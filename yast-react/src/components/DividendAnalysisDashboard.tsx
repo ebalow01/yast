@@ -21,12 +21,12 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Link
+  Link,
+  Tooltip
 } from '@mui/material';
 import {
   TrendingUp,
   TrendingDown,
-  ShowChart,
   Assessment
 } from '@mui/icons-material';
 
@@ -192,7 +192,7 @@ export default function DividendAnalysisDashboard() {
   const getReturnIcon = (returnValue: number) => {
     if (returnValue > 0) return <TrendingUp sx={{ color: '#4caf50' }} />;
     if (returnValue < 0) return <TrendingDown sx={{ color: '#f44336' }} />;
-    return <ShowChart sx={{ color: '#757575' }} />;
+    return <TrendingUp sx={{ color: '#757575' }} />;
   };
 
   if (loading) {
@@ -236,16 +236,23 @@ export default function DividendAnalysisDashboard() {
   }
 
   const getStrategyChip = (strategy: string) => {
+    const tooltipText = strategy === 'B&H' 
+      ? 'Buy & Hold: Traditional strategy of buying the ETF and holding it for the entire period, collecting all dividends along the way.'
+      : 'Dividend Capture: Strategic trading around ex-dividend dates to capture dividends while minimizing market exposure time.';
+    
     return (
-      <Chip
-        label={strategy}
-        size="small"
-        sx={{ 
-          fontWeight: 'bold',
-          backgroundColor: strategy === 'B&H' ? '#2196f3' : '#009688',
-          color: 'white'
-        }}
-      />
+      <Tooltip title={tooltipText} arrow>
+        <Chip
+          label={strategy}
+          size="small"
+          sx={{ 
+            fontWeight: 'bold',
+            backgroundColor: strategy === 'B&H' ? '#2196f3' : '#009688',
+            color: 'white',
+            cursor: 'help'
+          }}
+        />
+      </Tooltip>
     );
   };
 
@@ -379,38 +386,7 @@ export default function DividendAnalysisDashboard() {
               {metadata.analysisDate}
             </Typography>
           </Toolbar>
-        </AppBar>
-
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          {/* Strategy Explanations - Centered */}
-          <Box display="flex" justifyContent="center" sx={{ mb: 4 }}>
-            <Card sx={{ maxWidth: 800, width: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom color="primary" align="center">
-                  Trading Strategy Definitions
-                </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                <Box sx={{ minWidth: 250 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    B&H (Buy & Hold)
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Traditional strategy of buying the ETF and holding it for the entire period, collecting all dividends along the way.
-                  </Typography>
-                </Box>
-                <Box sx={{ minWidth: 250 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    DC (Dividend Capture)
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Strategic trading around ex-dividend dates to capture dividends while minimizing market exposure time.
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          </Box>
-
+        </AppBar>        <Container maxWidth="lg" sx={{ py: 4 }}>
           <Paper sx={{ width: '100%', mb: 2 }}>
             <Tabs
               value={selectedTab}
@@ -428,11 +404,6 @@ export default function DividendAnalysisDashboard() {
               <Tab
                 label={`Excluded (${excludedTickers.length})`}
                 icon={<TrendingDown />}
-                iconPosition="start"
-              />
-              <Tab
-                label="Benchmark"
-                icon={<ShowChart />}
                 iconPosition="start"
               />
             </Tabs>
@@ -455,27 +426,6 @@ export default function DividendAnalysisDashboard() {
                 ETFs with returns at or below 40% or risk at or above 40%
               </Typography>
               {renderTable(excludedTickers)}
-            </TabPanel>
-
-            <TabPanel value={selectedTab} index={2}>
-              <Typography variant="h6" gutterBottom>
-                Benchmark Comparison
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Performance comparison against SPY benchmark
-              </Typography>
-              <Card sx={{ p: 2 }}>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong>SPY Benchmark Performance:</strong>
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  SPY (S&P 500 ETF) served as the benchmark for comparison during the analysis period.
-                  Individual ETF performance is evaluated against this broad market index.
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Note: Detailed SPY comparison data will be available in future updates.
-                </Typography>
-              </Card>
             </TabPanel>
           </Paper>
 

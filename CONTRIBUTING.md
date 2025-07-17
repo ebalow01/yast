@@ -75,6 +75,10 @@ Thank you for your interest in contributing to the YieldMax ETF Analysis System!
 
 4. **Commit your changes**:
    ```bash
+   # Option 1: Auto-stage all tracked files (recommended)
+   git commit -am "Add: Brief description of your changes"
+   
+   # Option 2: Traditional approach
    git add .
    git commit -m "Add: Brief description of your changes"
    ```
