@@ -166,13 +166,13 @@ export default function DividendAnalysisDashboard() {
     setSelectedTab(newValue);
   };
 
-  // Helper function to format currency
-  const formatCurrency = (amount: number): string => {
+  // Helper function to format dividend amounts (with 3 decimal places)
+  const formatDividend = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
     }).format(amount);
   };
 
@@ -353,7 +353,7 @@ export default function DividendAnalysisDashboard() {
               </TableCell>
               <TableCell align="center">
                 <Typography variant="body2">
-                  {formatCurrency(item.medianDividend)}
+                  {formatDividend(item.medianDividend)}
                 </Typography>
               </TableCell>
             </TableRow>
