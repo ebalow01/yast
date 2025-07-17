@@ -1,0 +1,50 @@
+name: Daily ETF Analysis Update
+
+on:
+  schedule:
+    # Run daily at 6 PM EST (after market close)
+    - cron: '0 23 * * 1-5'  # Monday-Friday at 11 PM UTC (6 PM EST)
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run ETF analysis
+      run: |
+        python multi_ticker_orchestrator.py
+        
+    - name: Generate web data
+      run: |
+        python scripts/generate_web_data.py
+        
+    - name: Commit and push if data changed
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Daily ETF data update $(date +%Y-%m-%d)"
+          git push
+        fi
+        
+    - name: Trigger Netlify deploy
+      if: success()
+      run: |
+        curl -X POST -d {} ${{ secrets.NETLIFY_BUILD_HOOK }}
