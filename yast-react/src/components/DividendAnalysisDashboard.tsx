@@ -632,8 +632,7 @@ export default function DividendAnalysisDashboard() {
                       borderTop: '1px solid rgba(255, 255, 255, 0.1)',
                       pt: 2
                     }}>
-                      Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization<br/>
-                      Includes 20% cash allocation (4.5% yield, 0% risk) and SPY benchmark (12% return, 20% risk)
+                      Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization
                     </Typography>
                   </CardContent>
                 </Card>
