@@ -137,7 +137,7 @@
             </tbody>
         </table>
 
-        <div id="mpt-widget" class="strategy-box" style="display: none; max-width: 800px;">
+        <div id="mpt-widget" class="strategy-box" style="display: none; max-width: 600px !important; margin: 20px auto;">
             <div class="strategy-title" style="color: white; text-align: center;">Optimal Allocation</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
                 <div style="flex: 1; margin-right: 20px;">
@@ -416,8 +416,8 @@
                                  asset.ticker === 'SPY' ? 'strategy-chip bh-chip' : 
                                  'ticker';
                 return `
-                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="${colorClass}" style="display: inline-block; min-width: 60px;">${asset.ticker}</span>
+                    <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                        <span class="${colorClass}" style="display: inline-block; min-width: 60px; margin-right: 8px;">${asset.ticker}</span>
                         <span>${weightPercent}%</span>
                     </div>
                 `;

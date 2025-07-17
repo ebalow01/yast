@@ -26,8 +26,7 @@ import {
 } from '@mui/material';
 import {
   TrendingUp,
-  TrendingDown,
-  Assessment
+  TrendingDown
 } from '@mui/icons-material';
 
 export interface DividendData {
@@ -511,7 +510,6 @@ export default function DividendAnalysisDashboard() {
       <Box sx={{ minHeight: '100vh' }}>
         <AppBar position="static" sx={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)' }}>
           <Toolbar>
-            <Assessment sx={{ mr: 2 }} />
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               YieldMax ETFs - Weekly Distribution Analysis
             </Typography>
@@ -552,10 +550,9 @@ export default function DividendAnalysisDashboard() {
               
               {/* MPT Portfolio Optimization Widget */}
               {mptAllocation.length > 0 && portfolioMetrics && (
-                <Card sx={{ mt: 4, bgcolor: 'rgba(0, 230, 118, 0.05)', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
+                <Card sx={{ mt: 4, maxWidth: '600px', mx: 'auto', bgcolor: 'rgba(0, 230, 118, 0.05)', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
                   <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Assessment />
+                    <Typography variant="h6" sx={{ mb: 2, color: 'white', textAlign: 'center' }}>
                       Optimal Allocation
                     </Typography>
                     
@@ -567,7 +564,6 @@ export default function DividendAnalysisDashboard() {
                           .map((asset, index) => (
                             <Box key={index} sx={{ 
                               display: 'flex', 
-                              justifyContent: 'space-between', 
                               alignItems: 'center', 
                               mb: 1,
                               p: 1,
@@ -586,7 +582,7 @@ export default function DividendAnalysisDashboard() {
                                   minWidth: '60px'
                                 }}
                               />
-                              <Typography sx={{ fontWeight: 'bold' }}>
+                              <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
                                 {(asset.weight * 100).toFixed(1)}%
                               </Typography>
                             </Box>
