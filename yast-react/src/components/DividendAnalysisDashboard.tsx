@@ -20,10 +20,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  CircularProgress
+  CircularProgress,
+  Link
 } from '@mui/material';
 import {
-  AttachMoney,
   TrendingUp,
   TrendingDown,
   ShowChart,
@@ -162,7 +162,7 @@ export default function DividendAnalysisDashboard() {
     loadData();
   }, []);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
 
@@ -236,32 +236,37 @@ export default function DividendAnalysisDashboard() {
   }
 
   const getStrategyChip = (strategy: string) => {
-    const color = strategy === 'DC' ? 'primary' : 'secondary';
     return (
       <Chip
         label={strategy}
-        color={color}
         size="small"
-        sx={{ fontWeight: 'bold' }}
+        sx={{ 
+          fontWeight: 'bold',
+          backgroundColor: strategy === 'B&H' ? '#2196f3' : '#9c27b0',
+          color: 'white'
+        }}
       />
     );
   };
 
   const getRiskChip = (risk: number) => {
-    const color = risk > 50 ? 'error' : risk > 30 ? 'warning' : 'success';
+    const riskPct = risk * 100;
+    const isHighRisk = riskPct > 40;
     return (
       <Chip
         label={formatPercentage(risk)}
-        color={color}
         size="small"
         variant="outlined"
+        sx={{
+          color: isHighRisk ? '#f44336' : '#4caf50',
+          borderColor: isHighRisk ? '#f44336' : '#4caf50'
+        }}
       />
     );
   };
 
   const topPerformers = data.filter(item => item.category === 'top-performers');
   const excludedTickers = data.filter(item => item.category === 'excluded');
-  const benchmark = data.find(item => item.category === 'benchmark');
 
   const renderTable = (data: DividendData[]) => (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
@@ -285,9 +290,16 @@ export default function DividendAnalysisDashboard() {
           {data.map((item, index) => (
             <TableRow key={index} hover>
               <TableCell>
-                <Typography variant="body2" fontWeight="bold" color="primary">
-                  {item.ticker}
-                </Typography>
+                <Link
+                  href={`https://marketchameleon.com/Overview/${item.ticker}/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ textDecoration: 'none' }}
+                >
+                  <Typography variant="body2" fontWeight="bold" color="primary">
+                    {item.ticker}
+                  </Typography>
+                </Link>
               </TableCell>
               <TableCell align="center">{item.tradingDays}</TableCell>
               <TableCell align="center">{item.exDivDay}</TableCell>
@@ -363,7 +375,7 @@ export default function DividendAnalysisDashboard() {
           <Toolbar>
             <Assessment sx={{ mr: 2 }} />
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              YieldMax ETF Analysis Dashboard
+              YieldMax ETFs - Weekly Distribution Analysis
             </Typography>
             <Typography variant="subtitle2" sx={{ ml: 2 }}>
               {metadata.analysisDate}
@@ -372,22 +384,34 @@ export default function DividendAnalysisDashboard() {
         </AppBar>
 
         <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-            <Card sx={{ minWidth: 200 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <AttachMoney sx={{ color: 'primary.main', mr: 1 }} />
-                  <Typography variant="h6">Total Investment</Typography>
+          {/* Strategy Explanations */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom color="primary">
+                Trading Strategy Definitions
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                <Box sx={{ minWidth: 250 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    B&H (Buy & Hold)
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Traditional strategy of buying the ETF and holding it for the entire period, collecting all dividends along the way.
+                  </Typography>
                 </Box>
-                <Typography variant="h4" color="primary">
-                  {formatCurrency(metadata.startingCapital * metadata.totalTickers)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {metadata.totalTickers} ETFs × ${formatCurrency(metadata.startingCapital).replace('$', '')}
-                </Typography>
-              </CardContent>
-            </Card>
+                <Box sx={{ minWidth: 250 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    DC (Dividend Capture)
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Strategic trading around ex-dividend dates to capture dividends while minimizing market exposure time.
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
 
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
             <Card sx={{ minWidth: 200 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -398,7 +422,7 @@ export default function DividendAnalysisDashboard() {
                   {topPerformers.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Outperforming ETFs
+                  Returns &gt; 40% &amp; Risk &lt; 40%
                 </Typography>
               </CardContent>
             </Card>
@@ -413,7 +437,7 @@ export default function DividendAnalysisDashboard() {
                   {excludedTickers.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Underperforming ETFs
+                  Returns &lt;= 40% or Risk &gt;= 40%
                 </Typography>
               </CardContent>
             </Card>
@@ -450,7 +474,7 @@ export default function DividendAnalysisDashboard() {
                 Top Performing ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs that outperformed their buy-and-hold strategy using dividend capture
+                ETFs with returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
               </Typography>
               {renderTable(topPerformers)}
             </TabPanel>
@@ -460,7 +484,7 @@ export default function DividendAnalysisDashboard() {
                 Excluded ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs where buy-and-hold strategy performed better than dividend capture
+                ETFs with returns at or below 40% or risk at or above 40%
               </Typography>
               {renderTable(excludedTickers)}
             </TabPanel>
@@ -472,9 +496,37 @@ export default function DividendAnalysisDashboard() {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Performance comparison against SPY benchmark
               </Typography>
-              {benchmark && renderTable([benchmark])}
+              <Card sx={{ p: 2 }}>
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  <strong>SPY Benchmark Performance:</strong>
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  SPY (S&P 500 ETF) served as the benchmark for comparison during the analysis period.
+                  Individual ETF performance is evaluated against this broad market index.
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Note: Detailed SPY comparison data will be available in future updates.
+                </Typography>
+              </Card>
             </TabPanel>
           </Paper>
+
+          {/* Disclaimer */}
+          <Card sx={{ mt: 4, bgcolor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2, color: 'warning.main' }}>
+                ⚠️ Important Disclaimer
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                This analysis tool is provided for <strong>educational and entertainment purposes only</strong>. 
+                The data, calculations, and strategies presented here are <strong>not investment advice</strong> and should not be 
+                considered as recommendations for any financial decisions. Past performance does not guarantee future results. 
+                All investments carry risk, including the potential loss of principal. You should consult with a qualified 
+                financial advisor before making any investment decisions. The creator of this tool is not responsible for any 
+                financial losses or decisions made based on this information.
+              </Typography>
+            </CardContent>
+          </Card>
         </Container>
       </Box>
     </ThemeProvider>

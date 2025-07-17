@@ -164,14 +164,29 @@ def process_analysis_data(web_data_dir):
             
             # Parse data lines
             if parsing_data and line:
+                # Skip SPY benchmark line since it contains N/A values
+                if line.strip().startswith('SPY'):
+                    continue
+                    
                 # Use a more robust parsing approach that handles the fixed-width format
                 try:
                     # Extract each field by position for better parsing
                     ticker = line[0:8].strip()
-                    days = int(line[9:15].strip())
+                    
+                    # Skip if ticker is empty or invalid
+                    if not ticker or ticker in ['SPY']:
+                        continue
+                    
+                    days_str = line[9:15].strip()
+                    days = int(days_str) if days_str and days_str != 'N/A' else 0
+                    
                     ex_div_day = line[16:25].strip()
-                    buy_hold_return = float(line[26:38].strip().replace('%', '')) / 100
-                    div_capture_return = float(line[41:53].strip().replace('%', '')) / 100
+                    
+                    buy_hold_str = line[26:38].strip().replace('%', '')
+                    buy_hold_return = float(buy_hold_str) / 100 if buy_hold_str and buy_hold_str != 'N/A' else 0.0
+                    
+                    div_capture_str = line[41:53].strip().replace('%', '')
+                    div_capture_return = float(div_capture_str) / 100 if div_capture_str and div_capture_str != 'N/A' else 0.0
                     
                     # Parse best strategy from the longer field
                     best_strategy_field = line[54:70].strip()
@@ -179,22 +194,38 @@ def process_analysis_data(web_data_dir):
                         best_strategy = 'DC'
                         # Extract the percentage after DC:
                         best_return_str = best_strategy_field.split('DC:')[1].strip()
-                        best_return = float(best_return_str.replace('%', '')) / 100
+                        best_return = float(best_return_str.replace('%', '')) / 100 if best_return_str != 'N/A' else div_capture_return
                     elif 'B&H:' in best_strategy_field:
                         best_strategy = 'B&H'
                         # Extract the percentage after B&H:
                         best_return_str = best_strategy_field.split('B&H:')[1].strip()
-                        best_return = float(best_return_str.replace('%', '')) / 100
+                        best_return = float(best_return_str.replace('%', '')) / 100 if best_return_str != 'N/A' else buy_hold_return
                     else:
                         best_strategy = 'B&H'
                         best_return = buy_hold_return
                     
-                    final_value = float(line[71:83].strip().replace('$', '').replace(',', ''))
-                    dc_win_rate = float(line[84:95].strip().replace('%', '')) / 100
-                    risk_volatility = float(line[96:107].strip().replace('%', '')) / 100
+                    final_value_str = line[71:83].strip().replace('$', '').replace(',', '')
+                    final_value = float(final_value_str) if final_value_str and final_value_str != 'N/A' else 100000.0
+                    
+                    dc_win_rate_str = line[84:95].strip().replace('%', '')
+                    dc_win_rate = float(dc_win_rate_str) / 100 if dc_win_rate_str and dc_win_rate_str != 'N/A' else 0.0
+                    
+                    risk_volatility_str = line[96:107].strip().replace('%', '')
+                    risk_volatility = float(risk_volatility_str) / 100 if risk_volatility_str and risk_volatility_str != 'N/A' else 0.0
+                    
                     # Handle variable length for median dividend - take everything after position 108
                     median_dividend_str = line[108:].strip().replace('$', '').replace('%', '')
-                    median_dividend = float(median_dividend_str) if median_dividend_str else 0.0
+                    median_dividend = float(median_dividend_str) if median_dividend_str and median_dividend_str != 'N/A' else 0.0
+                    
+                    # Determine category based on new criteria:
+                    # Top performers: Either B&H or DC returns > 40% AND risk < 40%
+                    best_return_pct = max(buy_hold_return, div_capture_return) * 100
+                    risk_pct = risk_volatility * 100
+                    
+                    if best_return_pct > 40 and risk_pct < 40:
+                        category = 'top-performers'
+                    else:
+                        category = 'excluded'
                     
                     analysis_data.append({
                         'ticker': ticker,
@@ -208,7 +239,7 @@ def process_analysis_data(web_data_dir):
                         'dcWinRate': dc_win_rate,
                         'riskVolatility': risk_volatility,
                         'medianDividend': median_dividend,
-                        'category': current_category
+                        'category': category
                     })
                 except (ValueError, IndexError, AttributeError) as e:
                     print(f"Warning: Could not parse line: {line}. Error: {e}")
