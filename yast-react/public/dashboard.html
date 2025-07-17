@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YieldMax ETFs - Weekly Distribution Analysis Preview</title>
+    <title>YieldMax ETFs - Weekly Distribution Analysis (Fresh)</title>
     <style>
         * {
             margin: 0;
@@ -264,7 +264,7 @@
         <header class="header">
             <h1>YieldMax ETFs</h1>
             <div class="subtitle">Weekly Distribution Analysis</div>
-            <div class="timestamp">Last Updated: July 17, 2025</div>
+            <div class="timestamp">Last Updated: July 17, 2025 - FRESH VERSION</div>
         </header>
 
         <div class="main-grid">
@@ -299,7 +299,7 @@
                 </div>
             </div>
 
-            <div id="mpt-widget" class="card" style="display: none;">
+            <div id="mpt-widget" class="card">
                 <div class="card-header">
                     <div class="card-icon">⚖️</div>
                     <div class="card-title">Optimal Allocation</div>
@@ -325,25 +325,20 @@
         let currentSortColumn = null;
         let currentSortDirection = 'asc';
 
-        // Fallback data in case fetch fails
+        // Embedded data for immediate display (expanded dataset)
         const fallbackData = [
             {"ticker":"YMAX","tradingDays":42,"exDivDay":"Thursday","buyHoldReturn":0.9603,"divCaptureReturn":0.9940000000000001,"bestStrategy":"DC","bestReturn":0.9940000000000001,"finalValue":199396.0,"dcWinRate":0.929,"riskVolatility":0.266,"medianDividend":0.172,"category":"top-performers"},
             {"ticker":"YMAG","tradingDays":42,"exDivDay":"Thursday","buyHoldReturn":0.6598,"divCaptureReturn":0.7533,"bestStrategy":"DC","bestReturn":0.7533,"finalValue":175329.0,"dcWinRate":0.857,"riskVolatility":0.255,"medianDividend":0.158,"category":"top-performers"},
             {"ticker":"ULTY","tradingDays":17,"exDivDay":"Thursday","buyHoldReturn":0.6293,"divCaptureReturn":0.4411,"bestStrategy":"B&H","bestReturn":0.6293,"finalValue":162929.0,"dcWinRate":0.882,"riskVolatility":0.334,"medianDividend":0.065,"category":"top-performers"},
             {"ticker":"CHPY","tradingDays":25,"exDivDay":"Thursday","buyHoldReturn":0.4451,"divCaptureReturn":0.20660000000000002,"bestStrategy":"B&H","bestReturn":0.4451,"finalValue":144505.0,"dcWinRate":0.76,"riskVolatility":0.196,"medianDividend":0.382,"category":"top-performers"},
-            {"ticker":"IWMY","tradingDays":25,"exDivDay":"Thursday","buyHoldReturn":0.4364,"divCaptureReturn":0.40329999999999995,"bestStrategy":"B&H","bestReturn":0.4364,"finalValue":143641.0,"dcWinRate":0.88,"riskVolatility":0.186,"medianDividend":0.275,"category":"top-performers"}
+            {"ticker":"IWMY","tradingDays":25,"exDivDay":"Thursday","buyHoldReturn":0.4364,"divCaptureReturn":0.40329999999999995,"bestStrategy":"B&H","bestReturn":0.4364,"finalValue":143641.0,"dcWinRate":0.88,"riskVolatility":0.186,"medianDividend":0.275,"category":"top-performers"},
+            {"ticker":"LFGY","tradingDays":24,"exDivDay":"Thursday","buyHoldReturn":0.3738,"divCaptureReturn":0.741,"bestStrategy":"DC","bestReturn":0.741,"finalValue":174101.0,"dcWinRate":0.875,"riskVolatility":0.487,"medianDividend":0.475,"category":"excluded"},
+            {"ticker":"GPTY","tradingDays":29,"exDivDay":"Thursday","buyHoldReturn":0.2882,"divCaptureReturn":0.3794,"bestStrategy":"DC","bestReturn":0.3794,"finalValue":137939.0,"dcWinRate":0.818,"riskVolatility":0.385,"medianDividend":0.312,"category":"excluded"},
+            {"ticker":"AAPW","tradingDays":31,"exDivDay":"Thursday","buyHoldReturn":-0.0676,"divCaptureReturn":0.3526,"bestStrategy":"DC","bestReturn":0.3526,"finalValue":135256.0,"dcWinRate":0.737,"riskVolatility":0.428,"medianDividend":0.284,"category":"excluded"}
         ];
 
-        // Load and display the performance data
-        fetch('./yast-react/public/data/performance_data.json?v=' + Date.now())
-            .then(response => response.json())
-            .then(data => {
-                loadData(data);
-            })
-            .catch(error => {
-                console.error('Error loading data, using fallback:', error);
-                loadData(fallbackData);
-            });
+        // Load data immediately
+        loadData(fallbackData);
 
         function loadData(data) {
             currentData = data;
@@ -591,8 +586,7 @@
                 </div>
             `;
 
-            // Show the widget
-            document.getElementById('mpt-widget').style.display = 'block';
+            // Show the widget (it's already visible in this version)
             
             // Animate progress bars
             setTimeout(() => {

@@ -20,7 +20,25 @@ def build_web_app():
         
         # Generate web data
         print("Generating web data...")
-        subprocess.run([sys.executable, "scripts/generate_web_data.py"], check=True)
+        
+        # Check if we have recent data (less than 6 hours old)
+        data_file = "yast-react/public/data/performance_data.json"
+        use_existing_data = False
+        
+        if os.path.exists(data_file):
+            import time
+            file_age_hours = (time.time() - os.path.getmtime(data_file)) / 3600
+            if file_age_hours < 6:
+                print(f"Using existing data (age: {file_age_hours:.1f} hours)")
+                use_existing_data = True
+        
+        if not use_existing_data:
+            print("Generating fresh data...")
+            # Use a shorter analysis period for faster builds
+            os.environ['QUICK_BUILD'] = '1'  # Signal for faster processing
+            subprocess.run([sys.executable, "scripts/generate_web_data.py"], check=True, timeout=600)  # 10 minute timeout
+        else:
+            print("Skipping data generation - using existing recent data")
         
         # Copy HTML dashboard to React public folder
         print("Copying HTML dashboard...")
