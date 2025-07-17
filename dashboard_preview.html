@@ -6,49 +6,112 @@
     <title>YieldMax ETFs - Weekly Distribution Analysis Preview</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #1e1e1e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
             color: white;
+            min-height: 100vh;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            display: grid;
+            gap: 20px;
         }
-        .strategy-box {
-            background: #2a2a2a;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px auto;
-            max-width: 1200px;
+        .header-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+            padding: 30px;
+            border-radius: 16px;
             text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(76, 175, 80, 0.2);
         }
-        .strategy-title {
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        .card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card-title {
             color: #4caf50;
-            font-size: 1.2em;
-            font-weight: bold;
+            font-size: 1.3em;
+            font-weight: 600;
             margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-subtitle {
+            color: #ccc;
+            font-size: 0.9em;
+            margin-bottom: 20px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            background: #2a2a2a;
+            background: transparent;
+            border-radius: 12px;
+            overflow: hidden;
         }
         th, td {
-            padding: 12px;
+            padding: 12px 8px;
             text-align: center;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         th {
-            background: #333;
-            font-weight: bold;
+            background: rgba(76, 175, 80, 0.1);
+            font-weight: 600;
             cursor: pointer;
             position: relative;
             user-select: none;
+            color: #4caf50;
         }
         th:hover {
-            background: #444;
+            background: rgba(76, 175, 80, 0.15);
+        }
+        .mpt-card {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        .allocation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid #4caf50;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .metric-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-label {
+            font-size: 0.85em;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        .metric-value {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #4caf50;
         }
         th.sorted-asc::after {
             content: ' ▲';
@@ -96,88 +159,58 @@
 </head>
 <body>
     <div class="container">
-        <h1 style="text-align: center; color: #4caf50; margin-bottom: 30px;">
-            YieldMax ETFs - Weekly Distribution Analysis
-        </h1>
+        <div class="header-card">
+            <h1 style="margin: 0; color: #4caf50; font-size: 2.2em; font-weight: 600;">
+                YieldMax ETFs
+            </h1>
+            <p style="margin: 10px 0 0 0; color: #ccc; font-size: 1.1em;">Weekly Distribution Analysis</p>
+            <p style="margin: 5px 0 0 0; color: #999; font-size: 0.9em;">Last Updated: July 17, 2025</p>
+        </div>
 
-        <div class="strategy-box">
-            <div class="strategy-title">Trading Strategy Definitions</div>
-            <div style="display: flex; justify-content: space-around; text-align: left;">
-                <div>
-                    <strong>B&H (Buy & Hold)</strong><br>
-                    <small>Traditional strategy of buying the ETF and holding it for the entire period, collecting all dividends along the way.</small>
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-title">
+                    📊 Top Performing ETFs
                 </div>
-                <div>
-                    <strong>DC (Dividend Capture)</strong><br>
-                    <small>Strategic trading around ex-dividend dates to capture dividends while minimizing market exposure time.</small>
+                <div class="card-subtitle">
+                    ETFs with annualized returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
+                </div>
+                
+                <table id="top-performers">
+                    <thead>
+                        <tr>
+                            <th data-column="ticker">Ticker</th>
+                            <th data-column="exDivDay">Ex-Div</th>
+                            <th data-column="buyHoldReturn">B&H Return</th>
+                            <th data-column="divCaptureReturn">DC Return</th>
+                            <th data-column="bestStrategy">Best</th>
+                            <th data-column="bestReturn">Best Return</th>
+                            <th data-column="dcWinRate">Win Rate</th>
+                            <th data-column="riskVolatility">Risk</th>
+                            <th data-column="medianDividend">Median Div</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-performers-body">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="mpt-widget" class="card mpt-card" style="display: none;">
+                <div class="card-title">
+                    🎯 Optimal Allocation
+                </div>
+                <div id="portfolio-allocation">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div class="metrics-grid" id="portfolio-metrics">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div style="text-align: center; color: #999; font-size: 0.85em; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization
                 </div>
             </div>
         </div>
-
-        <h2 class="section-title">Top Performers</h2>
-        <p style="color: #ccc;">ETFs with returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)</p>
-        
-        <table id="top-performers">
-            <thead>
-                <tr>
-                    <th data-column="ticker">Ticker</th>
-                    <th data-column="exDivDay">Ex-Div</th>
-                    <th data-column="buyHoldReturn">B&H Return</th>
-                    <th data-column="divCaptureReturn">DC Return</th>
-                    <th data-column="bestStrategy">Best</th>
-                    <th data-column="bestReturn">Best Return</th>
-                    <th data-column="finalValue">Final Value</th>
-                    <th data-column="dcWinRate">Win Rate</th>
-                    <th data-column="riskVolatility">Risk</th>
-                    <th data-column="medianDividend">Median Div</th>
-                </tr>
-            </thead>
-            <tbody id="top-performers-body">
-                <!-- Will be populated by JavaScript -->
-            </tbody>
-        </table>
-
-        <div id="mpt-widget" class="strategy-box" style="display: none; max-width: 600px !important; margin: 20px auto;">
-            <div class="strategy-title" style="color: white; text-align: center;">Optimal Allocation</div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <div style="flex: 1; margin-right: 20px;">
-                    <div id="portfolio-allocation" style="text-align: left;">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
-                </div>
-                <div style="flex: 1; margin-left: 20px;">
-                    <div id="portfolio-metrics" style="text-align: left;">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-            <div style="text-align: center; color: #ccc; font-size: 0.9em;">
-                <p>Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization</p>
-            </div>
-        </div>
-
-        <h2 class="section-title">Excluded ETFs</h2>
-        <p style="color: #ccc;">ETFs with returns at or below 40% or risk at or above 40%</p>
-        
-        <table id="excluded">
-            <thead>
-                <tr>
-                    <th data-column="ticker">Ticker</th>
-                    <th data-column="exDivDay">Ex-Div</th>
-                    <th data-column="buyHoldReturn">B&H Return</th>
-                    <th data-column="divCaptureReturn">DC Return</th>
-                    <th data-column="bestStrategy">Best</th>
-                    <th data-column="bestReturn">Best Return</th>
-                    <th data-column="finalValue">Final Value</th>
-                    <th data-column="dcWinRate">Win Rate</th>
-                    <th data-column="riskVolatility">Risk</th>
-                    <th data-column="medianDividend">Median Div</th>
-                </tr>
-            </thead>
-            <tbody id="excluded-body">
-                <!-- Will be populated by JavaScript -->
-            </tbody>
-        </table>
     </div>
 
     <script>
@@ -191,10 +224,8 @@
             .then(data => {
                 currentData = data;
                 const topPerformers = data.filter(item => item.category === 'top-performers');
-                const excluded = data.filter(item => item.category === 'excluded');
                 
                 renderTable('top-performers-body', topPerformers, 'top-performers');
-                renderTable('excluded-body', excluded, 'excluded');
                 
                 // Calculate and display MPT allocation
                 calculateMPTAllocation(topPerformers);
@@ -204,8 +235,7 @@
             })
             .catch(error => {
                 console.error('Error loading data:', error);
-                document.getElementById('top-performers-body').innerHTML = '<tr><td colspan="10">Error loading data</td></tr>';
-                document.getElementById('excluded-body').innerHTML = '<tr><td colspan="10">Error loading data</td></tr>';
+                document.getElementById('top-performers-body').innerHTML = '<tr><td colspan="9">Error loading data</td></tr>';
             });
 
         function addSortHandlers() {
@@ -255,10 +285,8 @@
 
             // Re-render tables with sorted data
             const topPerformers = sortedData.filter(item => item.category === 'top-performers');
-            const excluded = sortedData.filter(item => item.category === 'excluded');
             
             renderTable('top-performers-body', topPerformers, 'top-performers');
-            renderTable('excluded-body', excluded, 'excluded');
         }
 
         function renderTable(bodyId, data, tableType) {
@@ -271,7 +299,6 @@
                     <td class="${item.divCaptureReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.divCaptureReturn)}</td>
                     <td><span class="strategy-chip ${item.bestStrategy === 'B&H' ? 'bh-chip' : 'dc-chip'}">${item.bestStrategy}</span></td>
                     <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
-                    <td>${formatCurrency(item.finalValue)}</td>
                     <td>${formatPercentage(item.dcWinRate)}</td>
                     <td class="${item.riskVolatility > 0.4 ? 'risk-high' : 'risk-low'}">${formatPercentage(item.riskVolatility)}</td>
                     <td>${formatDividend(item.medianDividend)}</td>
@@ -408,39 +435,36 @@
             // Sort allocation by weight (descending)
             const sortedAllocation = allocation.sort((a, b) => b.weight - a.weight);
 
-            // Display allocation
+            // Display allocation with new card style
             const allocationDiv = document.getElementById('portfolio-allocation');
             allocationDiv.innerHTML = sortedAllocation.map(asset => {
                 const weightPercent = (asset.weight * 100).toFixed(1);
-                const colorClass = asset.ticker === 'CASH' ? 'strategy-chip bh-chip' : 
-                                 asset.ticker === 'SPY' ? 'strategy-chip bh-chip' : 
-                                 'ticker';
                 return `
-                    <div style="margin-bottom: 8px; display: flex; align-items: center;">
-                        <span class="${colorClass}" style="display: inline-block; min-width: 60px; margin-right: 8px;">${asset.ticker}</span>
-                        <span>${weightPercent}%</span>
+                    <div class="allocation-item">
+                        <span class="ticker" style="font-weight: 600;">${asset.ticker}</span>
+                        <span style="font-weight: 600; color: #4caf50;">${weightPercent}%</span>
                     </div>
                 `;
             }).join('');
 
-            // Display metrics
+            // Display metrics in grid layout
             const metricsDiv = document.getElementById('portfolio-metrics');
             metricsDiv.innerHTML = `
-                <div style="margin-bottom: 8px;">
-                    <strong>Expected Return:</strong> 
-                    <span class="positive">${formatPercentage(metrics.expectedReturn)}</span>
+                <div class="metric-item">
+                    <div class="metric-label">Expected Return</div>
+                    <div class="metric-value">${formatPercentage(metrics.expectedReturn)}</div>
                 </div>
-                <div style="margin-bottom: 8px;">
-                    <strong>Portfolio Risk:</strong> 
-                    <span class="${metrics.risk > 0.15 ? 'risk-high' : 'risk-low'}">${formatPercentage(metrics.risk)}</span>
+                <div class="metric-item">
+                    <div class="metric-label">Portfolio Risk</div>
+                    <div class="metric-value">${formatPercentage(metrics.risk)}</div>
                 </div>
-                <div style="margin-bottom: 8px;">
-                    <strong>Sharpe Ratio:</strong> 
-                    <span class="positive">${metrics.sharpeRatio.toFixed(2)}</span>
+                <div class="metric-item">
+                    <div class="metric-label">Sharpe Ratio</div>
+                    <div class="metric-value">${metrics.sharpeRatio.toFixed(2)}</div>
                 </div>
-                <div style="margin-bottom: 8px;">
-                    <strong>Diversification:</strong> 
-                    <span class="positive">${allocation.length} assets</span>
+                <div class="metric-item">
+                    <div class="metric-label">Diversification</div>
+                    <div class="metric-value">${allocation.length} assets</div>
                 </div>
             `;
 
