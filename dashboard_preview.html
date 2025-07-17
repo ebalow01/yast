@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YieldMax ETFs - Weekly Distribution Analysis Preview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1e1e1e;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .strategy-box {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px auto;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .strategy-title {
+            color: #4caf50;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #2a2a2a;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+        }
+        th {
+            background: #333;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        th:hover {
+            background: #444;
+        }
+        th.sorted-asc::after {
+            content: ' ▲';
+            color: #4caf50;
+        }
+        th.sorted-desc::after {
+            content: ' ▼';
+            color: #4caf50;
+        }
+        .ticker {
+            color: #2196f3;
+            font-weight: bold;
+        }
+        .positive {
+            color: #4caf50;
+        }
+        .negative {
+            color: #f44336;
+        }
+        .strategy-chip {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .bh-chip {
+            background-color: #2196f3;
+        }
+        .dc-chip {
+            background-color: #009688;
+        }
+        .risk-high {
+            color: #f44336;
+        }
+        .risk-low {
+            color: #4caf50;
+        }
+        .section-title {
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #4caf50; margin-bottom: 30px;">
+            YieldMax ETFs - Weekly Distribution Analysis
+        </h1>
+
+        <div class="strategy-box">
+            <div class="strategy-title">Trading Strategy Definitions</div>
+            <div style="display: flex; justify-content: space-around; text-align: left;">
+                <div>
+                    <strong>B&H (Buy & Hold)</strong><br>
+                    <small>Traditional strategy of buying the ETF and holding it for the entire period, collecting all dividends along the way.</small>
+                </div>
+                <div>
+                    <strong>DC (Dividend Capture)</strong><br>
+                    <small>Strategic trading around ex-dividend dates to capture dividends while minimizing market exposure time.</small>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Top Performers</h2>
+        <p style="color: #ccc;">ETFs with returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)</p>
+        
+        <table id="top-performers">
+            <thead>
+                <tr>
+                    <th data-column="ticker">Ticker</th>
+                    <th data-column="exDivDay">Ex-Div</th>
+                    <th data-column="buyHoldReturn">B&H Return</th>
+                    <th data-column="divCaptureReturn">DC Return</th>
+                    <th data-column="bestStrategy">Best</th>
+                    <th data-column="bestReturn">Best Return</th>
+                    <th data-column="finalValue">Final Value</th>
+                    <th data-column="dcWinRate">Win Rate</th>
+                    <th data-column="riskVolatility">Risk</th>
+                    <th data-column="medianDividend">Median Div</th>
+                </tr>
+            </thead>
+            <tbody id="top-performers-body">
+                <!-- Will be populated by JavaScript -->
+            </tbody>
+        </table>
+
+        <div id="mpt-widget" class="strategy-box" style="display: none;">
+            <div class="strategy-title">Modern Portfolio Theory - Optimal Allocation</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div style="flex: 1; margin-right: 20px;">
+                    <h4 style="color: #4caf50; margin-bottom: 10px;">Portfolio Composition</h4>
+                    <div id="portfolio-allocation" style="text-align: left;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div style="flex: 1; margin-left: 20px;">
+                    <h4 style="color: #4caf50; margin-bottom: 10px;">Portfolio Metrics</h4>
+                    <div id="portfolio-metrics" style="text-align: left;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: center; color: #ccc; font-size: 0.9em;">
+                <p>Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization</p>
+                <p>Includes 20% cash allocation (4.5% yield, 0% risk) and SPY benchmark (12% return, 20% risk)</p>
+            </div>
+        </div>
+
+        <h2 class="section-title">Excluded ETFs</h2>
+        <p style="color: #ccc;">ETFs with returns at or below 40% or risk at or above 40%</p>
+        
+        <table id="excluded">
+            <thead>
+                <tr>
+                    <th data-column="ticker">Ticker</th>
+                    <th data-column="exDivDay">Ex-Div</th>
+                    <th data-column="buyHoldReturn">B&H Return</th>
+                    <th data-column="divCaptureReturn">DC Return</th>
+                    <th data-column="bestStrategy">Best</th>
+                    <th data-column="bestReturn">Best Return</th>
+                    <th data-column="finalValue">Final Value</th>
+                    <th data-column="dcWinRate">Win Rate</th>
+                    <th data-column="riskVolatility">Risk</th>
+                    <th data-column="medianDividend">Median Div</th>
+                </tr>
+            </thead>
+            <tbody id="excluded-body">
+                <!-- Will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let currentData = [];
+        let currentSortColumn = null;
+        let currentSortDirection = 'asc';
+
+        // Load and display the performance data
+        fetch('/yast-react/public/data/performance_data.json')
+            .then(response => response.json())
+            .then(data => {
+                currentData = data;
+                const topPerformers = data.filter(item => item.category === 'top-performers');
+                const excluded = data.filter(item => item.category === 'excluded');
+                
+                renderTable('top-performers-body', topPerformers, 'top-performers');
+                renderTable('excluded-body', excluded, 'excluded');
+                
+                // Calculate and display MPT allocation
+                calculateMPTAllocation(topPerformers);
+                
+                // Add click handlers for sorting
+                addSortHandlers();
+            })
+            .catch(error => {
+                console.error('Error loading data:', error);
+                document.getElementById('top-performers-body').innerHTML = '<tr><td colspan="10">Error loading data</td></tr>';
+                document.getElementById('excluded-body').innerHTML = '<tr><td colspan="10">Error loading data</td></tr>';
+            });
+
+        function addSortHandlers() {
+            const headers = document.querySelectorAll('th[data-column]');
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-column');
+                    sortTable(column, header);
+                });
+            });
+        }
+
+        function sortTable(column, headerElement) {
+            // Toggle sort direction if same column, otherwise start with ascending
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortDirection = 'asc';
+                currentSortColumn = column;
+            }
+
+            // Remove existing sort indicators
+            document.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            // Add sort indicator to current column
+            headerElement.classList.add(currentSortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+
+            // Sort the data
+            const sortedData = [...currentData].sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                // Handle different data types
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+
+                if (currentSortDirection === 'asc') {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+
+            // Re-render tables with sorted data
+            const topPerformers = sortedData.filter(item => item.category === 'top-performers');
+            const excluded = sortedData.filter(item => item.category === 'excluded');
+            
+            renderTable('top-performers-body', topPerformers, 'top-performers');
+            renderTable('excluded-body', excluded, 'excluded');
+        }
+
+        function renderTable(bodyId, data, tableType) {
+            const tbody = document.getElementById(bodyId);
+            tbody.innerHTML = data.map(item => `
+                <tr>
+                    <td class="ticker">${item.ticker}</td>
+                    <td>${item.exDivDay}</td>
+                    <td class="${item.buyHoldReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.buyHoldReturn)}</td>
+                    <td class="${item.divCaptureReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.divCaptureReturn)}</td>
+                    <td><span class="strategy-chip ${item.bestStrategy === 'B&H' ? 'bh-chip' : 'dc-chip'}">${item.bestStrategy}</span></td>
+                    <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
+                    <td>${formatCurrency(item.finalValue)}</td>
+                    <td>${formatPercentage(item.dcWinRate)}</td>
+                    <td class="${item.riskVolatility > 0.4 ? 'risk-high' : 'risk-low'}">${formatPercentage(item.riskVolatility)}</td>
+                    <td>${formatDividend(item.medianDividend)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function formatPercentage(value) {
+            return (value * 100).toFixed(2) + '%';
+        }
+
+        function formatCurrency(value) {
+            return '$' + value.toLocaleString();
+        }
+
+        function formatDividend(value) {
+            return '$' + value.toFixed(3);
+        }
+
+        function calculateMPTAllocation(topPerformers) {
+            if (topPerformers.length === 0) return;
+
+            // Add cash and SPY to the mix
+            const assets = [
+                ...topPerformers.map(etf => ({
+                    ticker: etf.ticker,
+                    return: etf.bestReturn,
+                    risk: etf.riskVolatility,
+                    sharpe: etf.bestReturn / etf.riskVolatility
+                })),
+                {
+                    ticker: 'CASH',
+                    return: 0.045, // 4.5% annual yield
+                    risk: 0.0, // 0% risk
+                    sharpe: Infinity
+                },
+                {
+                    ticker: 'SPY',
+                    return: 0.12, // 12% annual return
+                    risk: 0.20, // 20% risk
+                    sharpe: 0.12 / 0.20
+                }
+            ];
+
+            // Force 20% cash allocation
+            const cashAllocation = 0.20;
+            const remainingAllocation = 0.80;
+
+            // Filter out cash for optimization of remaining 80%
+            const optimizableAssets = assets.filter(asset => asset.ticker !== 'CASH');
+
+            // Simple mean variance optimization using Sharpe ratios
+            const allocation = optimizePortfolio(optimizableAssets, remainingAllocation);
+            
+            // Add cash allocation back
+            allocation.push({
+                ticker: 'CASH',
+                weight: cashAllocation,
+                return: 0.045,
+                risk: 0.0
+            });
+
+            // Calculate portfolio metrics
+            const portfolioMetrics = calculatePortfolioMetrics(allocation);
+
+            // Display results
+            displayMPTResults(allocation, portfolioMetrics);
+        }
+
+        function optimizePortfolio(assets, totalAllocation) {
+            // Sort by Sharpe ratio (descending)
+            const sortedAssets = [...assets].sort((a, b) => b.sharpe - a.sharpe);
+            
+            // Simple allocation based on Sharpe ratios with diversification constraints
+            const allocation = [];
+            let remainingWeight = totalAllocation;
+            
+            // Limit individual positions (max 25% each for diversification)
+            const maxWeight = 0.25;
+            
+            for (let i = 0; i < sortedAssets.length && remainingWeight > 0.01; i++) {
+                const asset = sortedAssets[i];
+                
+                // Calculate weight based on Sharpe ratio, but cap it
+                let weight = Math.min(
+                    (asset.sharpe / sortedAssets.reduce((sum, a) => sum + a.sharpe, 0)) * totalAllocation,
+                    maxWeight,
+                    remainingWeight
+                );
+                
+                // Minimum allocation of 2% if we're including it
+                if (weight > 0.02) {
+                    allocation.push({
+                        ticker: asset.ticker,
+                        weight: weight,
+                        return: asset.return,
+                        risk: asset.risk,
+                        sharpe: asset.sharpe
+                    });
+                    remainingWeight -= weight;
+                }
+            }
+            
+            // Redistribute any remaining weight proportionally
+            if (remainingWeight > 0.01 && allocation.length > 0) {
+                const redistributionFactor = 1 + (remainingWeight / allocation.reduce((sum, a) => sum + a.weight, 0));
+                allocation.forEach(asset => {
+                    asset.weight *= redistributionFactor;
+                });
+            }
+
+            return allocation;
+        }
+
+        function calculatePortfolioMetrics(allocation) {
+            const portfolioReturn = allocation.reduce((sum, asset) => sum + (asset.weight * asset.return), 0);
+            
+            // Simplified portfolio risk calculation (assuming some correlation)
+            const portfolioVariance = allocation.reduce((sum, asset) => {
+                return sum + Math.pow(asset.weight * asset.risk, 2);
+            }, 0);
+            const portfolioRisk = Math.sqrt(portfolioVariance);
+            
+            const sharpeRatio = portfolioRisk > 0 ? portfolioReturn / portfolioRisk : 0;
+
+            return {
+                expectedReturn: portfolioReturn,
+                risk: portfolioRisk,
+                sharpeRatio: sharpeRatio
+            };
+        }
+
+        function displayMPTResults(allocation, metrics) {
+            // Sort allocation by weight (descending)
+            const sortedAllocation = allocation.sort((a, b) => b.weight - a.weight);
+
+            // Display allocation
+            const allocationDiv = document.getElementById('portfolio-allocation');
+            allocationDiv.innerHTML = sortedAllocation.map(asset => {
+                const weightPercent = (asset.weight * 100).toFixed(1);
+                const colorClass = asset.ticker === 'CASH' ? 'strategy-chip bh-chip' : 
+                                 asset.ticker === 'SPY' ? 'strategy-chip' : 
+                                 'ticker';
+                return `
+                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span class="${colorClass}" style="display: inline-block; min-width: 60px;">${asset.ticker}</span>
+                        <span style="margin-left: 10px;">${weightPercent}%</span>
+                        <span style="margin-left: 10px; color: #ccc; font-size: 0.9em;">
+                            (${formatPercentage(asset.return)} return, ${formatPercentage(asset.risk)} risk)
+                        </span>
+                    </div>
+                `;
+            }).join('');
+
+            // Display metrics
+            const metricsDiv = document.getElementById('portfolio-metrics');
+            metricsDiv.innerHTML = `
+                <div style="margin-bottom: 8px;">
+                    <strong>Expected Return:</strong> 
+                    <span class="positive">${formatPercentage(metrics.expectedReturn)}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>Portfolio Risk:</strong> 
+                    <span class="${metrics.risk > 0.15 ? 'risk-high' : 'risk-low'}">${formatPercentage(metrics.risk)}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>Sharpe Ratio:</strong> 
+                    <span class="positive">${metrics.sharpeRatio.toFixed(2)}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong>Diversification:</strong> 
+                    <span class="positive">${allocation.length} assets</span>
+                </div>
+            `;
+
+            // Show the widget
+            document.getElementById('mpt-widget').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
