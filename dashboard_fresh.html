@@ -50,7 +50,7 @@
             font-size: 3rem;
             font-weight: 800;
             margin-bottom: 10px;
-            background: linear-gradient(45deg, #4caf50, #81c784);
+            background: linear-gradient(45deg, #2196f3, #00bcd4);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -305,7 +305,7 @@
                                 <th data-column="exDivDay">Ex-Div</th>
                                 <th data-column="buyHoldReturn">B&H Return</th>
                                 <th data-column="divCaptureReturn">DC Return</th>
-                                <th data-column="bestStrategy">Best</th>
+                                <th data-column="bestStrategy">Best Strategy</th>
                                 <th data-column="bestReturn">Best Return</th>
                                 <th data-column="dcWinRate">Win Rate</th>
                                 <th data-column="riskVolatility">Risk</th>
@@ -473,19 +473,22 @@
                     ticker: etf.ticker,
                     return: etf.bestReturn,
                     risk: etf.riskVolatility,
-                    sharpe: etf.bestReturn / etf.riskVolatility
+                    sharpe: etf.bestReturn / etf.riskVolatility,
+                    bestStrategy: etf.bestStrategy
                 })),
                 {
                     ticker: 'CASH',
                     return: 0.045, // 4.5% annual yield
                     risk: 0.0, // 0% risk
-                    sharpe: Infinity
+                    sharpe: Infinity,
+                    bestStrategy: null // Cash doesn't have a strategy
                 },
                 {
                     ticker: 'SPY',
                     return: 0.12, // 12% annual return
                     risk: 0.20, // 20% risk
-                    sharpe: 0.12 / 0.20
+                    sharpe: 0.12 / 0.20,
+                    bestStrategy: 'B&H' // SPY is always buy and hold
                 }
             ];
 
@@ -542,7 +545,8 @@
                         weight: weight,
                         return: asset.return,
                         risk: asset.risk,
-                        sharpe: asset.sharpe
+                        sharpe: asset.sharpe,
+                        bestStrategy: asset.bestStrategy
                     });
                     remainingWeight -= weight;
                 }
@@ -586,7 +590,17 @@
             allocationDiv.innerHTML = sortedAllocation.map(asset => {
                 const weightPercent = (asset.weight * 100).toFixed(1);
                 // Display CASH more intuitively
-                const displayName = asset.ticker === 'CASH' ? '💰 Cash (Risk-Free)' : asset.ticker;
+                let displayName;
+                if (asset.ticker === 'CASH') {
+                    displayName = '💰 Cash (Risk-Free)';
+                } else {
+                    // Make ticker clickable for non-cash assets
+                    displayName = `<a href="https://finance.yahoo.com/quote/${asset.ticker}" target="_blank" class="ticker">${asset.ticker}</a>`;
+                    // Add strategy chip if available
+                    if (asset.bestStrategy) {
+                        displayName += ` <span class="strategy-chip ${asset.bestStrategy === 'B&H' ? 'bh-chip' : 'dc-chip'}" title="${asset.bestStrategy === 'B&H' ? 'Buy & Hold: Purchase and hold the ETF for the entire analysis period' : 'Dividend Capture: Buy the morning before ex-dividend date and sell the morning on ex-dividend date to capture dividends while minimizing market exposure'}">${asset.bestStrategy}</span>`;
+                    }
+                }
                 return `
                     <div class="allocation-row">
                         <span class="allocation-name">${displayName}</span>
