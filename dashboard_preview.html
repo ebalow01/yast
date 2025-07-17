@@ -137,8 +137,8 @@
             </tbody>
         </table>
 
-        <div id="mpt-widget" class="strategy-box" style="display: none;">
-            <div class="strategy-title" style="color: white;">Optimal Allocation</div>
+        <div id="mpt-widget" class="strategy-box" style="display: none; max-width: 800px;">
+            <div class="strategy-title" style="color: white; text-align: center;">Optimal Allocation</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
                 <div style="flex: 1; margin-right: 20px;">
                     <div id="portfolio-allocation" style="text-align: left;">
@@ -153,7 +153,6 @@
             </div>
             <div style="text-align: center; color: #ccc; font-size: 0.9em;">
                 <p>Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization</p>
-                <p>Includes 20% cash allocation (4.5% yield, 0% risk) and SPY benchmark (12% return, 20% risk)</p>
             </div>
         </div>
 
@@ -419,7 +418,7 @@
                 return `
                     <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                         <span class="${colorClass}" style="display: inline-block; min-width: 60px;">${asset.ticker}</span>
-                        <span style="margin-left: 10px;">${weightPercent}%</span>
+                        <span>${weightPercent}%</span>
                     </div>
                 `;
             }).join('');
