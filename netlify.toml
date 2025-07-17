@@ -1,0 +1,36 @@
+# Netlify configuration for YieldMax Analysis
+[build]
+  command = "python scripts/build_web.py && cd yast-react && npm install && npm run build"
+  publish = "yast-react/dist"
+  
+[build.environment]
+  NODE_VERSION = "18"
+  PYTHON_VERSION = "3.12"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Redirect rules for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache data files but allow updates
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600" # 1 hour
