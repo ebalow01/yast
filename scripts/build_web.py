@@ -43,12 +43,12 @@ def build_web_app():
         # Copy HTML dashboard to React public folder
         print("Copying HTML dashboard...")
         import shutil
-        dashboard_files = ["dashboard_preview.html", "dashboard_fresh.html"]
-        for dashboard in dashboard_files:
-            if os.path.exists(dashboard):
-                shutil.copy2(dashboard, os.path.join(react_dir, "public", "dashboard.html"))
-                print(f"Copied {dashboard} to React public folder")
-                break
+        dashboard_file = "dashboard_fresh.html"
+        if os.path.exists(dashboard_file):
+            shutil.copy2(dashboard_file, os.path.join(react_dir, "public", "dashboard.html"))
+            print(f"Copied {dashboard_file} to React public folder")
+        else:
+            print(f"ERROR: {dashboard_file} not found!")
         
         # Check if npm is available
         try:
