@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -19,7 +19,8 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  CircularProgress
 } from '@mui/material';
 import {
   AttachMoney,
@@ -28,10 +29,23 @@ import {
   ShowChart,
   Assessment
 } from '@mui/icons-material';
-import { dividendAnalysisData, analysisMetadata } from '../data/dividendData';
-import type { DividendData } from '../data/dividendData';
 
-const darkTheme = createTheme({
+export interface DividendData {
+  ticker: string;
+  tradingDays: number;
+  exDivDay: string;
+  buyHoldReturn: number;
+  divCaptureReturn: number;
+  bestStrategy: string;
+  bestReturn: number;
+  finalValue: number;
+  dcWinRate: number;
+  riskVolatility: number;
+  medianDividend: number;
+  category: 'top-performers' | 'excluded' | 'benchmark';
+}
+
+const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
@@ -105,44 +119,121 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`analysis-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
     </div>
   );
 }
 
-const DividendAnalysisDashboard: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState(0);
+export default function DividendAnalysisDashboard() {
+  const [selectedTab, setSelectedTab] = useState(0);
+  const [data, setData] = useState<DividendData[]>([]);
+  const [metadata, setMetadata] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load performance data
+        const performanceResponse = await fetch('/data/performance_data.json');
+        if (!performanceResponse.ok) throw new Error('Failed to load performance data');
+        const performanceData = await performanceResponse.json();
+        
+        // Load metadata
+        const metadataResponse = await fetch('/data/metadata.json');
+        if (!metadataResponse.ok) throw new Error('Failed to load metadata');
+        const metadataData = await metadataResponse.json();
+        
+        setData(performanceData);
+        setMetadata(metadataData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setSelectedTab(newValue);
   };
 
-  const formatCurrency = (value: number) => {
+  // Helper function to format currency
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(amount);
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(2)}%`;
+  // Helper function to format percentage
+  const formatPercentage = (percentage: number): string => {
+    return `${(percentage * 100).toFixed(2)}%`;
   };
 
-  const getPerformanceChip = (return_: number) => {
-    const isPositive = return_ > 0;
-    const color = return_ > 50 ? 'primary' : return_ > 25 ? 'secondary' : isPositive ? 'success' : 'error';
-    
+  // Helper function to get color based on value
+  const getColorByValue = (value: number): string => {
+    if (value > 0) return '#4caf50';  // Green for positive
+    if (value < 0) return '#f44336';  // Red for negative
+    return '#757575';  // Gray for neutral
+  };
+
+  // Helper function to get appropriate icon based on return
+  const getReturnIcon = (returnValue: number) => {
+    if (returnValue > 0) return <TrendingUp sx={{ color: '#4caf50' }} />;
+    if (returnValue < 0) return <TrendingDown sx={{ color: '#f44336' }} />;
+    return <ShowChart sx={{ color: '#757575' }} />;
+  };
+
+  if (loading) {
     return (
-      <Chip
-        label={formatPercentage(return_)}
-        color={color}
-        size="small"
-        sx={{ fontWeight: 'bold' }}
-      />
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+          <CircularProgress />
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Loading dividend analysis data...
+          </Typography>
+        </Container>
+      </ThemeProvider>
     );
-  };
+  }
+
+  if (error) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+          <Typography variant="h6" color="error">
+            Error: {error}
+          </Typography>
+        </Container>
+      </ThemeProvider>
+    );
+  }
+
+  if (!metadata) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+          <Typography variant="body1">
+            No data available
+          </Typography>
+        </Container>
+      </ThemeProvider>
+    );
+  }
 
   const getStrategyChip = (strategy: string) => {
     const color = strategy === 'DC' ? 'primary' : 'secondary';
@@ -168,9 +259,9 @@ const DividendAnalysisDashboard: React.FC = () => {
     );
   };
 
-  const topPerformers = dividendAnalysisData.filter(item => item.category === 'top-performers');
-  const excludedTickers = dividendAnalysisData.filter(item => item.category === 'excluded');
-  const benchmark = dividendAnalysisData.find(item => item.category === 'benchmark');
+  const topPerformers = data.filter(item => item.category === 'top-performers');
+  const excludedTickers = data.filter(item => item.category === 'excluded');
+  const benchmark = data.find(item => item.category === 'benchmark');
 
   const renderTable = (data: DividendData[]) => (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
@@ -185,51 +276,76 @@ const DividendAnalysisDashboard: React.FC = () => {
             <TableCell align="center"><strong>Best</strong></TableCell>
             <TableCell align="center"><strong>Best Return</strong></TableCell>
             <TableCell align="center"><strong>Final Value</strong></TableCell>
-            <TableCell align="center"><strong>DC Win %</strong></TableCell>
-            <TableCell align="center"><strong>Risk %</strong></TableCell>
+            <TableCell align="center"><strong>Win Rate</strong></TableCell>
+            <TableCell align="center"><strong>Risk</strong></TableCell>
             <TableCell align="center"><strong>Median Div</strong></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((row) => (
-            <TableRow key={row.ticker} hover>
+          {data.map((item, index) => (
+            <TableRow key={index} hover>
               <TableCell>
                 <Typography variant="body2" fontWeight="bold" color="primary">
-                  {row.ticker}
+                  {item.ticker}
                 </Typography>
               </TableCell>
-              <TableCell align="center">{row.tradingDays}</TableCell>
+              <TableCell align="center">{item.tradingDays}</TableCell>
+              <TableCell align="center">{item.exDivDay}</TableCell>
               <TableCell align="center">
-                <Chip label={row.exDivDay} size="small" variant="outlined" />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {getReturnIcon(item.buyHoldReturn)}
+                  <Typography
+                    variant="body2"
+                    sx={{ ml: 0.5, color: getColorByValue(item.buyHoldReturn) }}
+                  >
+                    {formatPercentage(item.buyHoldReturn)}
+                  </Typography>
+                </Box>
               </TableCell>
               <TableCell align="center">
-                {getPerformanceChip(row.buyHoldReturn)}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {getReturnIcon(item.divCaptureReturn)}
+                  <Typography
+                    variant="body2"
+                    sx={{ ml: 0.5, color: getColorByValue(item.divCaptureReturn) }}
+                  >
+                    {formatPercentage(item.divCaptureReturn)}
+                  </Typography>
+                </Box>
               </TableCell>
               <TableCell align="center">
-                {getPerformanceChip(row.divCaptureReturn)}
+                {getStrategyChip(item.bestStrategy)}
               </TableCell>
               <TableCell align="center">
-                {getStrategyChip(row.bestStrategy)}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {getReturnIcon(item.bestReturn)}
+                  <Typography
+                    variant="body2"
+                    sx={{ ml: 0.5, color: getColorByValue(item.bestReturn) }}
+                  >
+                    {formatPercentage(item.bestReturn)}
+                  </Typography>
+                </Box>
               </TableCell>
               <TableCell align="center">
-                {getPerformanceChip(row.bestReturn)}
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="body2" fontWeight="bold" color="success.main">
-                  {formatCurrency(row.finalValue)}
+                <Typography
+                  variant="body2"
+                  sx={{ color: getColorByValue(item.finalValue - 10000) }}
+                >
+                  {formatCurrency(item.finalValue)}
                 </Typography>
               </TableCell>
               <TableCell align="center">
-                <Typography variant="body2" color={row.dcWinRate > 80 ? 'success.main' : 'warning.main'}>
-                  {formatPercentage(row.dcWinRate)}
+                <Typography variant="body2">
+                  {formatPercentage(item.dcWinRate)}
                 </Typography>
               </TableCell>
               <TableCell align="center">
-                {getRiskChip(row.riskVolatility)}
+                {getRiskChip(item.riskVolatility)}
               </TableCell>
               <TableCell align="center">
-                <Typography variant="body2" fontWeight="bold" color="primary">
-                  ${row.medianDividend.toFixed(3)}
+                <Typography variant="body2">
+                  {formatCurrency(item.medianDividend)}
                 </Typography>
               </TableCell>
             </TableRow>
@@ -239,196 +355,128 @@ const DividendAnalysisDashboard: React.FC = () => {
     </TableContainer>
   );
 
-  const getKeyMetrics = (data: DividendData[]) => {
-    const avgReturn = data.reduce((sum, item) => sum + item.bestReturn, 0) / data.length;
-    const avgRisk = data.reduce((sum, item) => sum + item.riskVolatility, 0) / data.length;
-    const avgDividend = data.reduce((sum, item) => sum + item.medianDividend, 0) / data.length;
-    return { avgReturn, avgRisk, avgDividend };
-  };
-
-  const topMetrics = getKeyMetrics(topPerformers);
-
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid #333' }}>
-        <Toolbar>
-          <Assessment sx={{ mr: 2, color: 'primary.main' }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: 'text.primary' }}>
-            YieldMax ETF Dividend Analysis Dashboard
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {analysisMetadata.analysisDate}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <Box sx={{ minHeight: '100vh' }}>
+        <AppBar position="static" sx={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)' }}>
+          <Toolbar>
+            <Assessment sx={{ mr: 2 }} />
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              YieldMax ETF Analysis Dashboard
+            </Typography>
+            <Typography variant="subtitle2" sx={{ ml: 2 }}>
+              {metadata.analysisDate}
+            </Typography>
+          </Toolbar>
+        </AppBar>
 
-      <Container maxWidth="xl" sx={{ py: 3 }}>
-        {/* Key Metrics Cards */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3 }}>
-          <Box sx={{ flex: '1 1 300px', minWidth: 300 }}>
-            <Card>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+            <Card sx={{ minWidth: 200 }}>
               <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <AttachMoney color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" color="primary">
-                    Total Capital
-                  </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <AttachMoney sx={{ color: 'primary.main', mr: 1 }} />
+                  <Typography variant="h6">Total Investment</Typography>
                 </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  {formatCurrency(analysisMetadata.startingCapital * analysisMetadata.totalTickers)}
+                <Typography variant="h4" color="primary">
+                  {formatCurrency(metadata.startingCapital * metadata.totalTickers)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Starting Investment
+                  {metadata.totalTickers} ETFs × ${formatCurrency(metadata.startingCapital).replace('$', '')}
+                </Typography>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ minWidth: 200 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <TrendingUp sx={{ color: 'success.main', mr: 1 }} />
+                  <Typography variant="h6">Top Performers</Typography>
+                </Box>
+                <Typography variant="h4" color="success.main">
+                  {topPerformers.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Outperforming ETFs
+                </Typography>
+              </CardContent>
+            </Card>
+
+            <Card sx={{ minWidth: 200 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <TrendingDown sx={{ color: 'error.main', mr: 1 }} />
+                  <Typography variant="h6">Excluded</Typography>
+                </Box>
+                <Typography variant="h4" color="error.main">
+                  {excludedTickers.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Underperforming ETFs
                 </Typography>
               </CardContent>
             </Card>
           </Box>
-          <Box sx={{ flex: '1 1 300px', minWidth: 300 }}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <TrendingUp color="success" sx={{ mr: 1 }} />
-                  <Typography variant="h6" color="success.main">
-                    Best Performer
-                  </Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  YMAX
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {formatPercentage(99.40)} Return
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-          <Box sx={{ flex: '1 1 300px', minWidth: 300 }}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <ShowChart color="secondary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" color="secondary.main">
-                    Avg Top 4 Return
-                  </Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  {formatPercentage(topMetrics.avgReturn)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  vs SPY {formatPercentage(11.51)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-          <Box sx={{ flex: '1 1 300px', minWidth: 300 }}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <TrendingDown color="warning" sx={{ mr: 1 }} />
-                  <Typography variant="h6" color="warning.main">
-                    Avg Risk
-                  </Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  {formatPercentage(topMetrics.avgRisk)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  vs SPY {formatPercentage(20.6)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
 
-        {/* Tabs */}
-        <Paper sx={{ bgcolor: 'background.paper', mb: 3 }}>
-          <Tabs
-            value={currentTab}
-            onChange={handleTabChange}
-            centered
-            sx={{
-              '& .MuiTabs-indicator': {
-                backgroundColor: 'primary.main'
-              }
-            }}
-          >
-            <Tab label="Top Performers (>50%)" />
-            <Tab label="Excluded Tickers (<50%)" />
-            <Tab label="Benchmark Comparison" />
-          </Tabs>
-        </Paper>
+          <Paper sx={{ width: '100%', mb: 2 }}>
+            <Tabs
+              value={selectedTab}
+              onChange={handleTabChange}
+              indicatorColor="primary"
+              textColor="primary"
+              variant="fullWidth"
+              sx={{ borderBottom: 1, borderColor: 'divider' }}
+            >
+              <Tab
+                label={`Top Performers (${topPerformers.length})`}
+                icon={<TrendingUp />}
+                iconPosition="start"
+              />
+              <Tab
+                label={`Excluded (${excludedTickers.length})`}
+                icon={<TrendingDown />}
+                iconPosition="start"
+              />
+              <Tab
+                label="Benchmark"
+                icon={<ShowChart />}
+                iconPosition="start"
+              />
+            </Tabs>
 
-        {/* Tab Panels */}
-        <TabPanel value={currentTab} index={0}>
-          <Typography variant="h4" gutterBottom color="primary">
-            🏆 Top Performers ({'>'}50% Returns)
-          </Typography>
-          {renderTable(topPerformers)}
-        </TabPanel>
+            <TabPanel value={selectedTab} index={0}>
+              <Typography variant="h6" gutterBottom>
+                Top Performing ETFs
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                ETFs that outperformed their buy-and-hold strategy using dividend capture
+              </Typography>
+              {renderTable(topPerformers)}
+            </TabPanel>
 
-        <TabPanel value={currentTab} index={1}>
-          <Typography variant="h4" gutterBottom color="secondary">
-            📊 Excluded Tickers ({'<'}50% Returns)
-          </Typography>
-          {renderTable(excludedTickers)}
-        </TabPanel>
+            <TabPanel value={selectedTab} index={1}>
+              <Typography variant="h6" gutterBottom>
+                Excluded ETFs
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                ETFs where buy-and-hold strategy performed better than dividend capture
+              </Typography>
+              {renderTable(excludedTickers)}
+            </TabPanel>
 
-        <TabPanel value={currentTab} index={2}>
-          <Typography variant="h4" gutterBottom color="warning.main">
-            📈 Benchmark Comparison
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-            <Box sx={{ flex: '1 1 400px', minWidth: 400 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    SPY Benchmark
-                  </Typography>
-                  {benchmark && (
-                    <Box>
-                      <Typography variant="body1" sx={{ mb: 1 }}>
-                        Return: {getPerformanceChip(benchmark.bestReturn)}
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 1 }}>
-                        Risk: {getRiskChip(benchmark.riskVolatility)}
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 1 }}>
-                        Final Value: {formatCurrency(benchmark.finalValue)}
-                      </Typography>
-                      <Typography variant="body1">
-                        Trading Days: {benchmark.tradingDays}
-                      </Typography>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ flex: '1 1 400px', minWidth: 400 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    YieldMax vs SPY
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    • 13 of 18 YieldMax ETFs outperformed SPY
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    • Top 4 average: {formatPercentage(topMetrics.avgReturn)}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    • YMAX delivered 8.6x SPY performance
-                  </Typography>
-                  <Typography variant="body1">
-                    • Average dividend: ${topMetrics.avgDividend.toFixed(3)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-          </Box>
-        </TabPanel>
-      </Container>
+            <TabPanel value={selectedTab} index={2}>
+              <Typography variant="h6" gutterBottom>
+                Benchmark Comparison
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Performance comparison against SPY benchmark
+              </Typography>
+              {benchmark && renderTable([benchmark])}
+            </TabPanel>
+          </Paper>
+        </Container>
+      </Box>
     </ThemeProvider>
   );
-};
-
-export default DividendAnalysisDashboard;
+}

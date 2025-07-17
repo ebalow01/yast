@@ -10,6 +10,7 @@ import numpy as np
 from datetime import datetime
 import os
 import sys
+import re
 
 # Add parent directory to path to import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -48,28 +49,25 @@ def create_fallback_data(web_data_dir):
         json.dump(ticker_configs, f, indent=2, default=convert_numpy_types)
     
     # Generate fallback performance data
-    performance_data = {
-        'last_updated': datetime.now().isoformat(),
-        'status': 'fallback',
-        'message': 'Analysis data not available. This is sample data for demonstration.',
-        'tickers': [],
-        'summary': {
-            'total_tickers': len(TICKER_CONFIGS),
-            'analysis_period': 'Sample data',
-            'best_performer': 'YMAX',
-            'best_return': '99.40%'
-        }
-    }
+    performance_data = []
     
     # Create sample ticker data
     for ticker in TICKER_CONFIGS.keys():
         ticker_info = {
             'ticker': ticker,
-            'name': TICKER_CONFIGS[ticker]['name'],
-            'data_available': False,
-            'sample_data': True
+            'tradingDays': 30,
+            'exDivDay': 'Thursday',
+            'buyHoldReturn': 0.15,
+            'divCaptureReturn': 0.12,
+            'bestStrategy': 'B&H',
+            'bestReturn': 0.15,
+            'finalValue': 115000,
+            'dcWinRate': 0.75,
+            'riskVolatility': 0.25,
+            'medianDividend': 0.25,
+            'category': 'excluded'
         }
-        performance_data['tickers'].append(ticker_info)
+        performance_data.append(ticker_info)
     
     # Save performance data
     with open(os.path.join(web_data_dir, 'performance_data.json'), 'w') as f:
@@ -80,6 +78,9 @@ def create_fallback_data(web_data_dir):
         'generated_at': datetime.now().isoformat(),
         'version': '1.0.0',
         'status': 'fallback',
+        'analysisDate': datetime.now().strftime('%B %d, %Y'),
+        'startingCapital': 100000,
+        'totalTickers': len(TICKER_CONFIGS),
         'data_files': [
             'ticker_configs.json',
             'performance_data.json'
@@ -102,7 +103,125 @@ def create_fallback_data(web_data_dir):
     return True
 
 def process_analysis_data(web_data_dir):
-    """Process real analysis data for web frontend"""
+    """Process analysis data and generate JSON files for web frontend"""
+    
+    # Find the latest comprehensive table file
+    comprehensive_files = []
+    for file in os.listdir('.'):
+        if file.startswith('comprehensive_sorted_table_') and file.endswith('.txt'):
+            comprehensive_files.append(file)
+    
+    if not comprehensive_files:
+        print("WARNING: No comprehensive table file found. Creating fallback data.")
+        return create_fallback_data(web_data_dir)
+    
+    # Use the latest file
+    latest_file = sorted(comprehensive_files)[-1]
+    print(f"Processing analysis data from: {latest_file}")
+    
+    # Parse the comprehensive table
+    analysis_data = []
+    
+    try:
+        with open(latest_file, 'r') as f:
+            lines = f.readlines()
+        
+        # Find the data sections
+        parsing_data = False
+        current_category = 'excluded'
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Skip empty lines and headers
+            if not line or line.startswith('=') or line.startswith('COMPREHENSIVE') or line.startswith('Analysis Date'):
+                continue
+                
+            # Check if we're in a data section
+            if line.startswith('HIGH PERFORMERS') or line.startswith('MEDIUM PERFORMERS') or line.startswith('LOW PERFORMERS'):
+                parsing_data = True
+                # Determine category
+                if 'HIGH PERFORMERS' in line or 'MEDIUM PERFORMERS' in line:
+                    current_category = 'top-performers'
+                else:
+                    current_category = 'excluded'
+                continue
+            
+            # Check if we're in benchmark section
+            if line.startswith('BENCHMARK COMPARISON'):
+                current_category = 'benchmark'
+                parsing_data = True
+                continue
+            
+            # Check if we hit the end
+            if line.startswith('KEY INSIGHTS'):
+                parsing_data = False
+                continue
+            
+            # Skip header lines
+            if line.startswith('Ticker') or line.startswith('----'):
+                continue
+            
+            # Parse data lines
+            if parsing_data and line:
+                # Use a more robust parsing approach that handles the fixed-width format
+                try:
+                    # Extract each field by position for better parsing
+                    ticker = line[0:8].strip()
+                    days = int(line[9:15].strip())
+                    ex_div_day = line[16:25].strip()
+                    buy_hold_return = float(line[26:38].strip().replace('%', '')) / 100
+                    div_capture_return = float(line[41:53].strip().replace('%', '')) / 100
+                    
+                    # Parse best strategy from the longer field
+                    best_strategy_field = line[54:70].strip()
+                    if 'DC:' in best_strategy_field:
+                        best_strategy = 'DC'
+                        # Extract the percentage after DC:
+                        best_return_str = best_strategy_field.split('DC:')[1].strip()
+                        best_return = float(best_return_str.replace('%', '')) / 100
+                    elif 'B&H:' in best_strategy_field:
+                        best_strategy = 'B&H'
+                        # Extract the percentage after B&H:
+                        best_return_str = best_strategy_field.split('B&H:')[1].strip()
+                        best_return = float(best_return_str.replace('%', '')) / 100
+                    else:
+                        best_strategy = 'B&H'
+                        best_return = buy_hold_return
+                    
+                    final_value = float(line[71:83].strip().replace('$', '').replace(',', ''))
+                    dc_win_rate = float(line[84:95].strip().replace('%', '')) / 100
+                    risk_volatility = float(line[96:107].strip().replace('%', '')) / 100
+                    # Handle variable length for median dividend - take everything after position 108
+                    median_dividend_str = line[108:].strip().replace('$', '').replace('%', '')
+                    median_dividend = float(median_dividend_str) if median_dividend_str else 0.0
+                    
+                    analysis_data.append({
+                        'ticker': ticker,
+                        'tradingDays': days,
+                        'exDivDay': ex_div_day,
+                        'buyHoldReturn': buy_hold_return,
+                        'divCaptureReturn': div_capture_return,
+                        'bestStrategy': best_strategy,
+                        'bestReturn': best_return,
+                        'finalValue': final_value,
+                        'dcWinRate': dc_win_rate,
+                        'riskVolatility': risk_volatility,
+                        'medianDividend': median_dividend,
+                        'category': current_category
+                    })
+                except (ValueError, IndexError, AttributeError) as e:
+                    print(f"Warning: Could not parse line: {line}. Error: {e}")
+                    continue
+    
+    except Exception as e:
+        print(f"ERROR parsing comprehensive table: {e}")
+        return create_fallback_data(web_data_dir)
+    
+    if not analysis_data:
+        print("WARNING: No analysis data found. Creating fallback data.")
+        return create_fallback_data(web_data_dir)
+    
     # Generate ticker configs for frontend
     ticker_configs = {}
     for ticker, config in TICKER_CONFIGS.items():
@@ -115,77 +234,24 @@ def process_analysis_data(web_data_dir):
     with open(os.path.join(web_data_dir, 'ticker_configs.json'), 'w') as f:
         json.dump(ticker_configs, f, indent=2, default=convert_numpy_types)
     
-    # Generate performance data
-    performance_data = {
-        'last_updated': datetime.now().isoformat(),
-        'status': 'live',
-        'tickers': [],
-        'summary': {
-            'total_tickers': len(TICKER_CONFIGS),
-            'analysis_period': 'Last 6 months',
-            'best_performer': 'YMAX',
-            'best_return': '99.40%'
-        }
-    }
-    
-    # Process each ticker's data
-    for ticker in TICKER_CONFIGS.keys():
-        try:
-            # Try to read dividend data
-            dividend_file = f"data/{ticker}_dividends.csv"
-            price_file = f"data/{ticker}_price_data.csv"
-            
-            ticker_info = {
-                'ticker': ticker,
-                'name': TICKER_CONFIGS[ticker]['name'],
-                'data_available': False
-            }
-            
-            if os.path.exists(dividend_file):
-                div_data = pd.read_csv(dividend_file)
-                ticker_info.update({
-                    'dividend_count': len(div_data),
-                    'latest_dividend': float(div_data.iloc[-1]['Dividends']) if len(div_data) > 0 else 0.0,
-                    'avg_dividend': float(div_data['Dividends'].mean()) if len(div_data) > 0 else 0.0,
-                    'data_available': True
-                })
-            
-            if os.path.exists(price_file):
-                price_data = pd.read_csv(price_file)
-                if len(price_data) > 0:
-                    ticker_info.update({
-                        'price_data_points': len(price_data),
-                        'latest_price': float(price_data.iloc[-1]['Close']) if len(price_data) > 0 else 0.0,
-                        'data_available': True
-                    })
-            
-            performance_data['tickers'].append(ticker_info)
-            
-        except Exception as e:
-            print(f"WARNING: Could not process {ticker}: {e}")
-            ticker_info = {
-                'ticker': ticker,
-                'name': TICKER_CONFIGS[ticker]['name'],
-                'data_available': False,
-                'error': str(e)
-            }
-            performance_data['tickers'].append(ticker_info)
-    
     # Save performance data
     with open(os.path.join(web_data_dir, 'performance_data.json'), 'w') as f:
-        json.dump(performance_data, f, indent=2, default=convert_numpy_types)
+        json.dump(analysis_data, f, indent=2, default=convert_numpy_types)
     
     # Generate metadata
     metadata = {
         'generated_at': datetime.now().isoformat(),
         'version': '1.0.0',
         'status': 'live',
+        'analysisDate': datetime.now().strftime('%B %d, %Y'),
+        'startingCapital': 100000,
+        'totalTickers': len(analysis_data),
         'data_files': [
             'ticker_configs.json',
             'performance_data.json'
         ],
         'analysis_info': {
-            'total_tickers': len(TICKER_CONFIGS),
+            'total_tickers': len(analysis_data),
             'strategies_analyzed': [
                 'Buy & Hold',
                 'Dividend Capture',
@@ -203,6 +269,7 @@ def process_analysis_data(web_data_dir):
     print("   - ticker_configs.json")
     print("   - performance_data.json")
     print("   - metadata.json")
+    print(f"Processed {len(analysis_data)} tickers")
     
     return True
 
