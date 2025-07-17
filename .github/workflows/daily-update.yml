@@ -2,8 +2,8 @@ name: Daily ETF Analysis Update
 
 on:
   schedule:
-    # Run daily at 6 PM EST (after market close)
-    - cron: '0 23 * * 1-5'  # Monday-Friday at 11 PM UTC (6 PM EST)
+    # Run daily at 6am UTC
+    - cron: '0 6 * * 1-5'  # Monday-Friday at midnight UTC
   workflow_dispatch:  # Allow manual triggers
 
 jobs:

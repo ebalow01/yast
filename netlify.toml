@@ -8,6 +8,11 @@
   PYTHON_VERSION = "3.12"
   NPM_FLAGS = "--legacy-peer-deps"
 
+# Daily scheduled function (if using Netlify scheduled functions - requires Pro plan)
+# [[functions]]
+#   schedule = "0 23 * * 1-5"  # Daily at 6 PM EST, Monday-Friday
+#   function = "daily-update"
+
 # Redirect rules for SPA
 [[redirects]]
   from = "/*"
