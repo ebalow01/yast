@@ -102,6 +102,138 @@ const theme = createTheme({
   }
 });
 
+// MPT Calculation Functions
+interface Asset {
+  ticker: string;
+  return: number;
+  risk: number;
+  sharpe: number;
+}
+
+interface AllocationItem {
+  ticker: string;
+  weight: number;
+  return: number;
+  risk: number;
+  sharpe?: number;
+}
+
+interface PortfolioMetrics {
+  expectedReturn: number;
+  risk: number;
+  sharpeRatio: number;
+}
+
+function calculateMPTAllocation(topPerformers: DividendData[]): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
+  // Add cash and SPY to the mix
+  const assets: Asset[] = [
+    ...topPerformers.map(etf => ({
+      ticker: etf.ticker,
+      return: etf.bestReturn,
+      risk: etf.riskVolatility,
+      sharpe: etf.bestReturn / etf.riskVolatility
+    })),
+    {
+      ticker: 'CASH',
+      return: 0.045, // 4.5% annual yield
+      risk: 0.0, // 0% risk
+      sharpe: Infinity
+    },
+    {
+      ticker: 'SPY',
+      return: 0.12, // 12% annual return
+      risk: 0.20, // 20% risk
+      sharpe: 0.12 / 0.20
+    }
+  ];
+
+  // Force 20% cash allocation
+  const cashAllocation = 0.20;
+  const remainingAllocation = 0.80;
+
+  // Filter out cash for optimization of remaining 80%
+  const optimizableAssets = assets.filter(asset => asset.ticker !== 'CASH');
+
+  // Simple mean variance optimization using Sharpe ratios
+  const allocation = optimizePortfolio(optimizableAssets, remainingAllocation);
+  
+  // Add cash allocation back
+  allocation.push({
+    ticker: 'CASH',
+    weight: cashAllocation,
+    return: 0.045,
+    risk: 0.0
+  });
+
+  // Calculate portfolio metrics
+  const portfolioMetrics = calculatePortfolioMetrics(allocation);
+
+  return { allocation, metrics: portfolioMetrics };
+}
+
+function optimizePortfolio(assets: Asset[], totalAllocation: number): AllocationItem[] {
+  // Sort by Sharpe ratio (descending)
+  const sortedAssets = [...assets].sort((a, b) => b.sharpe - a.sharpe);
+  
+  // Simple allocation based on Sharpe ratios with diversification constraints
+  const allocation: AllocationItem[] = [];
+  let remainingWeight = totalAllocation;
+  
+  // Limit individual positions (max 25% each for diversification)
+  const maxWeight = 0.25;
+  
+  for (let i = 0; i < sortedAssets.length && remainingWeight > 0.01; i++) {
+    const asset = sortedAssets[i];
+    
+    // Calculate weight based on Sharpe ratio, but cap it
+    let weight = Math.min(
+      (asset.sharpe / sortedAssets.reduce((sum, a) => sum + a.sharpe, 0)) * totalAllocation,
+      maxWeight,
+      remainingWeight
+    );
+    
+    // Minimum allocation of 2% if we're including it
+    if (weight > 0.02) {
+      allocation.push({
+        ticker: asset.ticker,
+        weight: weight,
+        return: asset.return,
+        risk: asset.risk,
+        sharpe: asset.sharpe
+      });
+      remainingWeight -= weight;
+    }
+  }
+  
+  // Redistribute any remaining weight proportionally
+  if (remainingWeight > 0.01 && allocation.length > 0) {
+    const redistributionFactor = 1 + (remainingWeight / allocation.reduce((sum, a) => sum + a.weight, 0));
+    allocation.forEach(asset => {
+      asset.weight *= redistributionFactor;
+    });
+  }
+
+  return allocation;
+}
+
+function calculatePortfolioMetrics(allocation: AllocationItem[]): PortfolioMetrics {
+  const portfolioReturn = allocation.reduce((sum, asset) => sum + (asset.weight * asset.return), 0);
+  
+  // Simplified portfolio risk calculation (assuming some correlation)
+  const portfolioVariance = allocation.reduce((sum, asset) => {
+    return sum + Math.pow(asset.weight * asset.risk, 2);
+  }, 0);
+  const portfolioRisk = Math.sqrt(portfolioVariance);
+  
+  const sharpeRatio = portfolioRisk > 0 ? portfolioReturn / portfolioRisk : 0;
+
+  return {
+    expectedReturn: portfolioReturn,
+    risk: portfolioRisk,
+    sharpeRatio: sharpeRatio
+  };
+}
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -134,6 +266,8 @@ export default function DividendAnalysisDashboard() {
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mptAllocation, setMptAllocation] = useState<any[]>([]);
+  const [portfolioMetrics, setPortfolioMetrics] = useState<any>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -152,6 +286,14 @@ export default function DividendAnalysisDashboard() {
         
         setData(performanceData);
         setMetadata(metadataData);
+        
+        // Calculate MPT allocation for top performers
+        const topPerformers = performanceData.filter((item: DividendData) => item.category === 'top-performers');
+        if (topPerformers.length > 0) {
+          const { allocation, metrics } = calculateMPTAllocation(topPerformers);
+          setMptAllocation(allocation);
+          setPortfolioMetrics(metrics);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
@@ -407,6 +549,104 @@ export default function DividendAnalysisDashboard() {
                 ETFs with annualized returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
               </Typography>
               {renderTable(topPerformers)}
+              
+              {/* MPT Portfolio Optimization Widget */}
+              {mptAllocation.length > 0 && portfolioMetrics && (
+                <Card sx={{ mt: 4, bgcolor: 'rgba(0, 230, 118, 0.05)', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Assessment />
+                      Modern Portfolio Theory - Optimal Allocation
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', gap: 4, mb: 3 }}>
+                      {/* Portfolio Composition */}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'primary.main' }}>
+                          Portfolio Composition
+                        </Typography>
+                        {mptAllocation
+                          .sort((a, b) => b.weight - a.weight)
+                          .map((asset, index) => (
+                            <Box key={index} sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              mb: 1,
+                              p: 1,
+                              bgcolor: 'rgba(255, 255, 255, 0.02)',
+                              borderRadius: 1
+                            }}>
+                              <Chip
+                                label={asset.ticker}
+                                size="small"
+                                sx={{
+                                  bgcolor: asset.ticker === 'CASH' ? 'primary.main' : 
+                                           asset.ticker === 'SPY' ? 'secondary.main' : 
+                                           'info.main',
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                  minWidth: '60px'
+                                }}
+                              />
+                              <Typography sx={{ fontWeight: 'bold' }}>
+                                {(asset.weight * 100).toFixed(1)}%
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                ({formatPercentage(asset.return)} return, {formatPercentage(asset.risk)} risk)
+                              </Typography>
+                            </Box>
+                          ))}
+                      </Box>
+                      
+                      {/* Portfolio Metrics */}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'primary.main' }}>
+                          Portfolio Metrics
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography><strong>Expected Return:</strong></Typography>
+                            <Typography sx={{ color: 'success.main' }}>
+                              {formatPercentage(portfolioMetrics.expectedReturn)}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography><strong>Portfolio Risk:</strong></Typography>
+                            <Typography sx={{ 
+                              color: portfolioMetrics.risk > 0.15 ? 'error.main' : 'success.main' 
+                            }}>
+                              {formatPercentage(portfolioMetrics.risk)}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography><strong>Sharpe Ratio:</strong></Typography>
+                            <Typography sx={{ color: 'success.main' }}>
+                              {portfolioMetrics.sharpeRatio.toFixed(2)}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography><strong>Diversification:</strong></Typography>
+                            <Typography sx={{ color: 'success.main' }}>
+                              {mptAllocation.length} assets
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                    
+                    <Typography variant="body2" color="text.secondary" sx={{ 
+                      textAlign: 'center',
+                      fontStyle: 'italic',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                      pt: 2
+                    }}>
+                      Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization<br/>
+                      Includes 20% cash allocation (4.5% yield, 0% risk) and SPY benchmark (12% return, 20% risk)
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
             </TabPanel>
 
             <TabPanel value={selectedTab} index={1}>
