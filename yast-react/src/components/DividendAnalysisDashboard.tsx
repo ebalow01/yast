@@ -242,7 +242,7 @@ export default function DividendAnalysisDashboard() {
         size="small"
         sx={{ 
           fontWeight: 'bold',
-          backgroundColor: strategy === 'B&H' ? '#2196f3' : '#9c27b0',
+          backgroundColor: strategy === 'B&H' ? '#2196f3' : '#009688',
           color: 'white'
         }}
       />
@@ -274,7 +274,6 @@ export default function DividendAnalysisDashboard() {
         <TableHead>
           <TableRow>
             <TableCell><strong>Ticker</strong></TableCell>
-            <TableCell align="center"><strong>Days</strong></TableCell>
             <TableCell align="center"><strong>Ex-Div</strong></TableCell>
             <TableCell align="center"><strong>B&H Return</strong></TableCell>
             <TableCell align="center"><strong>DC Return</strong></TableCell>
@@ -301,7 +300,6 @@ export default function DividendAnalysisDashboard() {
                   </Typography>
                 </Link>
               </TableCell>
-              <TableCell align="center">{item.tradingDays}</TableCell>
               <TableCell align="center">{item.exDivDay}</TableCell>
               <TableCell align="center">
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -384,12 +382,13 @@ export default function DividendAnalysisDashboard() {
         </AppBar>
 
         <Container maxWidth="lg" sx={{ py: 4 }}>
-          {/* Strategy Explanations */}
-          <Card sx={{ mb: 4 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom color="primary">
-                Trading Strategy Definitions
-              </Typography>
+          {/* Strategy Explanations - Centered */}
+          <Box display="flex" justifyContent="center" sx={{ mb: 4 }}>
+            <Card sx={{ maxWidth: 800, width: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom color="primary" align="center">
+                  Trading Strategy Definitions
+                </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                 <Box sx={{ minWidth: 250 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
@@ -410,37 +409,6 @@ export default function DividendAnalysisDashboard() {
               </Box>
             </CardContent>
           </Card>
-
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-            <Card sx={{ minWidth: 200 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <TrendingUp sx={{ color: 'success.main', mr: 1 }} />
-                  <Typography variant="h6">Top Performers</Typography>
-                </Box>
-                <Typography variant="h4" color="success.main">
-                  {topPerformers.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Returns &gt; 40% &amp; Risk &lt; 40%
-                </Typography>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ minWidth: 200 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <TrendingDown sx={{ color: 'error.main', mr: 1 }} />
-                  <Typography variant="h6">Excluded</Typography>
-                </Box>
-                <Typography variant="h4" color="error.main">
-                  {excludedTickers.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Returns &lt;= 40% or Risk &gt;= 40%
-                </Typography>
-              </CardContent>
-            </Card>
           </Box>
 
           <Paper sx={{ width: '100%', mb: 2 }}>

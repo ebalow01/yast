@@ -215,7 +215,10 @@ def process_analysis_data(web_data_dir):
                     
                     # Handle variable length for median dividend - take everything after position 108
                     median_dividend_str = line[108:].strip().replace('$', '').replace('%', '')
-                    median_dividend = float(median_dividend_str) if median_dividend_str and median_dividend_str != 'N/A' else 0.0
+                    try:
+                        median_dividend = float(median_dividend_str) if median_dividend_str and median_dividend_str != 'N/A' and median_dividend_str != '' else 0.0
+                    except ValueError:
+                        median_dividend = 0.0
                     
                     # Determine category based on new criteria:
                     # Top performers: Either B&H or DC returns > 40% AND risk < 40%
