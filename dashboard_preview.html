@@ -5,210 +5,317 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YieldMax ETFs - Weekly Distribution Analysis Preview</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
-            color: white;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            color: #fff;
+            padding: 20px;
         }
+
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            display: grid;
-            gap: 20px;
         }
-        .header-card {
-            background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
-            padding: 30px;
-            border-radius: 16px;
+
+        .header {
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(76, 175, 80, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #4caf50, #81c784);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .timestamp {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 25px;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+
         .main-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            align-items: start;
+            gap: 30px;
+            margin-bottom: 30px;
         }
+
         .card {
-            background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
-        .card-title {
-            color: #4caf50;
-            font-size: 1.3em;
-            font-weight: 600;
-            margin-bottom: 15px;
+
+        .card-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            margin-bottom: 25px;
         }
-        .card-subtitle {
-            color: #ccc;
-            font-size: 0.9em;
-            margin-bottom: 20px;
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #4caf50, #81c784);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
         }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            background: transparent;
-            border-radius: 12px;
-            overflow: hidden;
+            margin-top: 20px;
         }
-        th, td {
-            padding: 12px 8px;
-            text-align: center;
+
+        th {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        td {
+            padding: 15px 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        th {
-            background: rgba(76, 175, 80, 0.1);
-            font-weight: 600;
-            cursor: pointer;
-            position: relative;
-            user-select: none;
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .ticker {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #81c784;
+        }
+
+        .positive {
             color: #4caf50;
+            font-weight: 600;
         }
-        th:hover {
-            background: rgba(76, 175, 80, 0.15);
+
+        .negative {
+            color: #f48fb1;
+            font-weight: 600;
         }
-        .mpt-card {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
-            border: 1px solid rgba(76, 175, 80, 0.3);
+
+        .strategy-chip {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
-        .allocation-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.03);
+
+        .dc-chip {
+            background: #339af0;
+            color: white;
+        }
+
+        .bh-chip {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .risk-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
             border-radius: 8px;
-            border-left: 3px solid #4caf50;
+            font-size: 0.85rem;
         }
-        .metrics-grid {
+
+        .allocation-list {
+            margin-top: 20px;
+        }
+
+        .allocation-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .allocation-name {
+            font-weight: 600;
+            color: #81c784;
+        }
+
+        .allocation-percent {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #81c784);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-top: 20px;
+            margin-top: 25px;
         }
-        .metric-item {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 12px;
-            border-radius: 8px;
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
             text-align: center;
         }
-        .metric-label {
-            font-size: 0.85em;
-            color: #ccc;
-            margin-bottom: 5px;
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
         }
-        .metric-value {
-            font-size: 1.1em;
-            font-weight: 600;
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
             color: #4caf50;
         }
+
         th.sorted-asc::after {
             content: ' ▲';
             color: #4caf50;
         }
+
         th.sorted-desc::after {
             content: ' ▼';
             color: #4caf50;
         }
-        .ticker {
-            color: #2196f3;
-            font-weight: bold;
-        }
-        .positive {
-            color: #4caf50;
-        }
-        .negative {
-            color: #f44336;
-        }
-        .strategy-chip {
-            padding: 4px 8px;
-            border-radius: 4px;
-            color: white;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-        .bh-chip {
-            background-color: #2196f3;
-        }
-        .dc-chip {
-            background-color: #009688;
-        }
-        .risk-high {
-            color: #f44336;
-        }
-        .risk-low {
-            color: #4caf50;
-        }
-        .section-title {
-            font-size: 1.5em;
-            margin: 30px 0 15px 0;
-            color: #4caf50;
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header-card">
-            <h1 style="margin: 0; color: #4caf50; font-size: 2.2em; font-weight: 600;">
-                YieldMax ETFs
-            </h1>
-            <p style="margin: 10px 0 0 0; color: #ccc; font-size: 1.1em;">Weekly Distribution Analysis</p>
-            <p style="margin: 5px 0 0 0; color: #999; font-size: 0.9em;">Last Updated: July 17, 2025</p>
-        </div>
+        <header class="header">
+            <h1>YieldMax ETFs</h1>
+            <div class="subtitle">Weekly Distribution Analysis</div>
+            <div class="timestamp">Last Updated: July 17, 2025</div>
+        </header>
 
         <div class="main-grid">
             <div class="card">
-                <div class="card-title">
-                    📊 Top Performing ETFs
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div class="card-title">Top Performing ETFs</div>
                 </div>
-                <div class="card-subtitle">
+                <p style="opacity: 0.8; margin-bottom: 20px;">
                     ETFs with annualized returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
-                </div>
+                </p>
                 
-                <table id="top-performers">
-                    <thead>
-                        <tr>
-                            <th data-column="ticker">Ticker</th>
-                            <th data-column="exDivDay">Ex-Div</th>
-                            <th data-column="buyHoldReturn">B&H Return</th>
-                            <th data-column="divCaptureReturn">DC Return</th>
-                            <th data-column="bestStrategy">Best</th>
-                            <th data-column="bestReturn">Best Return</th>
-                            <th data-column="dcWinRate">Win Rate</th>
-                            <th data-column="riskVolatility">Risk</th>
-                            <th data-column="medianDividend">Median Div</th>
-                        </tr>
-                    </thead>
-                    <tbody id="top-performers-body">
-                        <!-- Will be populated by JavaScript -->
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table id="top-performers">
+                        <thead>
+                            <tr>
+                                <th data-column="ticker">Ticker</th>
+                                <th data-column="exDivDay">Ex-Div</th>
+                                <th data-column="buyHoldReturn">B&H Return</th>
+                                <th data-column="divCaptureReturn">DC Return</th>
+                                <th data-column="bestStrategy">Best</th>
+                                <th data-column="bestReturn">Best Return</th>
+                                <th data-column="dcWinRate">Win Rate</th>
+                                <th data-column="riskVolatility">Risk</th>
+                                <th data-column="medianDividend">Median Div</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-performers-body">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div id="mpt-widget" class="card mpt-card" style="display: none;">
-                <div class="card-title">
-                    🎯 Optimal Allocation
+            <div id="mpt-widget" class="card" style="display: none;">
+                <div class="card-header">
+                    <div class="card-icon">⚖️</div>
+                    <div class="card-title">Optimal Allocation</div>
                 </div>
-                <div id="portfolio-allocation">
+                
+                <div class="allocation-list" id="portfolio-allocation">
                     <!-- Will be populated by JavaScript -->
                 </div>
-                <div class="metrics-grid" id="portfolio-metrics">
+
+                <div class="stats-grid" id="portfolio-metrics">
                     <!-- Will be populated by JavaScript -->
                 </div>
-                <div style="text-align: center; color: #999; font-size: 0.85em; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+
+                <p style="text-align: center; margin-top: 20px; font-size: 0.85rem; opacity: 0.7;">
                     Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization
-                </div>
+                </p>
             </div>
         </div>
     </div>
@@ -300,7 +407,7 @@
                     <td><span class="strategy-chip ${item.bestStrategy === 'B&H' ? 'bh-chip' : 'dc-chip'}">${item.bestStrategy}</span></td>
                     <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
                     <td>${formatPercentage(item.dcWinRate)}</td>
-                    <td class="${item.riskVolatility > 0.4 ? 'risk-high' : 'risk-low'}">${formatPercentage(item.riskVolatility)}</td>
+                    <td><span class="risk-tag">${formatPercentage(item.riskVolatility)}</span></td>
                     <td>${formatDividend(item.medianDividend)}</td>
                 </tr>
             `).join('');
@@ -435,14 +542,17 @@
             // Sort allocation by weight (descending)
             const sortedAllocation = allocation.sort((a, b) => b.weight - a.weight);
 
-            // Display allocation with new card style
+            // Display allocation with progress bars
             const allocationDiv = document.getElementById('portfolio-allocation');
             allocationDiv.innerHTML = sortedAllocation.map(asset => {
                 const weightPercent = (asset.weight * 100).toFixed(1);
                 return `
-                    <div class="allocation-item">
-                        <span class="ticker" style="font-weight: 600;">${asset.ticker}</span>
-                        <span style="font-weight: 600; color: #4caf50;">${weightPercent}%</span>
+                    <div class="allocation-row">
+                        <span class="allocation-name">${asset.ticker}</span>
+                        <span class="allocation-percent">${weightPercent}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${weightPercent}%"></div>
                     </div>
                 `;
             }).join('');
@@ -450,26 +560,38 @@
             // Display metrics in grid layout
             const metricsDiv = document.getElementById('portfolio-metrics');
             metricsDiv.innerHTML = `
-                <div class="metric-item">
-                    <div class="metric-label">Expected Return</div>
-                    <div class="metric-value">${formatPercentage(metrics.expectedReturn)}</div>
+                <div class="stat-box">
+                    <div class="stat-label">Expected Return</div>
+                    <div class="stat-value">${formatPercentage(metrics.expectedReturn)}</div>
                 </div>
-                <div class="metric-item">
-                    <div class="metric-label">Portfolio Risk</div>
-                    <div class="metric-value">${formatPercentage(metrics.risk)}</div>
+                <div class="stat-box">
+                    <div class="stat-label">Portfolio Risk</div>
+                    <div class="stat-value">${formatPercentage(metrics.risk)}</div>
                 </div>
-                <div class="metric-item">
-                    <div class="metric-label">Sharpe Ratio</div>
-                    <div class="metric-value">${metrics.sharpeRatio.toFixed(2)}</div>
+                <div class="stat-box">
+                    <div class="stat-label">Sharpe Ratio</div>
+                    <div class="stat-value">${metrics.sharpeRatio.toFixed(2)}</div>
                 </div>
-                <div class="metric-item">
-                    <div class="metric-label">Diversification</div>
-                    <div class="metric-value">${allocation.length} assets</div>
+                <div class="stat-box">
+                    <div class="stat-label">Diversification</div>
+                    <div class="stat-value">${allocation.length} assets</div>
                 </div>
             `;
 
             // Show the widget
             document.getElementById('mpt-widget').style.display = 'block';
+            
+            // Animate progress bars
+            setTimeout(() => {
+                const bars = document.querySelectorAll('.progress-fill');
+                bars.forEach((bar, index) => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, index * 150);
+                });
+            }, 100);
         }
     </script>
 </body>
