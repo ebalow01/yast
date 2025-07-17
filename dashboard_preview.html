@@ -335,7 +335,7 @@
         ];
 
         // Load and display the performance data
-        fetch('./yast-react/public/data/performance_data.json')
+        fetch('./yast-react/public/data/performance_data.json?v=' + Date.now())
             .then(response => response.json())
             .then(data => {
                 loadData(data);
