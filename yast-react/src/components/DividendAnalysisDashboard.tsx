@@ -554,17 +554,14 @@ export default function DividendAnalysisDashboard() {
               {mptAllocation.length > 0 && portfolioMetrics && (
                 <Card sx={{ mt: 4, bgcolor: 'rgba(0, 230, 118, 0.05)', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
                   <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6" sx={{ mb: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Assessment />
-                      Modern Portfolio Theory - Optimal Allocation
+                      Optimal Allocation
                     </Typography>
                     
                     <Box sx={{ display: 'flex', gap: 4, mb: 3 }}>
                       {/* Portfolio Composition */}
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'primary.main' }}>
-                          Portfolio Composition
-                        </Typography>
                         {mptAllocation
                           .sort((a, b) => b.weight - a.weight)
                           .map((asset, index) => (
@@ -582,7 +579,7 @@ export default function DividendAnalysisDashboard() {
                                 size="small"
                                 sx={{
                                   bgcolor: asset.ticker === 'CASH' ? 'primary.main' : 
-                                           asset.ticker === 'SPY' ? 'secondary.main' : 
+                                           asset.ticker === 'SPY' ? 'primary.main' : 
                                            'info.main',
                                   color: 'white',
                                   fontWeight: 'bold',
@@ -592,18 +589,12 @@ export default function DividendAnalysisDashboard() {
                               <Typography sx={{ fontWeight: 'bold' }}>
                                 {(asset.weight * 100).toFixed(1)}%
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                ({formatPercentage(asset.return)} return, {formatPercentage(asset.risk)} risk)
-                              </Typography>
                             </Box>
                           ))}
                       </Box>
                       
                       {/* Portfolio Metrics */}
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'primary.main' }}>
-                          Portfolio Metrics
-                        </Typography>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography><strong>Expected Return:</strong></Typography>

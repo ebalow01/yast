@@ -138,16 +138,14 @@
         </table>
 
         <div id="mpt-widget" class="strategy-box" style="display: none;">
-            <div class="strategy-title">Modern Portfolio Theory - Optimal Allocation</div>
+            <div class="strategy-title" style="color: white;">Optimal Allocation</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
                 <div style="flex: 1; margin-right: 20px;">
-                    <h4 style="color: #4caf50; margin-bottom: 10px;">Portfolio Composition</h4>
                     <div id="portfolio-allocation" style="text-align: left;">
                         <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
                 <div style="flex: 1; margin-left: 20px;">
-                    <h4 style="color: #4caf50; margin-bottom: 10px;">Portfolio Metrics</h4>
                     <div id="portfolio-metrics" style="text-align: left;">
                         <!-- Will be populated by JavaScript -->
                     </div>
@@ -416,15 +414,12 @@
             allocationDiv.innerHTML = sortedAllocation.map(asset => {
                 const weightPercent = (asset.weight * 100).toFixed(1);
                 const colorClass = asset.ticker === 'CASH' ? 'strategy-chip bh-chip' : 
-                                 asset.ticker === 'SPY' ? 'strategy-chip' : 
+                                 asset.ticker === 'SPY' ? 'strategy-chip bh-chip' : 
                                  'ticker';
                 return `
                     <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                         <span class="${colorClass}" style="display: inline-block; min-width: 60px;">${asset.ticker}</span>
                         <span style="margin-left: 10px;">${weightPercent}%</span>
-                        <span style="margin-left: 10px; color: #ccc; font-size: 0.9em;">
-                            (${formatPercentage(asset.return)} return, ${formatPercentage(asset.risk)} risk)
-                        </span>
                     </div>
                 `;
             }).join('');
