@@ -22,6 +22,16 @@ def build_web_app():
         print("Generating web data...")
         subprocess.run([sys.executable, "scripts/generate_web_data.py"], check=True)
         
+        # Copy HTML dashboard to React public folder
+        print("Copying HTML dashboard...")
+        import shutil
+        dashboard_files = ["dashboard_preview.html", "dashboard_fresh.html"]
+        for dashboard in dashboard_files:
+            if os.path.exists(dashboard):
+                shutil.copy2(dashboard, os.path.join(react_dir, "public", "dashboard.html"))
+                print(f"Copied {dashboard} to React public folder")
+                break
+        
         # Check if npm is available
         try:
             subprocess.run(["npm", "--version"], check=True, capture_output=True)
