@@ -14,8 +14,20 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            color: #fff;
+            min-height: 100vh;            allocationDiv.innerHTML = sortedAllocation.map(asset => {
+                const weightPercent = (asset.weight * 100).toFixed(1);
+                // Display CASH more intuitively
+                const displayName = asset.ticker === 'CASH' ? '💰 Cash (Risk-Free)' : asset.ticker;
+                return `
+                    <div class="allocation-row">
+                        <span class="allocation-name">${displayName}</span>
+                        <span class="allocation-percent">${weightPercent}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${weightPercent}%"></div>
+                    </div>
+                `;
+            }).join('');  color: #fff;
             padding: 20px;
         }
 
@@ -135,6 +147,14 @@
             font-weight: 700;
             font-size: 1.1rem;
             color: #81c784;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .ticker:hover {
+            color: #4caf50;
+            text-decoration: underline;
         }
 
         .positive {
@@ -283,8 +303,8 @@
                             <tr>
                                 <th data-column="ticker">Ticker</th>
                                 <th data-column="exDivDay">Ex-Div</th>
-                                <th data-column="buyHoldReturn">B&H Return</th>
-                                <th data-column="divCaptureReturn">DC Return</th>
+                                <th data-column="buyHoldReturn" title="Buy & Hold: Purchase and hold the ETF for the entire analysis period">B&H Return</th>
+                                <th data-column="divCaptureReturn" title="Dividend Capture: Buy the morning before ex-dividend date and sell the morning on ex-dividend date to capture dividends while minimizing market exposure">DC Return</th>
                                 <th data-column="bestStrategy">Best</th>
                                 <th data-column="bestReturn">Best Return</th>
                                 <th data-column="dcWinRate">Win Rate</th>
@@ -301,7 +321,7 @@
 
             <div id="mpt-widget" class="card">
                 <div class="card-header">
-                    <div class="card-icon">⚖️</div>
+                    <div class="card-icon" style="color: #ffd54f;">⚖️</div>
                     <div class="card-title">Optimal Allocation</div>
                 </div>
                 
@@ -419,7 +439,7 @@
             const tbody = document.getElementById(bodyId);
             tbody.innerHTML = data.map(item => `
                 <tr>
-                    <td class="ticker">${item.ticker}</td>
+                    <td><a href="https://finance.yahoo.com/quote/${item.ticker}" target="_blank" class="ticker">${item.ticker}</a></td>
                     <td>${item.exDivDay}</td>
                     <td class="${item.buyHoldReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.buyHoldReturn)}</td>
                     <td class="${item.divCaptureReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.divCaptureReturn)}</td>
@@ -565,9 +585,11 @@
             const allocationDiv = document.getElementById('portfolio-allocation');
             allocationDiv.innerHTML = sortedAllocation.map(asset => {
                 const weightPercent = (asset.weight * 100).toFixed(1);
+                // Display CASH more intuitively
+                const displayName = asset.ticker === 'CASH' ? '💰 Cash (Risk-Free)' : asset.ticker;
                 return `
                     <div class="allocation-row">
-                        <span class="allocation-name">${asset.ticker}</span>
+                        <span class="allocation-name">${displayName}</span>
                         <span class="allocation-percent">${weightPercent}%</span>
                     </div>
                     <div class="progress-bar">
