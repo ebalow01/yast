@@ -95,7 +95,7 @@
         .card-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(45deg, #4caf50, #81c784);
+            background: transparent;
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -175,12 +175,12 @@
         }
 
         .dc-chip {
-            background: #339af0;
+            background: #9c27b0;
             color: white;
         }
 
         .bh-chip {
-            background: #ff6b6b;
+            background: #2196f3;
             color: white;
         }
 
@@ -303,8 +303,8 @@
                             <tr>
                                 <th data-column="ticker">Ticker</th>
                                 <th data-column="exDivDay">Ex-Div</th>
-                                <th data-column="buyHoldReturn" title="Buy & Hold: Purchase and hold the ETF for the entire analysis period">B&H Return</th>
-                                <th data-column="divCaptureReturn" title="Dividend Capture: Buy the morning before ex-dividend date and sell the morning on ex-dividend date to capture dividends while minimizing market exposure">DC Return</th>
+                                <th data-column="buyHoldReturn">B&H Return</th>
+                                <th data-column="divCaptureReturn">DC Return</th>
                                 <th data-column="bestStrategy">Best</th>
                                 <th data-column="bestReturn">Best Return</th>
                                 <th data-column="dcWinRate">Win Rate</th>
@@ -443,7 +443,7 @@
                     <td>${item.exDivDay}</td>
                     <td class="${item.buyHoldReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.buyHoldReturn)}</td>
                     <td class="${item.divCaptureReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.divCaptureReturn)}</td>
-                    <td><span class="strategy-chip ${item.bestStrategy === 'B&H' ? 'bh-chip' : 'dc-chip'}">${item.bestStrategy}</span></td>
+                    <td><span class="strategy-chip ${item.bestStrategy === 'B&H' ? 'bh-chip' : 'dc-chip'}" title="${item.bestStrategy === 'B&H' ? 'Buy & Hold: Purchase and hold the ETF for the entire analysis period' : 'Dividend Capture: Buy the morning before ex-dividend date and sell the morning on ex-dividend date to capture dividends while minimizing market exposure'}">${item.bestStrategy}</span></td>
                     <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
                     <td>${formatPercentage(item.dcWinRate)}</td>
                     <td><span class="risk-tag">${formatPercentage(item.riskVolatility)}</span></td>
