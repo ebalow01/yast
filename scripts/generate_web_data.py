@@ -213,8 +213,8 @@ def process_analysis_data(web_data_dir):
                     risk_volatility_str = line[96:107].strip().replace('%', '')
                     risk_volatility = float(risk_volatility_str) / 100 if risk_volatility_str and risk_volatility_str != 'N/A' else 0.0
                     
-                    # Handle variable length for median dividend - take everything after position 108
-                    median_dividend_str = line[108:].strip().replace('$', '').replace('%', '')
+                    # Handle median dividend at position 110
+                    median_dividend_str = line[110:].strip().replace('$', '').replace('%', '')
                     try:
                         median_dividend = float(median_dividend_str) if median_dividend_str and median_dividend_str != 'N/A' and median_dividend_str != '' else 0.0
                     except ValueError:

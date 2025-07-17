@@ -286,7 +286,6 @@ export default function DividendAnalysisDashboard() {
             <TableCell align="center"><strong>DC Return</strong></TableCell>
             <TableCell align="center"><strong>Best</strong></TableCell>
             <TableCell align="center"><strong>Best Return</strong></TableCell>
-            <TableCell align="center"><strong>Final Value</strong></TableCell>
             <TableCell align="center"><strong>Win Rate</strong></TableCell>
             <TableCell align="center"><strong>Risk</strong></TableCell>
             <TableCell align="center"><strong>Median Div</strong></TableCell>
@@ -345,14 +344,6 @@ export default function DividendAnalysisDashboard() {
                 </Box>
               </TableCell>
               <TableCell align="center">
-                <Typography
-                  variant="body2"
-                  sx={{ color: getColorByValue(item.finalValue - 10000) }}
-                >
-                  {formatCurrency(item.finalValue)}
-                </Typography>
-              </TableCell>
-              <TableCell align="center">
                 <Typography variant="body2">
                   {formatPercentage(item.dcWinRate)}
                 </Typography>
@@ -383,7 +374,7 @@ export default function DividendAnalysisDashboard() {
               YieldMax ETFs - Weekly Distribution Analysis
             </Typography>
             <Typography variant="subtitle2" sx={{ ml: 2 }}>
-              {metadata.analysisDate}
+              Last Updated: {metadata.analysisDate}
             </Typography>
           </Toolbar>
         </AppBar>        <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -413,7 +404,7 @@ export default function DividendAnalysisDashboard() {
                 Top Performing ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs with returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
+                ETFs with annualized returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
               </Typography>
               {renderTable(topPerformers)}
             </TabPanel>
@@ -423,7 +414,7 @@ export default function DividendAnalysisDashboard() {
                 Excluded ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs with returns at or below 40% or risk at or above 40%
+                ETFs with annualized returns at or below 40% or risk at or above 40%
               </Typography>
               {renderTable(excludedTickers)}
             </TabPanel>
