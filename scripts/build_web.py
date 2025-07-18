@@ -2,6 +2,47 @@
 import subprocess
 import sys
 import os
+import json
+
+def update_dashboard_with_fresh_data(dashboard_file):
+    """Update the dashboard HTML file with fresh data from JSON files"""
+    try:
+        # Read the fresh data
+        data_file = "yast-react/public/data/performance_data.json"
+        if not os.path.exists(data_file):
+            print(f"Fresh data file not found: {data_file}")
+            return None
+        
+        with open(data_file, 'r') as f:
+            fresh_data = json.load(f)
+        
+        # Read the dashboard HTML
+        with open(dashboard_file, 'r', encoding='utf-8') as f:
+            dashboard_content = f.read()
+        
+        # Find the fallback data section and replace it
+        import re
+        
+        # Pattern to match the fallback data array
+        pattern = r'const fallbackData = \[.*?\];'
+        
+        # Convert fresh data to JavaScript array format
+        js_data = json.dumps(fresh_data, indent=12)
+        replacement = f'const fallbackData = {js_data};'
+        
+        # Replace the fallback data in the HTML
+        updated_content = re.sub(pattern, replacement, dashboard_content, flags=re.DOTALL)
+        
+        if updated_content != dashboard_content:
+            print(f"Successfully updated dashboard with {len(fresh_data)} fresh data entries")
+            return updated_content
+        else:
+            print("No data replacement made in dashboard")
+            return None
+            
+    except Exception as e:
+        print(f"Error updating dashboard with fresh data: {e}")
+        return None
 
 def build_web_app():
     """Build the React web application"""
@@ -45,8 +86,15 @@ def build_web_app():
         import shutil
         dashboard_file = "dashboard_fresh.html"
         if os.path.exists(dashboard_file):
-            shutil.copy2(dashboard_file, os.path.join(react_dir, "public", "dashboard.html"))
-            print(f"Copied {dashboard_file} to React public folder")
+            # Update dashboard with fresh data if available
+            updated_dashboard = update_dashboard_with_fresh_data(dashboard_file)
+            if updated_dashboard:
+                with open(os.path.join(react_dir, "public", "dashboard.html"), 'w', encoding='utf-8') as f:
+                    f.write(updated_dashboard)
+                print("Updated dashboard with fresh data and copied to React public folder")
+            else:
+                shutil.copy2(dashboard_file, os.path.join(react_dir, "public", "dashboard.html"))
+                print(f"Copied {dashboard_file} to React public folder (no data update)")
         else:
             print(f"ERROR: {dashboard_file} not found!")
         
