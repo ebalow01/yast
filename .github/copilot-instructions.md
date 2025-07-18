@@ -2,28 +2,29 @@
 
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 
-# YieldMax ETF Multi-Ticker Analysis System - Copilot Instructions
+# Weekly Distribution ETF Portfolio Income Generator - Copilot Instructions
 
-This is a comprehensive Python analysis system for 25 YieldMax ETFs, focusing on dividend capture strategies and performance comparison.
+This is a comprehensive Python analysis system for 25 weekly distribution ETFs, focusing on dividend capture strategies and performance comparison with risk-balanced portfolio optimization.
 
 ## Project Context
-- **Main Orchestrator**: `multi_ticker_orchestrator.py` - Coordinates analysis across all 25 YieldMax ETFs
+- **Main Orchestrator**: `multi_ticker_orchestrator.py` - Coordinates analysis across all 25 weekly distribution ETFs
 - **Core Data Processor**: `multi_ticker_data_processor.py` - Downloads and processes ticker data
 - **Strategy Modules**: 
   - `ulty_weekly_analysis_main.py` - Weekly dividend pattern analysis
   - `ulty_trading_strategies_main.py` - DD to DD+4 and DD+2 to DD+4 strategies
   - `ulty_dividend_capture_main.py` - Best dividend capture strategy and market exposure analysis
 - **Data Storage**: CSV files saved in the `data/` directory (price, dividend, full data for each ticker)
-- **Target ETFs**: 25 YieldMax ETFs (ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX, BRKW, COIW, HOOW, METW, NVDW, PLTW, TSLW)
-- **Output**: Comprehensive sorted analysis tables comparing all strategies
+- **Target ETFs**: 25 weekly distribution ETFs (ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX, BRKW, COIW, HOOW, METW, NVDW, PLTW, TSLW)
+- **Output**: Comprehensive sorted analysis tables comparing all strategies with risk-balanced performance metrics
 
 ## Key Features
 - **Automated Multi-Ticker Analysis**: Processes all 25 ETFs with consistent methodology
 - **Strategy Comparison**: Buy & Hold vs Multiple Dividend Capture Strategies
-- **Risk Assessment**: Calculates annualized volatility and Sharpe ratios
+- **Risk-Balanced Assessment**: Calculates annualized volatility and Sharpe ratios for income optimization
 - **SPY Benchmarking**: Compares performance against market benchmark
 - **Comprehensive Tables**: Automatically generates sorted performance tables by return categories
-- **Ex-Dividend Analysis**: Tracks dividend patterns and optimal trading windows
+- **Weekly Distribution Analysis**: Tracks dividend patterns and optimal trading windows for income generation
+- **Multi-Provider Support**: Supports YieldMax, Roundhill, and other weekly distribution ETF providers
 
 ## Code Style Guidelines
 - Use descriptive function names and docstrings
@@ -43,13 +44,15 @@ This is a comprehensive Python analysis system for 25 YieldMax ETFs, focusing on
 
 ## Common Tasks
 When extending this project, consider:
-- Adding new YieldMax ETFs to the analysis
-- Implementing additional trading strategies
-- Adding data visualization with matplotlib/plotly
-- Creating automated scheduling for daily analysis updates
-- Adding more sophisticated risk metrics
+- Adding new weekly distribution ETFs from various providers (YieldMax, Roundhill, etc.)
+- Implementing additional income-focused trading strategies
+- Adding monthly distribution ETFs for broader portfolio coverage
+- Adding data visualization with matplotlib/plotly for income analysis
+- Creating automated scheduling for daily portfolio income updates
+- Adding more sophisticated risk-adjusted income metrics
 - Implementing different export formats (Excel, JSON, etc.)
-- Creating React web interface for results visualization
+- Creating React web interface for portfolio income visualization
+- Adding portfolio optimization for income vs risk balance
 
 ## Dependencies
 - yfinance: For downloading stock market data
@@ -64,10 +67,10 @@ python multi_ticker_orchestrator.py
 ```
 
 This will:
-1. Download latest data for all 25 YieldMax ETFs
+1. Download latest data for all 25 weekly distribution ETFs
 2. Analyze dividend patterns and strategies for each ticker
-3. Compare performance across all tickers
-4. Generate comprehensive sorted analysis tables
+3. Compare performance across all tickers with risk-balanced metrics
+4. Generate comprehensive sorted analysis tables for income optimization
 5. Save all results to timestamped files
 
 ## Output Files

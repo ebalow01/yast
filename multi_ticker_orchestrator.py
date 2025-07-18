@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Multi-Ticker Analysis Orchestrator
-Coordinates analysis across multiple tickers with flexible strategy comparison.
+Weekly Distribution ETF Portfolio Income Generator
+Coordinates analysis across multiple weekly distribution ETFs with risk-balanced strategy comparison.
 """
 
 import pandas as pd
@@ -186,7 +186,7 @@ def save_multi_ticker_summary(all_results, comparison_data):
     Save comprehensive multi-ticker analysis summary.
     """
     output_lines = []
-    output_lines.append("MULTI-TICKER DIVIDEND CAPTURE ANALYSIS")
+    output_lines.append("WEEKLY DISTRIBUTION ETF PORTFOLIO INCOME ANALYSIS")
     output_lines.append("=" * 80)
     output_lines.append(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     output_lines.append(f"Tickers Analyzed: {', '.join(all_results.keys())}")
@@ -369,7 +369,7 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
     filename = f"comprehensive_sorted_table_{timestamp}.txt"
     
     with open(filename, 'w') as f:
-        f.write("COMPREHENSIVE 25-TICKER ANALYSIS WITH SORTED RESULTS\n")
+        f.write("COMPREHENSIVE 25-TICKER WEEKLY DISTRIBUTION ETF ANALYSIS\n")
         f.write("=" * 80 + "\n")
         f.write(f"Analysis Date: {datetime.now().strftime('%B %d, %Y')}\n")
         f.write("Starting Capital: $100,000.00 per ticker\n\n")
@@ -451,7 +451,7 @@ def main():
     """
     Main function to run multi-ticker analysis.
     """
-    print("Multi-Ticker Dividend Capture Analysis")
+    print("Weekly Distribution ETF Portfolio Income Generator")
     print("=" * 60)
     
     # Download data for all configured tickers
@@ -488,7 +488,7 @@ def main():
     create_comprehensive_sorted_table(all_results, comparison_data)
     
     print(f"\n{'='*60}")
-    print("MULTI-TICKER ANALYSIS COMPLETE!")
+    print("WEEKLY DISTRIBUTION ETF PORTFOLIO INCOME ANALYSIS COMPLETE!")
     print(f"{'='*60}")
     print(f"Comprehensive sorted table saved to: {comprehensive_table_file}")
     

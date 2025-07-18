@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Multi-Ticker Data Processor - Core Data Download and Processing
-Downloads and processes stock data for multiple tickers with dividend analysis.
+Weekly Distribution ETF Data Processor - Core Data Download and Processing
+Downloads and processes stock data for multiple weekly distribution ETFs with dividend analysis.
 """
 
 import yfinance as yf

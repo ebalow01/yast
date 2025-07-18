@@ -1,14 +1,15 @@
-# YieldMax ETF Multi-Ticker Analysis System
+# Weekly Distribution ETF Portfolio Income Generator
 
-A comprehensive Python analysis system for 25 YieldMax ETFs, focusing on dividend capture strategies and performance comparison with automated risk assessment and SPY benchmarking.
+A comprehensive Python analysis system for 25 weekly distribution ETFs, focusing on dividend capture strategies and performance comparison with risk-balanced portfolio optimization.
 
 ## Features
-- **Multi-Ticker Analysis**: Processes all 25 YieldMax ETFs simultaneously
+- **Multi-Ticker Analysis**: Processes all 25 weekly distribution ETFs simultaneously
 - **Strategy Comparison**: Buy & Hold vs Multiple Dividend Capture Strategies
-- **Risk Assessment**: Calculates annualized volatility and Sharpe ratios
+- **Risk-Balanced Assessment**: Calculates annualized volatility and Sharpe ratios for income optimization
 - **SPY Benchmarking**: Compares performance against market benchmark
 - **Comprehensive Tables**: Automatically generates sorted performance tables by return categories
-- **Ex-Dividend Analysis**: Tracks dividend patterns and optimal trading windows
+- **Weekly Distribution Analysis**: Tracks dividend patterns and optimal trading windows for income generation
+- **Multi-Provider Support**: Supports YieldMax, Roundhill, and other weekly distribution ETF providers
 - **Automated Orchestration**: Single command runs complete analysis pipeline
 
 ## Quick Start
@@ -43,7 +44,7 @@ This will:
 - `data/[TICKER]_*.csv` - Individual ticker data files (price, dividend, full data)
 
 ## Tickers Analyzed
-**25 YieldMax ETFs**: ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX, BRKW, COIW, HOOW, METW, NVDW, PLTW, TSLW
+**25 Weekly Distribution ETFs**: ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX, BRKW, COIW, HOOW, METW, NVDW, PLTW, TSLW
 
 ## Strategies Compared
 - **Buy & Hold**: Simple buy and hold with dividend reinvestment
