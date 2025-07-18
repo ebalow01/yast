@@ -33,8 +33,15 @@ def update_dashboard_with_fresh_data(dashboard_file):
         # Replace the fallback data in the HTML
         updated_content = re.sub(pattern, replacement, dashboard_content, flags=re.DOTALL)
         
+        # Also update the timestamp
+        from datetime import datetime
+        current_date = datetime.now().strftime("%B %d, %Y")
+        timestamp_pattern = r'<div class="timestamp">Last Updated: [^<]+</div>'
+        timestamp_replacement = f'<div class="timestamp">Last Updated: {current_date}</div>'
+        updated_content = re.sub(timestamp_pattern, timestamp_replacement, updated_content)
+        
         if updated_content != dashboard_content:
-            print(f"Successfully updated dashboard with {len(fresh_data)} fresh data entries")
+            print(f"Successfully updated dashboard with {len(fresh_data)} fresh data entries and current timestamp")
             return updated_content
         else:
             print("No data replacement made in dashboard")
