@@ -96,6 +96,12 @@ def build_web_app():
             # Update dashboard with fresh data if available
             updated_dashboard = update_dashboard_with_fresh_data(dashboard_file)
             if updated_dashboard:
+                # Update the source file too so it gets committed
+                with open(dashboard_file, 'w', encoding='utf-8') as f:
+                    f.write(updated_dashboard)
+                print("Updated source dashboard_fresh.html with fresh data and timestamp")
+                
+                # Copy to React public folder
                 with open(os.path.join(react_dir, "public", "dashboard.html"), 'w', encoding='utf-8') as f:
                     f.write(updated_dashboard)
                 print("Updated dashboard with fresh data and copied to React public folder")
