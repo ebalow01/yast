@@ -4,21 +4,21 @@
 
 # YieldMax ETF Multi-Ticker Analysis System - Copilot Instructions
 
-This is a comprehensive Python analysis system for 18 YieldMax ETFs, focusing on dividend capture strategies and performance comparison.
+This is a comprehensive Python analysis system for 25 YieldMax ETFs, focusing on dividend capture strategies and performance comparison.
 
 ## Project Context
-- **Main Orchestrator**: `multi_ticker_orchestrator.py` - Coordinates analysis across all 18 YieldMax ETFs
+- **Main Orchestrator**: `multi_ticker_orchestrator.py` - Coordinates analysis across all 25 YieldMax ETFs
 - **Core Data Processor**: `multi_ticker_data_processor.py` - Downloads and processes ticker data
 - **Strategy Modules**: 
   - `ulty_weekly_analysis_main.py` - Weekly dividend pattern analysis
   - `ulty_trading_strategies_main.py` - DD to DD+4 and DD+2 to DD+4 strategies
   - `ulty_dividend_capture_main.py` - Best dividend capture strategy and market exposure analysis
 - **Data Storage**: CSV files saved in the `data/` directory (price, dividend, full data for each ticker)
-- **Target ETFs**: 18 YieldMax ETFs (ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX)
+- **Target ETFs**: 25 YieldMax ETFs (ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX, BRKW, COIW, HOOW, METW, NVDW, PLTW, TSLW)
 - **Output**: Comprehensive sorted analysis tables comparing all strategies
 
 ## Key Features
-- **Automated Multi-Ticker Analysis**: Processes all 18 ETFs with consistent methodology
+- **Automated Multi-Ticker Analysis**: Processes all 25 ETFs with consistent methodology
 - **Strategy Comparison**: Buy & Hold vs Multiple Dividend Capture Strategies
 - **Risk Assessment**: Calculates annualized volatility and Sharpe ratios
 - **SPY Benchmarking**: Compares performance against market benchmark
@@ -64,7 +64,7 @@ python multi_ticker_orchestrator.py
 ```
 
 This will:
-1. Download latest data for all 18 YieldMax ETFs
+1. Download latest data for all 25 YieldMax ETFs
 2. Analyze dividend patterns and strategies for each ticker
 3. Compare performance across all tickers
 4. Generate comprehensive sorted analysis tables

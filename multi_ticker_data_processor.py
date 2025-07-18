@@ -83,6 +83,34 @@ TICKER_CONFIGS = {
     'BLOX': {
         'start_date': 'auto_detect',
         'name': 'YieldMax Block Option Income Strategy ETF'
+    },
+    'BRKW': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax Berkshire Hathaway Option Income Strategy ETF'
+    },
+    'COIW': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax Coinbase Option Income Strategy ETF'
+    },
+    'HOOW': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax Home Depot Option Income Strategy ETF'
+    },
+    'METW': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax Meta Option Income Strategy ETF'
+    },
+    'NVDW': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax NVIDIA Option Income Strategy ETF'
+    },
+    'PLTW': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax Palantir Option Income Strategy ETF'
+    },
+    'TSLW': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax Tesla Option Income Strategy ETF'
     }
 }
 

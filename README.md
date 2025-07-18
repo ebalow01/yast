@@ -1,9 +1,9 @@
 # YieldMax ETF Multi-Ticker Analysis System
 
-A comprehensive Python analysis system for 18 YieldMax ETFs, focusing on dividend capture strategies and performance comparison with automated risk assessment and SPY benchmarking.
+A comprehensive Python analysis system for 25 YieldMax ETFs, focusing on dividend capture strategies and performance comparison with automated risk assessment and SPY benchmarking.
 
 ## Features
-- **Multi-Ticker Analysis**: Processes all 18 YieldMax ETFs simultaneously
+- **Multi-Ticker Analysis**: Processes all 25 YieldMax ETFs simultaneously
 - **Strategy Comparison**: Buy & Hold vs Multiple Dividend Capture Strategies
 - **Risk Assessment**: Calculates annualized volatility and Sharpe ratios
 - **SPY Benchmarking**: Compares performance against market benchmark
@@ -31,7 +31,7 @@ python multi_ticker_orchestrator.py
 ```
 
 This will:
-1. Download latest data for all 18 YieldMax ETFs
+1. Download latest data for all 25 YieldMax ETFs
 2. Analyze dividend patterns and strategies for each ticker
 3. Compare performance across all tickers
 4. Generate comprehensive sorted analysis tables
@@ -43,7 +43,7 @@ This will:
 - `data/[TICKER]_*.csv` - Individual ticker data files (price, dividend, full data)
 
 ## Tickers Analyzed
-**18 YieldMax ETFs**: ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX
+**25 YieldMax ETFs**: ULTY, YMAX, YMAG, LFGY, GPTY, SDTY, QDTY, RDTY, CHPY, NFLW, IWMY, AMZW, MSII, RDTE, AAPW, COII, MST, BLOX, BRKW, COIW, HOOW, METW, NVDW, PLTW, TSLW
 
 ## Strategies Compared
 - **Buy & Hold**: Simple buy and hold with dividend reinvestment

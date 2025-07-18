@@ -369,7 +369,7 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
     filename = f"comprehensive_sorted_table_{timestamp}.txt"
     
     with open(filename, 'w') as f:
-        f.write("COMPREHENSIVE 18-TICKER ANALYSIS WITH SORTED RESULTS\n")
+        f.write("COMPREHENSIVE 25-TICKER ANALYSIS WITH SORTED RESULTS\n")
         f.write("=" * 80 + "\n")
         f.write(f"Analysis Date: {datetime.now().strftime('%B %d, %Y')}\n")
         f.write("Starting Capital: $100,000.00 per ticker\n\n")
