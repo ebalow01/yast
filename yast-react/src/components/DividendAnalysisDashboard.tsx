@@ -234,6 +234,12 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     // Always include CASH and SPY
     if (asset.ticker === 'CASH' || asset.ticker === 'SPY') return true;
     
+    // RULE 1 CHECK FIRST: ETFs with >40% return AND <40% risk are ALWAYS included
+    if (asset.return > 0.40 && asset.risk < 0.40) {
+      console.log(`✅ RULE 1: Including ${asset.ticker} (${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk) - meets >40% return AND <40% risk criteria`);
+      return true;
+    }
+    
     // Find other ETFs on the same ex-div day for comparison
     const sameExDivAssets = assets.filter(other => 
       other.exDivDay === asset.exDivDay && 
@@ -242,7 +248,7 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       other.ticker !== 'SPY'
     );
     
-    // FIRST: Check if this is a Rule 2 ETF (>30% div capture) - these qualify regardless of risk
+    // RULE 2 CHECK: Rule 2 ETFs (>30% div capture) - these qualify regardless of risk BUT can be excluded if better alternatives exist
     if (asset.dividendCapture > 0.30) {
       console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture) ---`);
       
