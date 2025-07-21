@@ -1,0 +1,21 @@
+{
+  "generated_at": "2025-07-21T12:00:00.000000",
+  "version": "1.0.0",
+  "status": "live",
+  "analysisDate": "July 21, 2025",
+  "startingCapital": 100000,
+  "totalTickers": 18,
+  "data_files": [
+    "ticker_configs.json",
+    "performance_data.json"
+  ],
+  "analysis_info": {
+    "total_tickers": 18,
+    "strategies_analyzed": [
+      "Buy & Hold",
+      "Dividend Capture",
+      "DD to DD+4",
+      "DD+2 to DD+4"
+    ]
+  }
+}
