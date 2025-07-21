@@ -221,6 +221,7 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   });
   
   // Filter out high-risk tickers (>40% risk) if lower-risk alternatives exist on the same ex-div date
+  // BUT preserve ETFs that qualify for Rule 2 (>30% div capture, 10% holding regardless of risk)
   const filteredAssets = assets.filter(asset => {
     // Always include CASH and SPY
     if (asset.ticker === 'CASH' || asset.ticker === 'SPY') return true;
@@ -228,7 +229,14 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     // If this asset has risk <= 40%, include it
     if (asset.risk <= 0.40) return true;
     
-    // If this asset has risk > 40%, only include it if no lower-risk alternative exists on the same ex-div date
+    // If this asset qualifies for Rule 2 (>30% div capture), include it regardless of risk
+    if (asset.dividendCapture > 0.30) {
+      console.log(`Including ${asset.ticker} despite ${(asset.risk*100).toFixed(1)}% risk - qualifies for Rule 2 (${(asset.dividendCapture*100).toFixed(1)}% div capture)`);
+      return true;
+    }
+    
+    // If this asset has risk > 40% and doesn't qualify for Rule 2, 
+    // only include it if no lower-risk alternative exists on the same ex-div date
     const sameExDivAssets = assets.filter(other => 
       other.exDivDay === asset.exDivDay && 
       other.ticker !== asset.ticker &&
