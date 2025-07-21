@@ -229,10 +229,30 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     // If this asset has risk <= 40%, include it
     if (asset.risk <= 0.40) return true;
     
-    // If this asset qualifies for Rule 2 (>30% div capture), include it regardless of risk
+    // If this asset qualifies for Rule 2 (>30% div capture), check if it's worth including
     if (asset.dividendCapture > 0.30) {
-      console.log(`Including ${asset.ticker} despite ${(asset.risk*100).toFixed(1)}% risk - qualifies for Rule 2 (${(asset.dividendCapture*100).toFixed(1)}% div capture)`);
-      return true;
+      // Find other ETFs on the same ex-div day
+      const sameExDivAssets = assets.filter(other => 
+        other.exDivDay === asset.exDivDay && 
+        other.ticker !== asset.ticker &&
+        other.ticker !== 'CASH' &&
+        other.ticker !== 'SPY'
+      );
+      
+      // Check if there's a lower-risk alternative with similar or better div capture (within 10% difference)
+      const betterAlternatives = sameExDivAssets.filter(other => 
+        other.risk < asset.risk && 
+        other.dividendCapture >= (asset.dividendCapture * 0.9) // Within 10% of div capture
+      );
+      
+      if (betterAlternatives.length > 0) {
+        console.log(`Excluding ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture) - better alternative exists:`, 
+          betterAlternatives.map(alt => `${alt.ticker} (${(alt.risk*100).toFixed(1)}% risk, ${(alt.dividendCapture*100).toFixed(1)}% div capture)`).join(', '));
+        return false;
+      } else {
+        console.log(`Including ${asset.ticker} despite ${(asset.risk*100).toFixed(1)}% risk - qualifies for Rule 2 (${(asset.dividendCapture*100).toFixed(1)}% div capture) with no better alternative`);
+        return true;
+      }
     }
     
     // If this asset has risk > 40% and doesn't qualify for Rule 2, 
