@@ -256,18 +256,23 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     
     // If this asset qualifies for Rule 2 (>30% div capture), check if it's worth including
     if (asset.dividendCapture > 0.30) {
-      // Check if there's a lower-risk alternative with similar or better div capture (within 10% difference)
+      // For Rule 2 ETFs, be more selective - exclude if there are meaningfully better alternatives
       const betterAlternatives = sameExDivAssets.filter(other => 
-        other.risk < asset.risk && 
-        other.dividendCapture >= (asset.dividendCapture * 0.9) // Within 10% of div capture
+        other.risk < asset.risk && (
+          // Either significantly better div capture (20% better)
+          other.dividendCapture >= (asset.dividendCapture * 1.2) ||
+          // Or similar div capture (within 10%) but much lower risk (5+ percentage points lower)
+          (other.dividendCapture >= (asset.dividendCapture * 0.9) && 
+           other.risk <= (asset.risk - 0.05))
+        )
       );
       
       if (betterAlternatives.length > 0) {
-        console.log(`Excluding ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture) - better alternative exists:`, 
+        console.log(`Excluding Rule 2 ETF ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture) - meaningfully better alternative exists:`, 
           betterAlternatives.map(alt => `${alt.ticker} (${(alt.risk*100).toFixed(1)}% risk, ${(alt.dividendCapture*100).toFixed(1)}% div capture)`).join(', '));
         return false;
       } else {
-        console.log(`Including ${asset.ticker} despite ${(asset.risk*100).toFixed(1)}% risk - qualifies for Rule 2 (${(asset.dividendCapture*100).toFixed(1)}% div capture) with no better alternative`);
+        console.log(`Including ${asset.ticker} despite ${(asset.risk*100).toFixed(1)}% risk - qualifies for Rule 2 (${(asset.dividendCapture*100).toFixed(1)}% div capture) with no meaningfully better alternative`);
         return true;
       }
     }
