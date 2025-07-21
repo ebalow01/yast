@@ -1,0 +1,74 @@
+{
+  "ULTY": {
+    "name": "YieldMax Ultra Option Income Strategy ETF",
+    "start_date": "2025-03-13"
+  },
+  "YMAX": {
+    "name": "YieldMax S&P 500 Option Income Strategy ETF",
+    "start_date": "2024-09-19"
+  },
+  "YMAG": {
+    "name": "YieldMax Magnificent 7 Fund of Option Income ETFs",
+    "start_date": "2024-09-19"
+  },
+  "LFGY": {
+    "name": "Lifegoal Longevity & Demographic Trends ETF",
+    "start_date": "2025-01-23"
+  },
+  "GPTY": {
+    "name": "YieldMax ChatGPT Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "SDTY": {
+    "name": "YieldMax Super Dividend ETF",
+    "start_date": "auto_detect"
+  },
+  "QDTY": {
+    "name": "YieldMax QQQ Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "RDTY": {
+    "name": "YieldMax Russell 2000 Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "CHPY": {
+    "name": "YieldMax Chubb Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "NFLW": {
+    "name": "YieldMax Netflix Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "IWMY": {
+    "name": "YieldMax IWM Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "AMZW": {
+    "name": "YieldMax Amazon Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "MSII": {
+    "name": "YieldMax Microsoft Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "RDTE": {
+    "name": "YieldMax Russell 2000 Enhanced Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "AAPW": {
+    "name": "YieldMax Apple Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "COII": {
+    "name": "YieldMax Coin Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "MST": {
+    "name": "YieldMax Microsoft Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "BLOX": {
+    "name": "YieldMax Block Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  }
+}

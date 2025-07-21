@@ -334,7 +334,7 @@
                 </div>
 
                 <p style="text-align: center; margin-top: 20px; font-size: 0.85rem; opacity: 0.7;">
-                    Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization
+                    Return-maximizing optimization with 10% portfolio risk constraint, using diversified allocation strategies
                 </p>
             </div>
         </div>
@@ -736,23 +736,11 @@
                 }
             ];
 
-            // Force 20% cash allocation
-            const cashAllocation = 0.20;
-            const remainingAllocation = 0.80;
-
-            // Filter out cash for optimization of remaining 80%
-            const optimizableAssets = assets.filter(asset => asset.ticker !== 'CASH');
-
-            // Simple mean variance optimization using Sharpe ratios
-            const allocation = optimizePortfolio(optimizableAssets, remainingAllocation);
+            // Maximize return while keeping overall portfolio risk under 10%
+            const maxPortfolioRisk = 0.10; // 10% risk constraint
             
-            // Add cash allocation back
-            allocation.push({
-                ticker: 'CASH',
-                weight: cashAllocation,
-                return: 0.045,
-                risk: 0.0
-            });
+            // Optimize portfolio with risk constraint (include cash as an option)
+            const allocation = optimizePortfolioWithRiskConstraint(assets, maxPortfolioRisk);
 
             // Calculate portfolio metrics
             const portfolioMetrics = calculatePortfolioMetrics(allocation);
@@ -804,6 +792,81 @@
                 });
             }
 
+            return allocation;
+        }
+
+        function optimizePortfolioWithRiskConstraint(assets, maxRisk) {
+            // Sort by expected return (descending) to maximize return
+            const sortedAssets = [...assets].sort((a, b) => b.return - a.return);
+            
+            // Start with highest return assets and add them while staying under risk limit
+            const allocation = [];
+            let totalWeight = 0;
+            
+            // Limit individual positions (max 30% each for diversification)
+            const maxWeight = 0.30;
+            
+            // Try to build portfolio iteratively
+            for (let i = 0; i < sortedAssets.length && totalWeight < 0.98; i++) {
+                const asset = sortedAssets[i];
+                
+                // Start with a small weight and increase until risk constraint is hit
+                let testWeight = 0.05; // Start with 5%
+                let bestWeight = 0;
+                
+                while (testWeight <= maxWeight && (totalWeight + testWeight) <= 1.0) {
+                    // Create test allocation
+                    const testAllocation = [...allocation];
+                    testAllocation.push({
+                        ticker: asset.ticker,
+                        weight: testWeight,
+                        return: asset.return,
+                        risk: asset.risk,
+                        sharpe: asset.sharpe,
+                        bestStrategy: asset.bestStrategy
+                    });
+                    
+                    // Calculate test portfolio risk
+                    const testPortfolioVariance = testAllocation.reduce((sum, a) => {
+                        return sum + Math.pow(a.weight * a.risk, 2);
+                    }, 0);
+                    const testPortfolioRisk = Math.sqrt(testPortfolioVariance);
+                    
+                    if (testPortfolioRisk <= maxRisk) {
+                        bestWeight = testWeight;
+                        testWeight += 0.01; // Increase by 1%
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Add the asset with the best weight if it's meaningful
+                if (bestWeight >= 0.02) { // Minimum 2% allocation
+                    allocation.push({
+                        ticker: asset.ticker,
+                        weight: bestWeight,
+                        return: asset.return,
+                        risk: asset.risk,
+                        sharpe: asset.sharpe,
+                        bestStrategy: asset.bestStrategy
+                    });
+                    totalWeight += bestWeight;
+                }
+            }
+            
+            // If we still have remaining weight and low portfolio risk, add cash
+            const remainingWeight = 1.0 - totalWeight;
+            if (remainingWeight > 0.01) {
+                allocation.push({
+                    ticker: 'CASH',
+                    weight: remainingWeight,
+                    return: 0.045,
+                    risk: 0.0,
+                    sharpe: Infinity,
+                    bestStrategy: null
+                });
+            }
+            
             return allocation;
         }
 
