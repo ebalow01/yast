@@ -248,25 +248,26 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       if (asset.dividendCapture > 0.30) {
         console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture) ---`);
         
-        // Special rule: If return < 40% and there are other ETFs on same ex-div day, exclude
+        // Special rule: If return < 40% and there are BETTER ETFs on same ex-div day, exclude
         if (asset.return < 0.40) {
           console.log(`${asset.ticker} has return ${(asset.return*100).toFixed(1)}% < 40% threshold`);
           
-          const originalSameExDivAssets = assets.filter(other => 
+          const betterSameExDivAssets = assets.filter(other => 
             other.ticker !== asset.ticker && 
             other.exDivDay === asset.exDivDay &&
             other.ticker !== 'CASH' && 
-            other.ticker !== 'SPY'
+            other.ticker !== 'SPY' &&
+            other.return > asset.return // Only count BETTER alternatives
           );
           
-          console.log(`Other ETFs on same ex-div day ${asset.exDivDay}:`, originalSameExDivAssets.map(alt => alt.ticker));
+          console.log(`Better ETFs on same ex-div day ${asset.exDivDay}:`, betterSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`));
           
-          if (originalSameExDivAssets.length > 0) {
-            console.log(`❌ EXCLUDING Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return < 40%) - other ETFs exist on same ex-div day ${asset.exDivDay}:`, 
-              originalSameExDivAssets.map(alt => alt.ticker).join(', '));
+          if (betterSameExDivAssets.length > 0) {
+            console.log(`❌ EXCLUDING Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return < 40%) - better ETFs exist on same ex-div day ${asset.exDivDay}:`, 
+              betterSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`).join(', '));
             return false;
           } else {
-            console.log(`✅ Including ${asset.ticker} despite low return - no other ETFs on ${asset.exDivDay}`);
+            console.log(`✅ Including ${asset.ticker} despite low return - no better ETFs on ${asset.exDivDay}`);
           }
         }
         
