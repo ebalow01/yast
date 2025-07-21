@@ -1,6 +1,6 @@
 # Netlify configuration for YieldMax Analysis
 [build]
-  command = "python scripts/build_web.py && cd yast-react && npm install && npm run build && mv dist/index.html dist/react-app.html && cp ../dashboard_fresh.html dist/index.html"
+  command = "python scripts/build_web.py && cd yast-react && npm install && npm run build && cp ../dashboard_fresh.html dist/static-dashboard.html"
   publish = "yast-react/dist"
   
 [build.environment]
@@ -15,18 +15,18 @@
 
 # Redirect rules
 [[redirects]]
+  from = "/static"
+  to = "/static-dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/legacy"
+  to = "/static-dashboard.html"
+  status = 200
+
+[[redirects]]
   from = "/dashboard"
   to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/react"
-  to = "/react-app.html"
-  status = 200
-
-[[redirects]]
-  from = "/app"
-  to = "/react-app.html"
   status = 200
 
 # Security headers

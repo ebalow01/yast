@@ -728,7 +728,7 @@ export default function DividendAnalysisDashboard() {
                 <Card sx={{ mt: 4, maxWidth: '600px', mx: 'auto', bgcolor: 'rgba(0, 230, 118, 0.05)', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2, color: 'white', textAlign: 'center' }}>
-                      Optimal Allocation
+                      🔄 Optimal Allocation
                     </Typography>
                     
                     <Box sx={{ display: 'flex', gap: 4, mb: 3 }}>
