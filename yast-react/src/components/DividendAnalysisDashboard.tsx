@@ -822,32 +822,51 @@ export default function DividendAnalysisDashboard() {
                       <Box sx={{ flex: 1 }}>
                         {mptAllocation
                           .sort((a, b) => b.weight - a.weight)
-                          .map((asset, index) => (
-                            <Box key={index} sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              mb: 1,
-                              p: 1,
-                              bgcolor: 'rgba(255, 255, 255, 0.02)',
-                              borderRadius: 1
-                            }}>
-                              <Chip
-                                label={asset.ticker}
-                                size="small"
-                                sx={{
-                                  bgcolor: asset.ticker === 'CASH' ? 'primary.main' : 
-                                           asset.ticker === 'SPY' ? 'primary.main' : 
-                                           'info.main',
-                                  color: 'white',
-                                  fontWeight: 'bold',
-                                  minWidth: '60px'
-                                }}
-                              />
-                              <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
-                                {(asset.weight * 100).toFixed(1)}%
-                              </Typography>
-                            </Box>
-                          ))}
+                          .map((asset, index) => {
+                            // Find the corresponding ETF data to get the strategy
+                            const etfData = data.find(item => item.ticker === asset.ticker);
+                            const strategy = etfData ? etfData.bestStrategy : null;
+                            
+                            return (
+                              <Box key={index} sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                mb: 1,
+                                p: 1,
+                                bgcolor: 'rgba(255, 255, 255, 0.02)',
+                                borderRadius: 1
+                              }}>
+                                <Chip
+                                  label={asset.ticker}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: asset.ticker === 'CASH' ? 'primary.main' : 
+                                             asset.ticker === 'SPY' ? 'primary.main' : 
+                                             'info.main',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    minWidth: '60px'
+                                  }}
+                                />
+                                <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
+                                  {(asset.weight * 100).toFixed(1)}%
+                                </Typography>
+                                {strategy && (
+                                  <Chip
+                                    label={strategy}
+                                    size="small"
+                                    sx={{
+                                      ml: 1,
+                                      bgcolor: strategy === 'B&H' ? '#2196f3' : '#009688',
+                                      color: 'white',
+                                      fontSize: '10px',
+                                      height: '18px'
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            );
+                          })}
                       </Box>
                       
                       {/* Portfolio Metrics */}
