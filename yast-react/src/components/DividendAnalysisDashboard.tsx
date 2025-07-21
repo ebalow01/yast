@@ -204,6 +204,14 @@ function optimizePortfolio(assets: Asset[], totalAllocation: number): Allocation
 }
 
 function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): AllocationItem[] {
+  // Debug: Log all assets to see their actual values
+  console.log('All assets with return/risk values:');
+  assets.forEach(asset => {
+    if (asset.ticker !== 'CASH') {
+      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk`);
+    }
+  });
+  
   // First, identify ETFs that meet diversity criteria: >40% return AND <40% risk
   const qualifyingETFs = assets.filter(asset => 
     asset.ticker !== 'CASH' && 
@@ -212,7 +220,7 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     asset.risk < 0.40
   );
   
-  console.log('Qualifying ETFs for mandatory inclusion:', qualifyingETFs.map(etf => 
+  console.log('Qualifying ETFs for mandatory inclusion (>40% return AND <40% risk):', qualifyingETFs.map(etf => 
     `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk`
   ));
   
@@ -264,8 +272,14 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   // Step 2: Try to add remaining high-return assets if we have room
   const remainingAssets = sortedAssets.filter(asset => 
     !qualifyingETFs.some(qual => qual.ticker === asset.ticker) &&
-    asset.ticker !== 'CASH'
+    asset.ticker !== 'CASH' &&
+    // Only allow SPY if no qualifying ETFs were found
+    (asset.ticker !== 'SPY' || qualifyingETFs.length === 0)
   );
+  
+  console.log('Remaining assets to consider:', remainingAssets.map(asset => 
+    `${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk`
+  ));
   
   for (const asset of remainingAssets) {
     if (totalWeight >= 0.98) break; // Leave room for potential cash
