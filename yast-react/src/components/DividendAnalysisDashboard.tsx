@@ -222,23 +222,40 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   
   // Filter out high-risk tickers (>40% risk) if lower-risk alternatives exist on the same ex-div date
   // BUT preserve ETFs that qualify for Rule 2 (>30% div capture, 10% holding regardless of risk)
+  // ALSO filter out weak performers when much better alternatives exist on same ex-div day
   const filteredAssets = assets.filter(asset => {
     // Always include CASH and SPY
     if (asset.ticker === 'CASH' || asset.ticker === 'SPY') return true;
     
-    // If this asset has risk <= 40%, include it
-    if (asset.risk <= 0.40) return true;
+    // Find other ETFs on the same ex-div day for comparison
+    const sameExDivAssets = assets.filter(other => 
+      other.exDivDay === asset.exDivDay && 
+      other.ticker !== asset.ticker &&
+      other.ticker !== 'CASH' &&
+      other.ticker !== 'SPY'
+    );
+    
+    // If this asset has risk <= 40%, check if it should still be included
+    if (asset.risk <= 0.40) {
+      // For non-Rule assets, exclude if there are significantly better alternatives on same day
+      if (asset.dividendCapture <= 0.30 && asset.return <= 0.40) {
+        // Check if there are much better alternatives (2x better div capture or return)
+        const muchBetterAlternatives = sameExDivAssets.filter(other => 
+          (other.dividendCapture >= asset.dividendCapture * 2.0) || 
+          (other.return >= asset.return * 2.0)
+        );
+        
+        if (muchBetterAlternatives.length > 0) {
+          console.log(`Excluding weak performer ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% DC, ${(asset.return*100).toFixed(1)}% return) - much better alternatives exist:`, 
+            muchBetterAlternatives.map(alt => `${alt.ticker} (${(alt.dividendCapture*100).toFixed(1)}% DC, ${(alt.return*100).toFixed(1)}% return)`).join(', '));
+          return false;
+        }
+      }
+      return true;
+    }
     
     // If this asset qualifies for Rule 2 (>30% div capture), check if it's worth including
     if (asset.dividendCapture > 0.30) {
-      // Find other ETFs on the same ex-div day
-      const sameExDivAssets = assets.filter(other => 
-        other.exDivDay === asset.exDivDay && 
-        other.ticker !== asset.ticker &&
-        other.ticker !== 'CASH' &&
-        other.ticker !== 'SPY'
-      );
-      
       // Check if there's a lower-risk alternative with similar or better div capture (within 10% difference)
       const betterAlternatives = sameExDivAssets.filter(other => 
         other.risk < asset.risk && 
@@ -257,14 +274,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     
     // If this asset has risk > 40% and doesn't qualify for Rule 2, 
     // only include it if no lower-risk alternative exists on the same ex-div date
-    const sameExDivAssets = assets.filter(other => 
-      other.exDivDay === asset.exDivDay && 
-      other.ticker !== asset.ticker &&
-      other.ticker !== 'CASH' &&
-      other.ticker !== 'SPY'
-    );
-    
-    // Check if there's a lower-risk alternative on the same ex-div date
     const hasLowerRiskAlternative = sameExDivAssets.some(other => other.risk < asset.risk);
     
     if (hasLowerRiskAlternative) {
