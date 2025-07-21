@@ -1,12 +1,13 @@
 # Netlify configuration for YieldMax Analysis
 [build]
-  command = "cd yast-react && npm install && npm run build"
+  command = "cd yast-react && npm ci && npx vite build"
   publish = "yast-react/dist"
   
 [build.environment]
   NODE_VERSION = "18"
   PYTHON_VERSION = "3.12"
   NPM_FLAGS = "--legacy-peer-deps"
+  CI = "true"
 
 # Daily scheduled function (if using Netlify scheduled functions - requires Pro plan)
 # [[functions]]
