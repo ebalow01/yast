@@ -143,9 +143,9 @@ function calculateMPTAllocation(topPerformers: DividendData[]): { allocation: Al
     },
     {
       ticker: 'SPY',
-      return: 0.12, // 12% annual return
-      risk: 0.20, // 20% risk
-      sharpe: 0.12 / 0.20,
+      return: 0.1574, // Use actual SPY return from your data: 15.74%
+      risk: 0.205, // Use actual SPY risk from your data: 20.5%
+      sharpe: 0.1574 / 0.205,
       dividendCapture: 0.0
     }
   ];
@@ -238,6 +238,11 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   
   console.log('Div Capture ETFs (>30% div capture, 10% holding):', divCaptureETFs.map(etf => 
     `${etf.ticker}: ${(etf.dividendCapture*100).toFixed(1)}% div capture, ${(etf.risk*100).toFixed(1)}% risk`
+  ));
+  
+  // Debug: Show ALL assets and their values
+  console.log('ALL ASSETS:', assets.map(asset => 
+    `${asset.ticker}: return=${(asset.return*100).toFixed(1)}%, risk=${(asset.risk*100).toFixed(1)}%, divCapture=${(asset.dividendCapture*100).toFixed(1)}%`
   ));
   
   // Sort all assets by expected return (descending) for remaining allocation
@@ -457,10 +462,9 @@ export default function DividendAnalysisDashboard() {
         setData(performanceData);
         setMetadata(metadataData);
         
-        // Calculate MPT allocation for top performers
-        const topPerformers = performanceData.filter((item: DividendData) => item.category === 'top-performers');
-        if (topPerformers.length > 0) {
-          const { allocation, metrics } = calculateMPTAllocation(topPerformers);
+        // Calculate MPT allocation for ALL ETFs, not just top performers
+        if (performanceData.length > 0) {
+          const { allocation, metrics } = calculateMPTAllocation(performanceData);
           setMptAllocation(allocation);
           setPortfolioMetrics(metrics);
         }
