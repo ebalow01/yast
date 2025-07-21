@@ -256,7 +256,14 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     
     // If this asset qualifies for Rule 2 (>30% div capture), check if it's worth including
     if (asset.dividendCapture > 0.30) {
-      // For Rule 2 ETFs, be more selective - exclude if there are meaningfully better alternatives
+      // Special rule: If return < 40% and there are other ETFs on same ex-div day, exclude
+      if (asset.return < 0.40 && sameExDivAssets.length > 0) {
+        console.log(`Excluding Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return < 40%) - other ETFs exist on same ex-div day ${asset.exDivDay}:`, 
+          sameExDivAssets.map(alt => alt.ticker).join(', '));
+        return false;
+      }
+      
+      // For Rule 2 ETFs with ≥40% return, be more selective - exclude if there are meaningfully better alternatives
       const betterAlternatives = sameExDivAssets.filter(other => 
         other.risk < asset.risk && (
           // Either significantly better div capture (20% better)
