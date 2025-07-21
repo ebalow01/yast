@@ -204,25 +204,78 @@ function optimizePortfolio(assets: Asset[], totalAllocation: number): Allocation
 }
 
 function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): AllocationItem[] {
-  // Sort by expected return (descending) to maximize return
+  // First, identify ETFs that meet diversity criteria: >40% return AND <40% risk
+  const qualifyingETFs = assets.filter(asset => 
+    asset.ticker !== 'CASH' && 
+    asset.ticker !== 'SPY' && 
+    asset.return > 0.40 && 
+    asset.risk < 0.40
+  );
+  
+  console.log('Qualifying ETFs for mandatory inclusion:', qualifyingETFs.map(etf => 
+    `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk`
+  ));
+  
+  // Sort all assets by expected return (descending) to maximize return
   const sortedAssets = [...assets].sort((a, b) => b.return - a.return);
   
-  // Start with highest return assets and add them while staying under risk limit
+  // Start with mandatory qualifying ETFs with equal weight
   const allocation: AllocationItem[] = [];
   let totalWeight = 0;
   
-  // Limit individual positions (max 30% each for diversification)
-  const maxWeight = 0.30;
+  // Step 1: Add all qualifying ETFs with equal initial weights
+  if (qualifyingETFs.length > 0) {
+    const equalWeight = Math.min(0.80 / qualifyingETFs.length, 0.25); // Max 25% each, up to 80% total
+    
+    for (const asset of qualifyingETFs) {
+      allocation.push({
+        ticker: asset.ticker,
+        weight: equalWeight,
+        return: asset.return,
+        risk: asset.risk,
+        sharpe: asset.sharpe
+      });
+      totalWeight += equalWeight;
+    }
+    
+    // Check if this allocation meets risk constraint
+    let portfolioVariance = allocation.reduce((sum, a) => {
+      return sum + Math.pow(a.weight * a.risk, 2);
+    }, 0);
+    let portfolioRisk = Math.sqrt(portfolioVariance);
+    
+    console.log(`Initial allocation with ${qualifyingETFs.length} qualifying ETFs:`, 
+               `${(portfolioRisk*100).toFixed(1)}% risk, ${(totalWeight*100).toFixed(1)}% allocated`);
+    
+    // If initial allocation exceeds risk limit, scale down proportionally
+    if (portfolioRisk > maxRisk) {
+      const scaleFactor = maxRisk / portfolioRisk * 0.95; // 95% of max for safety buffer
+      allocation.forEach(asset => {
+        const oldWeight = asset.weight;
+        asset.weight *= scaleFactor;
+        totalWeight = totalWeight - oldWeight + asset.weight;
+      });
+      portfolioRisk = Math.sqrt(allocation.reduce((sum, a) => 
+        sum + Math.pow(a.weight * a.risk, 2), 0));
+      console.log(`Scaled down to meet risk constraint: ${(portfolioRisk*100).toFixed(1)}% risk`);
+    }
+  }
   
-  // Try to build portfolio iteratively
-  for (let i = 0; i < sortedAssets.length && totalWeight < 0.98; i++) {
-    const asset = sortedAssets[i];
+  // Step 2: Try to add remaining high-return assets if we have room
+  const remainingAssets = sortedAssets.filter(asset => 
+    !qualifyingETFs.some(qual => qual.ticker === asset.ticker) &&
+    asset.ticker !== 'CASH'
+  );
+  
+  for (const asset of remainingAssets) {
+    if (totalWeight >= 0.98) break; // Leave room for potential cash
     
-    // Start with a small weight and increase until risk constraint is hit
-    let testWeight = 0.05; // Start with 5%
+    // Try adding this asset with incremental weights
+    let testWeight = 0.02; // Start with 2%
     let bestWeight = 0;
+    const maxIndividualWeight = 0.25; // Max 25% for any single position
     
-    while (testWeight <= maxWeight && (totalWeight + testWeight) <= 1.0) {
+    while (testWeight <= maxIndividualWeight && (totalWeight + testWeight) <= 0.98) {
       // Create test allocation
       const testAllocation = [...allocation];
       testAllocation.push({
@@ -257,10 +310,11 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         sharpe: asset.sharpe
       });
       totalWeight += bestWeight;
+      console.log(`Added ${asset.ticker} with ${(bestWeight*100).toFixed(1)}% allocation`);
     }
   }
   
-  // If we still have remaining weight and low portfolio risk, add cash
+  // Step 3: Add cash if needed to reach 100%
   const remainingWeight = 1.0 - totalWeight;
   if (remainingWeight > 0.01) {
     allocation.push({
@@ -270,7 +324,15 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       risk: 0.0,
       sharpe: Infinity
     });
+    console.log(`Added ${(remainingWeight*100).toFixed(1)}% cash to complete allocation`);
   }
+  
+  // Final portfolio metrics
+  const finalVariance = allocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
+  const finalRisk = Math.sqrt(finalVariance);
+  const finalReturn = allocation.reduce((sum, a) => sum + (a.weight * a.return), 0);
+  
+  console.log(`Final portfolio: ${(finalReturn*100).toFixed(1)}% expected return, ${(finalRisk*100).toFixed(1)}% risk`);
   
   return allocation;
 }
