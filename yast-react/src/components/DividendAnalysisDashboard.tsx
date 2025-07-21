@@ -28,6 +28,7 @@ import {
   TrendingUp,
   TrendingDown
 } from '@mui/icons-material';
+import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
 
 export interface DividendData {
   ticker: string;
@@ -41,7 +42,7 @@ export interface DividendData {
   dcWinRate: number;
   riskVolatility: number;
   medianDividend: number;
-  category: 'top-performers' | 'excluded' | 'benchmark';
+  category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
 }
 
 const theme = createTheme({
@@ -109,6 +110,8 @@ interface Asset {
   sharpe: number;
   dividendCapture: number;
   exDivDay?: string;
+  isRule1?: boolean;  // Flag for Rule 1 ETFs (>40% return AND <40% risk)
+  isRule2?: boolean;  // Flag for Rule 2 ETFs (>30% div capture)
 }
 
 interface AllocationItem {
@@ -131,29 +134,40 @@ function calculateMPTAllocation(allData: DividendData[]): { allocation: Allocati
   
   // Add cash and SPY to the mix
   const assets: Asset[] = [
-    ...allETFs.map(etf => ({
-      ticker: etf.ticker,
-      return: etf.bestReturn,
-      risk: etf.riskVolatility,
-      sharpe: etf.bestReturn / etf.riskVolatility,
-      dividendCapture: etf.divCaptureReturn,
-      exDivDay: etf.exDivDay
-    })),
+    ...allETFs.map(etf => {
+      const isRule1 = etf.bestReturn > 0.40 && etf.riskVolatility < 0.40;
+      // Note: isRule2 will be determined later after checking for better alternatives
+      
+      return {
+        ticker: etf.ticker,
+        return: etf.bestReturn,
+        risk: etf.riskVolatility,
+        sharpe: etf.bestReturn / etf.riskVolatility,
+        dividendCapture: etf.divCaptureReturn,
+        exDivDay: etf.exDivDay,
+        isRule1: isRule1,
+        isRule2: false // Will be set later after filtering logic
+      };
+    }),
     {
       ticker: 'CASH',
       return: 0.045, // 4.5% annual yield
       risk: 0.0, // 0% risk
       sharpe: Infinity,
       dividendCapture: 0.0,
-      exDivDay: undefined
+      exDivDay: undefined,
+      isRule1: false,
+      isRule2: false
     },
     {
       ticker: 'SPY',
-      return: 0.1574, // Use actual SPY return from your data: 15.74%
-      risk: 0.205, // Use actual SPY risk from your data: 20.5%
+      return: 0.1574, // 15.74% from actual data
+      risk: 0.205, // 20.5% from actual data
       sharpe: 0.1574 / 0.205,
       dividendCapture: 0.0,
-      exDivDay: undefined
+      exDivDay: undefined,
+      isRule1: false,
+      isRule2: false
     }
   ];
 
@@ -234,6 +248,12 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     // Always include CASH and SPY
     if (asset.ticker === 'CASH' || asset.ticker === 'SPY') return true;
     
+    // ALWAYS INCLUDE Rule 1 and Rule 2 ETFs - they are protected from filtering
+    if (asset.isRule1 || asset.isRule2) {
+      console.log(`✅ PROTECTED: Including ${asset.ticker} - Rule ${asset.isRule1 ? '1' : '2'} ETF cannot be filtered out`);
+      return true;
+    }
+    
     // RULE 1 CHECK FIRST: ETFs with >40% return AND <40% risk are ALWAYS included
     if (asset.return > 0.40 && asset.risk < 0.40) {
       console.log(`✅ RULE 1: Including ${asset.ticker} (${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk) - meets >40% return AND <40% risk criteria`);
@@ -248,9 +268,9 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       other.ticker !== 'SPY'
     );
     
-    // RULE 2 CHECK: Rule 2 ETFs (>30% div capture) - these qualify regardless of risk BUT can be excluded if better alternatives exist
-    if (asset.dividendCapture > 0.30) {
-      console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture) ---`);
+    // RULE 2 CHECK: Rule 2 ETFs (>30% div capture AND <80% risk) - these qualify with risk cap BUT can be excluded if better alternatives exist
+    if (asset.dividendCapture > 0.30 && asset.risk < 0.80) {
+      console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture, ${(asset.risk*100).toFixed(1)}% risk) ---`);
       
       // Special rule: If there are BETTER ETFs on same ex-div day, exclude regardless of return threshold
       const betterSameExDivAssets = assets.filter(other => 
@@ -270,9 +290,12 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         return false;
       } else {
         console.log(`✅ Including ${asset.ticker} - no better ETFs on ${asset.exDivDay}`);
+        // SET Rule 2 flag here since no better alternatives exist
+        asset.isRule2 = true;
+        console.log(`🔒 SETTING Rule 2 flag for ${asset.ticker} - guaranteed 10% allocation`);
       }
       
-      console.log(`✅ Including Rule 2 ETF ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture) - qualifies regardless of risk`);
+      console.log(`✅ Including Rule 2 ETF ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture, ${(asset.risk*100).toFixed(1)}% risk) - qualifies with <80% risk cap`);
       return true;
     }
     
@@ -323,26 +346,20 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   
   // Rule 1: Identify ETFs with >40% return AND <40% risk (mandatory 10% minimum)
   const qualifyingETFs = workingAssets.filter(asset => 
-    asset.ticker !== 'CASH' && 
-    asset.ticker !== 'SPY' && 
-    asset.return > 0.40 && 
-    asset.risk < 0.40
+    asset.isRule1 || (asset.ticker !== 'CASH' && asset.ticker !== 'SPY' && asset.return > 0.40 && asset.risk < 0.40)
   );
   
-  // Rule 2: Identify ETFs with >30% dividend capture (10% holding regardless of risk)
+  // Rule 2: Identify ETFs with >30% dividend capture AND <80% risk (10% holding with risk cap)
   const divCaptureETFs = workingAssets.filter(asset => 
-    asset.ticker !== 'CASH' && 
-    asset.ticker !== 'SPY' && 
-    asset.dividendCapture > 0.30 &&
-    !qualifyingETFs.some(qual => qual.ticker === asset.ticker) // Don't double-count
+    asset.isRule2 || (asset.ticker !== 'CASH' && asset.ticker !== 'SPY' && asset.dividendCapture > 0.30 && asset.risk < 0.80 && !qualifyingETFs.some(qual => qual.ticker === asset.ticker))
   );
   
   console.log('Qualifying ETFs (>40% return AND <40% risk, min 10%):', qualifyingETFs.map(etf => 
-    `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk`
+    `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk${etf.isRule1 ? ' [RULE1]' : ''}`
   ));
   
-  console.log('Div Capture ETFs (>30% div capture, 10% holding):', divCaptureETFs.map(etf => 
-    `${etf.ticker}: ${(etf.dividendCapture*100).toFixed(1)}% div capture, ${(etf.risk*100).toFixed(1)}% risk`
+  console.log('Div Capture ETFs (>30% div capture AND <80% risk, 10% holding):', divCaptureETFs.map(etf => 
+    `${etf.ticker}: ${(etf.dividendCapture*100).toFixed(1)}% div capture, ${(etf.risk*100).toFixed(1)}% risk${etf.isRule2 ? ' [RULE2]' : ''}`
   ));
   
   // Debug: Show ALL WORKING assets and their values
@@ -358,6 +375,23 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   
   // Step 1: Add qualifying ETFs with minimum 10% each, cap at 20%
   for (const asset of qualifyingETFs) {
+    // ADDITIONAL CHECK: Even Rule 1 ETFs shouldn't get allocation if they're high-risk with lower-risk alternatives on same day
+    if (asset.risk > 0.40) {
+      const sameExDivAssets = assets.filter(other => 
+        other.exDivDay === asset.exDivDay && 
+        other.ticker !== asset.ticker &&
+        other.ticker !== 'CASH' &&
+        other.ticker !== 'SPY'
+      );
+      
+      const hasLowerRiskAlternative = sameExDivAssets.some(other => other.risk < asset.risk);
+      
+      if (hasLowerRiskAlternative) {
+        console.log(`⚠️ SKIPPING qualifying ETF ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk) - lower-risk alternative exists on ex-div ${asset.exDivDay}`);
+        continue; // Skip this asset even though it qualifies
+      }
+    }
+    
     const weight = Math.min(0.20, 0.10); // Start with 10%, max 20%
     allocation.push({
       ticker: asset.ticker,
@@ -370,7 +404,7 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (mandatory minimum)`);
   }
   
-  // Step 2: Add div capture ETFs with 10% each
+  // Step 2: Add div capture ETFs with 10% each (GUARANTEED allocation)
   for (const asset of divCaptureETFs) {
     if (totalWeight + 0.10 <= 1.0) {
       allocation.push({
@@ -381,7 +415,32 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         sharpe: asset.sharpe
       });
       totalWeight += 0.10;
-      console.log(`Added div capture ETF ${asset.ticker} with 10.0% allocation`);
+      console.log(`Added div capture ETF ${asset.ticker} with 10.0% allocation${asset.isRule2 ? ' [RULE2 GUARANTEED]' : ''}`);
+    } else {
+      // Even if we're over 100%, Rule 2 ETFs get their allocation by reducing others
+      if (asset.isRule2) {
+        // Force allocation by reducing other holdings proportionally
+        const reductionNeeded = 0.10;
+        const currentTotal = allocation.reduce((sum, a) => sum + a.weight, 0);
+        const reductionFactor = (currentTotal - reductionNeeded) / currentTotal;
+        
+        // Reduce all existing allocations proportionally
+        allocation.forEach(holding => {
+          holding.weight *= reductionFactor;
+        });
+        
+        // Add the Rule 2 ETF
+        allocation.push({
+          ticker: asset.ticker,
+          weight: 0.10,
+          return: asset.return,
+          risk: asset.risk,
+          sharpe: asset.sharpe
+        });
+        
+        totalWeight = allocation.reduce((sum, a) => sum + a.weight, 0);
+        console.log(`🔒 FORCED Rule 2 ETF ${asset.ticker} with 10.0% allocation [RULE2 GUARANTEED] - reduced others proportionally`);
+      }
     }
   }
   
@@ -433,6 +492,23 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   
   for (const asset of remainingAssets) {
     if (totalWeight >= 0.98) break; // Leave room for potential cash
+    
+    // ADDITIONAL CHECK: Don't add high-risk ETFs if lower-risk alternatives exist on same ex-div day
+    if (asset.risk > 0.40) {
+      const sameExDivAssets = assets.filter(other => 
+        other.exDivDay === asset.exDivDay && 
+        other.ticker !== asset.ticker &&
+        other.ticker !== 'CASH' &&
+        other.ticker !== 'SPY'
+      );
+      
+      const hasLowerRiskAlternative = sameExDivAssets.some(other => other.risk < asset.risk);
+      
+      if (hasLowerRiskAlternative) {
+        console.log(`⚠️ SKIPPING high-risk ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk) in Step 4 - lower-risk alternative exists on ex-div ${asset.exDivDay}`);
+        continue; // Skip this asset
+      }
+    }
     
     // Try adding this asset up to 20% allocation
     let testWeight = 0.02; // Start with 2%
@@ -540,6 +616,44 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Convert DividendAsset to DividendData format
+const convertAssetToData = (asset: DividendAsset): DividendData => {
+  // Convert percentages to decimals for consistent calculations
+  const returnDecimal = asset.return / 100;
+  const riskDecimal = asset.risk / 100;
+  const buyHoldReturnDecimal = asset.buyHoldReturn / 100;
+  const divCaptureReturnDecimal = asset.dividendCaptureReturn / 100;
+  const winRateDecimal = asset.winRate / 100;
+  
+  // Determine category based on performance and risk characteristics
+  let category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark' = 'excluded';
+  
+  if (asset.ticker === 'SPY') {
+    category = 'benchmark';
+  } else if (returnDecimal >= 0.40) {
+    category = 'top-performers';
+  } else if (returnDecimal >= 0.20) {
+    category = 'mid-performers';
+  } else if (returnDecimal >= 0.0) {
+    category = 'low-performers';
+  }
+  
+  return {
+    ticker: asset.ticker,
+    tradingDays: asset.tradingDays,
+    exDivDay: asset.exDivDay,
+    buyHoldReturn: buyHoldReturnDecimal,
+    divCaptureReturn: divCaptureReturnDecimal,
+    bestStrategy: asset.bestStrategy,
+    bestReturn: returnDecimal,
+    finalValue: asset.finalValue,
+    dcWinRate: winRateDecimal,
+    riskVolatility: riskDecimal,
+    medianDividend: asset.medianDividend,
+    category: category
+  };
+};
+
 export default function DividendAnalysisDashboard() {
   const [selectedTab, setSelectedTab] = useState(0);
   const [data, setData] = useState<DividendData[]>([]);
@@ -554,22 +668,14 @@ export default function DividendAnalysisDashboard() {
       try {
         setLoading(true);
         
-        // Load performance data
-        const performanceResponse = await fetch('/data/performance_data.json');
-        if (!performanceResponse.ok) throw new Error('Failed to load performance data');
-        const performanceData = await performanceResponse.json();
-        
-        // Load metadata
-        const metadataResponse = await fetch('/data/metadata.json');
-        if (!metadataResponse.ok) throw new Error('Failed to load metadata');
-        const metadataData = await metadataResponse.json();
-        
-        setData(performanceData);
-        setMetadata(metadataData);
+        // Convert imported data to the format expected by the dashboard
+        const convertedData = dividendData.map(convertAssetToData);
+        setData(convertedData);
+        setMetadata(analysisMetadata);
         
         // Calculate MPT allocation for ALL ETFs, not just top performers
-        if (performanceData.length > 0) {
-          const { allocation, metrics } = calculateMPTAllocation(performanceData);
+        if (convertedData.length > 0) {
+          const { allocation, metrics } = calculateMPTAllocation(convertedData);
           setMptAllocation(allocation);
           setPortfolioMetrics(metrics);
         }
@@ -694,12 +800,11 @@ export default function DividendAnalysisDashboard() {
   };
 
   const topPerformers = data.filter(item => 
-    item.category === 'top-performers' || 
     mptAllocation.some(allocation => allocation.ticker === item.ticker)
   );
   const excludedTickers = data.filter(item => 
-    item.category === 'excluded' && 
-    !mptAllocation.some(allocation => allocation.ticker === item.ticker)
+    !mptAllocation.some(allocation => allocation.ticker === item.ticker) &&
+    item.ticker !== 'SPY' // Keep SPY separate as benchmark, don't show in excluded
   );
 
   const renderTable = (data: DividendData[]) => (
@@ -830,12 +935,12 @@ export default function DividendAnalysisDashboard() {
               sx={{ borderBottom: 1, borderColor: 'divider' }}
             >
               <Tab
-                label={`Top Performers (${topPerformers.length})`}
+                label={`Optimal Portfolio (${topPerformers.length})`}
                 icon={<TrendingUp />}
                 iconPosition="start"
               />
               <Tab
-                label={`Excluded (${excludedTickers.length})`}
+                label={`All Other ETFs (${excludedTickers.length})`}
                 icon={<TrendingDown />}
                 iconPosition="start"
               />
@@ -843,10 +948,10 @@ export default function DividendAnalysisDashboard() {
 
             <TabPanel value={selectedTab} index={0}>
               <Typography variant="h6" gutterBottom>
-                Top Performing ETFs
+                Optimal Portfolio ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs with strong performance metrics or included in the optimal allocation portfolio
+                ETFs selected for the optimal allocation based on risk-adjusted returns and diversification
               </Typography>
               {renderTable(topPerformers)}
               
@@ -958,10 +1063,10 @@ export default function DividendAnalysisDashboard() {
 
             <TabPanel value={selectedTab} index={1}>
               <Typography variant="h6" gutterBottom>
-                Excluded ETFs
+                All Other ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs not included in the optimal allocation due to lower performance or higher risk metrics
+                All remaining ETFs analyzed but not included in the optimal allocation
               </Typography>
               {renderTable(excludedTickers)}
             </TabPanel>
