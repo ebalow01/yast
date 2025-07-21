@@ -215,7 +215,8 @@ function optimizePortfolio(assets: Asset[], totalAllocation: number): Allocation
 }
 
 function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): AllocationItem[] {
-  // Debug: Log all assets to see their actual values
+  // Version identifier for deployment verification
+  console.log('🚀 YAST Portfolio Optimizer - Version 2025-07-21-DEBUG - Commit: 9b74d7e');
   console.log('=== PORTFOLIO OPTIMIZATION DEBUG ===');
   console.log('All assets with return/risk values:');
   assets.forEach(asset => {
