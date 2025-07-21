@@ -588,8 +588,14 @@ export default function DividendAnalysisDashboard() {
     );
   };
 
-  const topPerformers = data.filter(item => item.category === 'top-performers');
-  const excludedTickers = data.filter(item => item.category === 'excluded');
+  const topPerformers = data.filter(item => 
+    item.category === 'top-performers' || 
+    mptAllocation.some(allocation => allocation.ticker === item.ticker)
+  );
+  const excludedTickers = data.filter(item => 
+    item.category === 'excluded' && 
+    !mptAllocation.some(allocation => allocation.ticker === item.ticker)
+  );
 
   const renderTable = (data: DividendData[]) => (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
@@ -611,16 +617,32 @@ export default function DividendAnalysisDashboard() {
           {data.map((item, index) => (
             <TableRow key={index} hover>
               <TableCell>
-                <Link
-                  href={`https://marketchameleon.com/Overview/${item.ticker}/`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{ textDecoration: 'none' }}
-                >
-                  <Typography variant="body2" fontWeight="bold" color="primary">
-                    {item.ticker}
-                  </Typography>
-                </Link>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Link
+                    href={`https://marketchameleon.com/Overview/${item.ticker}/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ textDecoration: 'none' }}
+                  >
+                    <Typography variant="body2" fontWeight="bold" color="primary">
+                      {item.ticker}
+                    </Typography>
+                  </Link>
+                  {mptAllocation.some(allocation => allocation.ticker === item.ticker) && (
+                    <Chip
+                      label="⭐"
+                      size="small"
+                      sx={{ 
+                        ml: 1,
+                        bgcolor: 'success.main',
+                        color: 'white',
+                        fontSize: '10px',
+                        height: '16px',
+                        minWidth: '16px'
+                      }}
+                    />
+                  )}
+                </Box>
               </TableCell>
               <TableCell align="center">{item.exDivDay}</TableCell>
               <TableCell align="center">
@@ -719,7 +741,7 @@ export default function DividendAnalysisDashboard() {
                 Top Performing ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs with annualized returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
+                ETFs with strong performance metrics or included in the optimal allocation portfolio
               </Typography>
               {renderTable(topPerformers)}
               
@@ -815,7 +837,7 @@ export default function DividendAnalysisDashboard() {
                 Excluded ETFs
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs with annualized returns at or below 40% or risk at or above 40%
+                ETFs not included in the optimal allocation due to lower performance or higher risk metrics
               </Typography>
               {renderTable(excludedTickers)}
             </TabPanel>
