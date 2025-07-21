@@ -108,6 +108,7 @@ interface Asset {
   risk: number;
   sharpe: number;
   dividendCapture: number;
+  exDivDay?: string;
 }
 
 interface AllocationItem {
@@ -132,21 +133,24 @@ function calculateMPTAllocation(topPerformers: DividendData[]): { allocation: Al
       return: etf.bestReturn,
       risk: etf.riskVolatility,
       sharpe: etf.bestReturn / etf.riskVolatility,
-      dividendCapture: etf.divCaptureReturn
+      dividendCapture: etf.divCaptureReturn,
+      exDivDay: etf.exDivDay
     })),
     {
       ticker: 'CASH',
       return: 0.045, // 4.5% annual yield
       risk: 0.0, // 0% risk
       sharpe: Infinity,
-      dividendCapture: 0.0
+      dividendCapture: 0.0,
+      exDivDay: undefined
     },
     {
       ticker: 'SPY',
       return: 0.1574, // Use actual SPY return from your data: 15.74%
       risk: 0.205, // Use actual SPY risk from your data: 20.5%
       sharpe: 0.1574 / 0.205,
-      dividendCapture: 0.0
+      dividendCapture: 0.0,
+      exDivDay: undefined
     }
   ];
 
@@ -212,12 +216,44 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   console.log('All assets with return/risk values:');
   assets.forEach(asset => {
     if (asset.ticker !== 'CASH') {
-      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture`);
+      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture, exDiv: ${asset.exDivDay}`);
     }
   });
   
+  // Filter out high-risk tickers (>40% risk) if lower-risk alternatives exist on the same ex-div date
+  const filteredAssets = assets.filter(asset => {
+    // Always include CASH and SPY
+    if (asset.ticker === 'CASH' || asset.ticker === 'SPY') return true;
+    
+    // If this asset has risk <= 40%, include it
+    if (asset.risk <= 0.40) return true;
+    
+    // If this asset has risk > 40%, only include it if no lower-risk alternative exists on the same ex-div date
+    const sameExDivAssets = assets.filter(other => 
+      other.exDivDay === asset.exDivDay && 
+      other.ticker !== asset.ticker &&
+      other.ticker !== 'CASH' &&
+      other.ticker !== 'SPY'
+    );
+    
+    // Check if there's a lower-risk alternative on the same ex-div date
+    const hasLowerRiskAlternative = sameExDivAssets.some(other => other.risk < asset.risk);
+    
+    if (hasLowerRiskAlternative) {
+      console.log(`Excluding high-risk ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk) - lower-risk alternative exists on ex-div ${asset.exDivDay}`);
+      return false;
+    }
+    
+    return true;
+  });
+  
+  console.log(`Filtered ${assets.length - filteredAssets.length} high-risk assets with lower-risk alternatives`);
+  
+  // Use filtered assets for the rest of the optimization
+  const workingAssets = filteredAssets;
+  
   // Rule 1: Identify ETFs with >40% return AND <40% risk (mandatory 10% minimum)
-  const qualifyingETFs = assets.filter(asset => 
+  const qualifyingETFs = workingAssets.filter(asset => 
     asset.ticker !== 'CASH' && 
     asset.ticker !== 'SPY' && 
     asset.return > 0.40 && 
@@ -225,7 +261,7 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   );
   
   // Rule 2: Identify ETFs with >30% dividend capture (10% holding regardless of risk)
-  const divCaptureETFs = assets.filter(asset => 
+  const divCaptureETFs = workingAssets.filter(asset => 
     asset.ticker !== 'CASH' && 
     asset.ticker !== 'SPY' && 
     asset.dividendCapture > 0.30 &&
@@ -240,13 +276,13 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     `${etf.ticker}: ${(etf.dividendCapture*100).toFixed(1)}% div capture, ${(etf.risk*100).toFixed(1)}% risk`
   ));
   
-  // Debug: Show ALL assets and their values
-  console.log('ALL ASSETS:', assets.map(asset => 
+  // Debug: Show ALL WORKING assets and their values
+  console.log('ALL WORKING ASSETS:', workingAssets.map(asset => 
     `${asset.ticker}: return=${(asset.return*100).toFixed(1)}%, risk=${(asset.risk*100).toFixed(1)}%, divCapture=${(asset.dividendCapture*100).toFixed(1)}%`
   ));
   
-  // Sort all assets by expected return (descending) for remaining allocation
-  const sortedAssets = [...assets].sort((a, b) => b.return - a.return);
+  // Sort all working assets by expected return (descending) for remaining allocation
+  const sortedAssets = [...workingAssets].sort((a, b) => b.return - a.return);
   
   const allocation: AllocationItem[] = [];
   let totalWeight = 0;
