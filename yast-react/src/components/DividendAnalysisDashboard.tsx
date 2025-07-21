@@ -216,12 +216,15 @@ function optimizePortfolio(assets: Asset[], totalAllocation: number): Allocation
 
 function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): AllocationItem[] {
   // Debug: Log all assets to see their actual values
+  console.log('=== PORTFOLIO OPTIMIZATION DEBUG ===');
   console.log('All assets with return/risk values:');
   assets.forEach(asset => {
     if (asset.ticker !== 'CASH') {
       console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture, exDiv: ${asset.exDivDay}`);
     }
   });
+  
+  console.log('\n=== FILTERING STAGE 1: HIGH RISK + WEAK PERFORMER FILTER ===');
   
   // Filter out high-risk tickers (>40% risk) if lower-risk alternatives exist on the same ex-div date
   // BUT preserve ETFs that qualify for Rule 2 (>30% div capture, 10% holding regardless of risk)
@@ -259,8 +262,12 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     
     // If this asset qualifies for Rule 2 (>30% div capture), check if it's worth including
     if (asset.dividendCapture > 0.30) {
+      console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture) ---`);
+      
       // Special rule: If return < 40% and there are other ETFs on same ex-div day, exclude
       if (asset.return < 0.40) {
+        console.log(`${asset.ticker} has return ${(asset.return*100).toFixed(1)}% < 40% threshold`);
+        
         const originalSameExDivAssets = assets.filter(other => 
           other.ticker !== asset.ticker && 
           other.exDivDay === asset.exDivDay &&
@@ -268,10 +275,14 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
           other.ticker !== 'SPY'
         );
         
+        console.log(`Other ETFs on same ex-div day ${asset.exDivDay}:`, originalSameExDivAssets.map(alt => alt.ticker));
+        
         if (originalSameExDivAssets.length > 0) {
-          console.log(`Excluding Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return < 40%) - other ETFs exist on same ex-div day ${asset.exDivDay}:`, 
+          console.log(`❌ EXCLUDING Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return < 40%) - other ETFs exist on same ex-div day ${asset.exDivDay}:`, 
             originalSameExDivAssets.map(alt => alt.ticker).join(', '));
           return false;
+        } else {
+          console.log(`✅ Including ${asset.ticker} despite low return - no other ETFs on ${asset.exDivDay}`);
         }
       }
       
@@ -307,6 +318,14 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     
     return true;
   });
+  
+  console.log('\n=== FILTERING RESULTS ===');
+  console.log('Filtered assets that passed all filters:');
+  const etfsPassedFilter = filteredAssets.filter(a => a.ticker !== 'CASH' && a.ticker !== 'SPY');
+  etfsPassedFilter.forEach(asset => {
+    console.log(`✅ ${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture, ${asset.exDivDay}`);
+  });
+  console.log('=== END FILTERING DEBUG ===\n');
   
   console.log(`Filtered ${assets.length - filteredAssets.length} high-risk assets with lower-risk alternatives`);
   
