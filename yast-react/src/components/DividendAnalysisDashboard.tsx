@@ -273,37 +273,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       return true;
     }
     
-    // FIRST: Check if this is a Rule 2 ETF (>30% div capture) - these qualify regardless of risk
-    if (asset.dividendCapture > 0.30) {
-      console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture) ---`);
-      
-      // Special rule: If return < 40% and there are BETTER ETFs on same ex-div day, exclude
-      if (asset.return < 0.40) {
-        console.log(`${asset.ticker} has return ${(asset.return*100).toFixed(1)}% < 40% threshold`);
-        
-        const betterSameExDivAssets = assets.filter(other => 
-          other.ticker !== asset.ticker && 
-          other.exDivDay === asset.exDivDay &&
-          other.ticker !== 'CASH' && 
-          other.ticker !== 'SPY' &&
-          other.return > asset.return // Only count BETTER alternatives
-        );
-        
-        console.log(`Better ETFs on same ex-div day ${asset.exDivDay}:`, betterSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`));
-        
-        if (betterSameExDivAssets.length > 0) {
-          console.log(`❌ EXCLUDING Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return < 40%) - better ETFs exist on same ex-div day ${asset.exDivDay}:`, 
-            betterSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`).join(', '));
-          return false;
-        } else {
-          console.log(`✅ Including ${asset.ticker} despite low return - no better ETFs on ${asset.exDivDay}`);
-        }
-      }
-      
-      console.log(`✅ Including Rule 2 ETF ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture) - qualifies regardless of risk`);
-      return true;
-    }
-    
     // SECOND: For non-Rule 2 ETFs, apply risk and performance filters
     // If this asset has risk <= 40%, check if it should still be included
     if (asset.risk <= 0.40) {
