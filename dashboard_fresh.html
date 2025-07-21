@@ -816,7 +816,23 @@
                 `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk`
             ));
             
-            // Sort all assets by expected return (descending) to maximize return
+            // Rule 2: Identify ETFs with >30% dividend capture (10% holding regardless of risk)
+            const divCaptureETFs = assets.filter(asset => 
+                asset.ticker !== 'CASH' && 
+                asset.ticker !== 'SPY' && 
+                asset.dividendCapture > 0.30 &&
+                !qualifyingETFs.some(qual => qual.ticker === asset.ticker) // Don't double-count
+            );
+            
+            console.log('Qualifying ETFs (>40% return AND <40% risk, min 10%):', qualifyingETFs.map(etf => 
+                `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk`
+            ));
+            
+            console.log('Div Capture ETFs (>30% div capture, 10% holding):', divCaptureETFs.map(etf => 
+                `${etf.ticker}: ${(etf.dividendCapture*100).toFixed(1)}% div capture, ${(etf.risk*100).toFixed(1)}% risk`
+            ));
+            
+            // Sort all assets by expected return (descending) for remaining allocation
             const sortedAssets = [...assets].sort((a, b) => b.return - a.return);
             
             // Start with mandatory qualifying ETFs with equal weight

@@ -107,6 +107,7 @@ interface Asset {
   return: number;
   risk: number;
   sharpe: number;
+  dividendCapture: number;
 }
 
 interface AllocationItem {
@@ -130,19 +131,22 @@ function calculateMPTAllocation(topPerformers: DividendData[]): { allocation: Al
       ticker: etf.ticker,
       return: etf.bestReturn,
       risk: etf.riskVolatility,
-      sharpe: etf.bestReturn / etf.riskVolatility
+      sharpe: etf.bestReturn / etf.riskVolatility,
+      dividendCapture: etf.divCaptureReturn
     })),
     {
       ticker: 'CASH',
       return: 0.045, // 4.5% annual yield
       risk: 0.0, // 0% risk
-      sharpe: Infinity
+      sharpe: Infinity,
+      dividendCapture: 0.0
     },
     {
       ticker: 'SPY',
       return: 0.12, // 12% annual return
       risk: 0.20, // 20% risk
-      sharpe: 0.12 / 0.20
+      sharpe: 0.12 / 0.20,
+      dividendCapture: 0.0
     }
   ];
 
@@ -208,11 +212,11 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   console.log('All assets with return/risk values:');
   assets.forEach(asset => {
     if (asset.ticker !== 'CASH') {
-      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk`);
+      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture`);
     }
   });
   
-  // First, identify ETFs that meet diversity criteria: >40% return AND <40% risk
+  // Rule 1: Identify ETFs with >40% return AND <40% risk (mandatory 10% minimum)
   const qualifyingETFs = assets.filter(asset => 
     asset.ticker !== 'CASH' && 
     asset.ticker !== 'SPY' && 
@@ -220,77 +224,112 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     asset.risk < 0.40
   );
   
-  console.log('Qualifying ETFs for mandatory inclusion (>40% return AND <40% risk):', qualifyingETFs.map(etf => 
+  // Rule 2: Identify ETFs with >30% dividend capture (10% holding regardless of risk)
+  const divCaptureETFs = assets.filter(asset => 
+    asset.ticker !== 'CASH' && 
+    asset.ticker !== 'SPY' && 
+    asset.dividendCapture > 0.30 &&
+    !qualifyingETFs.some(qual => qual.ticker === asset.ticker) // Don't double-count
+  );
+  
+  console.log('Qualifying ETFs (>40% return AND <40% risk, min 10%):', qualifyingETFs.map(etf => 
     `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk`
   ));
   
-  // Sort all assets by expected return (descending) to maximize return
+  console.log('Div Capture ETFs (>30% div capture, 10% holding):', divCaptureETFs.map(etf => 
+    `${etf.ticker}: ${(etf.dividendCapture*100).toFixed(1)}% div capture, ${(etf.risk*100).toFixed(1)}% risk`
+  ));
+  
+  // Sort all assets by expected return (descending) for remaining allocation
   const sortedAssets = [...assets].sort((a, b) => b.return - a.return);
   
-  // Start with mandatory qualifying ETFs with equal weight
   const allocation: AllocationItem[] = [];
   let totalWeight = 0;
   
-  // Step 1: Add all qualifying ETFs with equal initial weights
-  if (qualifyingETFs.length > 0) {
-    const equalWeight = Math.min(0.80 / qualifyingETFs.length, 0.25); // Max 25% each, up to 80% total
-    
-    for (const asset of qualifyingETFs) {
+  // Step 1: Add qualifying ETFs with minimum 10% each, cap at 20%
+  for (const asset of qualifyingETFs) {
+    const weight = Math.min(0.20, 0.10); // Start with 10%, max 20%
+    allocation.push({
+      ticker: asset.ticker,
+      weight: weight,
+      return: asset.return,
+      risk: asset.risk,
+      sharpe: asset.sharpe
+    });
+    totalWeight += weight;
+    console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (mandatory minimum)`);
+  }
+  
+  // Step 2: Add div capture ETFs with 10% each
+  for (const asset of divCaptureETFs) {
+    if (totalWeight + 0.10 <= 1.0) {
       allocation.push({
         ticker: asset.ticker,
-        weight: equalWeight,
+        weight: 0.10,
         return: asset.return,
         risk: asset.risk,
         sharpe: asset.sharpe
       });
-      totalWeight += equalWeight;
-    }
-    
-    // Check if this allocation meets risk constraint
-    let portfolioVariance = allocation.reduce((sum, a) => {
-      return sum + Math.pow(a.weight * a.risk, 2);
-    }, 0);
-    let portfolioRisk = Math.sqrt(portfolioVariance);
-    
-    console.log(`Initial allocation with ${qualifyingETFs.length} qualifying ETFs:`, 
-               `${(portfolioRisk*100).toFixed(1)}% risk, ${(totalWeight*100).toFixed(1)}% allocated`);
-    
-    // If initial allocation exceeds risk limit, scale down proportionally
-    if (portfolioRisk > maxRisk) {
-      const scaleFactor = maxRisk / portfolioRisk * 0.95; // 95% of max for safety buffer
-      allocation.forEach(asset => {
-        const oldWeight = asset.weight;
-        asset.weight *= scaleFactor;
-        totalWeight = totalWeight - oldWeight + asset.weight;
-      });
-      portfolioRisk = Math.sqrt(allocation.reduce((sum, a) => 
-        sum + Math.pow(a.weight * a.risk, 2), 0));
-      console.log(`Scaled down to meet risk constraint: ${(portfolioRisk*100).toFixed(1)}% risk`);
+      totalWeight += 0.10;
+      console.log(`Added div capture ETF ${asset.ticker} with 10.0% allocation`);
     }
   }
   
-  // Step 2: Try to add remaining high-return assets if we have room
-  const remainingAssets = sortedAssets.filter(asset => 
-    !qualifyingETFs.some(qual => qual.ticker === asset.ticker) &&
-    asset.ticker !== 'CASH' &&
-    // Only allow SPY if no qualifying ETFs were found
-    (asset.ticker !== 'SPY' || qualifyingETFs.length === 0)
-  );
+  // Check portfolio risk so far
+  let portfolioVariance = allocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
+  let portfolioRisk = Math.sqrt(portfolioVariance);
   
-  console.log('Remaining assets to consider:', remainingAssets.map(asset => 
-    `${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk`
-  ));
+  console.log(`After mandatory allocations: ${(portfolioRisk*100).toFixed(1)}% risk, ${(totalWeight*100).toFixed(1)}% allocated`);
+  
+  // Step 3: Try to increase allocations of existing holdings up to 20% cap if risk allows
+  for (const holding of allocation) {
+    if (holding.weight < 0.20 && totalWeight < 1.0) {
+      // Try increasing this holding to 20%
+      const maxIncrease = Math.min(0.20 - holding.weight, 1.0 - totalWeight);
+      let bestIncrease = 0;
+      
+      // Test incremental increases
+      for (let increase = 0.01; increase <= maxIncrease; increase += 0.01) {
+        const testAllocation = allocation.map(a => 
+          a.ticker === holding.ticker 
+            ? { ...a, weight: a.weight + increase }
+            : a
+        );
+        
+        const testVariance = testAllocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
+        const testRisk = Math.sqrt(testVariance);
+        
+        if (testRisk <= maxRisk) {
+          bestIncrease = increase;
+        } else {
+          break;
+        }
+      }
+      
+      if (bestIncrease > 0) {
+        holding.weight += bestIncrease;
+        totalWeight += bestIncrease;
+        console.log(`Increased ${holding.ticker} by ${(bestIncrease*100).toFixed(1)}% to ${(holding.weight*100).toFixed(1)}%`);
+      }
+    }
+  }
+  
+  // Step 4: Try to add remaining high-return assets up to 20% each if room and risk allows
+  const remainingAssets = sortedAssets.filter(asset => 
+    !allocation.some(a => a.ticker === asset.ticker) &&
+    asset.ticker !== 'CASH' &&
+    asset.ticker !== 'SPY'
+  );
   
   for (const asset of remainingAssets) {
     if (totalWeight >= 0.98) break; // Leave room for potential cash
     
-    // Try adding this asset with incremental weights
+    // Try adding this asset up to 20% allocation
     let testWeight = 0.02; // Start with 2%
     let bestWeight = 0;
-    const maxIndividualWeight = 0.25; // Max 25% for any single position
+    const maxWeight = 0.20; // Cap at 20%
     
-    while (testWeight <= maxIndividualWeight && (totalWeight + testWeight) <= 0.98) {
-      // Create test allocation
+    while (testWeight <= maxWeight && (totalWeight + testWeight) <= 0.98) {
       const testAllocation = [...allocation];
       testAllocation.push({
         ticker: asset.ticker,
@@ -300,22 +339,18 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         sharpe: asset.sharpe
       });
       
-      // Calculate test portfolio risk
-      const testPortfolioVariance = testAllocation.reduce((sum, a) => {
-        return sum + Math.pow(a.weight * a.risk, 2);
-      }, 0);
-      const testPortfolioRisk = Math.sqrt(testPortfolioVariance);
+      const testVariance = testAllocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
+      const testRisk = Math.sqrt(testVariance);
       
-      if (testPortfolioRisk <= maxRisk) {
+      if (testRisk <= maxRisk) {
         bestWeight = testWeight;
-        testWeight += 0.01; // Increase by 1%
+        testWeight += 0.01;
       } else {
         break;
       }
     }
     
-    // Add the asset with the best weight if it's meaningful
-    if (bestWeight >= 0.02) { // Minimum 2% allocation
+    if (bestWeight >= 0.02) {
       allocation.push({
         ticker: asset.ticker,
         weight: bestWeight,
@@ -328,9 +363,9 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     }
   }
   
-  // Step 3: Add cash if needed to reach 100%
+  // Step 5: Only add cash if we have significant remaining weight (>5%)
   const remainingWeight = 1.0 - totalWeight;
-  if (remainingWeight > 0.01) {
+  if (remainingWeight > 0.05) {
     allocation.push({
       ticker: 'CASH',
       weight: remainingWeight,
