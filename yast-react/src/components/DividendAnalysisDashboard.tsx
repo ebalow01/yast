@@ -125,10 +125,13 @@ interface PortfolioMetrics {
   sharpeRatio: number;
 }
 
-function calculateMPTAllocation(topPerformers: DividendData[]): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
+function calculateMPTAllocation(allData: DividendData[]): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
+  // Use ALL data (not just top performers) so filtering logic can work properly
+  const allETFs = allData.filter(etf => etf.ticker !== 'SPY' && etf.category !== 'benchmark');
+  
   // Add cash and SPY to the mix
   const assets: Asset[] = [
-    ...topPerformers.map(etf => ({
+    ...allETFs.map(etf => ({
       ticker: etf.ticker,
       return: etf.bestReturn,
       risk: etf.riskVolatility,
