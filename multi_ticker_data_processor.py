@@ -111,6 +111,82 @@ TICKER_CONFIGS = {
     'TSLW': {
         'start_date': 'auto_detect',
         'name': 'YieldMax Tesla Option Income Strategy ETF'
+    },
+    'USOY': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Oil Enhanced Options Income ETF'
+    },
+    'TSYY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBOOST TSLA ETF'
+    },
+    'YETH': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill Ether Covered Call Strategy ETF'
+    },
+    'QQQY': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Nasdaq 100 Enhanced Options & 0DTE Income ETF'
+    },
+    'WDTE': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance S&P 500 Target 30 Income ETF'
+    },
+    'YBTC': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill Bitcoin Covered Call Strategy ETF'
+    },
+    'QDTE': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill Innovation-100 0DTE Covered Call Strategy ETF'
+    },
+    'XDTE': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill S&P 500 0DTE Covered Call Strategy ETF'
+    },
+    'TQQY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBOOST QQQ ETF'
+    },
+    'YSPY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBOOST SPY ETF'
+    },
+    'XBTY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBOOST Bitcoin ETF'
+    },
+    'GLDY': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Gold Enhanced Options Income ETF'
+    },
+    'NVYY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBOOST NVDA ETF'
+    },
+    'MAGY': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill Magnificent Seven Covered Call ETF'
+    },
+    'TSII': {
+        'start_date': 'auto_detect',
+        'name': 'REX TSLA Growth & Income ETF'
+    },
+    'NVII': {
+        'start_date': 'auto_detect',
+        'name': 'REX NVDA Growth & Income ETF'
+    },
+    'BCCC': {
+        'start_date': 'auto_detect',
+        'name': 'Global X Bitcoin Covered Call ETF'
+    },
+    'MMKT': {
+        'start_date': 'auto_detect',
+        'name': 'Texas Capital Government Money Market ETF'
+    },
+    'WEEK': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill Weekly T-Bill ETF'
     }
 }
 
