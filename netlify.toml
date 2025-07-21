@@ -1,6 +1,6 @@
 # Netlify configuration for YieldMax Analysis
 [build]
-  command = "python scripts/build_web.py && cd yast-react && npm install && npm run build && cp ../dashboard_fresh.html dist/static-dashboard.html"
+  command = "cd yast-react && npm install && npm run build"
   publish = "yast-react/dist"
   
 [build.environment]
