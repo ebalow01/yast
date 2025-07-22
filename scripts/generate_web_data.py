@@ -37,7 +37,7 @@ def calculate_forward_yield(ticker, median_dividend):
     """
     Calculate forward yield: (median dividend * 52) / current price * 100
     """
-    print(f"🔄 Calculating forward yield for {ticker} (dividend: ${median_dividend})")
+    print(f"Calculating forward yield for {ticker} (dividend: ${median_dividend})")
     
     try:
         # Get current price from yfinance
@@ -144,9 +144,19 @@ def process_analysis_data(web_data_dir):
     
     # Find the latest comprehensive table file
     comprehensive_files = []
-    for file in os.listdir('.'):
-        if file.startswith('comprehensive_sorted_table_') and file.endswith('.txt'):
-            comprehensive_files.append(file)
+    
+    # Check in parent directory first
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # First check for cleaned file
+    cleaned_file_path = os.path.join(parent_dir, 'comprehensive_sorted_table_cleaned.txt')
+    if os.path.exists(cleaned_file_path):
+        comprehensive_files.append(cleaned_file_path)
+    else:
+        # Fall back to regular files in parent directory
+        for file in os.listdir(parent_dir):
+            if file.startswith('comprehensive_sorted_table_') and file.endswith('.txt'):
+                comprehensive_files.append(os.path.join(parent_dir, file))
     
     if not comprehensive_files:
         print("WARNING: No comprehensive table file found. Creating fallback data.")
@@ -160,8 +170,25 @@ def process_analysis_data(web_data_dir):
     analysis_data = []
     
     try:
-        with open(latest_file, 'r') as f:
-            lines = f.readlines()
+        # Try UTF-8 first, fallback to Windows encoding
+        try:
+            with open(latest_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        except UnicodeDecodeError:
+            # Try Windows-1252 encoding which handles more characters
+            try:
+                with open(latest_file, 'r', encoding='windows-1252') as f:
+                    lines = f.readlines()
+            except UnicodeDecodeError:
+                # Final fallback - read as binary and clean
+                with open(latest_file, 'rb') as f:
+                    content = f.read()
+                    # Clean problematic characters
+                    content = content.replace(b'\x95', b'*')  # Replace bullet with asterisk
+                    content = content.replace(b'\x94', b'"')  # Replace smart quote
+                    content = content.replace(b'\x93', b'"')  # Replace smart quote
+                    lines = content.decode('utf-8', errors='ignore').splitlines()
+                    lines = [line + '\n' for line in lines]  # Add newlines back
         
         # Find the data sections
         parsing_data = False
@@ -225,21 +252,18 @@ def process_analysis_data(web_data_dir):
                     div_capture_str = line[41:53].strip().replace('%', '')
                     div_capture_return = float(div_capture_str) / 100 if div_capture_str and div_capture_str != 'N/A' else 0.0
                     
-                    # Parse best strategy from the longer field
-                    best_strategy_field = line[54:70].strip()
-                    if 'DC:' in best_strategy_field:
+                    # Debug output
+                    print(f"   {ticker}: B&H={buy_hold_return:.4f} ({buy_hold_str}), DC={div_capture_return:.4f} ({div_capture_str})")
+                    
+                    # Determine best strategy by comparing actual returns
+                    if div_capture_return > buy_hold_return:
                         best_strategy = 'DC'
-                        # Extract the percentage after DC:
-                        best_return_str = best_strategy_field.split('DC:')[1].strip()
-                        best_return = float(best_return_str.replace('%', '')) / 100 if best_return_str != 'N/A' else div_capture_return
-                    elif 'B&H:' in best_strategy_field:
-                        best_strategy = 'B&H'
-                        # Extract the percentage after B&H:
-                        best_return_str = best_strategy_field.split('B&H:')[1].strip()
-                        best_return = float(best_return_str.replace('%', '')) / 100 if best_return_str != 'N/A' else buy_hold_return
+                        best_return = div_capture_return
+                        print(f"   {ticker}: DC wins ({div_capture_return:.4f} > {buy_hold_return:.4f})")
                     else:
                         best_strategy = 'B&H'
                         best_return = buy_hold_return
+                        print(f"   {ticker}: B&H wins ({buy_hold_return:.4f} > {div_capture_return:.4f})")
                     
                     final_value_str = line[71:83].strip().replace('$', '').replace(',', '')
                     final_value = float(final_value_str) if final_value_str and final_value_str != 'N/A' else 100000.0
@@ -287,8 +311,11 @@ def process_analysis_data(web_data_dir):
                         'forwardYield': forward_yield,
                         'category': category
                     })
+                except UnicodeEncodeError as e:
+                    print(f"Warning: Unicode encoding error in line parsing. Error: {e}")
+                    continue
                 except (ValueError, IndexError, AttributeError) as e:
-                    print(f"Warning: Could not parse line: {line}. Error: {e}")
+                    print(f"Warning: Could not parse line for ticker parsing. Error: {e}")
                     continue
     
     except Exception as e:
