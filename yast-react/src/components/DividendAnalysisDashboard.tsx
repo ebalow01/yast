@@ -894,8 +894,8 @@ export default function DividendAnalysisDashboard() {
   );
 
   const renderTable = (data: DividendData[]) => (
-    <TableContainer component={Paper} sx={{ mt: 2 }}>
-      <Table size="small" stickyHeader>
+    <TableContainer component={Paper} sx={{ mt: 2, overflowX: 'auto' }}>
+      <Table size="small" stickyHeader sx={{ minWidth: 800 }}>
         <TableHead>
           <TableRow>
             <TableCell><strong>Ticker</strong></TableCell>
@@ -1013,7 +1013,7 @@ export default function DividendAnalysisDashboard() {
               Last Updated: {metadata.analysisDate}
             </Typography>
           </Toolbar>
-        </AppBar>        <Container maxWidth="lg" sx={{ py: 4 }}>
+        </AppBar>        <Container maxWidth="xl" sx={{ py: 4 }}>
           <Paper sx={{ width: '100%', mb: 2 }}>
             <Tabs
               value={selectedTab}
