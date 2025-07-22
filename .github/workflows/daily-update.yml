@@ -53,11 +53,15 @@ jobs:
         git config --local user.name "GitHub Action"
         git config --local advice.addIgnoredFile false
         
-        # Add files that exist
+        # Only add files that are NOT ignored by .gitignore
+        # Add web data files (these are explicitly not ignored)
         find yast-react/public/data -name "*.json" -exec git add {} \; 2>/dev/null || echo "No JSON files to add"
-        find data -name "*.csv" -exec git add {} \; 2>/dev/null || echo "No CSV files to add"  
+        
+        # Add analysis output files (if they exist and aren't ignored)
         find . -maxdepth 1 -name "comprehensive_sorted_table_*.txt" -exec git add {} \; 2>/dev/null || echo "No table files to add"
         find . -maxdepth 1 -name "multi_ticker_analysis_*.txt" -exec git add {} \; 2>/dev/null || echo "No analysis files to add"
+        
+        # Don't try to add data/*.csv files as they are ignored by .gitignore
         
         # Check if there are any changes
         if git diff --staged --quiet; then
