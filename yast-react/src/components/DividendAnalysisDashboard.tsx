@@ -745,7 +745,7 @@ export default function DividendAnalysisDashboard() {
               exDivDay: item.exDivDay,
               buyHoldReturn: item.buyHoldReturn, // Already in decimal format
               divCaptureReturn: item.divCaptureReturn, // Already in decimal format
-              bestStrategy: item.bestStrategy === 'Buy & Hold' ? 'B&H' : 'DC',
+              bestStrategy: item.bestStrategy, // JSON already contains "B&H" or "DC"
               bestReturn: item.bestReturn, // Already in decimal format
               finalValue: item.finalValue,
               dcWinRate: item.dcWinRate, // Already in decimal format

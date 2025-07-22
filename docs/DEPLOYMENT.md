@@ -2,7 +2,15 @@
 
 This guide covers multiple deployment options for publishing your YieldMax ETF analysis system to a public website.
 
-## 🚀 Quick Deployment Options
+├── run_analysis.ps1                 # PowerShell script
+├── run_analysis.bat                 # Windows batch script
+├── multi_ticker_orchestrator.py    # Main analysis
+├── multi_ticker_data_processor.py  # Data processing
+├── ulty_*.py                       # Strategy modules
+├── data/                           # Generated data (gitignored)
+├── scripts/
+│   ├── generate_web_data.py        # Web data generator
+│   └── setup_dirs.bat             # Directory setupck Deployment Options
 
 ### Option 1: GitHub Pages (Free, Easy)
 **Best for**: Static websites, documentation, React apps
@@ -17,10 +25,10 @@ This guide covers multiple deployment options for publishing your YieldMax ETF a
    - Folder: `/ (root)` or `/docs`
 
 2. **Build React App**:
-   ```bash
+   ```powershell
    cd yast-react
    npm run build
-   cp -r dist/* ../docs/
+   Copy-Item -Recurse -Force dist\* ..\docs\
    ```
 
 3. **Access**: Your site will be at `https://YOUR_USERNAME.github.io/yast`
@@ -84,7 +92,7 @@ This guide covers multiple deployment options for publishing your YieldMax ETF a
    - Follow installation wizard
 
 2. **Initialize Git Repository**:
-   ```bash
+   ```powershell
    cd c:\Users\ebalo\yast
    git init
    git add .
@@ -99,7 +107,7 @@ This guide covers multiple deployment options for publishing your YieldMax ETF a
    - Don't initialize with README (you already have one)
 
 4. **Push to GitHub**:
-   ```bash
+   ```powershell
    git remote add origin https://github.com/YOUR_USERNAME/REPO_NAME.git
    git branch -M main
    git push -u origin main
