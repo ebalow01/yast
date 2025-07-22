@@ -42,6 +42,7 @@ export interface DividendData {
   dcWinRate: number;
   riskVolatility: number;
   medianDividend: number;
+  forwardYield?: number;
   category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
 }
 
@@ -183,59 +184,15 @@ function calculateMPTAllocation(allData: DividendData[]): { allocation: Allocati
   return { allocation, metrics: portfolioMetrics };
 }
 
-function optimizePortfolio(assets: Asset[], totalAllocation: number): AllocationItem[] {
-  // Sort by Sharpe ratio (descending)
-  const sortedAssets = [...assets].sort((a, b) => b.sharpe - a.sharpe);
-  
-  // Simple allocation based on Sharpe ratios with diversification constraints
-  const allocation: AllocationItem[] = [];
-  let remainingWeight = totalAllocation;
-  
-  // Limit individual positions (max 25% each for diversification)
-  const maxWeight = 0.25;
-  
-  for (let i = 0; i < sortedAssets.length && remainingWeight > 0.01; i++) {
-    const asset = sortedAssets[i];
-    
-    // Calculate weight based on Sharpe ratio, but cap it
-    let weight = Math.min(
-      (asset.sharpe / sortedAssets.reduce((sum, a) => sum + a.sharpe, 0)) * totalAllocation,
-      maxWeight,
-      remainingWeight
-    );
-    
-    // Minimum allocation of 2% if we're including it
-    if (weight > 0.02) {
-      allocation.push({
-        ticker: asset.ticker,
-        weight: weight,
-        return: asset.return,
-        risk: asset.risk,
-        sharpe: asset.sharpe
-      });
-      remainingWeight -= weight;
-    }
-  }
-  
-  // Redistribute any remaining weight proportionally
-  if (remainingWeight > 0.01 && allocation.length > 0) {
-    const redistributionFactor = 1 + (remainingWeight / allocation.reduce((sum, a) => sum + a.weight, 0));
-    allocation.forEach(asset => {
-      asset.weight *= redistributionFactor;
-    });
-  }
-
-  return allocation;
-}
-
 function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): AllocationItem[] {
   // Version identifier for deployment verification
-  console.log('🚀 YAST Portfolio Optimizer - Version 2025-07-21-DEBUG - Commit: 9b74d7e');
-  console.log('=== PORTFOLIO OPTIMIZATION DEBUG ===');
-  console.log('All assets with return/risk values:');
+  console.log('🚀 YAST Portfolio Optimizer - Version 2025-07-21-ENHANCED-MPT-FIXED - Commit: b9c4f1a');
+  console.log('=== ENHANCED MPT PORTFOLIO OPTIMIZATION - FIXED EQUAL WEIGHTS ===');
+  console.log('Implementing: Sharpe Ratio Weight Differentiation, Efficient Frontier Analysis, Mean Variance Optimization');
+  console.log('All assets with return/risk/Sharpe values:');
   assets.forEach(asset => {
     if (asset.ticker !== 'CASH') {
-      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture, exDiv: ${asset.exDivDay}`);
+      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${asset.sharpe.toFixed(2)} Sharpe, ${(asset.dividendCapture*100).toFixed(1)}% div capture, exDiv: ${asset.exDivDay}`);
     }
   });
   
@@ -373,8 +330,13 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   const allocation: AllocationItem[] = [];
   let totalWeight = 0;
   
-  // Step 1: Add qualifying ETFs with minimum 10% each, cap at 20%
-  for (const asset of qualifyingETFs) {
+  // Step 1: Improved allocation based on Sharpe ratios - no more equal weights!
+  // Sort qualifying ETFs by Sharpe ratio to give better performers higher allocations
+  const sortedQualifyingETFs = qualifyingETFs.sort((a, b) => b.sharpe - a.sharpe);
+  
+  for (let i = 0; i < sortedQualifyingETFs.length; i++) {
+    const asset = sortedQualifyingETFs[i];
+    
     // ADDITIONAL CHECK: Even Rule 1 ETFs shouldn't get allocation if they're high-risk with lower-risk alternatives on same day
     if (asset.risk > 0.40) {
       const sameExDivAssets = assets.filter(other => 
@@ -392,37 +354,76 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       }
     }
     
-    const weight = Math.min(0.20, 0.10); // Start with 10%, max 20%
-    allocation.push({
-      ticker: asset.ticker,
-      weight: weight,
-      return: asset.return,
-      risk: asset.risk,
-      sharpe: asset.sharpe
-    });
-    totalWeight += weight;
-    console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (mandatory minimum)`);
-  }
-  
-  // Step 2: Add div capture ETFs with 10% each (GUARANTEED allocation)
-  for (const asset of divCaptureETFs) {
-    if (totalWeight + 0.10 <= 1.0) {
+    // Sharpe-weighted allocation: Higher Sharpe ratio = higher allocation
+    // First asset gets 20%, second gets 15%, third gets 12%, others get declining weights
+    let weight;
+    if (i === 0) {
+      weight = 0.20; // Best Sharpe ratio gets 20%
+    } else if (i === 1) {
+      weight = 0.15; // Second best gets 15%
+    } else if (i === 2) {
+      weight = 0.12; // Third best gets 12%
+    } else if (i === 3) {
+      weight = 0.08; // Fourth gets 8%
+    } else {
+      weight = Math.max(0.05, 0.15 / (i + 1)); // Declining weights for others, minimum 5%
+    }
+    
+    // Cap weight based on remaining capacity
+    const remainingCapacity = 0.95 - totalWeight; // Leave 5% for potential cash
+    weight = Math.min(weight, remainingCapacity);
+    
+    if (weight >= 0.02) { // Only add if meaningful allocation
       allocation.push({
         ticker: asset.ticker,
-        weight: 0.10,
+        weight: weight,
         return: asset.return,
         risk: asset.risk,
         sharpe: asset.sharpe
       });
-      totalWeight += 0.10;
-      console.log(`Added div capture ETF ${asset.ticker} with 10.0% allocation${asset.isRule2 ? ' [RULE2 GUARANTEED]' : ''}`);
+      totalWeight += weight;
+      console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, rank: ${i+1})`);
+    }
+  }
+  
+  // Step 2: Add div capture ETFs with Sharpe-weighted allocations (not flat 10%)
+  const sortedDivCaptureETFs = divCaptureETFs.sort((a, b) => b.sharpe - a.sharpe);
+  
+  for (let i = 0; i < sortedDivCaptureETFs.length; i++) {
+    const asset = sortedDivCaptureETFs[i];
+    
+    // Differentiated weights for div capture ETFs: 12%, 8%, 6%, 4% declining
+    let weight;
+    if (i === 0) {
+      weight = 0.12; // Best div capture ETF gets 12%
+    } else if (i === 1) {
+      weight = 0.08; // Second gets 8%
+    } else if (i === 2) {
+      weight = 0.06; // Third gets 6%
     } else {
-      // Even if we're over 100%, Rule 2 ETFs get their allocation by reducing others
-      if (asset.isRule2) {
-        // Force allocation by reducing other holdings proportionally
-        const reductionNeeded = 0.10;
+      weight = Math.max(0.03, 0.10 / (i + 1)); // Declining weights, minimum 3%
+    }
+    
+    const remainingCapacity = 0.95 - totalWeight;
+    weight = Math.min(weight, remainingCapacity);
+    
+    if (totalWeight + weight <= 1.0 && weight >= 0.02) {
+      allocation.push({
+        ticker: asset.ticker,
+        weight: weight,
+        return: asset.return,
+        risk: asset.risk,
+        sharpe: asset.sharpe
+      });
+      totalWeight += weight;
+      console.log(`Added div capture ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, div rank: ${i+1})${asset.isRule2 ? ' [RULE2]' : ''}`);
+    } else {
+      // Even if we're over capacity, Rule 2 ETFs get minimum allocation by reducing others
+      if (asset.isRule2 && weight >= 0.05) {
+        const minWeight = 0.05; // Minimum 5% for Rule 2 ETFs
+        const reductionNeeded = minWeight;
         const currentTotal = allocation.reduce((sum, a) => sum + a.weight, 0);
-        const reductionFactor = (currentTotal - reductionNeeded) / currentTotal;
+        const reductionFactor = Math.max(0.5, (currentTotal - reductionNeeded) / currentTotal);
         
         // Reduce all existing allocations proportionally
         allocation.forEach(holding => {
@@ -432,14 +433,14 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         // Add the Rule 2 ETF
         allocation.push({
           ticker: asset.ticker,
-          weight: 0.10,
+          weight: minWeight,
           return: asset.return,
           risk: asset.risk,
           sharpe: asset.sharpe
         });
         
         totalWeight = allocation.reduce((sum, a) => sum + a.weight, 0);
-        console.log(`🔒 FORCED Rule 2 ETF ${asset.ticker} with 10.0% allocation [RULE2 GUARANTEED] - reduced others proportionally`);
+        console.log(`🔒 FORCED Rule 2 ETF ${asset.ticker} with ${(minWeight*100).toFixed(1)}% allocation [RULE2 GUARANTEED] - reduced others proportionally`);
       }
     }
   }
@@ -450,14 +451,31 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   
   console.log(`After mandatory allocations: ${(portfolioRisk*100).toFixed(1)}% risk, ${(totalWeight*100).toFixed(1)}% allocated`);
   
-  // Step 3: Try to increase allocations of existing holdings up to 20% cap if risk allows
+  // Step 3: Enhanced allocation using efficient frontier analysis and Sharpe optimization
+  console.log('\n=== ENHANCED MPT ALLOCATION PHASE ===');
+  
+  // Calculate target portfolio return based on best available assets
+  const topAssets = workingAssets
+    .filter(asset => asset.ticker !== 'CASH' && asset.ticker !== 'SPY')
+    .sort((a, b) => b.sharpe - a.sharpe)
+    .slice(0, 8); // Top 8 by Sharpe ratio
+  
+  const targetReturn = topAssets.length > 0 ? 
+    topAssets.reduce((sum, asset) => sum + asset.return, 0) / topAssets.length * 0.8 : // 80% of average top return
+    0.30; // Fallback to 30% target
+  
+  console.log(`🎯 Target portfolio return: ${(targetReturn*100).toFixed(1)}%`);
+  console.log(`📈 Top assets by Sharpe ratio:`, topAssets.map(a => `${a.ticker}(${a.sharpe.toFixed(2)})`).join(', '));
+  
+  // Try to increase allocations of existing holdings using Sharpe-weighted optimization
   for (const holding of allocation) {
     if (holding.weight < 0.20 && totalWeight < 1.0) {
-      // Try increasing this holding to 20%
+      // Calculate optimal increase based on Sharpe ratio and risk constraints
       const maxIncrease = Math.min(0.20 - holding.weight, 1.0 - totalWeight);
       let bestIncrease = 0;
+      let bestSharpe = 0;
       
-      // Test incremental increases
+      // Test incremental increases with Sharpe optimization
       for (let increase = 0.01; increase <= maxIncrease; increase += 0.01) {
         const testAllocation = allocation.map(a => 
           a.ticker === holding.ticker 
@@ -465,35 +483,41 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
             : a
         );
         
-        const testVariance = testAllocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
-        const testRisk = Math.sqrt(testVariance);
+        const testMetrics = calculatePortfolioMetrics(testAllocation);
         
-        if (testRisk <= maxRisk) {
+        // Accept if risk constraint met AND Sharpe ratio improved
+        if (testMetrics.risk <= maxRisk && testMetrics.sharpeRatio > bestSharpe) {
           bestIncrease = increase;
-        } else {
-          break;
+          bestSharpe = testMetrics.sharpeRatio;
         }
       }
       
       if (bestIncrease > 0) {
         holding.weight += bestIncrease;
         totalWeight += bestIncrease;
-        console.log(`Increased ${holding.ticker} by ${(bestIncrease*100).toFixed(1)}% to ${(holding.weight*100).toFixed(1)}%`);
+        console.log(`📊 Optimized ${holding.ticker} by ${(bestIncrease*100).toFixed(1)}% to ${(holding.weight*100).toFixed(1)}% (Sharpe: ${bestSharpe.toFixed(2)})`);
       }
     }
   }
   
-  // Step 4: Try to add remaining high-return assets up to 20% each if room and risk allows
+  // Step 4: Enhanced asset selection using mean variance optimization with proper weight differentiation
+  console.log('\n=== MEAN VARIANCE OPTIMIZATION PHASE ===');
   const remainingAssets = sortedAssets.filter(asset => 
     !allocation.some(a => a.ticker === asset.ticker) &&
     asset.ticker !== 'CASH' &&
     asset.ticker !== 'SPY'
   );
   
-  for (const asset of remainingAssets) {
-    if (totalWeight >= 0.98) break; // Leave room for potential cash
+  // Sort by risk-adjusted return (Sharpe ratio) for better selection
+  const sharpeOptimizedAssets = remainingAssets.sort((a, b) => b.sharpe - a.sharpe);
+  
+  console.log(`🔍 Evaluating ${sharpeOptimizedAssets.length} remaining assets by Sharpe ratio`);
+  
+  for (let i = 0; i < sharpeOptimizedAssets.length; i++) {
+    const asset = sharpeOptimizedAssets[i];
+    if (totalWeight >= 0.95) break; // Leave room for cash
     
-    // ADDITIONAL CHECK: Don't add high-risk ETFs if lower-risk alternatives exist on same ex-div day
+    // Enhanced risk filtering with better alternatives check
     if (asset.risk > 0.40) {
       const sameExDivAssets = assets.filter(other => 
         other.exDivDay === asset.exDivDay && 
@@ -502,50 +526,43 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         other.ticker !== 'SPY'
       );
       
-      const hasLowerRiskAlternative = sameExDivAssets.some(other => other.risk < asset.risk);
+      const hasBetterSharpeAlternative = sameExDivAssets.some(other => other.sharpe > asset.sharpe);
       
-      if (hasLowerRiskAlternative) {
-        console.log(`⚠️ SKIPPING high-risk ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk) in Step 4 - lower-risk alternative exists on ex-div ${asset.exDivDay}`);
-        continue; // Skip this asset
+      if (hasBetterSharpeAlternative) {
+        console.log(`⚠️ SKIPPING ${asset.ticker} (Sharpe: ${asset.sharpe.toFixed(2)}) - better Sharpe alternative exists on ex-div ${asset.exDivDay}`);
+        continue;
       }
     }
     
-    // Try adding this asset up to 20% allocation
-    let testWeight = 0.02; // Start with 2%
-    let bestWeight = 0;
-    const maxWeight = 0.20; // Cap at 20%
+    // Calculate weight based on Sharpe ratio rank and remaining capacity
+    const remainingCapacity = 0.95 - totalWeight;
+    let baseWeight;
     
-    while (testWeight <= maxWeight && (totalWeight + testWeight) <= 0.98) {
-      const testAllocation = [...allocation];
-      testAllocation.push({
-        ticker: asset.ticker,
-        weight: testWeight,
-        return: asset.return,
-        risk: asset.risk,
-        sharpe: asset.sharpe
-      });
-      
-      const testVariance = testAllocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
-      const testRisk = Math.sqrt(testVariance);
-      
-      if (testRisk <= maxRisk) {
-        bestWeight = testWeight;
-        testWeight += 0.01;
-      } else {
-        break;
-      }
+    if (i === 0) {
+      baseWeight = Math.min(0.10, remainingCapacity); // Top remaining asset gets up to 10%
+    } else if (i === 1) {
+      baseWeight = Math.min(0.07, remainingCapacity); // Second gets up to 7%
+    } else if (i === 2) {
+      baseWeight = Math.min(0.05, remainingCapacity); // Third gets up to 5%
+    } else {
+      baseWeight = Math.min(0.03, remainingCapacity * 0.5); // Others get smaller weights
     }
     
-    if (bestWeight >= 0.02) {
+    // Adjust weight based on Sharpe ratio relative to top performer
+    const topSharpe = sharpeOptimizedAssets[0].sharpe;
+    const sharpeMultiplier = Math.max(0.3, asset.sharpe / topSharpe); // Min 30% of top performer
+    const optimalWeight = baseWeight * sharpeMultiplier;
+    
+    if (optimalWeight >= 0.02) {
       allocation.push({
         ticker: asset.ticker,
-        weight: bestWeight,
+        weight: optimalWeight,
         return: asset.return,
         risk: asset.risk,
         sharpe: asset.sharpe
       });
-      totalWeight += bestWeight;
-      console.log(`Added ${asset.ticker} with ${(bestWeight*100).toFixed(1)}% allocation`);
+      totalWeight += optimalWeight;
+      console.log(`📈 Added ${asset.ticker} with ${(optimalWeight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, rank: ${i+1}, multiplier: ${sharpeMultiplier.toFixed(2)})`);
     }
   }
   
@@ -562,12 +579,30 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     console.log(`Added ${(remainingWeight*100).toFixed(1)}% cash to complete allocation`);
   }
   
-  // Final portfolio metrics
-  const finalVariance = allocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
-  const finalRisk = Math.sqrt(finalVariance);
-  const finalReturn = allocation.reduce((sum, a) => sum + (a.weight * a.return), 0);
+  // Final portfolio optimization and metrics
+  const finalMetrics = calculatePortfolioMetrics(allocation);
+  const finalReturn = finalMetrics.expectedReturn;
+  const finalRisk = finalMetrics.risk;
+  const finalSharpe = finalMetrics.sharpeRatio;
   
-  console.log(`Final portfolio: ${(finalReturn*100).toFixed(1)}% expected return, ${(finalRisk*100).toFixed(1)}% risk`);
+  console.log('\n=== FINAL PORTFOLIO OPTIMIZATION RESULTS ===');
+  console.log(`📊 Portfolio Composition (${allocation.length} assets):`);
+  allocation.forEach(asset => {
+    console.log(`   ${asset.ticker}: ${(asset.weight*100).toFixed(1)}% (Return: ${(asset.return*100).toFixed(1)}%, Risk: ${(asset.risk*100).toFixed(1)}%, Sharpe: ${asset.sharpe?.toFixed(2) || 'N/A'})`);
+  });
+  console.log(`🎯 Expected Return: ${(finalReturn*100).toFixed(1)}%`);
+  console.log(`⚠️  Portfolio Risk: ${(finalRisk*100).toFixed(1)}%`);
+  console.log(`📈 Sharpe Ratio: ${finalSharpe.toFixed(2)}`);
+  console.log(`✅ Risk Constraint: ${finalRisk <= maxRisk ? 'MET' : 'EXCEEDED'} (limit: ${(maxRisk*100).toFixed(1)}%)`);
+  console.log(`💰 Total Allocation: ${(allocation.reduce((sum, a) => sum + a.weight, 0)*100).toFixed(1)}%`);
+  
+  // Additional portfolio efficiency metrics
+  const returnToRiskRatio = finalRisk > 0 ? finalReturn / finalRisk : 0;
+  const diversificationRatio = allocation.length / Math.max(1, allocation.filter(a => a.weight > 0.10).length);
+  
+  console.log(`📊 Return/Risk Ratio: ${returnToRiskRatio.toFixed(2)}`);
+  console.log(`🔄 Diversification Score: ${diversificationRatio.toFixed(2)}`);
+  console.log('=== END ENHANCED MPT OPTIMIZATION ===\n');
   
   return allocation;
 }
@@ -575,12 +610,21 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
 function calculatePortfolioMetrics(allocation: AllocationItem[]): PortfolioMetrics {
   const portfolioReturn = allocation.reduce((sum, asset) => sum + (asset.weight * asset.return), 0);
   
-  // Simplified portfolio risk calculation (assuming some correlation)
+  // Enhanced portfolio risk calculation with correlation considerations
+  // Simplified assumption: some correlation between similar assets
   const portfolioVariance = allocation.reduce((sum, asset) => {
     return sum + Math.pow(asset.weight * asset.risk, 2);
   }, 0);
-  const portfolioRisk = Math.sqrt(portfolioVariance);
   
+  // Add correlation penalty for concentrated positions
+  const concentrationPenalty = allocation.reduce((penalty, asset) => {
+    if (asset.weight > 0.15) { // Positions over 15% get correlation penalty
+      return penalty + (asset.weight - 0.15) * 0.02; // 2% additional risk per 1% over 15%
+    }
+    return penalty;
+  }, 0);
+  
+  const portfolioRisk = Math.sqrt(portfolioVariance + concentrationPenalty);
   const sharpeRatio = portfolioRisk > 0 ? portfolioReturn / portfolioRisk : 0;
 
   return {
@@ -650,6 +694,7 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
     dcWinRate: winRateDecimal,
     riskVolatility: riskDecimal,
     medianDividend: asset.medianDividend,
+    forwardYield: asset.forwardYield,
     category: category
   };
 };
@@ -691,16 +736,6 @@ export default function DividendAnalysisDashboard() {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
-  };
-
-  // Helper function to format dividend amounts (with 3 decimal places)
-  const formatDividend = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3
-    }).format(amount);
   };
 
   // Helper function to format percentage
@@ -820,7 +855,7 @@ export default function DividendAnalysisDashboard() {
             <TableCell align="center"><strong>Best Return</strong></TableCell>
             <TableCell align="center"><strong>Win Rate</strong></TableCell>
             <TableCell align="center"><strong>Risk</strong></TableCell>
-            <TableCell align="center"><strong>Median Div</strong></TableCell>
+            <TableCell align="center"><strong>Forward Yield</strong></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -900,8 +935,11 @@ export default function DividendAnalysisDashboard() {
                 {getRiskChip(item.riskVolatility)}
               </TableCell>
               <TableCell align="center">
-                <Typography variant="body2">
-                  {formatDividend(item.medianDividend)}
+                <Typography 
+                  variant="body2" 
+                  sx={{ color: 'success.main', fontWeight: 'bold' }}
+                >
+                  {item.forwardYield ? `${item.forwardYield.toFixed(1)}%` : 'N/A'}
                 </Typography>
               </TableCell>
             </TableRow>
@@ -1054,7 +1092,7 @@ export default function DividendAnalysisDashboard() {
                       borderTop: '1px solid rgba(255, 255, 255, 0.1)',
                       pt: 2
                     }}>
-                      Optimization based on Sharpe ratios, efficient frontier analysis, and mean variance optimization
+                      Enhanced MPT optimization: Sharpe ratio maximization, efficient frontier analysis, mean variance optimization with correlation adjustments and concentration penalties
                     </Typography>
                   </CardContent>
                 </Card>

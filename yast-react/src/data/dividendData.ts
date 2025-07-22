@@ -14,6 +14,7 @@ export interface Asset {
   tradingDays: number;
   exDivDay: string;
   dividendCapture: number;
+  forwardYield?: number;
 }
 
 export const dividendData: Asset[] = [
@@ -29,13 +30,14 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.484,
     "tradingDays": 96,
     "exDivDay": "Thursday",
-    "dividendCapture": 49.89
+    "dividendCapture": 49.89,
+    "forwardYield": 72.2
   },
   {
     "ticker": "COIW",
-    "return": 119.50,
+    "return": 119.5,
     "risk": 105.2,
-    "buyHoldReturn": 119.50,
+    "buyHoldReturn": 119.5,
     "dividendCaptureReturn": 26.59,
     "bestStrategy": "Buy & Hold",
     "finalValue": 219502,
@@ -43,7 +45,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.398,
     "tradingDays": 96,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 66.5
   },
   {
     "ticker": "QDTE",
@@ -57,21 +60,23 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.247,
     "tradingDays": 329,
     "exDivDay": "Thursday",
-    "dividendCapture": 106.08
+    "dividendCapture": 106.08,
+    "forwardYield": 34.6
   },
   {
     "ticker": "YMAX",
     "return": 103.58,
     "risk": 26.5,
-    "buyHoldReturn": 97.90,
+    "buyHoldReturn": 97.9,
     "dividendCaptureReturn": 103.58,
     "bestStrategy": "Dividend Capture",
     "finalValue": 203579,
-    "winRate": 93.0,
+    "winRate": 93,
     "medianDividend": 0.172,
     "tradingDays": 207,
     "exDivDay": "Thursday",
-    "dividendCapture": 103.58
+    "dividendCapture": 103.58,
+    "forwardYield": 50.4
   },
   {
     "ticker": "YETH",
@@ -82,10 +87,11 @@ export const dividendData: Asset[] = [
     "bestStrategy": "Dividend Capture",
     "finalValue": 186124,
     "winRate": 81.8,
-    "medianDividend": 1.590,
+    "medianDividend": 1.59,
     "tradingDays": 218,
     "exDivDay": "Thursday",
-    "dividendCapture": 86.12
+    "dividendCapture": 86.12,
+    "forwardYield": 72.0
   },
   {
     "ticker": "LFGY",
@@ -95,11 +101,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 79.17,
     "bestStrategy": "Dividend Capture",
     "finalValue": 179172,
-    "winRate": 88.0,
+    "winRate": 88,
     "medianDividend": 0.475,
     "tradingDays": 122,
     "exDivDay": "Thursday",
-    "dividendCapture": 79.17
+    "dividendCapture": 79.17,
+    "forwardYield": 61.7
   },
   {
     "ticker": "YMAG",
@@ -113,7 +120,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.158,
     "tradingDays": 207,
     "exDivDay": "Thursday",
-    "dividendCapture": 77.89
+    "dividendCapture": 77.89,
+    "forwardYield": 42.4
   },
   {
     "ticker": "ULTY",
@@ -127,13 +135,14 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.095,
     "tradingDays": 88,
     "exDivDay": "Thursday",
-    "dividendCapture": 49.74
+    "dividendCapture": 49.74,
+    "forwardYield": 78.9
   },
   {
     "ticker": "XDTE",
-    "return": 64.90,
+    "return": 64.9,
     "risk": 15.5,
-    "buyHoldReturn": 64.90,
+    "buyHoldReturn": 64.9,
     "dividendCaptureReturn": 59.51,
     "bestStrategy": "Buy & Hold",
     "finalValue": 164902,
@@ -141,7 +150,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.236,
     "tradingDays": 329,
     "exDivDay": "Thursday",
-    "dividendCapture": 59.51
+    "dividendCapture": 59.51,
+    "forwardYield": 29.9
   },
   {
     "ticker": "NVDW",
@@ -155,7 +165,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.376,
     "tradingDays": 96,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 48.4
   },
   {
     "ticker": "HOOW",
@@ -165,11 +176,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 6.15,
     "bestStrategy": "Buy & Hold",
     "finalValue": 156674,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 1.075,
     "tradingDays": 21,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 0.0
   },
   {
     "ticker": "COII",
@@ -179,16 +191,17 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": -1.56,
     "bestStrategy": "Buy & Hold",
     "finalValue": 153940,
-    "winRate": 75.0,
+    "winRate": 75,
     "medianDividend": 0.309,
     "tradingDays": 31,
     "exDivDay": "Tuesday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 46.6
   },
   {
     "ticker": "QQQY",
     "return": 52.54,
-    "risk": 18.0,
+    "risk": 18,
     "buyHoldReturn": 52.54,
     "dividendCaptureReturn": 51.93,
     "bestStrategy": "Buy & Hold",
@@ -197,7 +210,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.231,
     "tradingDays": 199,
     "exDivDay": "Thursday",
-    "dividendCapture": 51.93
+    "dividendCapture": 51.93,
+    "forwardYield": 38.8
   },
   {
     "ticker": "YBTC",
@@ -211,35 +225,38 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.324,
     "tradingDays": 135,
     "exDivDay": "Thursday",
-    "dividendCapture": 45.32
+    "dividendCapture": 45.32,
+    "forwardYield": 33.4
   },
   {
     "ticker": "CHPY",
-    "return": 45.80,
+    "return": 45.8,
     "risk": 19.6,
-    "buyHoldReturn": 45.80,
+    "buyHoldReturn": 45.8,
     "dividendCaptureReturn": 22.71,
     "bestStrategy": "Buy & Hold",
     "finalValue": 145797,
     "winRate": 76.9,
-    "medianDividend": 0.380,
+    "medianDividend": 0.38,
     "tradingDays": 63,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 35.2
   },
   {
     "ticker": "IWMY",
     "return": 45.41,
     "risk": 18.8,
     "buyHoldReturn": 45.41,
-    "dividendCaptureReturn": 43.60,
+    "dividendCaptureReturn": 43.6,
     "bestStrategy": "Buy & Hold",
     "finalValue": 145415,
     "winRate": 88.2,
-    "medianDividend": 0.270,
+    "medianDividend": 0.27,
     "tradingDays": 162,
     "exDivDay": "Thursday",
-    "dividendCapture": 43.60
+    "dividendCapture": 43.6,
+    "forwardYield": 52.6
   },
   {
     "ticker": "RDTE",
@@ -253,7 +270,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.265,
     "tradingDays": 202,
     "exDivDay": "Thursday",
-    "dividendCapture": 34.67
+    "dividendCapture": 34.67,
+    "forwardYield": 40.0
   },
   {
     "ticker": "NVYY",
@@ -263,11 +281,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 16.15,
     "bestStrategy": "Buy & Hold",
     "finalValue": 140440,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.517,
     "tradingDays": 46,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 98.6
   },
   {
     "ticker": "TSLW",
@@ -281,12 +300,13 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.439,
     "tradingDays": 96,
     "exDivDay": "Thursday",
-    "dividendCapture": 39.49
+    "dividendCapture": 39.49,
+    "forwardYield": 71.2
   },
   {
     "ticker": "GPTY",
     "return": 38.69,
-    "risk": 36.0,
+    "risk": 36,
     "buyHoldReturn": 29.97,
     "dividendCaptureReturn": 38.69,
     "bestStrategy": "Dividend Capture",
@@ -295,7 +315,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.293,
     "tradingDays": 111,
     "exDivDay": "Thursday",
-    "dividendCapture": 38.69
+    "dividendCapture": 38.69,
+    "forwardYield": 32.3
   },
   {
     "ticker": "AAPW",
@@ -309,21 +330,23 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.232,
     "tradingDays": 96,
     "exDivDay": "Monday",
-    "dividendCapture": 35.26
+    "dividendCapture": 35.26,
+    "forwardYield": 38.2
   },
   {
     "ticker": "NVII",
     "return": 33.92,
     "risk": 26.8,
     "buyHoldReturn": 33.92,
-    "dividendCaptureReturn": 6.00,
+    "dividendCaptureReturn": 6,
     "bestStrategy": "Buy & Hold",
     "finalValue": 133917,
-    "winRate": 80.0,
+    "winRate": 80,
     "medianDividend": 0.165,
     "tradingDays": 36,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 26.0
   },
   {
     "ticker": "YSPY",
@@ -333,11 +356,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 13.81,
     "bestStrategy": "Buy & Hold",
     "finalValue": 130023,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.193,
     "tradingDays": 73,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 49.3
   },
   {
     "ticker": "XBTY",
@@ -347,11 +371,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 14.24,
     "bestStrategy": "Buy & Hold",
     "finalValue": 128942,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.478,
     "tradingDays": 46,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 99.2
   },
   {
     "ticker": "TSYY",
@@ -361,11 +386,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 24.41,
     "bestStrategy": "Buy & Hold",
     "finalValue": 128471,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.298,
     "tradingDays": 29,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 136.9
   },
   {
     "ticker": "WDTE",
@@ -379,7 +405,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.217,
     "tradingDays": 162,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 31.0
   },
   {
     "ticker": "BLOX",
@@ -389,11 +416,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 8.21,
     "bestStrategy": "Buy & Hold",
     "finalValue": 125716,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.147,
     "tradingDays": 22,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 32.7
   },
   {
     "ticker": "RDTY",
@@ -404,10 +432,11 @@ export const dividendData: Asset[] = [
     "bestStrategy": "Buy & Hold",
     "finalValue": 119833,
     "winRate": 70.6,
-    "medianDividend": 0.330,
+    "medianDividend": 0.33,
     "tradingDays": 83,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 34.6
   },
   {
     "ticker": "MAGY",
@@ -417,11 +446,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 4.67,
     "bestStrategy": "Buy & Hold",
     "finalValue": 118524,
-    "winRate": 80.0,
+    "winRate": 80,
     "medianDividend": 0.376,
     "tradingDays": 48,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 34.0
   },
   {
     "ticker": "SDTY",
@@ -435,7 +465,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.225,
     "tradingDays": 103,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 17.0
   },
   {
     "ticker": "QDTY",
@@ -445,11 +476,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 16.66,
     "bestStrategy": "Dividend Capture",
     "finalValue": 116664,
-    "winRate": 90.0,
+    "winRate": 90,
     "medianDividend": 0.257,
     "tradingDays": 98,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 22.1
   },
   {
     "ticker": "SPY",
@@ -460,16 +492,17 @@ export const dividendData: Asset[] = [
     "bestStrategy": "Buy & Hold",
     "finalValue": 115739,
     "winRate": 0,
-    "medianDividend": 0,
+    "medianDividend": 0.0,
     "tradingDays": 250,
     "exDivDay": "N/A",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 0.0
   },
   {
     "ticker": "TQQY",
-    "return": 15.20,
+    "return": 15.2,
     "risk": 9.9,
-    "buyHoldReturn": 15.20,
+    "buyHoldReturn": 15.2,
     "dividendCaptureReturn": 5.37,
     "bestStrategy": "Buy & Hold",
     "finalValue": 115198,
@@ -477,7 +510,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.181,
     "tradingDays": 29,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 49.3
   },
   {
     "ticker": "MSII",
@@ -487,11 +521,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 4.68,
     "bestStrategy": "Buy & Hold",
     "finalValue": 115115,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.247,
     "tradingDays": 31,
     "exDivDay": "Tuesday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 48.1
   },
   {
     "ticker": "MST",
@@ -501,25 +536,27 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 7.09,
     "bestStrategy": "Buy & Hold",
     "finalValue": 114886,
-    "winRate": 75.0,
+    "winRate": 75,
     "medianDividend": 0.272,
     "tradingDays": 53,
     "exDivDay": "Wednesday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 78.6
   },
   {
     "ticker": "GLDY",
     "return": 14.11,
     "risk": 14.7,
     "buyHoldReturn": 14.11,
-    "dividendCaptureReturn": 11.60,
+    "dividendCaptureReturn": 11.6,
     "bestStrategy": "Buy & Hold",
     "finalValue": 114107,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.169,
     "tradingDays": 74,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 49.0
   },
   {
     "ticker": "BCCC",
@@ -529,11 +566,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 6.78,
     "bestStrategy": "Buy & Hold",
     "finalValue": 113769,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.194,
     "tradingDays": 31,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 37.4
   },
   {
     "ticker": "USOY",
@@ -543,11 +581,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 9.68,
     "bestStrategy": "Dividend Capture",
     "finalValue": 109678,
-    "winRate": 100.0,
-    "medianDividend": 0.160,
+    "winRate": 100,
+    "medianDividend": 0.16,
     "tradingDays": 21,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 91.2
   },
   {
     "ticker": "AMZW",
@@ -557,11 +596,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 1.85,
     "bestStrategy": "Buy & Hold",
     "finalValue": 108051,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.393,
     "tradingDays": 21,
     "exDivDay": "Monday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 0.0
   },
   {
     "ticker": "TSII",
@@ -571,25 +611,27 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": -2.52,
     "bestStrategy": "Buy & Hold",
     "finalValue": 104234,
-    "winRate": 75.0,
+    "winRate": 75,
     "medianDividend": 0.251,
     "tradingDays": 31,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 55.7
   },
   {
     "ticker": "MMKT",
-    "return": 3.20,
+    "return": 3.2,
     "risk": 0.3,
-    "buyHoldReturn": 3.20,
+    "buyHoldReturn": 3.2,
     "dividendCaptureReturn": 1.76,
     "bestStrategy": "Buy & Hold",
     "finalValue": 103202,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.079,
     "tradingDays": 99,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 3.5
   },
   {
     "ticker": "WEEK",
@@ -603,7 +645,8 @@ export const dividendData: Asset[] = [
     "medianDividend": 0.079,
     "tradingDays": 90,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 4.1
   },
   {
     "ticker": "METW",
@@ -613,11 +656,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 0.61,
     "bestStrategy": "Buy & Hold",
     "finalValue": 100949,
-    "winRate": 100.0,
-    "medianDividend": 0.390,
+    "winRate": 100,
+    "medianDividend": 0.39,
     "tradingDays": 21,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 0.0
   },
   {
     "ticker": "BRKW",
@@ -627,11 +671,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 0.08,
     "bestStrategy": "Dividend Capture",
     "finalValue": 100079,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.212,
     "tradingDays": 21,
     "exDivDay": "Thursday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 0.0
   },
   {
     "ticker": "NFLW",
@@ -641,11 +686,12 @@ export const dividendData: Asset[] = [
     "dividendCaptureReturn": 0.02,
     "bestStrategy": "Dividend Capture",
     "finalValue": 100021,
-    "winRate": 100.0,
+    "winRate": 100,
     "medianDividend": 0.459,
     "tradingDays": 21,
     "exDivDay": "Monday",
-    "dividendCapture": 0
+    "dividendCapture": 0,
+    "forwardYield": 0.0
   }
 ];
 

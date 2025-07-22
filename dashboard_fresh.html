@@ -309,7 +309,6 @@
                                 <th data-column="bestReturn">Best Return</th>
                                 <th data-column="dcWinRate">Win Rate</th>
                                 <th data-column="riskVolatility">Risk</th>
-                                <th data-column="medianDividend">Median Div</th>
                             </tr>
                         </thead>
                         <tbody id="top-performers-body">
@@ -691,7 +690,6 @@
                     <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
                     <td>${formatPercentage(item.dcWinRate)}</td>
                     <td><span class="risk-tag">${formatPercentage(item.riskVolatility)}</span></td>
-                    <td>${formatDividend(item.medianDividend)}</td>
                 </tr>
             `).join('');
         }

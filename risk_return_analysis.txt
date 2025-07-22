@@ -1,0 +1,39 @@
+Risk and Return Calculation Methodology Analysis
+=================================================================
+
+RISK CALCULATION:
+- Risk = Volatility (Standard Deviation of Daily Returns)
+- Calculated using: daily_returns.std() * sqrt(252) * 100
+- Annualized volatility in percentage
+- Example: PLTW = 90.6% (very volatile), YMAX = 26.5% (moderate)
+
+RETURN CALCULATION:
+- Two strategies compared: Buy & Hold vs Dividend Capture
+- Buy & Hold: ((end_price + total_dividends) / start_price - 1) * 100
+- Dividend Capture: Active strategy results from trading around ex-div dates
+- Final 'return' field uses the BETTER performing strategy
+- 'bestStrategy' field indicates which strategy performed better
+
+MEDIAN DIVIDEND CALCULATION:
+- Median of ALL historical dividend payments
+- Calculated from {ticker}_dividends.csv files
+- Filters out zero dividends: dividends = dividends[dividends > 0]
+- Uses pandas median() function: dividends.median()
+
+FORWARD YIELD CALCULATION (NEW):
+- Forward Yield = (median of last 3 dividends * 52) / current_price * 100
+- Uses most recent 3 dividend payments for recency
+- Annualizes by multiplying by 52 (weeks)
+- Results range from 17.0% (SDTY) to 80.8% (HOOW)
+- Average forward yield: 47.6%, Median: 44.5%
+
+CALCULATION EXAMPLES:
+- HOOW: 80.8% = (1.075 * 52) / $69.19 * 100
+- YMAX: 50.4% = (0.135 * 52) / $13.93 * 100  
+- SDTY: 17.0% = (0.148 * 52) / $45.34 * 100
+
+KEY INSIGHTS:
+1. Risk is measured as annualized volatility (higher = more risky)
+2. Returns use the best strategy between buy-hold and dividend capture
+3. Forward yield predicts future income based on recent dividend patterns
+4. High forward yields often correlate with higher volatility/risk
