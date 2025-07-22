@@ -1,5 +1,5 @@
 // Auto-generated portfolio data from Python analysis
-// Last updated: 2025-07-21T08:21:20.086588
+// Last updated: 2025-07-22T18:20:39
 
 export interface Asset {
   ticker: string;
@@ -76,7 +76,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 207,
     "exDivDay": "Thursday",
     "dividendCapture": 103.58,
-    "forwardYield": 50.4
+    "forwardYield": 64.0
   },
   {
     "ticker": "YETH",
@@ -91,7 +91,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 218,
     "exDivDay": "Thursday",
     "dividendCapture": 86.12,
-    "forwardYield": 72.0
+    "forwardYield": 298.9
   },
   {
     "ticker": "LFGY",
@@ -121,7 +121,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 207,
     "exDivDay": "Thursday",
     "dividendCapture": 77.89,
-    "forwardYield": 42.4
+    "forwardYield": 53.3
   },
   {
     "ticker": "ULTY",
@@ -136,7 +136,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 88,
     "exDivDay": "Thursday",
     "dividendCapture": 49.74,
-    "forwardYield": 78.9
+    "forwardYield": 78.5
   },
   {
     "ticker": "XDTE",
@@ -181,7 +181,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 21,
     "exDivDay": "Thursday",
     "dividendCapture": 0,
-    "forwardYield": 0.0
+    "forwardYield": 87.4
   },
   {
     "ticker": "COII",
