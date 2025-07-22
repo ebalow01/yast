@@ -322,7 +322,7 @@
                 </div>
 
                 <p style="text-align: center; margin-top: 20px; font-size: 0.85rem; opacity: 0.7;">
-                    Diversified optimization: Includes all ETFs with >40% return and <40% risk, then maximizes returns within 10% portfolio risk constraint
+                    Diversified optimization: Includes all ETFs with >40% return and <40% risk, then maximizes returns within 10% portfolio risk constraint. Individual positions: 5% minimum, 20% maximum allocation.
                 </p>
             </div>
         </div>
@@ -761,8 +761,8 @@
             const allocation = [];
             let remainingWeight = totalAllocation;
             
-            // Limit individual positions (max 25% each for diversification)
-            const maxWeight = 0.25;
+            // Limit individual positions (max 20% each for diversification)
+            const maxWeight = 0.20;
             
             for (let i = 0; i < sortedAssets.length && remainingWeight > 0.01; i++) {
                 const asset = sortedAssets[i];
@@ -774,8 +774,8 @@
                     remainingWeight
                 );
                 
-                // Minimum allocation of 2% if we're including it
-                if (weight > 0.02) {
+                // Minimum allocation of 5% if we're including it
+                if (weight > 0.05) {
                     allocation.push({
                         ticker: asset.ticker,
                         weight: weight,
@@ -838,9 +838,9 @@
             const allocation = [];
             let totalWeight = 0;
             
-            // Step 1: Add qualifying ETFs with minimum 10% each, cap at 20%
+            // Step 1: Add qualifying ETFs with minimum 5% each, cap at 20%
             for (const asset of qualifyingETFs) {
-                const weight = Math.min(0.20, 0.10); // Start with 10%, max 20%
+                const weight = Math.min(0.20, 0.05); // Start with 5%, max 20%
                 allocation.push({
                     ticker: asset.ticker,
                     weight: weight,
@@ -853,19 +853,19 @@
                 console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (mandatory minimum)`);
             }
             
-            // Step 2: Add div capture ETFs with 10% each
+            // Step 2: Add div capture ETFs with 5% each
             for (const asset of divCaptureETFs) {
-                if (totalWeight + 0.10 <= 1.0) {
+                if (totalWeight + 0.05 <= 1.0) {
                     allocation.push({
                         ticker: asset.ticker,
-                        weight: 0.10,
+                        weight: 0.05,
                         return: asset.return,
                         risk: asset.risk,
                         sharpe: asset.sharpe,
                         bestStrategy: asset.bestStrategy
                     });
-                    totalWeight += 0.10;
-                    console.log(`Added div capture ETF ${asset.ticker} with 10.0% allocation`);
+                    totalWeight += 0.05;
+                    console.log(`Added div capture ETF ${asset.ticker} with 5.0% allocation`);
                 }
             }
             
@@ -919,7 +919,7 @@
                 if (totalWeight >= 0.98) break; // Leave room for potential cash
                 
                 // Try adding this asset up to 20% allocation
-                let testWeight = 0.02; // Start with 2%
+                let testWeight = 0.05; // Start with 5%
                 let bestWeight = 0;
                 const maxWeight = 0.20; // Cap at 20%
                 
@@ -945,7 +945,7 @@
                     }
                 }
                 
-                if (bestWeight >= 0.02) {
+                if (bestWeight >= 0.05) {
                     allocation.push({
                         ticker: asset.ticker,
                         weight: bestWeight,
