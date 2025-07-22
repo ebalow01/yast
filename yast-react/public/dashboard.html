@@ -14,20 +14,8 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;            allocationDiv.innerHTML = sortedAllocation.map(asset => {
-                const weightPercent = (asset.weight * 100).toFixed(1);
-                // Display CASH more intuitively
-                const displayName = asset.ticker === 'CASH' ? '💰 Cash (Risk-Free)' : asset.ticker;
-                return `
-                    <div class="allocation-row">
-                        <span class="allocation-name">${displayName}</span>
-                        <span class="allocation-percent">${weightPercent}%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${weightPercent}%"></div>
-                    </div>
-                `;
-            }).join('');  color: #fff;
+            min-height: 100vh;
+            color: #fff;
             padding: 20px;
         }
 
@@ -284,7 +272,7 @@
         <header class="header">
             <h1>YieldMax ETFs</h1>
             <div class="subtitle">Weekly Distribution Analysis</div>
-            <div class="timestamp">Last Updated: July 18, 2025</div>
+            <div class="timestamp">Last Updated: July 22, 2025</div>
         </header>
 
         <div class="main-grid">
@@ -309,6 +297,7 @@
                                 <th data-column="bestReturn">Best Return</th>
                                 <th data-column="dcWinRate">Win Rate</th>
                                 <th data-column="riskVolatility">Risk</th>
+                                <th data-column="forwardYield">Forward Yield</th>
                             </tr>
                         </thead>
                         <tbody id="top-performers-body">
@@ -369,6 +358,7 @@
                         "dcWinRate": 0.93,
                         "riskVolatility": 0.266,
                         "medianDividend": 0.172,
+                        "forwardYield": 64.2,
                         "category": "top-performers"
             },
             {
@@ -383,6 +373,7 @@
                         "dcWinRate": 0.88,
                         "riskVolatility": 0.485,
                         "medianDividend": 0.475,
+                        "forwardYield": 61.1,
                         "category": "excluded"
             },
             {
@@ -397,6 +388,7 @@
                         "dcWinRate": 0.884,
                         "riskVolatility": 0.254,
                         "medianDividend": 0.158,
+                        "forwardYield": 53.3,
                         "category": "top-performers"
             },
             {
@@ -411,6 +403,7 @@
                         "dcWinRate": 0.889,
                         "riskVolatility": 0.33299999999999996,
                         "medianDividend": 0.095,
+                        "forwardYield": 79.0,
                         "category": "top-performers"
             },
             {
@@ -611,8 +604,17 @@
             }
 ];
 
-        // Load data immediately
-        loadData(fallbackData);
+        // Load data immediately - try to fetch real data first, fallback to embedded data
+        fetch('./data/performance_data.json')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Loaded real data from JSON file');
+                loadData(data);
+            })
+            .catch(error => {
+                console.warn('Could not load real data, using fallback:', error);
+                loadData(fallbackData);
+            });
 
         function loadData(data) {
             currentData = data;
@@ -690,6 +692,7 @@
                     <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
                     <td>${formatPercentage(item.dcWinRate)}</td>
                     <td><span class="risk-tag">${formatPercentage(item.riskVolatility)}</span></td>
+                    <td class="positive">${item.forwardYield ? item.forwardYield.toFixed(1) + '%' : 'N/A'}</td>
                 </tr>
             `).join('');
         }
