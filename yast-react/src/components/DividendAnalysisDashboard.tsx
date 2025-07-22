@@ -712,11 +712,53 @@ export default function DividendAnalysisDashboard() {
     const loadData = async () => {
       try {
         setLoading(true);
+        let convertedData: DividendData[] = [];
+        let metadataValue: any = null;
         
-        // Convert imported data to the format expected by the dashboard
-        const convertedData = dividendData.map(convertAssetToData);
+        // Try to load data from JSON files first (updated by GitHub Action)
+        try {
+          const [performanceResponse, metadataResponse] = await Promise.all([
+            fetch('/data/performance_data.json'),
+            fetch('/data/metadata.json')
+          ]);
+          
+          if (performanceResponse.ok && metadataResponse.ok) {
+            const performanceData = await performanceResponse.json();
+            metadataValue = await metadataResponse.json();
+            
+            console.log('📊 Loading data from updated JSON files');
+            console.log('📅 Metadata:', metadataValue);
+            
+            // Convert JSON data to the format expected by the dashboard
+            convertedData = performanceData.map((item: any) => ({
+              ticker: item.ticker,
+              tradingDays: item.trading_days,
+              exDivDay: item.ex_div_day,
+              buyHoldReturn: item.buy_hold_return / 100, // Convert from percentage
+              divCaptureReturn: item.div_capture_return / 100,
+              bestStrategy: item.best_strategy === 'Buy & Hold' ? 'B&H' : 'DC',
+              bestReturn: item.best_return / 100,
+              finalValue: item.final_value,
+              dcWinRate: item.dc_win_rate / 100,
+              riskVolatility: item.risk_volatility / 100,
+              medianDividend: item.median_dividend,
+              forwardYield: item.forward_yield,
+              category: item.best_return >= 40 ? 'top-performers' : 
+                       item.best_return >= 20 ? 'mid-performers' : 
+                       item.best_return >= 0 ? 'low-performers' : 'excluded'
+            }));
+          } else {
+            throw new Error('JSON files not found, falling back to static data');
+          }
+        } catch (jsonError) {
+          console.log('📁 JSON files not available, using static imported data');
+          // Fallback to static imported data
+          convertedData = dividendData.map(convertAssetToData);
+          metadataValue = analysisMetadata;
+        }
+        
         setData(convertedData);
-        setMetadata(analysisMetadata);
+        setMetadata(metadataValue);
         
         // Calculate MPT allocation for ALL ETFs, not just top performers
         if (convertedData.length > 0) {
