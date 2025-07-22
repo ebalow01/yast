@@ -14,20 +14,8 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;            allocationDiv.innerHTML = sortedAllocation.map(asset => {
-                const weightPercent = (asset.weight * 100).toFixed(1);
-                // Display CASH more intuitively
-                const displayName = asset.ticker === 'CASH' ? '💰 Cash (Risk-Free)' : asset.ticker;
-                return `
-                    <div class="allocation-row">
-                        <span class="allocation-name">${displayName}</span>
-                        <span class="allocation-percent">${weightPercent}%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${weightPercent}%"></div>
-                    </div>
-                `;
-            }).join('');  color: #fff;
+            min-height: 100vh;
+            color: #fff;
             padding: 20px;
         }
 
@@ -284,7 +272,7 @@
         <header class="header">
             <h1>YieldMax ETFs</h1>
             <div class="subtitle">Weekly Distribution Analysis</div>
-            <div class="timestamp">Last Updated: July 18, 2025</div>
+            <div class="timestamp">Last Updated: July 22, 2025</div>
         </header>
 
         <div class="main-grid">
@@ -309,6 +297,7 @@
                                 <th data-column="bestReturn">Best Return</th>
                                 <th data-column="dcWinRate">Win Rate</th>
                                 <th data-column="riskVolatility">Risk</th>
+                                <th data-column="forwardYield">Forward Yield</th>
                             </tr>
                         </thead>
                         <tbody id="top-performers-body">
@@ -333,7 +322,7 @@
                 </div>
 
                 <p style="text-align: center; margin-top: 20px; font-size: 0.85rem; opacity: 0.7;">
-                    Diversified optimization: Includes all ETFs with >40% return and <40% risk, then maximizes returns within 10% portfolio risk constraint
+                    Diversified optimization: Includes all ETFs with &gt;40% return and &lt;40% risk, then maximizes returns within 10% portfolio risk constraint. Individual positions: 5% minimum, 20% maximum allocation.
                 </p>
             </div>
         </div>
@@ -369,6 +358,7 @@
                         "dcWinRate": 0.93,
                         "riskVolatility": 0.266,
                         "medianDividend": 0.172,
+                        "forwardYield": 64.2,
                         "category": "top-performers"
             },
             {
@@ -383,6 +373,7 @@
                         "dcWinRate": 0.88,
                         "riskVolatility": 0.485,
                         "medianDividend": 0.475,
+                        "forwardYield": 61.1,
                         "category": "excluded"
             },
             {
@@ -397,6 +388,7 @@
                         "dcWinRate": 0.884,
                         "riskVolatility": 0.254,
                         "medianDividend": 0.158,
+                        "forwardYield": 53.3,
                         "category": "top-performers"
             },
             {
@@ -411,6 +403,7 @@
                         "dcWinRate": 0.889,
                         "riskVolatility": 0.33299999999999996,
                         "medianDividend": 0.095,
+                        "forwardYield": 79.0,
                         "category": "top-performers"
             },
             {
@@ -611,8 +604,17 @@
             }
 ];
 
-        // Load data immediately
-        loadData(fallbackData);
+        // Load data immediately - try to fetch real data first, fallback to embedded data
+        fetch('./data/performance_data.json')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Loaded real data from JSON file');
+                loadData(data);
+            })
+            .catch(error => {
+                console.warn('Could not load real data, using fallback:', error);
+                loadData(fallbackData);
+            });
 
         function loadData(data) {
             currentData = data;
@@ -690,6 +692,7 @@
                     <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
                     <td>${formatPercentage(item.dcWinRate)}</td>
                     <td><span class="risk-tag">${formatPercentage(item.riskVolatility)}</span></td>
+                    <td class="positive">${item.forwardYield ? item.forwardYield.toFixed(1) + '%' : 'N/A'}</td>
                 </tr>
             `).join('');
         }
@@ -758,8 +761,8 @@
             const allocation = [];
             let remainingWeight = totalAllocation;
             
-            // Limit individual positions (max 25% each for diversification)
-            const maxWeight = 0.25;
+            // Limit individual positions (max 20% each for diversification)
+            const maxWeight = 0.20;
             
             for (let i = 0; i < sortedAssets.length && remainingWeight > 0.01; i++) {
                 const asset = sortedAssets[i];
@@ -771,8 +774,8 @@
                     remainingWeight
                 );
                 
-                // Minimum allocation of 2% if we're including it
-                if (weight > 0.02) {
+                // Minimum allocation of 5% if we're including it
+                if (weight > 0.05) {
                     allocation.push({
                         ticker: asset.ticker,
                         weight: weight,
@@ -835,9 +838,9 @@
             const allocation = [];
             let totalWeight = 0;
             
-            // Step 1: Add qualifying ETFs with minimum 10% each, cap at 20%
+            // Step 1: Add qualifying ETFs with minimum 5% each, cap at 20%
             for (const asset of qualifyingETFs) {
-                const weight = Math.min(0.20, 0.10); // Start with 10%, max 20%
+                const weight = Math.min(0.20, 0.05); // Start with 5%, max 20%
                 allocation.push({
                     ticker: asset.ticker,
                     weight: weight,
@@ -850,19 +853,19 @@
                 console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (mandatory minimum)`);
             }
             
-            // Step 2: Add div capture ETFs with 10% each
+            // Step 2: Add div capture ETFs with 5% each
             for (const asset of divCaptureETFs) {
-                if (totalWeight + 0.10 <= 1.0) {
+                if (totalWeight + 0.05 <= 1.0) {
                     allocation.push({
                         ticker: asset.ticker,
-                        weight: 0.10,
+                        weight: 0.05,
                         return: asset.return,
                         risk: asset.risk,
                         sharpe: asset.sharpe,
                         bestStrategy: asset.bestStrategy
                     });
-                    totalWeight += 0.10;
-                    console.log(`Added div capture ETF ${asset.ticker} with 10.0% allocation`);
+                    totalWeight += 0.05;
+                    console.log(`Added div capture ETF ${asset.ticker} with 5.0% allocation`);
                 }
             }
             
@@ -916,7 +919,7 @@
                 if (totalWeight >= 0.98) break; // Leave room for potential cash
                 
                 // Try adding this asset up to 20% allocation
-                let testWeight = 0.02; // Start with 2%
+                let testWeight = 0.05; // Start with 5%
                 let bestWeight = 0;
                 const maxWeight = 0.20; // Cap at 20%
                 
@@ -942,7 +945,7 @@
                     }
                 }
                 
-                if (bestWeight >= 0.02) {
+                if (bestWeight >= 0.05) {
                     allocation.push({
                         ticker: asset.ticker,
                         weight: bestWeight,
