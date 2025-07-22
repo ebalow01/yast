@@ -11,6 +11,7 @@ from datetime import datetime
 import os
 import sys
 import re
+import yfinance as yf
 
 # Add parent directory to path to import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -31,6 +32,36 @@ def convert_numpy_types(obj):
     elif isinstance(obj, datetime):
         return obj.isoformat()
     return obj
+
+def calculate_forward_yield(ticker, median_dividend):
+    """
+    Calculate forward yield: (median dividend * 52) / current price * 100
+    """
+    try:
+        # Get current price from yfinance
+        stock = yf.Ticker(ticker)
+        current_price = stock.info.get('regularMarketPrice')
+        
+        # If regularMarketPrice not available, try previousClose
+        if not current_price:
+            current_price = stock.info.get('previousClose')
+        
+        # If still no price, try getting recent data
+        if not current_price:
+            recent_data = stock.history(period="5d")
+            if not recent_data.empty:
+                current_price = recent_data['Close'].iloc[-1]
+        
+        if current_price and median_dividend > 0:
+            forward_yield = (median_dividend * 52 / current_price) * 100
+            return round(forward_yield, 1)
+        else:
+            print(f"Warning: Could not calculate forward yield for {ticker} - price: {current_price}, dividend: {median_dividend}")
+            return None
+            
+    except Exception as e:
+        print(f"Error calculating forward yield for {ticker}: {e}")
+        return None
 
 def create_fallback_data(web_data_dir):
     """Create fallback data when analysis fails"""
@@ -65,6 +96,7 @@ def create_fallback_data(web_data_dir):
             'dcWinRate': 0.75,
             'riskVolatility': 0.25,
             'medianDividend': 0.25,
+            'forwardYield': 25.0,
             'category': 'excluded'
         }
         performance_data.append(ticker_info)
@@ -231,6 +263,9 @@ def process_analysis_data(web_data_dir):
                     else:
                         category = 'excluded'
                     
+                    # Calculate forward yield using current price from yfinance
+                    forward_yield = calculate_forward_yield(ticker, median_dividend)
+                    
                     analysis_data.append({
                         'ticker': ticker,
                         'tradingDays': days,
@@ -243,6 +278,7 @@ def process_analysis_data(web_data_dir):
                         'dcWinRate': dc_win_rate,
                         'riskVolatility': risk_volatility,
                         'medianDividend': median_dividend,
+                        'forwardYield': forward_yield,
                         'category': category
                     })
                 except (ValueError, IndexError, AttributeError) as e:
