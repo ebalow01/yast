@@ -5,6 +5,12 @@ on:
     # Run daily at 6am UTC
     - cron: '0 6 * * 1-5'  # Monday-Friday at 6am UTC (weekdays only)
   workflow_dispatch:  # Allow manual triggers
+  push:
+    branches: [ main ]  # Auto-deploy on push to main
+
+permissions:
+  contents: write  # Allow the action to push commits
+  actions: read    # Allow reading workflow information
 
 jobs:
   update-data:
@@ -13,6 +19,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0  # Fetch full history for git operations
       
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -42,10 +51,9 @@ jobs:
         
     - name: Check if files were created
       run: |
-        echo "Checking for generated files..."
+        echo "Checking for generated web data files..."
         ls -la yast-react/public/data/ || echo "No web data directory found"
-        ls -la data/*.csv | head -10 || echo "No CSV files found"
-        ls -la comprehensive_sorted_table_*.txt | head -5 || echo "No comprehensive table files found"
+        echo "Analysis completed. Text files are in local directory but not committed (ignored by .gitignore)"
         
     - name: Commit and push if data changed
       run: |
@@ -53,15 +61,8 @@ jobs:
         git config --local user.name "GitHub Action"
         git config --local advice.addIgnoredFile false
         
-        # Only add files that are NOT ignored by .gitignore
-        # Add web data files (these are explicitly not ignored)
+        # Add web data files (these are the important ones for Netlify)
         find yast-react/public/data -name "*.json" -exec git add {} \; 2>/dev/null || echo "No JSON files to add"
-        
-        # Add analysis output files (if they exist and aren't ignored)
-        find . -maxdepth 1 -name "comprehensive_sorted_table_*.txt" -exec git add {} \; 2>/dev/null || echo "No table files to add"
-        find . -maxdepth 1 -name "multi_ticker_analysis_*.txt" -exec git add {} \; 2>/dev/null || echo "No analysis files to add"
-        
-        # Don't try to add data/*.csv files as they are ignored by .gitignore
         
         # Check if there are any changes
         if git diff --staged --quiet; then
@@ -70,7 +71,7 @@ jobs:
         else
           echo "Changes detected, committing..."
           git commit -m "Daily ETF data update $(date +%Y-%m-%d)" || echo "Commit failed"
-          git push || echo "Push failed"
+          git push origin main || echo "Push failed"
         fi
         
     - name: Trigger Netlify deploy
