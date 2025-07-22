@@ -97,7 +97,7 @@
     "divCaptureReturn": 0.7789,
     "bestStrategy": "DC",
     "bestReturn": 0.7789,
-    "finalValue": 177890.0,
+    "finalValue": 177889.0,
     "dcWinRate": 0.884,
     "riskVolatility": 0.253,
     "medianDividend": 0.158,
@@ -116,7 +116,7 @@
     "dcWinRate": 0.889,
     "riskVolatility": 0.33,
     "medianDividend": 0.095,
-    "forwardYield": 79.2,
+    "forwardYield": 79.3,
     "category": "top-performers"
   },
   {
@@ -147,6 +147,21 @@
     "riskVolatility": 0.643,
     "medianDividend": 0.377,
     "forwardYield": 39.6,
+    "category": "excluded"
+  },
+  {
+    "ticker": "TSLW",
+    "tradingDays": 20,
+    "exDivDay": "Thursday",
+    "buyHoldReturn": 0.38939999999999997,
+    "divCaptureReturn": 0.5417000000000001,
+    "bestStrategy": "DC",
+    "bestReturn": 0.5417000000000001,
+    "finalValue": 154175.0,
+    "dcWinRate": 0.65,
+    "riskVolatility": 0.972,
+    "medianDividend": 0.432,
+    "forwardYield": 65.2,
     "category": "excluded"
   },
   {
@@ -208,21 +223,6 @@
     "medianDividend": 0.324,
     "forwardYield": 34.3,
     "category": "top-performers"
-  },
-  {
-    "ticker": "TSLW",
-    "tradingDays": 20,
-    "exDivDay": "Thursday",
-    "buyHoldReturn": 0.3489,
-    "divCaptureReturn": 0.47979999999999995,
-    "bestStrategy": "DC",
-    "bestReturn": 0.47979999999999995,
-    "finalValue": 147976.0,
-    "dcWinRate": 0.65,
-    "riskVolatility": 0.9740000000000001,
-    "medianDividend": 0.432,
-    "forwardYield": 65.2,
-    "category": "excluded"
   },
   {
     "ticker": "CHPY",
