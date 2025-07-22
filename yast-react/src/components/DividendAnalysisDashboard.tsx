@@ -990,7 +990,7 @@ export default function DividendAnalysisDashboard() {
                   variant="body2" 
                   sx={{ color: 'success.main', fontWeight: 'bold' }}
                 >
-                  {item.forwardYield ? `${item.forwardYield.toFixed(1)}%` : 'N/A'}
+                  {(item.forwardYield !== null && item.forwardYield !== undefined) ? `${item.forwardYield.toFixed(1)}%` : 'N/A'}
                 </Typography>
               </TableCell>
             </TableRow>
