@@ -37,6 +37,8 @@ def calculate_forward_yield(ticker, median_dividend):
     """
     Calculate forward yield: (median dividend * 52) / current price * 100
     """
+    print(f"🔄 Calculating forward yield for {ticker} (dividend: ${median_dividend})")
+    
     try:
         # Get current price from yfinance
         stock = yf.Ticker(ticker)
@@ -52,15 +54,18 @@ def calculate_forward_yield(ticker, median_dividend):
             if not recent_data.empty:
                 current_price = recent_data['Close'].iloc[-1]
         
+        print(f"   Price for {ticker}: ${current_price}")
+        
         if current_price and median_dividend > 0:
             forward_yield = (median_dividend * 52 / current_price) * 100
+            print(f"   Forward yield for {ticker}: {forward_yield:.1f}%")
             return round(forward_yield, 1)
         else:
-            print(f"Warning: Could not calculate forward yield for {ticker} - price: {current_price}, dividend: {median_dividend}")
+            print(f"   Warning: Could not calculate forward yield for {ticker} - price: {current_price}, dividend: {median_dividend}")
             return None
             
     except Exception as e:
-        print(f"Error calculating forward yield for {ticker}: {e}")
+        print(f"   ERROR calculating forward yield for {ticker}: {e}")
         return None
 
 def create_fallback_data(web_data_dir):
@@ -265,6 +270,7 @@ def process_analysis_data(web_data_dir):
                     
                     # Calculate forward yield using current price from yfinance
                     forward_yield = calculate_forward_yield(ticker, median_dividend)
+                    print(f"   Added {ticker}: Forward yield = {forward_yield}")
                     
                     analysis_data.append({
                         'ticker': ticker,
@@ -341,6 +347,14 @@ def process_analysis_data(web_data_dir):
     print("   - performance_data.json")
     print("   - metadata.json")
     print(f"Processed {len(analysis_data)} tickers")
+    
+    # Forward yield summary
+    forward_yields_calculated = sum(1 for item in analysis_data if item.get('forwardYield') is not None)
+    print(f"Forward yields calculated: {forward_yields_calculated}/{len(analysis_data)} tickers")
+    if forward_yields_calculated > 0:
+        valid_yields = [item['forwardYield'] for item in analysis_data if item.get('forwardYield') is not None]
+        avg_yield = sum(valid_yields) / len(valid_yields)
+        print(f"Average forward yield: {avg_yield:.1f}%")
     
     return True
 
