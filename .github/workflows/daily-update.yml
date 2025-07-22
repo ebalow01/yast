@@ -51,6 +51,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        git config --local advice.addIgnoredFile false
         
         # Add files that exist
         find yast-react/public/data -name "*.json" -exec git add {} \; 2>/dev/null || echo "No JSON files to add"
