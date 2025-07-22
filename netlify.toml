@@ -4,7 +4,7 @@
   publish = "yast-react/dist"
   
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   PYTHON_VERSION = "3.12"
   NPM_FLAGS = "--legacy-peer-deps"
   CI = "true"
