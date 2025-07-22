@@ -130,8 +130,14 @@ interface PortfolioMetrics {
 }
 
 function calculateMPTAllocation(allData: DividendData[]): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
+  console.log('🚀 Starting MPT allocation with', allData.length, 'total ETFs');
+  
   // Use ALL data (not just top performers) so filtering logic can work properly
   const allETFs = allData.filter(etf => etf.ticker !== 'SPY' && etf.category !== 'benchmark');
+  console.log('📊 Found', allETFs.length, 'ETFs for analysis (excluding SPY)');
+  
+  // Log the ETFs we're working with
+  console.log('Available ETFs:', allETFs.map(etf => `${etf.ticker}(${(etf.bestReturn*100).toFixed(1)}%)`).join(', '));
   
   // Add cash and SPY to the mix
   const assets: Asset[] = [
@@ -143,7 +149,7 @@ function calculateMPTAllocation(allData: DividendData[]): { allocation: Allocati
         ticker: etf.ticker,
         return: etf.bestReturn,
         risk: etf.riskVolatility,
-        sharpe: etf.bestReturn / etf.riskVolatility,
+        sharpe: etf.riskVolatility > 0 ? etf.bestReturn / etf.riskVolatility : 0,
         dividendCapture: etf.divCaptureReturn,
         exDivDay: etf.exDivDay,
         isRule1: isRule1,
@@ -172,8 +178,10 @@ function calculateMPTAllocation(allData: DividendData[]): { allocation: Allocati
     }
   ];
 
-  // Maximize return while keeping overall portfolio risk under 10%
-  const maxPortfolioRisk = 0.10; // 10% risk constraint
+  console.log('🎯 Total assets for optimization:', assets.length);
+
+  // Use more relaxed risk constraint for better diversification
+  const maxPortfolioRisk = 0.15; // Increased to 15% risk constraint for better allocation
   
   // Optimize portfolio with risk constraint (include cash as an option)
   const allocation = optimizePortfolioWithRiskConstraint(assets, maxPortfolioRisk);
@@ -730,22 +738,23 @@ export default function DividendAnalysisDashboard() {
             console.log('📅 Metadata:', metadataValue);
             
             // Convert JSON data to the format expected by the dashboard
+            // Note: JSON data uses different field names and decimal format
             convertedData = performanceData.map((item: any) => ({
               ticker: item.ticker,
-              tradingDays: item.trading_days,
-              exDivDay: item.ex_div_day,
-              buyHoldReturn: item.buy_hold_return / 100, // Convert from percentage
-              divCaptureReturn: item.div_capture_return / 100,
-              bestStrategy: item.best_strategy === 'Buy & Hold' ? 'B&H' : 'DC',
-              bestReturn: item.best_return / 100,
-              finalValue: item.final_value,
-              dcWinRate: item.dc_win_rate / 100,
-              riskVolatility: item.risk_volatility / 100,
-              medianDividend: item.median_dividend,
-              forwardYield: item.forward_yield,
-              category: item.best_return >= 40 ? 'top-performers' : 
-                       item.best_return >= 20 ? 'mid-performers' : 
-                       item.best_return >= 0 ? 'low-performers' : 'excluded'
+              tradingDays: item.tradingDays,
+              exDivDay: item.exDivDay,
+              buyHoldReturn: item.buyHoldReturn, // Already in decimal format
+              divCaptureReturn: item.divCaptureReturn, // Already in decimal format
+              bestStrategy: item.bestStrategy === 'Buy & Hold' ? 'B&H' : 'DC',
+              bestReturn: item.bestReturn, // Already in decimal format
+              finalValue: item.finalValue,
+              dcWinRate: item.dcWinRate, // Already in decimal format
+              riskVolatility: item.riskVolatility, // Already in decimal format
+              medianDividend: item.medianDividend,
+              forwardYield: item.forwardYield,
+              category: item.bestReturn >= 0.40 ? 'top-performers' : 
+                       item.bestReturn >= 0.20 ? 'mid-performers' : 
+                       item.bestReturn >= 0.0 ? 'low-performers' : 'excluded'
             }));
           } else {
             throw new Error('JSON files not found, falling back to static data');
