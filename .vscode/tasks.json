@@ -2,11 +2,22 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Run ULTY Stock Downloader",
+			"label": "Run Multi-Ticker Analysis",
 			"type": "shell",
 			"command": "C:/Users/ebalo/AppData/Local/Microsoft/WindowsApps/python3.12.exe",
 			"args": [
-				"ulty_stock_downloader.py"
+				"multi_ticker_orchestrator.py"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Generate Web Data",
+			"type": "shell",
+			"command": "C:/Users/ebalo/AppData/Local/Microsoft/WindowsApps/python3.12.exe",
+			"args": [
+				"scripts/generate_web_data.py"
 			],
 			"group": "build",
 			"isBackground": false,

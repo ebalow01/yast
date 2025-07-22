@@ -70,5 +70,109 @@
   "BLOX": {
     "name": "YieldMax Block Option Income Strategy ETF",
     "start_date": "auto_detect"
+  },
+  "BRKW": {
+    "name": "YieldMax Berkshire Hathaway Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "COIW": {
+    "name": "YieldMax Coinbase Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "HOOW": {
+    "name": "YieldMax Home Depot Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "METW": {
+    "name": "YieldMax Meta Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "NVDW": {
+    "name": "YieldMax NVIDIA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "PLTW": {
+    "name": "YieldMax Palantir Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "TSLW": {
+    "name": "YieldMax Tesla Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "USOY": {
+    "name": "Defiance Oil Enhanced Options Income ETF",
+    "start_date": "auto_detect"
+  },
+  "TSYY": {
+    "name": "GraniteShares YieldBOOST TSLA ETF",
+    "start_date": "auto_detect"
+  },
+  "YETH": {
+    "name": "Roundhill Ether Covered Call Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "QQQY": {
+    "name": "Defiance Nasdaq 100 Enhanced Options & 0DTE Income ETF",
+    "start_date": "auto_detect"
+  },
+  "WDTE": {
+    "name": "Defiance S&P 500 Target 30 Income ETF",
+    "start_date": "auto_detect"
+  },
+  "YBTC": {
+    "name": "Roundhill Bitcoin Covered Call Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "QDTE": {
+    "name": "Roundhill Innovation-100 0DTE Covered Call Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "XDTE": {
+    "name": "Roundhill S&P 500 0DTE Covered Call Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "TQQY": {
+    "name": "GraniteShares YieldBOOST QQQ ETF",
+    "start_date": "auto_detect"
+  },
+  "YSPY": {
+    "name": "GraniteShares YieldBOOST SPY ETF",
+    "start_date": "auto_detect"
+  },
+  "XBTY": {
+    "name": "GraniteShares YieldBOOST Bitcoin ETF",
+    "start_date": "auto_detect"
+  },
+  "GLDY": {
+    "name": "Defiance Gold Enhanced Options Income ETF",
+    "start_date": "auto_detect"
+  },
+  "NVYY": {
+    "name": "GraniteShares YieldBOOST NVDA ETF",
+    "start_date": "auto_detect"
+  },
+  "MAGY": {
+    "name": "Roundhill Magnificent Seven Covered Call ETF",
+    "start_date": "auto_detect"
+  },
+  "TSII": {
+    "name": "REX TSLA Growth & Income ETF",
+    "start_date": "auto_detect"
+  },
+  "NVII": {
+    "name": "REX NVDA Growth & Income ETF",
+    "start_date": "auto_detect"
+  },
+  "BCCC": {
+    "name": "Global X Bitcoin Covered Call ETF",
+    "start_date": "auto_detect"
+  },
+  "MMKT": {
+    "name": "Texas Capital Government Money Market ETF",
+    "start_date": "auto_detect"
+  },
+  "WEEK": {
+    "name": "Roundhill Weekly T-Bill ETF",
+    "start_date": "auto_detect"
   }
 }

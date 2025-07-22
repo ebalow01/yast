@@ -323,7 +323,7 @@ def clean_historical_data(hist_data):
     hist_data_clean.index = pd.to_datetime(hist_data_clean.index.date)
     
     # Fill any missing values
-    hist_data_clean = hist_data_clean.fillna(method='ffill')
+    hist_data_clean = hist_data_clean.ffill()
     
     return hist_data_clean
 

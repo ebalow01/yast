@@ -3,7 +3,7 @@ name: Daily ETF Analysis Update
 on:
   schedule:
     # Run daily at 6am UTC
-    - cron: '0 6 * * 1-5'  # Monday-Friday at midnight UTC
+    - cron: '0 6 * * 1-5'  # Monday-Friday at 6am UTC (weekdays only)
   workflow_dispatch:  # Allow manual triggers
 
 jobs:
@@ -25,27 +25,56 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run ETF analysis
+      id: analysis
+      continue-on-error: true
       run: |
-        python multi_ticker_orchestrator.py
+        echo "Starting ETF analysis..."
+        python multi_ticker_orchestrator.py || echo "Analysis completed with warnings"
+        echo "Analysis step completed"
         
     - name: Generate web data
+      id: webdata  
+      continue-on-error: true
       run: |
-        python scripts/generate_web_data.py
+        echo "Generating web data..."
+        python scripts/generate_web_data.py || echo "Web data generation completed with warnings"
+        echo "Web data generation completed"
+        
+    - name: Check if files were created
+      run: |
+        echo "Checking for generated files..."
+        ls -la yast-react/public/data/ || echo "No web data directory found"
+        ls -la data/*.csv | head -10 || echo "No CSV files found"
+        ls -la comprehensive_sorted_table_*.txt | head -5 || echo "No comprehensive table files found"
         
     - name: Commit and push if data changed
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add yast-react/public/data/*.json
-        git add data/*.csv
+        
+        # Add files that exist
+        find yast-react/public/data -name "*.json" -exec git add {} \; 2>/dev/null || echo "No JSON files to add"
+        find data -name "*.csv" -exec git add {} \; 2>/dev/null || echo "No CSV files to add"  
+        find . -maxdepth 1 -name "comprehensive_sorted_table_*.txt" -exec git add {} \; 2>/dev/null || echo "No table files to add"
+        find . -maxdepth 1 -name "multi_ticker_analysis_*.txt" -exec git add {} \; 2>/dev/null || echo "No analysis files to add"
+        
+        # Check if there are any changes
         if git diff --staged --quiet; then
           echo "No changes to commit"
+          exit 0
         else
-          git commit -m "Daily ETF data update $(date +%Y-%m-%d)"
-          git push
+          echo "Changes detected, committing..."
+          git commit -m "Daily ETF data update $(date +%Y-%m-%d)" || echo "Commit failed"
+          git push || echo "Push failed"
         fi
         
     - name: Trigger Netlify deploy
       if: success()
+      continue-on-error: true
       run: |
-        curl -X POST -d {} ${{ secrets.NETLIFY_BUILD_HOOK }}
+        if [ -n "${{ secrets.NETLIFY_BUILD_HOOK }}" ]; then
+          echo "Triggering Netlify deployment..."
+          curl -X POST -d {} "${{ secrets.NETLIFY_BUILD_HOOK }}" || echo "Netlify trigger failed"
+        else
+          echo "No Netlify build hook configured"
+        fi

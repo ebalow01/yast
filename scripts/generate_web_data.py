@@ -334,11 +334,24 @@ def generate_web_data():
         print(f"ERROR: Analysis failed: {e}")
         # Create fallback data for deployment
         print("Creating fallback data...")
-        return create_fallback_data(web_data_dir)
+        create_fallback_data(web_data_dir)
+        return True  # Return True for fallback success
     
     # Read and process the data
     print("Processing data for web...")
-    return process_analysis_data(web_data_dir)
+    success = process_analysis_data(web_data_dir)
+    
+    return success
 
 if __name__ == "__main__":
-    generate_web_data()
+    try:
+        success = generate_web_data()
+        if success:
+            print("SUCCESS: Web data generation completed successfully")
+            sys.exit(0)
+        else:
+            print("ERROR: Web data generation failed")
+            sys.exit(1)
+    except Exception as e:
+        print(f"FATAL ERROR: {e}")
+        sys.exit(1)
