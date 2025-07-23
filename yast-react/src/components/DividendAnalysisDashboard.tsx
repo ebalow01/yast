@@ -756,6 +756,14 @@ export default function DividendAnalysisDashboard() {
                        item.bestReturn >= 0.20 ? 'mid-performers' : 
                        item.bestReturn >= 0.0 ? 'low-performers' : 'excluded'
             }));
+            
+            // Debug forward yields
+            console.log('📊 Forward yield debug:');
+            convertedData.forEach(item => {
+              if (['YMAX', 'ULTY', 'YMAG', 'IWMY', 'CHPY', 'RDTE'].includes(item.ticker)) {
+                console.log(`${item.ticker}: forwardYield = ${item.forwardYield} (type: ${typeof item.forwardYield})`);
+              }
+            });
           } else {
             throw new Error('JSON files not found, falling back to static data');
           }
@@ -888,6 +896,13 @@ export default function DividendAnalysisDashboard() {
   const topPerformers = data.filter(item => 
     mptAllocation.some(allocation => allocation.ticker === item.ticker)
   );
+  
+  // Debug top performers forward yields
+  console.log('🏆 Top performers forward yield debug:');
+  topPerformers.forEach(item => {
+    console.log(`${item.ticker}: forwardYield = ${item.forwardYield} (type: ${typeof item.forwardYield})`);
+  });
+  
   const excludedTickers = data.filter(item => 
     !mptAllocation.some(allocation => allocation.ticker === item.ticker) &&
     item.ticker !== 'SPY' // Keep SPY separate as benchmark, don't show in excluded
