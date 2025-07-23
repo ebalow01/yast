@@ -16,6 +16,35 @@ from ulty_weekly_analysis_main import analyze_weekly_dividend_pattern
 from ulty_trading_strategies_main import backtest_weekly_strategy, backtest_dd2_to_dd4_strategy
 from ulty_dividend_capture_main import backtest_best_dividend_capture_strategy, analyze_market_exposure
 
+def detect_ex_dividend_day_from_data(ticker_symbol, hist_data):
+    """
+    Detect the ex-dividend day from the most recent dividend payment.
+    Returns the weekday of the last dividend payment to reflect current schedule.
+    """
+    try:
+        if hist_data is None or hist_data.empty:
+            return "Thursday"  # Default fallback
+        
+        # Get dividend payments
+        dividends = hist_data[hist_data['Dividends'] > 0]
+        if dividends.empty:
+            return "Thursday"  # Default fallback
+        
+        # Get the most recent dividend payment date
+        most_recent_date = dividends.index[-1]
+        
+        # Get the weekday (0=Monday, 6=Sunday)
+        weekday_num = most_recent_date.weekday()
+        weekday_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        detected_day = weekday_names[weekday_num]
+        
+        print(f"  {ticker_symbol}: Most recent dividend on {most_recent_date.strftime('%Y-%m-%d')} ({detected_day})")
+        return detected_day
+            
+    except Exception as e:
+        print(f"  Error detecting ex-dividend day for {ticker_symbol}: {e}")
+        return "Thursday"  # Default fallback
+
 def analyze_ticker_strategies(ticker_symbol, hist_data, initial_capital=100000):
     """
     Analyze all strategies for a specific ticker.
@@ -336,16 +365,8 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
         best_return = max(buy_hold_return, div_capture_return)
         final_value = 100000 * (1 + best_return/100)
         
-        # Get ex-dividend day (simplified - would need actual verification)
-        ex_div_day = "Thursday"  # Default for most YieldMax ETFs
-        if ticker in ['COII', 'MSII']:
-            ex_div_day = "Tuesday"
-        elif ticker in ['AAPW', 'AMZW', 'NFLW']:
-            ex_div_day = "Monday"
-        elif ticker == 'MST':
-            ex_div_day = "Wednesday"
-        elif ticker == 'ULTY':
-            ex_div_day = "Thursday"  # Corrected from Friday
+        # Detect ex-dividend day from actual data
+        ex_div_day = detect_ex_dividend_day_from_data(ticker, results['hist_data'])
         
         performance_data.append({
             'ticker': ticker,
