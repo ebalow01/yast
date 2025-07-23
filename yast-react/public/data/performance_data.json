@@ -37,7 +37,7 @@
     "divCaptureReturn": 1.0608,
     "bestStrategy": "DC",
     "bestReturn": 1.0608,
-    "finalValue": 206075.0,
+    "finalValue": 206076.0,
     "dcWinRate": 0.897,
     "riskVolatility": 0.204,
     "medianDividend": 0.247,
@@ -450,21 +450,6 @@
     "category": "excluded"
   },
   {
-    "ticker": "QDTY",
-    "tradingDays": 20,
-    "exDivDay": "Thursday",
-    "buyHoldReturn": 0.15130000000000002,
-    "divCaptureReturn": 0.1673,
-    "bestStrategy": "DC",
-    "bestReturn": 0.1673,
-    "finalValue": 116725.0,
-    "dcWinRate": 0.9,
-    "riskVolatility": 0.40299999999999997,
-    "medianDividend": 0.257,
-    "forwardYield": 29.8,
-    "category": "excluded"
-  },
-  {
     "ticker": "MST",
     "tradingDays": 8,
     "exDivDay": "Wednesday",
@@ -477,6 +462,21 @@
     "riskVolatility": 0.851,
     "medianDividend": 0.272,
     "forwardYield": 74.6,
+    "category": "excluded"
+  },
+  {
+    "ticker": "QDTY",
+    "tradingDays": 20,
+    "exDivDay": "Thursday",
+    "buyHoldReturn": 0.15109999999999998,
+    "divCaptureReturn": 0.1666,
+    "bestStrategy": "DC",
+    "bestReturn": 0.1666,
+    "finalValue": 116664.0,
+    "dcWinRate": 0.9,
+    "riskVolatility": 0.40299999999999997,
+    "medianDividend": 0.257,
+    "forwardYield": 29.8,
     "category": "excluded"
   },
   {
