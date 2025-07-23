@@ -272,7 +272,7 @@
         <header class="header">
             <h1>YieldMax ETFs</h1>
             <div class="subtitle">Weekly Distribution Analysis</div>
-            <div class="timestamp">Last Updated: July 22, 2025</div>
+            <div class="timestamp" id="last-updated">Last Updated: Loading...</div>
         </header>
 
         <div class="main-grid">
@@ -605,10 +605,21 @@
 ];
 
         // Load data immediately - try to fetch real data first, fallback to embedded data
-        fetch('./data/performance_data.json')
-            .then(response => response.json())
-            .then(data => {
+        Promise.all([
+            fetch('./data/performance_data.json'),
+            fetch('./data/metadata.json')
+        ])
+            .then(([dataResponse, metadataResponse]) => Promise.all([dataResponse.json(), metadataResponse.json()]))
+            .then(([data, metadata]) => {
                 console.log('Loaded real data from JSON file');
+                console.log('All assets with return/risk values:');
+                
+                // Update timestamp from metadata
+                const timestampElement = document.getElementById('last-updated');
+                if (timestampElement && metadata.analysisDate) {
+                    timestampElement.textContent = `Last Updated: ${metadata.analysisDate}`;
+                }
+                
                 loadData(data);
             })
             .catch(error => {

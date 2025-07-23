@@ -605,7 +605,7 @@
 ];
 
         // Load data immediately - try to fetch real data first, fallback to embedded data
-        fetch('./public/data/performance_data.json')
+        fetch('./data/performance_data.json')
             .then(response => response.json())
             .then(data => {
                 console.log('Loaded real data from JSON file');
