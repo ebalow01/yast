@@ -241,7 +241,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 63,
     "exDivDay": "Thursday",
     "dividendCapture": 0,
-    "forwardYield": 35.2
+    "forwardYield": 36.2
   },
   {
     "ticker": "IWMY",
@@ -256,7 +256,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 162,
     "exDivDay": "Thursday",
     "dividendCapture": 43.6,
-    "forwardYield": 52.6
+    "forwardYield": 58.6
   },
   {
     "ticker": "RDTE",
@@ -271,7 +271,7 @@ export const dividendData: Asset[] = [
     "tradingDays": 202,
     "exDivDay": "Thursday",
     "dividendCapture": 34.67,
-    "forwardYield": 40.0
+    "forwardYield": 40.2
   },
   {
     "ticker": "NVYY",
