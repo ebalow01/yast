@@ -739,6 +739,7 @@ export default function DividendAnalysisDashboard() {
             console.log('📊 Loading data from updated JSON files');
             console.log('📅 Metadata loaded:', metadataValue);
             console.log('🔄 Cache buster used:', cacheBuster);
+            console.log('🏗️ Build ID:', metadataValue.build_id || 'N/A');
             console.log('📈 Performance data entries:', performanceData.length);
             
             // Convert JSON data to the format expected by the dashboard

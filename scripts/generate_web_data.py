@@ -12,6 +12,7 @@ import os
 import sys
 import re
 import yfinance as yf
+import hashlib
 
 # Add parent directory to path to import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -111,8 +112,11 @@ def create_fallback_data(web_data_dir):
         json.dump(performance_data, f, indent=2, default=convert_numpy_types)
     
     # Generate metadata
+    import hashlib
+    build_id = hashlib.md5(datetime.now().isoformat().encode()).hexdigest()[:8]
     metadata = {
         'generated_at': datetime.now().isoformat(),
+        'build_id': build_id,
         'version': '1.0.0',
         'status': 'fallback',
         'analysisDate': datetime.now().strftime('%B %d, %Y'),
@@ -343,8 +347,10 @@ def process_analysis_data(web_data_dir):
         json.dump(analysis_data, f, indent=2, default=convert_numpy_types)
     
     # Generate metadata
+    build_id = hashlib.md5(datetime.now().isoformat().encode()).hexdigest()[:8]
     metadata = {
         'generated_at': datetime.now().isoformat(),
+        'build_id': build_id,
         'version': '1.0.0',
         'status': 'live',
         'analysisDate': datetime.now().strftime('%B %d, %Y'),
