@@ -725,9 +725,11 @@ export default function DividendAnalysisDashboard() {
         
         // Try to load data from JSON files first (updated by GitHub Action)
         try {
+          // Add cache busting to ensure fresh data from GitHub Actions
+          const cacheBuster = new Date().getTime();
           const [performanceResponse, metadataResponse] = await Promise.all([
-            fetch('/data/performance_data.json'),
-            fetch('/data/metadata.json')
+            fetch(`/data/performance_data.json?v=${cacheBuster}`),
+            fetch(`/data/metadata.json?v=${cacheBuster}`)
           ]);
           
           if (performanceResponse.ok && metadataResponse.ok) {
@@ -735,7 +737,9 @@ export default function DividendAnalysisDashboard() {
             metadataValue = await metadataResponse.json();
             
             console.log('📊 Loading data from updated JSON files');
-            console.log('📅 Metadata:', metadataValue);
+            console.log('📅 Metadata loaded:', metadataValue);
+            console.log('🔄 Cache buster used:', cacheBuster);
+            console.log('📈 Performance data entries:', performanceData.length);
             
             // Convert JSON data to the format expected by the dashboard
             // Note: JSON data uses different field names and decimal format
@@ -757,10 +761,17 @@ export default function DividendAnalysisDashboard() {
                        item.bestReturn >= 0.0 ? 'low-performers' : 'excluded'
             }));
           } else {
+            console.warn('❌ JSON file fetch failed:', {
+              performanceOk: performanceResponse.ok,
+              performanceStatus: performanceResponse.status,
+              metadataOk: metadataResponse.ok,
+              metadataStatus: metadataResponse.status
+            });
             throw new Error('JSON files not found, falling back to static data');
           }
         } catch (jsonError) {
           console.log('📁 JSON files not available, using static imported data');
+          console.error('JSON fetch error:', jsonError);
           // Fallback to static imported data
           convertedData = dividendData.map(convertAssetToData);
           metadataValue = analysisMetadata;

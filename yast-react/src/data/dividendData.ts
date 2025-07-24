@@ -696,7 +696,7 @@ export const dividendData: Asset[] = [
 ];
 
 export const analysisMetadata = {
-  "lastUpdated": "2025-07-21T08:25:00",
-  "analysisDate": "2025-07-21",
+  "lastUpdated": "2025-07-24T06:16:09",
+  "analysisDate": "July 24, 2025",
   "totalTickers": 44
 };
