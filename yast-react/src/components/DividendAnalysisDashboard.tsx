@@ -61,45 +61,50 @@ export interface DividendData {
   category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
 }
 
-// Modern 2024 Design System
+// Accessible 2025 Design System - Semantic Colors + Patterns
 const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#00D4FF', // Vibrant cyan
+      main: '#00D4FF', // Reserved for primary actions & selected states only
       light: '#64E3FF',
       dark: '#0095CC',
       contrastText: '#000000'
     },
     secondary: {
-      main: '#6C63FF', // Modern purple
-      light: '#9C88FF',
-      dark: '#3F51B5'
+      main: '#8E8E93', // Neutral gray for secondary elements
+      light: '#C7C7CC',
+      dark: '#636366'
     },
     success: {
-      main: '#00E676',
+      main: '#34C759', // Clear positive outcomes only
       light: '#69F0AE',
-      dark: '#00C853'
+      dark: '#28A745'
     },
     warning: {
-      main: '#FFB74D',
-      light: '#FFE082',
-      dark: '#F57C00'
+      main: '#FF9500', // Caution/moderate risk
+      light: '#FFB74D',
+      dark: '#E6840E'
     },
     error: {
-      main: '#FF4569',
+      main: '#FF3B30', // Clear negative outcomes only
       light: '#FF7D99',
-      dark: '#E91E63'
+      dark: '#D70015'
+    },
+    info: {
+      main: '#007AFF', // Informational content
+      light: '#64B5F6',
+      dark: '#0056CC'
     },
     background: {
-      default: 'linear-gradient(135deg, #0F0F23 0%, #1A1A2E 50%, #16213E 100%)',
-      paper: 'rgba(255, 255, 255, 0.02)'
+      default: '#0A0A0A', // Single solid background - no competing gradients
+      paper: 'rgba(255, 255, 255, 0.03)' // Reduced transparency for better readability
     },
     text: {
       primary: '#FFFFFF',
-      secondary: 'rgba(255, 255, 255, 0.7)'
+      secondary: 'rgba(255, 255, 255, 0.8)' // Improved contrast
     },
-    divider: 'rgba(255, 255, 255, 0.08)'
+    divider: 'rgba(255, 255, 255, 0.12)' // Better visibility
   },
   typography: {
     fontFamily: '"Inter", "SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -107,9 +112,7 @@ const theme = createTheme({
       fontWeight: 800,
       fontSize: '3.5rem',
       letterSpacing: '-0.04em',
-      background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent'
+      color: '#FFFFFF' // Solid color for better readability
     },
     h2: {
       fontWeight: 700,
@@ -361,6 +364,14 @@ interface PortfolioMetrics {
   expectedReturn: number;
   risk: number;
   sharpeRatio: number;
+  // Enhanced risk metrics
+  var95?: number;
+  var99?: number;
+  conditionalVaR?: number;
+  maxDrawdown?: number;
+  sortinoRatio?: number;
+  calmarRatio?: number;
+  volatilityRegime?: 'Low' | 'Normal' | 'High' | 'Crisis';
 }
 
 function calculateMPTAllocation(allData: DividendData[]): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
@@ -896,6 +907,68 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   return allocation;
 }
 
+// Advanced Risk Metrics Calculations
+const calculateVaR = (portfolioReturn: number, portfolioRisk: number, confidence: number = 0.95): number => {
+  // Z-score for different confidence levels
+  const zScores = { 0.90: 1.282, 0.95: 1.645, 0.99: 2.326 };
+  const zScore = zScores[confidence as keyof typeof zScores] || 1.645;
+  
+  // Daily VaR calculation: VaR = μ - z * σ
+  const dailyReturn = portfolioReturn / 252; // Annualized to daily
+  const dailyRisk = portfolioRisk / Math.sqrt(252); // Annualized to daily
+  
+  return Math.abs(dailyReturn - zScore * dailyRisk);
+};
+
+const calculateConditionalVaR = (var95: number): number => {
+  // Expected Shortfall (Conditional VaR) is typically 25-30% higher than VaR
+  return var95 * 1.28;
+};
+
+const calculateMaxDrawdown = (allocation: AllocationItem[]): number => {
+  // Estimate max drawdown based on portfolio composition and individual asset characteristics
+  let maxDrawdown = 0;
+  
+  for (const asset of allocation) {
+    if (asset.ticker === 'CASH') continue;
+    
+    // Estimate individual asset max drawdown based on risk and historical patterns
+    let assetDrawdown = 0;
+    
+    // YieldMax ETFs have specific drawdown characteristics
+    if (asset.risk > 0.6) {
+      assetDrawdown = 0.4 + asset.risk * 0.3; // High vol assets: 40-60% potential drawdowns
+    } else if (asset.risk > 0.3) {
+      assetDrawdown = 0.2 + asset.risk * 0.4; // Medium vol: 20-40%
+    } else {
+      assetDrawdown = asset.risk * 1.5; // Low vol: proportional to risk
+    }
+    
+    // Weight-adjusted contribution to portfolio drawdown
+    const weightedDrawdown = asset.weight * assetDrawdown;
+    maxDrawdown += weightedDrawdown;
+  }
+  
+  // Add correlation adjustment - diversification reduces total drawdown
+  const diversificationFactor = Math.min(0.8, allocation.length * 0.1); // Max 20% reduction
+  maxDrawdown *= (1 - diversificationFactor);
+  
+  return Math.min(0.6, maxDrawdown); // Cap at 60% for realism
+};
+
+const calculateSortinoRatio = (portfolioReturn: number, portfolioRisk: number, riskFreeRate: number = 0.045): number => {
+  // Sortino uses downside deviation (approximately 70% of total volatility for most assets)
+  const downwardVolatility = portfolioRisk * 0.7;
+  return downwardVolatility > 0 ? (portfolioReturn - riskFreeRate) / downwardVolatility : 0;
+};
+
+const detectVolatilityRegime = (portfolioRisk: number): 'Low' | 'Normal' | 'High' | 'Crisis' => {
+  if (portfolioRisk < 0.15) return 'Low';
+  if (portfolioRisk < 0.25) return 'Normal';
+  if (portfolioRisk < 0.4) return 'High';
+  return 'Crisis';
+};
+
 function calculatePortfolioMetrics(allocation: AllocationItem[]): PortfolioMetrics {
   const portfolioReturn = allocation.reduce((sum, asset) => sum + (asset.weight * asset.return), 0);
   
@@ -918,15 +991,39 @@ function calculatePortfolioMetrics(allocation: AllocationItem[]): PortfolioMetri
   const portfolioRisk = Math.sqrt(portfolioVariance + diversificationPenalty);
   const sharpeRatio = portfolioRisk > 0 ? portfolioReturn / portfolioRisk : 0;
 
-  console.log(`📊 Portfolio Risk Calculation:`);
-  console.log(`   Base variance: ${Math.sqrt(portfolioVariance).toFixed(3)}`);
-  console.log(`   Diversification penalty: ${diversificationPenalty.toFixed(3)}`);
-  console.log(`   Final risk: ${portfolioRisk.toFixed(3)}`);
+  // Advanced Risk Metrics
+  const var95 = calculateVaR(portfolioReturn, portfolioRisk, 0.95);
+  const var99 = calculateVaR(portfolioReturn, portfolioRisk, 0.99);
+  const conditionalVaR = calculateConditionalVaR(var95);
+  const maxDrawdown = calculateMaxDrawdown(allocation);
+  const sortinoRatio = calculateSortinoRatio(portfolioReturn, portfolioRisk);
+  const calmarRatio = portfolioReturn / Math.max(0.01, maxDrawdown);
+  const volatilityRegime = detectVolatilityRegime(portfolioRisk);
+
+  console.log(`📊 Enhanced Portfolio Risk Analysis:`);
+  console.log(`   Expected Return: ${(portfolioReturn * 100).toFixed(1)}%`);
+  console.log(`   Portfolio Risk: ${(portfolioRisk * 100).toFixed(1)}%`);
+  console.log(`   VaR (95%): ${(var95 * 100).toFixed(2)}% daily`);
+  console.log(`   VaR (99%): ${(var99 * 100).toFixed(2)}% daily`);
+  console.log(`   Expected Shortfall: ${(conditionalVaR * 100).toFixed(2)}%`);
+  console.log(`   Max Drawdown: ${(maxDrawdown * 100).toFixed(1)}%`);
+  console.log(`   Sharpe Ratio: ${sharpeRatio.toFixed(3)}`);
+  console.log(`   Sortino Ratio: ${sortinoRatio.toFixed(3)}`);
+  console.log(`   Calmar Ratio: ${calmarRatio.toFixed(3)}`);
+  console.log(`   Volatility Regime: ${volatilityRegime}`);
 
   return {
     expectedReturn: portfolioReturn,
     risk: portfolioRisk,
-    sharpeRatio: sharpeRatio
+    sharpeRatio: sharpeRatio,
+    // Enhanced metrics
+    var95,
+    var99,
+    conditionalVaR,
+    maxDrawdown,
+    sortinoRatio,
+    calmarRatio,
+    volatilityRegime
   };
 }
 
@@ -1007,6 +1104,27 @@ export default function DividendAnalysisDashboard() {
   const [data, setData] = useState<DividendData[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Accessibility helpers - Pattern-based indicators for colorblind users
+  const getPerformanceIcon = (value: number, type: 'return' | 'risk' = 'return') => {
+    if (type === 'return') {
+      if (value > 40) return { icon: '▲▲', color: '#34C759', label: 'Excellent' };
+      if (value > 20) return { icon: '▲', color: '#34C759', label: 'Good' };
+      if (value > 0) return { icon: '▷', color: '#FF9500', label: 'Moderate' };
+      return { icon: '▼', color: '#FF3B30', label: 'Poor' };
+    } else {
+      if (value < 20) return { icon: '◆', color: '#34C759', label: 'Low Risk' };
+      if (value < 40) return { icon: '◇', color: '#FF9500', label: 'Medium Risk' };
+      if (value < 60) return { icon: '⚠', color: '#FF3B30', label: 'High Risk' };
+      return { icon: '⚠⚠', color: '#FF3B30', label: 'Very High Risk' };
+    }
+  };
+
+  const getStrategyIndicator = (strategy: string) => {
+    if (strategy === 'Buy & Hold') return { icon: '⏳', color: '#007AFF', label: 'B&H' };
+    if (strategy === 'Dividend Capture') return { icon: '⚡', color: '#00D4FF', label: 'DC' };
+    return { icon: '?', color: '#8E8E93', label: strategy };
+  };
   const [error, setError] = useState<string | null>(null);
   const [mptAllocation, setMptAllocation] = useState<any[]>([]);
   const [portfolioMetrics, setPortfolioMetrics] = useState<any>(null);
@@ -1231,7 +1349,244 @@ export default function DividendAnalysisDashboard() {
     item.ticker !== 'SPY' // Keep SPY separate as benchmark, don't show in excluded
   );
 
-  const renderTable = (data: DividendData[]) => (
+  // Clean Portfolio Allocation Table
+  const renderPortfolioAllocationTable = () => (
+    <Card sx={{ 
+      background: 'rgba(255, 255, 255, 0.02)',
+      border: '1px solid rgba(255, 255, 255, 0.1)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ 
+          color: '#FFFFFF', 
+          fontWeight: 600, 
+          mb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <AccountBalance sx={{ color: '#00D4FF', fontSize: 20 }} />
+          Portfolio Allocation
+        </Typography>
+        
+        <TableContainer>
+          <Table size="medium">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>ETF</TableCell>
+                <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Weight</TableCell>
+                <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Expected Return</TableCell>
+                <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Risk</TableCell>
+                <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Sharpe</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {mptAllocation.map((asset, index) => (
+                <TableRow key={asset.ticker} hover>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" sx={{ 
+                        fontWeight: 600, 
+                        color: asset.ticker === 'CASH' ? '#FFB74D' : '#FFFFFF' 
+                      }}>
+                        {asset.ticker}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography variant="body2" sx={{ 
+                      fontWeight: 700, 
+                      color: '#00D4FF',
+                      fontSize: '0.95rem'
+                    }}>
+                      {(asset.weight * 100).toFixed(1)}%
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    {(() => {
+                      const indicator = getPerformanceIcon(asset.return * 100, 'return');
+                      return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" sx={{ fontSize: '1rem' }}>
+                            {indicator.icon}
+                          </Typography>
+                          <Typography variant="body2" sx={{ 
+                            color: indicator.color,
+                            fontWeight: 500
+                          }}>
+                            {(asset.return * 100).toFixed(1)}%
+                          </Typography>
+                        </Box>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell align="center">
+                    {(() => {
+                      const indicator = getPerformanceIcon(asset.risk * 100, 'risk');
+                      return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" sx={{ fontSize: '1rem' }}>
+                            {indicator.icon}
+                          </Typography>
+                          <Typography variant="body2" sx={{ 
+                            color: indicator.color,
+                            fontWeight: 500
+                          }}>
+                            {(asset.risk * 100).toFixed(1)}%
+                          </Typography>
+                        </Box>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography variant="body2" sx={{ 
+                      color: '#FFFFFF',
+                      fontWeight: 500
+                    }}>
+                      {asset.sharpe?.toFixed(2) || 'N/A'}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+  );
+
+  // Card-based Portfolio View for Better Scanning
+  const renderPortfolioCards = () => (
+    <Card sx={{ 
+      background: 'rgba(255, 255, 255, 0.02)',
+      border: '1px solid rgba(255, 255, 255, 0.1)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ 
+          color: '#FFFFFF', 
+          fontWeight: 600, 
+          mb: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <Stars sx={{ color: '#00D4FF', fontSize: 20 }} />
+          Selected Portfolio ETFs
+        </Typography>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 2 }}>
+          {mptAllocation.filter(asset => asset.ticker !== 'CASH').map((asset) => {
+            const assetData = data.find(d => d.ticker === asset.ticker);
+            const returnIndicator = getPerformanceIcon(asset.return * 100, 'return');
+            const riskIndicator = getPerformanceIcon(asset.risk * 100, 'risk');
+            
+            return (
+              <Card key={asset.ticker} sx={{ 
+                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                border: '1px solid rgba(0, 212, 255, 0.2)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  border: '1px solid rgba(0, 212, 255, 0.4)',
+                  transform: 'translateY(-2px)'
+                }
+              }}>
+                <CardContent sx={{ p: 2.5 }}>
+                  {/* Header */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Typography variant="h6" sx={{ color: '#FFFFFF', fontWeight: 700 }}>
+                      {asset.ticker}
+                    </Typography>
+                    <Typography variant="h5" sx={{ color: '#00D4FF', fontWeight: 700 }}>
+                      {(asset.weight * 100).toFixed(1)}%
+                    </Typography>
+                  </Box>
+                  
+                  {/* Key Metrics */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
+                        <Typography sx={{ fontSize: '1.1rem' }}>{returnIndicator.icon}</Typography>
+                        <Typography variant="body2" sx={{ color: returnIndicator.color, fontWeight: 600 }}>
+                          {(asset.return * 100).toFixed(1)}%
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Return
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
+                        <Typography sx={{ fontSize: '1.1rem' }}>{riskIndicator.icon}</Typography>
+                        <Typography variant="body2" sx={{ color: riskIndicator.color, fontWeight: 600 }}>
+                          {(asset.risk * 100).toFixed(1)}%
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Risk
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 600, mb: 0.5 }}>
+                        {asset.sharpe?.toFixed(2) || 'N/A'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Sharpe
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* Additional Info */}
+                  {assetData && (
+                    <Box sx={{ 
+                      pt: 1.5, 
+                      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                        {assetData.exDivDay} ex-div
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#34C759', fontWeight: 500 }}>
+                        {assetData.forwardYield?.toFixed(1) || 'N/A'}% yield
+                      </Typography>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  // Detailed ETF Performance Table (Expandable)
+  const renderDetailedETFTable = (data: DividendData[]) => (
+    <Card sx={{ 
+      background: 'rgba(255, 255, 255, 0.02)',
+      border: '1px solid rgba(255, 255, 255, 0.1)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ 
+          color: '#FFFFFF', 
+          fontWeight: 600, 
+          mb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <ShowChart sx={{ color: '#00D4FF', fontSize: 20 }} />
+          Detailed Performance Analysis
+        </Typography>
+        
+        {renderLegacyTable(data)}
+      </CardContent>
+    </Card>
+  );
+
+  const renderLegacyTable = (data: DividendData[]) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -1343,22 +1698,27 @@ export default function DividendAnalysisDashboard() {
                         </Typography>
                       </Link>
                     {mptAllocation.some(allocation => allocation.ticker === item.ticker) && (
-                      <Chip
-                        icon={<Stars sx={{ fontSize: 14, color: '#FFD700' }} />}
-                        label="SELECTED"
-                        size="small"
-                        sx={{ 
-                          background: 'linear-gradient(135deg, #FFD700 0%, #FFA000 100%)',
-                          color: '#000',
-                          fontWeight: 700,
-                          fontSize: '10px',
-                          height: '20px',
-                          '& .MuiChip-label': {
-                            px: 1
-                          },
-                          boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
-                        }}
-                      />
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 0.5,
+                        px: 0.75,
+                        py: 0.25,
+                        border: '2px solid #00D4FF',
+                        borderRadius: 1,
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        height: '20px'
+                      }}>
+                        <Typography sx={{ fontSize: '0.7rem' }}>⭐</Typography>
+                        <Typography sx={{ 
+                          color: '#00D4FF',
+                          fontWeight: 600,
+                          fontSize: '0.65rem',
+                          lineHeight: 1
+                        }}>
+                          IN PORTFOLIO
+                        </Typography>
+                      </Box>
                     )}
                     </Box>
                     {/* Price and Dividend Information */}
@@ -1665,34 +2025,94 @@ export default function DividendAnalysisDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <Box sx={{ mb: 4 }}>
-                  <Typography 
-                    variant="h4" 
-                    gutterBottom
-                    sx={{ 
-                      fontWeight: 700,
-                      background: 'linear-gradient(135deg, #FFFFFF 0%, #00D4FF 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      mb: 1
-                    }}
-                  >
-                    Optimal Portfolio
-                  </Typography>
-                  <Typography 
-                    variant="subtitle1" 
-                    sx={{ 
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      maxWidth: '500px',
-                      lineHeight: 1.5,
-                      fontSize: '1rem'
-                    }}
-                  >
-                    MPT-optimized ETF allocation for maximum risk-adjusted returns
-                  </Typography>
+                {/* Primary Focus Area - Portfolio Summary */}
+                <Card sx={{ 
+                  mb: 3, 
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                      <Box>
+                        <Typography variant="h4" sx={{ 
+                          color: '#FFFFFF', 
+                          fontWeight: 700, 
+                          mb: 1,
+                          fontSize: '1.75rem'
+                        }}>
+                          Optimal Portfolio
+                        </Typography>
+                        <Typography variant="subtitle1" sx={{ 
+                          color: 'rgba(255, 255, 255, 0.8)', 
+                          fontSize: '1rem'
+                        }}>
+                          {mptAllocation.length} ETFs selected via correlation-aware MPT optimization
+                        </Typography>
+                      </Box>
+                      
+                      {/* Key Metrics - Primary Focus */}
+                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 2, textAlign: 'center' }}>
+                        <Box>
+                          <Typography variant="h5" sx={{ color: '#34C759', fontWeight: 700 }}>
+                            {portfolioMetrics ? `${(portfolioMetrics.expectedReturn * 100).toFixed(1)}%` : '---'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            Expected Return
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="h5" sx={{ color: '#FF9500', fontWeight: 700 }}>
+                            {portfolioMetrics ? `${(portfolioMetrics.risk * 100).toFixed(1)}%` : '---'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            Portfolio Risk
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="h5" sx={{ color: '#00D4FF', fontWeight: 700 }}>
+                            {portfolioMetrics ? portfolioMetrics.sharpeRatio.toFixed(2) : '---'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            Sharpe Ratio
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="h5" sx={{ color: '#FF3B30', fontWeight: 700 }}>
+                            {portfolioMetrics?.var95 ? `${(portfolioMetrics.var95 * 100).toFixed(2)}%` : '---'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            VaR (95%)
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="h5" sx={{ color: '#FF3B30', fontWeight: 700 }}>
+                            {portfolioMetrics?.maxDrawdown ? `${(portfolioMetrics.maxDrawdown * 100).toFixed(1)}%` : '---'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            Max Drawdown
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="h5" sx={{ color: '#007AFF', fontWeight: 700 }}>
+                            {portfolioMetrics?.sortinoRatio ? portfolioMetrics.sortinoRatio.toFixed(2) : '---'}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            Sortino Ratio
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+                {/* Secondary Information - Progressive Disclosure */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {renderPortfolioCards()}
+                  {renderPortfolioAllocationTable()}
+                  {renderDetailedETFTable(topPerformers)}
                 </Box>
               </motion.div>
-              {renderTable(topPerformers)}
               
               {/* Modern Portfolio Optimization Widget */}
               {mptAllocation.length > 0 && portfolioMetrics && (
