@@ -185,19 +185,12 @@ const createYieldMetrics = (legacyData: LegacyDividendData): YieldMetrics => {
   };
 };
 
-// For 401k context - simplified tax metrics (no actual tax implications)
-const createSimplifiedTaxMetrics = () => ({
-  taxEfficiencyRatio: 1.0, // No tax drag in 401k
-  qualifiedDividendPercent: 1.0, // All dividends are tax-deferred
-  ordinaryIncomePercent: 0.0,
-  capitalGainsPercent: 0.0,
-  washSaleRisk: 'Low' as const,
-  washSaleIndicators: [],
-  taxOptimizedHoldingPeriod: 1, // No holding period requirements in 401k
-  shortTermCapitalGainsRisk: 0.0,
-  effectiveTaxRate: 0.0, // Tax-deferred account
-  afterTaxReturn: 1.0, // Same as pre-tax in 401k context
-  estimatedTaxableIncome: 0.0 // No current tax liability
+// For 401k context - no tax implications (tax-advantaged account)
+const createTaxAdvantageMetrics = () => ({
+  accountType: '401k' as const,
+  taxAdvantaged: true,
+  noTaxDrag: true,
+  note: 'Tax-advantaged retirement account - no current tax implications'
 });
 
 // Transform legacy data to enhanced format
@@ -233,7 +226,7 @@ export const transformLegacyData = (legacyData: LegacyDividendData[]): EnhancedD
       // Enhanced metrics
       riskMetrics: createRiskMetrics(item),
       liquidityMetrics: createLiquidityMetrics(item),
-      taxMetrics: createSimplifiedTaxMetrics(), // Simplified for 401k
+      taxAdvantageInfo: createTaxAdvantageMetrics(), // 401k tax-advantaged status
       yieldMetrics: createYieldMetrics(item)
     };
   });

@@ -28,8 +28,8 @@ export interface EnhancedDividendData {
   // NEW: Liquidity metrics
   liquidityMetrics: LiquidityMetrics;
   
-  // NEW: Tax efficiency metrics
-  taxMetrics: TaxMetrics;
+  // NEW: Tax advantage info (401k context)
+  taxAdvantageInfo: TaxAdvantageInfo;
   
   // NEW: Enhanced yield calculations
   yieldMetrics: YieldMetrics;
@@ -87,38 +87,12 @@ export interface LiquidityMetrics {
   estimatedTradingCost: number; // Total cost including spread + impact
 }
 
-// Tax efficiency and tracking metrics
-export interface TaxMetrics {
-  // Tax efficiency ratios
-  taxEfficiencyRatio: number; // After-tax return / pre-tax return
-  
-  // Distribution analysis
-  qualifiedDividendPercent: number;
-  ordinaryIncomePercent: number;
-  capitalGainsPercent: number;
-  
-  // Wash sale risk analysis
-  washSaleRisk: 'Low' | 'Medium' | 'High';
-  washSaleIndicators: WashSaleIndicator[];
-  
-  // Tax optimization
-  taxOptimizedHoldingPeriod: number; // Optimal holding period in days
-  shortTermCapitalGainsRisk: number; // 0-1 probability
-  
-  // Tax bracket impact
-  effectiveTaxRate: number; // Estimated for different brackets
-  afterTaxReturn: number;
-  
-  // 1099 estimate
-  estimatedTaxableIncome: number; // Per $10k investment
-}
-
-// Wash sale detection indicators
-export interface WashSaleIndicator {
-  date: string;
-  riskLevel: 'Low' | 'Medium' | 'High';
-  reason: string;
-  impactOnReturns: number;
+// Tax advantage information for 401k context
+export interface TaxAdvantageInfo {
+  accountType: '401k';
+  taxAdvantaged: true;
+  noTaxDrag: true;
+  note: string;
 }
 
 // Enhanced yield calculations and projections
@@ -267,8 +241,6 @@ export interface DashboardFilters {
   minReturn: number;
   maxRisk: number;
   minLiquidity: number;
-  excludeHighTaxImpact: boolean;
-  onlyQualifiedDividends: boolean;
   
   // Sector and strategy filters
   allowedStrategies: Array<'B&H' | 'DC'>;

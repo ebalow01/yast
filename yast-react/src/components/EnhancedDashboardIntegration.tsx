@@ -167,9 +167,38 @@ function TabPanel(props: TabPanelProps) {
 
 // Demo data converter (converts your existing Asset interface to LegacyDividendData)
 const convertAssetToLegacyData = (asset: any): LegacyDividendData => {
-  // Generate realistic mock stock price based on dividend yield
-  const estimatedPrice = asset.medianDividend ? (asset.medianDividend * 52) / (asset.forwardYield / 100 || 0.05) : 25.0;
-  const mockPrice = asset.currentPrice || Math.max(15.0, Math.min(100.0, estimatedPrice + (Math.random() - 0.5) * 10));
+  // Generate realistic stock prices based on actual ETF characteristics
+  const generateRealisticPrice = (ticker: string, forwardYield: number, medianDividend: number) => {
+    // Base price estimation using dividend yield relationship
+    const yieldDecimal = (forwardYield || 50) / 100; // Default 50% yield if missing
+    const annualDividend = (medianDividend || 0.2) * 52; // Weekly dividends * 52
+    const basePrice = annualDividend / yieldDecimal;
+    
+    // Ticker-specific price adjustments for realism
+    const priceMultipliers: { [key: string]: number } = {
+      'PLTW': 0.8,  'COIW': 0.9,  'QDTE': 1.1,  'YMAX': 1.0,  'YETH': 0.7,
+      'LFGY': 1.2,  'YMAG': 1.1,  'ULTY': 1.3,  'XDTE': 1.0,  'NVDW': 0.9,
+      'HOOW': 0.6,  'COII': 1.4,  'QQQY': 1.2,  'YBTC': 0.8,  'CHPY': 1.1,
+      'IWMY': 1.0,  'RDTE': 1.1,  'NVYY': 0.9,  'TSLW': 0.7,  'GPTY': 1.0,
+      'AAPW': 1.3,  'NVII': 1.5,  'YSPY': 1.4,  'XBTY': 0.8,  'TSYY': 0.9,
+      'WDTE': 1.2,  'BLOX': 1.6,  'RDTY': 1.1,  'MAGY': 1.8,  'SDTY': 2.1,
+      'QDTY': 1.9,  'SPY': 8.5,   'TQQY': 2.2,  'MSII': 1.7,  'MST': 1.4,
+      'GLDY': 2.0,  'BCCC': 2.3,  'USOY': 1.5,  'AMZW': 3.2,  'TSII': 1.8,
+      'MMKT': 12.7, 'WEEK': 12.8, 'METW': 3.5,  'BRKW': 4.1,  'NFLW': 2.9
+    };
+    
+    const multiplier = priceMultipliers[ticker] || 1.0;
+    const adjustedPrice = basePrice * multiplier;
+    
+    // Add some realistic variation
+    const variation = (Math.random() - 0.5) * 0.1; // ±5% variation
+    const finalPrice = adjustedPrice * (1 + variation);
+    
+    // Keep within reasonable ETF price ranges
+    return Math.max(8.0, Math.min(500.0, finalPrice));
+  };
+  
+  const mockPrice = asset.currentPrice || generateRealisticPrice(asset.ticker, asset.forwardYield, asset.medianDividend);
   
   return {
     ticker: asset.ticker,
@@ -223,8 +252,6 @@ export const EnhancedDashboardIntegration: React.FC<EnhancedDashboardIntegration
       minReturn: 0,
       maxRisk: 100,
       minLiquidity: 0,
-      excludeHighTaxImpact: false,
-      onlyQualifiedDividends: false,
       allowedStrategies: ['B&H', 'DC'],
       preferredExDivDays: []
     },

@@ -62,8 +62,6 @@ const defaultFilters: DashboardFilters = {
   minReturn: 0,
   maxRisk: 100,
   minLiquidity: 0,
-  excludeHighTaxImpact: false,
-  onlyQualifiedDividends: false,
   allowedStrategies: ['B&H', 'DC'],
   preferredExDivDays: []
 };
@@ -100,15 +98,6 @@ export const EnhancedDividendScanner: React.FC<EnhancedDividendScannerProps> = (
         return false;
       }
       
-      // Tax impact filter
-      if (filters.excludeHighTaxImpact && asset.taxMetrics.taxEfficiencyRatio < 0.8) {
-        return false;
-      }
-      
-      // Qualified dividends filter
-      if (filters.onlyQualifiedDividends && asset.taxMetrics.qualifiedDividendPercent < 0.8) {
-        return false;
-      }
       
       // Ex-dividend day preferences
       if (filters.preferredExDivDays && filters.preferredExDivDays.length > 0) {
@@ -333,36 +322,10 @@ export const EnhancedDividendScanner: React.FC<EnhancedDividendScannerProps> = (
             <Typography variant="subtitle2" gutterBottom>
               Advanced Filters
             </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={filters.excludeHighTaxImpact}
-                      onChange={(e) => setFilters({
-                        ...filters,
-                        excludeHighTaxImpact: e.target.checked
-                      })}
-                    />
-                  }
-                  label="Exclude High Tax Impact"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={filters.onlyQualifiedDividends}
-                      onChange={(e) => setFilters({
-                        ...filters,
-                        onlyQualifiedDividends: e.target.checked
-                      })}
-                    />
-                  }
-                  label="Only Qualified Dividends"
-                />
-              </Grid>
-            </Grid>
+            <Typography variant="body2" color="text.secondary">
+              Tax optimization not applicable - this is a tax-advantaged 401k account.
+              All dividends and capital gains grow tax-deferred until retirement.
+            </Typography>
           </Card>
         </Collapse>
 
@@ -403,9 +366,6 @@ export const EnhancedDividendScanner: React.FC<EnhancedDividendScannerProps> = (
                 </TableCell>
                 <TableCell align="center">
                   <strong>Liquidity</strong>
-                </TableCell>
-                <TableCell align="center">
-                  <strong>Tax Efficiency</strong>
                 </TableCell>
                 <TableCell align="center">
                   <strong>Ex-Div</strong>
@@ -475,22 +435,6 @@ export const EnhancedDividendScanner: React.FC<EnhancedDividendScannerProps> = (
                       {renderLiquidityIndicator(asset.liquidityMetrics)}
                     </TableCell>
                     
-                    <TableCell align="center">
-                      <Tooltip title={`Tax Efficiency: ${formatPercentage(asset.taxMetrics.taxEfficiencyRatio)} | After-tax Return: ${formatPercentage(asset.taxMetrics.afterTaxReturn)}`}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {asset.taxMetrics.taxEfficiencyRatio > 0.8 ? (
-                            <CheckCircle color="success" />
-                          ) : asset.taxMetrics.taxEfficiencyRatio > 0.6 ? (
-                            <Warning color="warning" />
-                          ) : (
-                            <Cancel color="error" />
-                          )}
-                          <Typography variant="caption" sx={{ ml: 0.5 }}>
-                            {formatPercentage(asset.taxMetrics.taxEfficiencyRatio)}
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-                    </TableCell>
                     
                     <TableCell align="center">
                       <Typography variant="body2">
@@ -541,10 +485,10 @@ export const EnhancedDividendScanner: React.FC<EnhancedDividendScannerProps> = (
           
           <Box>
             <Typography variant="caption" color="text.secondary">
-              Tax Efficient
+              401k Status
             </Typography>
-            <Typography variant="body2" fontWeight="bold">
-              {filteredAndSortedData.filter(asset => asset.taxMetrics.taxEfficiencyRatio > 0.8).length}
+            <Typography variant="body2" fontWeight="bold" color="success.main">
+              Tax-Advantaged ✓
             </Typography>
           </Box>
         </Box>
