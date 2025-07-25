@@ -369,7 +369,7 @@ export const validateTransformedData = (data: EnhancedDividendData[]): boolean =
       item.riskMetrics &&
       item.liquidityMetrics &&
       item.yieldMetrics &&
-      item.taxMetrics
+      item.taxAdvantageInfo
     );
   } catch (error) {
     console.error('Data validation failed:', error);
