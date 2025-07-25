@@ -2404,7 +2404,7 @@ export default function DividendAnalysisDashboard() {
                   </Typography>
                 </Box>
               </motion.div>
-              {renderTable(excludedTickers)}
+              {renderLegacyTable(excludedTickers)}
             </TabPanel>
 
             <TabPanel value={selectedTab} index={2}>
