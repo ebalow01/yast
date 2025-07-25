@@ -11,7 +11,7 @@
     "dcWinRate": 0.8,
     "riskVolatility": 0.894,
     "medianDividend": 0.49,
-    "forwardYield": 53.6,
+    "forwardYield": 51.9,
     "category": "excluded"
   },
   {
@@ -26,7 +26,7 @@
     "dcWinRate": 0.75,
     "riskVolatility": 1.034,
     "medianDividend": 0.431,
-    "forwardYield": 37.8,
+    "forwardYield": 38.5,
     "category": "excluded"
   },
   {
@@ -41,7 +41,7 @@
     "dcWinRate": 0.899,
     "riskVolatility": 0.203,
     "medianDividend": 0.246,
-    "forwardYield": 36.2,
+    "forwardYield": 36.1,
     "category": "top-performers"
   },
   {
@@ -56,7 +56,7 @@
     "dcWinRate": 0.932,
     "riskVolatility": 0.263,
     "medianDividend": 0.172,
-    "forwardYield": 65.0,
+    "forwardYield": 64.8,
     "category": "top-performers"
   },
   {
@@ -71,7 +71,7 @@
     "dcWinRate": 0.833,
     "riskVolatility": 0.52,
     "medianDividend": 1.52,
-    "forwardYield": 284.8,
+    "forwardYield": 291.8,
     "category": "excluded"
   },
   {
@@ -86,7 +86,7 @@
     "dcWinRate": 0.885,
     "riskVolatility": 0.47600000000000003,
     "medianDividend": 0.475,
-    "forwardYield": 62.2,
+    "forwardYield": 63.3,
     "category": "excluded"
   },
   {
@@ -101,7 +101,7 @@
     "dcWinRate": 0.8859999999999999,
     "riskVolatility": 0.251,
     "medianDividend": 0.158,
-    "forwardYield": 53.8,
+    "forwardYield": 53.5,
     "category": "top-performers"
   },
   {
@@ -116,7 +116,7 @@
     "dcWinRate": 0.895,
     "riskVolatility": 0.325,
     "medianDividend": 0.095,
-    "forwardYield": 78.9,
+    "forwardYield": 79.0,
     "category": "top-performers"
   },
   {
@@ -146,7 +146,7 @@
     "dcWinRate": 0.87,
     "riskVolatility": 0.154,
     "medianDividend": 0.236,
-    "forwardYield": 27.7,
+    "forwardYield": 27.6,
     "category": "top-performers"
   },
   {
@@ -161,7 +161,7 @@
     "dcWinRate": 0.8809999999999999,
     "riskVolatility": 0.17800000000000002,
     "medianDividend": 0.231,
-    "forwardYield": 46.1,
+    "forwardYield": 46.0,
     "category": "top-performers"
   },
   {
@@ -176,23 +176,8 @@
     "dcWinRate": 0.7929999999999999,
     "riskVolatility": 0.365,
     "medianDividend": 0.326,
-    "forwardYield": 34.7,
+    "forwardYield": 35.7,
     "category": "top-performers"
-  },
-  {
-    "ticker": "TSLW",
-    "tradingDays": 20,
-    "exDivDay": "Monday",
-    "buyHoldReturn": 0.2929,
-    "divCaptureReturn": 0.5417000000000001,
-    "bestStrategy": "DC",
-    "bestReturn": 0.5417000000000001,
-    "finalValue": 154175.0,
-    "dcWinRate": 0.65,
-    "riskVolatility": 0.971,
-    "medianDividend": 0.432,
-    "forwardYield": 71.9,
-    "category": "excluded"
   },
   {
     "ticker": "COII",
@@ -206,7 +191,22 @@
     "dcWinRate": 0.6,
     "riskVolatility": 0.5670000000000001,
     "medianDividend": 0.308,
-    "forwardYield": 48.7,
+    "forwardYield": 49.4,
+    "category": "excluded"
+  },
+  {
+    "ticker": "TSLW",
+    "tradingDays": 20,
+    "exDivDay": "Monday",
+    "buyHoldReturn": 0.2541,
+    "divCaptureReturn": 0.47979999999999995,
+    "bestStrategy": "DC",
+    "bestReturn": 0.47979999999999995,
+    "finalValue": 147976.0,
+    "dcWinRate": 0.65,
+    "riskVolatility": 0.973,
+    "medianDividend": 0.432,
+    "forwardYield": 69.4,
     "category": "excluded"
   },
   {
@@ -221,7 +221,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.705,
     "medianDividend": 1.128,
-    "forwardYield": 86.6,
+    "forwardYield": 84.0,
     "category": "excluded"
   },
   {
@@ -236,7 +236,7 @@
     "dcWinRate": 0.8859999999999999,
     "riskVolatility": 0.18600000000000003,
     "medianDividend": 0.27,
-    "forwardYield": 59.5,
+    "forwardYield": 59.6,
     "category": "top-performers"
   },
   {
@@ -281,7 +281,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.195,
     "medianDividend": 0.517,
-    "forwardYield": 97.8,
+    "forwardYield": 99.2,
     "category": "top-performers"
   },
   {
@@ -311,7 +311,7 @@
     "dcWinRate": 0.75,
     "riskVolatility": 0.456,
     "medianDividend": 0.235,
-    "forwardYield": 33.8,
+    "forwardYield": 33.6,
     "category": "excluded"
   },
   {
@@ -326,7 +326,7 @@
     "dcWinRate": 0.667,
     "riskVolatility": 0.28,
     "medianDividend": 0.174,
-    "forwardYield": 28.7,
+    "forwardYield": 28.6,
     "category": "excluded"
   },
   {
@@ -341,7 +341,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.17300000000000001,
     "medianDividend": 0.193,
-    "forwardYield": 48.5,
+    "forwardYield": 48.8,
     "category": "excluded"
   },
   {
@@ -356,7 +356,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.237,
     "medianDividend": 0.478,
-    "forwardYield": 97.3,
+    "forwardYield": 102.3,
     "category": "excluded"
   },
   {
@@ -386,7 +386,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.327,
     "medianDividend": 0.147,
-    "forwardYield": 32.3,
+    "forwardYield": 33.3,
     "category": "excluded"
   },
   {
@@ -401,7 +401,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.382,
     "medianDividend": 0.298,
-    "forwardYield": 171.0,
+    "forwardYield": 172.4,
     "category": "excluded"
   },
   {
@@ -416,22 +416,7 @@
     "dcWinRate": 0.722,
     "riskVolatility": 0.312,
     "medianDividend": 0.333,
-    "forwardYield": 37.9,
-    "category": "excluded"
-  },
-  {
-    "ticker": "QDTY",
-    "tradingDays": 21,
-    "exDivDay": "Thursday",
-    "buyHoldReturn": 0.1787,
-    "divCaptureReturn": 0.19690000000000002,
-    "bestStrategy": "DC",
-    "bestReturn": 0.19690000000000002,
-    "finalValue": 119692.0,
-    "dcWinRate": 0.905,
-    "riskVolatility": 0.39899999999999997,
-    "medianDividend": 0.252,
-    "forwardYield": 29.2,
+    "forwardYield": 38.1,
     "category": "excluded"
   },
   {
@@ -446,7 +431,7 @@
     "dcWinRate": 0.8,
     "riskVolatility": 0.129,
     "medianDividend": 0.376,
-    "forwardYield": 33.9,
+    "forwardYield": 34.1,
     "category": "excluded"
   },
   {
@@ -461,7 +446,22 @@
     "dcWinRate": 0.8640000000000001,
     "riskVolatility": 0.247,
     "medianDividend": 0.223,
-    "forwardYield": 25.4,
+    "forwardYield": 25.5,
+    "category": "excluded"
+  },
+  {
+    "ticker": "QDTY",
+    "tradingDays": 21,
+    "exDivDay": "Thursday",
+    "buyHoldReturn": 0.1609,
+    "divCaptureReturn": 0.1751,
+    "bestStrategy": "DC",
+    "bestReturn": 0.1751,
+    "finalValue": 117513.0,
+    "dcWinRate": 0.905,
+    "riskVolatility": 0.39899999999999997,
+    "medianDividend": 0.252,
+    "forwardYield": 29.2,
     "category": "excluded"
   },
   {
@@ -476,7 +476,7 @@
     "dcWinRate": 0.833,
     "riskVolatility": 0.094,
     "medianDividend": 0.181,
-    "forwardYield": 48.1,
+    "forwardYield": 48.5,
     "category": "excluded"
   },
   {
@@ -491,7 +491,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.233,
     "medianDividend": 0.192,
-    "forwardYield": 37.3,
+    "forwardYield": 38.3,
     "category": "excluded"
   },
   {
@@ -506,7 +506,7 @@
     "dcWinRate": 0.857,
     "riskVolatility": 0.14400000000000002,
     "medianDividend": 0.158,
-    "forwardYield": 46.4,
+    "forwardYield": 46.8,
     "category": "excluded"
   },
   {
@@ -521,7 +521,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.501,
     "medianDividend": 0.252,
-    "forwardYield": 51.1,
+    "forwardYield": 52.3,
     "category": "excluded"
   },
   {
@@ -536,7 +536,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.251,
     "medianDividend": 0.421,
-    "forwardYield": 41.4,
+    "forwardYield": 41.6,
     "category": "excluded"
   },
   {
@@ -551,7 +551,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.25,
     "medianDividend": 0.153,
-    "forwardYield": 88.1,
+    "forwardYield": 88.4,
     "category": "excluded"
   },
   {
@@ -566,7 +566,7 @@
     "dcWinRate": 0.667,
     "riskVolatility": 0.867,
     "medianDividend": 0.272,
-    "forwardYield": 79.6,
+    "forwardYield": 82.6,
     "category": "excluded"
   },
   {
@@ -581,7 +581,7 @@
     "dcWinRate": 1.0,
     "riskVolatility": 0.256,
     "medianDividend": 0.446,
-    "forwardYield": 46.9,
+    "forwardYield": 46.7,
     "category": "excluded"
   },
   {
@@ -641,7 +641,7 @@
     "dcWinRate": 0.6,
     "riskVolatility": 0.6970000000000001,
     "medianDividend": 0.242,
-    "forwardYield": 57.8,
+    "forwardYield": 56.4,
     "category": "excluded"
   },
   {
@@ -656,7 +656,7 @@
     "dcWinRate": 0.5,
     "riskVolatility": 0.37,
     "medianDividend": 0.524,
-    "forwardYield": 59.4,
+    "forwardYield": 59.5,
     "category": "excluded"
   }
 ]
