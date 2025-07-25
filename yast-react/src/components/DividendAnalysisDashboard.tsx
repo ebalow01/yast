@@ -1036,6 +1036,11 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
+  
+  // Debug logging
+  if (index === 3) {
+    console.log('🔍 TabPanel index 3 - value:', value, 'index:', index, 'hidden:', value !== index);
+  }
 
   return (
     <div
@@ -1241,6 +1246,7 @@ export default function DividendAnalysisDashboard() {
   }, []);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    console.log('🔄 TAB CHANGE - from:', selectedTab, 'to:', newValue);
     setSelectedTab(newValue);
   };
 
@@ -2057,7 +2063,12 @@ export default function DividendAnalysisDashboard() {
                   }
                 }}
               />
-              {console.log('🎯 TABS RENDERED - Third tab "Enhanced Analytics" should be visible')}
+              {console.log('🎯 TABS RENDERED - All tabs:', {
+                tabCount: 4,
+                selectedTab,
+                dataLength: data.length,
+                tabs: ['Optimal Portfolio', 'All ETFs', 'Enhanced Analytics', 'Full Analysis']
+              })}
             </Tabs>
 
             <TabPanel value={selectedTab} index={0}>
@@ -2550,6 +2561,7 @@ export default function DividendAnalysisDashboard() {
             </TabPanel>
 
             <TabPanel value={selectedTab} index={3}>
+              {console.log('🎯 RENDERING FULL ANALYSIS TAB - selectedTab:', selectedTab, 'should show:', selectedTab === 3)}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
