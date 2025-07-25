@@ -1633,6 +1633,7 @@ export default function DividendAnalysisDashboard() {
   // Card-based layout for Full Analysis (like High/Medium/Low Performers)
   const renderFullAnalysisCards = (data: DividendData[]) => {
     console.log('🎯 RENDERING FULL ANALYSIS CARDS - data length:', data.length);
+    console.log('🎯 First item data sample:', data[0]);
     
     if (!data || data.length === 0) {
       return <Typography color="white">No data available</Typography>;
@@ -1667,94 +1668,107 @@ export default function DividendAnalysisDashboard() {
                   boxShadow: '0 8px 32px rgba(0, 212, 255, 0.1)'
                 }
               }}>
-                <CardContent sx={{ p: 2.5 }}>
-                  {/* Header with Ticker and Price */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <CardContent sx={{ p: 2 }}>
+                  {/* Compact Header Row */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 2, alignItems: 'center', mb: 1.5 }}>
                     <Box>
-                      <Typography variant="h6" sx={{ color: '#FFFFFF', fontWeight: 700, mb: 0.5 }}>
+                      <Typography variant="h6" sx={{ color: '#FFFFFF', fontWeight: 700, fontSize: '1.1rem' }}>
                         {item.ticker}
                       </Typography>
-                      <Typography variant="caption" sx={{ 
-                        color: 'rgba(255, 255, 255, 0.7)', 
-                        fontSize: '0.75rem'
-                      }}>
-                        ${item.currentPrice?.toFixed(2) || '---'} • Div: ${(item.lastDividend || item.medianDividend || 0.5).toFixed(3)}
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.7rem' }}>
+                        ${item.currentPrice ? item.currentPrice.toFixed(2) : 'N/A'} • Div: ${(item.lastDividend || item.medianDividend || 0.5).toFixed(3)}
                       </Typography>
                     </Box>
                     <Chip
                       label={item.exDivDay}
                       size="small"
                       sx={{
-                        background: 'rgba(0, 212, 255, 0.1)',
+                        background: 'rgba(0, 212, 255, 0.15)',
                         color: '#00D4FF',
                         fontSize: '0.7rem',
-                        height: '20px'
+                        fontWeight: 600,
+                        height: '22px'
                       }}
                     />
-                  </Box>
-                  
-                  {/* Strategy and Best Return */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography sx={{ fontSize: '1rem' }}>{strategyInfo.icon}</Typography>
-                      <Typography variant="body2" sx={{ color: strategyInfo.color, fontWeight: 600 }}>
-                        {strategyInfo.label}
-                      </Typography>
-                    </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Typography sx={{ fontSize: '1.1rem' }}>{returnIndicator.icon}</Typography>
-                      <Typography variant="h6" sx={{ color: returnIndicator.color, fontWeight: 700 }}>
-                        {formatPercentage(item.bestReturn)}
-                      </Typography>
+                      <Typography sx={{ fontSize: '0.9rem' }}>{strategyInfo.icon}</Typography>
+                      <Chip
+                        label={strategyInfo.label}
+                        size="small"
+                        sx={{
+                          background: strategyInfo.color === '#007AFF' ? 'rgba(0, 122, 255, 0.15)' : 'rgba(0, 212, 255, 0.15)',
+                          color: strategyInfo.color,
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          height: '22px'
+                        }}
+                      />
                     </Box>
                   </Box>
                   
-                  {/* Performance Metrics Grid */}
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2, mb: 2 }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="body2" sx={{ color: getColorByValue(item.buyHoldReturn), fontWeight: 600, mb: 0.5 }}>
+                  {/* Main Metrics Row - Table-like */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 1, textAlign: 'center' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: getColorByValue(item.buyHoldReturn), fontWeight: 700, fontSize: '0.9rem' }}>
                         {formatPercentage(item.buyHoldReturn)}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                        B&H Return
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.65rem' }}>
+                        B&H
                       </Typography>
                     </Box>
                     
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="body2" sx={{ color: getColorByValue(item.divCaptureReturn), fontWeight: 600, mb: 0.5 }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: getColorByValue(item.divCaptureReturn), fontWeight: 700, fontSize: '0.9rem' }}>
                         {formatPercentage(item.divCaptureReturn)}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                        DC Return
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.65rem' }}>
+                        DC
                       </Typography>
                     </Box>
                     
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 600, mb: 0.5 }}>
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.3 }}>
+                        <Typography sx={{ fontSize: '0.8rem' }}>{returnIndicator.icon}</Typography>
+                        <Typography variant="body2" sx={{ color: returnIndicator.color, fontWeight: 700, fontSize: '0.9rem' }}>
+                          {formatPercentage(item.bestReturn)}
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.65rem' }}>
+                        Best
+                      </Typography>
+                    </Box>
+                    
+                    <Box>
+                      <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 600, fontSize: '0.9rem' }}>
                         {formatPercentage(item.dcWinRate)}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.65rem' }}>
                         Win Rate
                       </Typography>
                     </Box>
-                  </Box>
-                  
-                  {/* Risk and Yield Footer */}
-                  <Box sx={{ 
-                    pt: 1.5, 
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Typography sx={{ fontSize: '1rem' }}>{riskIndicator.icon}</Typography>
-                      <Typography variant="caption" sx={{ color: riskIndicator.color, fontWeight: 500 }}>
-                        {formatPercentage(item.riskVolatility)} risk
+                    
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.3 }}>
+                        <Typography sx={{ fontSize: '0.8rem' }}>{riskIndicator.icon}</Typography>
+                        <Typography variant="body2" sx={{ color: riskIndicator.color, fontWeight: 600, fontSize: '0.9rem' }}>
+                          {formatPercentage(item.riskVolatility)}
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.65rem' }}>
+                        Risk
                       </Typography>
                     </Box>
-                    <Typography variant="caption" sx={{ color: '#34C759', fontWeight: 500 }}>
-                      {item.forwardYield?.toFixed(1) || 'N/A'}% yield
+                  </Box>
+                  
+                  {/* Bottom Yield Info */}
+                  <Box sx={{ 
+                    mt: 1.5, 
+                    pt: 1, 
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    textAlign: 'center'
+                  }}>
+                    <Typography variant="caption" sx={{ color: '#34C759', fontWeight: 600, fontSize: '0.8rem' }}>
+                      {item.forwardYield?.toFixed(1) || 'N/A'}% Forward Yield
                     </Typography>
                   </Box>
                 </CardContent>
