@@ -176,7 +176,7 @@ const createYieldMetrics = (legacyData: LegacyDividendData): YieldMetrics => {
     yieldVolatility: legacyData.riskVolatility * 0.8, // Yield vol typically lower than price vol
     yieldConsistencyScore: Math.round(yieldConsistencyScore),
     averageYieldGrowth: 0.02 + Math.random() * 0.03, // 2-5% annual growth
-    distributionFrequency: 'Weekly', // YieldMax ETFs are typically weekly
+    distributionFrequency: 'Weekly', // High-income ETFs are typically weekly
     averageDistributionAmount: legacyData.medianDividend,
     distributionGrowthRate: 0.01 + Math.random() * 0.02, // 1-3% growth
     payoutRatio: 0.8 + Math.random() * 0.15, // 80-95% payout ratio

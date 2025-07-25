@@ -936,7 +936,7 @@ const calculateMaxDrawdown = (allocation: AllocationItem[]): number => {
     // Estimate individual asset max drawdown based on risk and historical patterns
     let assetDrawdown = 0;
     
-    // YieldMax ETFs have specific drawdown characteristics
+    // High-income ETFs have specific drawdown characteristics
     if (asset.risk > 0.6) {
       assetDrawdown = 0.4 + asset.risk * 0.3; // High vol assets: 40-60% potential drawdowns
     } else if (asset.risk > 0.3) {
@@ -2076,7 +2076,7 @@ export default function DividendAnalysisDashboard() {
                       lineHeight: 1.2
                     }}
                   >
-                    YieldMax Analytics
+                    High Income Analyzer
                   </Typography>
                   <Typography 
                     variant="subtitle2" 
@@ -2747,7 +2747,7 @@ export default function DividendAnalysisDashboard() {
                       lineHeight: 1.6
                     }}
                   >
-                    Complete analysis of all dividend capture opportunities across the YieldMax universe. 
+                    Complete analysis of all dividend capture opportunities across the high-income ETF universe. 
                     Compare buy & hold vs dividend capture strategies, win rates, risk metrics, and forward yields 
                     for informed investment decisions.
                   </Typography>
