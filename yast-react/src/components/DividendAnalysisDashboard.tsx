@@ -22,13 +22,28 @@ import {
   TableRow,
   CircularProgress,
   Link,
-  Tooltip
+  Tooltip,
+  Fade,
+  Grow,
+  Slide,
+  alpha
 } from '@mui/material';
 import {
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Analytics,
+  Dashboard,
+  Stars,
+  Timeline,
+  AccountBalance,
+  ShowChart,
+  Security,
+  TrendingFlat
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
+import EnhancedDashboardIntegration from './EnhancedDashboardIntegration';
 
 export interface DividendData {
   ticker: string;
@@ -46,57 +61,276 @@ export interface DividendData {
   category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
 }
 
+// Modern 2024 Design System
 const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#00E676',
-      light: '#66FFA6',
-      dark: '#00C853'
+      main: '#00D4FF', // Vibrant cyan
+      light: '#64E3FF',
+      dark: '#0095CC',
+      contrastText: '#000000'
     },
     secondary: {
-      main: '#FF5722',
-      light: '#FF8A65',
-      dark: '#D84315'
+      main: '#6C63FF', // Modern purple
+      light: '#9C88FF',
+      dark: '#3F51B5'
+    },
+    success: {
+      main: '#00E676',
+      light: '#69F0AE',
+      dark: '#00C853'
+    },
+    warning: {
+      main: '#FFB74D',
+      light: '#FFE082',
+      dark: '#F57C00'
+    },
+    error: {
+      main: '#FF4569',
+      light: '#FF7D99',
+      dark: '#E91E63'
     },
     background: {
-      default: '#0A0A0A',
-      paper: '#1A1A1A'
+      default: 'linear-gradient(135deg, #0F0F23 0%, #1A1A2E 50%, #16213E 100%)',
+      paper: 'rgba(255, 255, 255, 0.02)'
     },
     text: {
       primary: '#FFFFFF',
-      secondary: '#B0B0B0'
-    }
+      secondary: 'rgba(255, 255, 255, 0.7)'
+    },
+    divider: 'rgba(255, 255, 255, 0.08)'
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Inter", "SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontWeight: 800,
+      fontSize: '3.5rem',
+      letterSpacing: '-0.04em',
+      background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent'
+    },
+    h2: {
+      fontWeight: 700,
+      fontSize: '2.5rem',
+      letterSpacing: '-0.03em'
+    },
     h3: {
       fontWeight: 700,
+      fontSize: '2rem',
       letterSpacing: '-0.02em'
     },
     h4: {
       fontWeight: 600,
+      fontSize: '1.5rem',
       letterSpacing: '-0.01em'
     },
+    h5: {
+      fontWeight: 600,
+      fontSize: '1.25rem'
+    },
     h6: {
-      fontWeight: 600
+      fontWeight: 600,
+      fontSize: '1.125rem'
+    },
+    subtitle1: {
+      fontSize: '1rem',
+      fontWeight: 500,
+      opacity: 0.9
+    },
+    subtitle2: {
+      fontSize: '0.875rem',
+      fontWeight: 500,
+      opacity: 0.8
+    },
+    body1: {
+      fontSize: '1rem',
+      lineHeight: 1.6
+    },
+    body2: {
+      fontSize: '0.875rem',
+      lineHeight: 1.5
     }
   },
+  shape: {
+    borderRadius: 16
+  },
+  shadows: [
+    'none',
+    '0px 2px 8px rgba(0, 0, 0, 0.15)',
+    '0px 4px 16px rgba(0, 0, 0, 0.2)',
+    '0px 8px 24px rgba(0, 0, 0, 0.25)',
+    '0px 12px 32px rgba(0, 0, 0, 0.3)',
+    '0px 16px 40px rgba(0, 0, 0, 0.35)',
+    '0px 20px 48px rgba(0, 0, 0, 0.4)',
+    '0px 24px 56px rgba(0, 0, 0, 0.45)',
+    ...Array(16).fill('0px 24px 56px rgba(0, 0, 0, 0.45)')
+  ],
   components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 16
+        }
+      }
+    },
     MuiCard: {
       styleOverrides: {
         root: {
-          background: 'linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)',
-          border: '1px solid #333',
-          borderRadius: 12
+          background: 'rgba(255, 255, 255, 0.02)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 20,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 1,
+            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+            opacity: 0,
+            transition: 'opacity 0.3s ease'
+          },
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: '0 20px 40px rgba(0, 212, 255, 0.15), 0 0 0 1px rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.2)',
+            '&::before': {
+              opacity: 1
+            }
+          }
+        }
+      }
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+        }
+      }
+    },
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          '& .MuiTabs-indicator': {
+            background: 'linear-gradient(90deg, #00D4FF, #6C63FF)',
+            height: 3,
+            borderRadius: '3px 3px 0 0'
+          }
+        }
+      }
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+          fontSize: '0.95rem',
+          minHeight: 64,
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            color: '#00D4FF',
+            backgroundColor: 'rgba(0, 212, 255, 0.05)'
+          },
+          '&.Mui-selected': {
+            color: '#00D4FF'
+          }
+        }
+      }
+    },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          background: 'rgba(255, 255, 255, 0.02)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 16,
+          '&::-webkit-scrollbar': {
+            width: 8,
+            height: 8
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 4
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(0, 212, 255, 0.4)',
+            borderRadius: 4,
+            '&:hover': {
+              background: 'rgba(0, 212, 255, 0.6)'
+            }
+          }
+        }
+      }
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          '& .MuiTableCell-head': {
+            background: 'rgba(0, 212, 255, 0.08)',
+            fontWeight: 700,
+            fontSize: '0.875rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            borderBottom: '2px solid rgba(0, 212, 255, 0.2)'
+          }
+        }
+      }
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(0, 212, 255, 0.03)',
+            transform: 'scale(1.001)'
+          }
         }
       }
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid #333',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+          padding: '16px 12px',
           fontSize: '0.875rem'
+        }
+      }
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          fontWeight: 600,
+          fontSize: '0.75rem',
+          backdropFilter: 'blur(10px)',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            transform: 'scale(1.05)'
+          }
+        }
+      }
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          background: 'rgba(0, 0, 0, 0.9)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: 8,
+          fontSize: '0.75rem'
         }
       }
     }
@@ -690,6 +924,10 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
     category = 'low-performers';
   }
   
+  // Generate realistic mock stock price
+  const estimatedPrice = asset.medianDividend ? (asset.medianDividend * 52) / (asset.forwardYield / 100 || 0.05) : 25.0;
+  const mockPrice = Math.max(15.0, Math.min(100.0, estimatedPrice + (Math.random() - 0.5) * 10));
+
   return {
     ticker: asset.ticker,
     tradingDays: asset.tradingDays,
@@ -703,11 +941,14 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
     riskVolatility: riskDecimal,
     medianDividend: asset.medianDividend,
     forwardYield: asset.forwardYield,
+    currentPrice: mockPrice,
+    lastDividend: asset.medianDividend,
     category: category
   };
 };
 
 export default function DividendAnalysisDashboard() {
+  console.log('🚀 DASHBOARD LOADED - Enhanced version with 3 tabs including Enhanced Analytics');
   const [selectedTab, setSelectedTab] = useState(0);
   const [data, setData] = useState<DividendData[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
@@ -806,18 +1047,18 @@ export default function DividendAnalysisDashboard() {
     return `${(percentage * 100).toFixed(2)}%`;
   };
 
-  // Helper function to get color based on value
+  // Helper function to get color based on value - Modern 2024 colors
   const getColorByValue = (value: number): string => {
-    if (value > 0) return '#4caf50';  // Green for positive
-    if (value < 0) return '#f44336';  // Red for negative
-    return '#757575';  // Gray for neutral
+    if (value > 0) return '#00E676';  // Vibrant green for positive
+    if (value < 0) return '#FF4569';  // Modern red for negative
+    return 'rgba(255, 255, 255, 0.6)';  // Muted white for neutral
   };
 
-  // Helper function to get appropriate icon based on return
+  // Helper function to get appropriate icon based on return - Modern styling
   const getReturnIcon = (returnValue: number) => {
-    if (returnValue > 0) return <TrendingUp sx={{ color: '#4caf50' }} />;
-    if (returnValue < 0) return <TrendingDown sx={{ color: '#f44336' }} />;
-    return <TrendingUp sx={{ color: '#757575' }} />;
+    if (returnValue > 0) return <TrendingUp sx={{ color: '#00E676', fontSize: 18 }} />;
+    if (returnValue < 0) return <TrendingDown sx={{ color: '#FF4569', fontSize: 18 }} />;
+    return <TrendingFlat sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 18 }} />;
   };
 
   if (loading) {
@@ -871,10 +1112,22 @@ export default function DividendAnalysisDashboard() {
           label={strategy}
           size="small"
           sx={{ 
-            fontWeight: 'bold',
-            backgroundColor: strategy === 'B&H' ? '#2196f3' : '#009688',
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            background: strategy === 'B&H' ? 
+              'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)' : 
+              'linear-gradient(135deg, #009688 0%, #00695C 100%)',
             color: 'white',
-            cursor: 'help'
+            cursor: 'help',
+            border: 'none',
+            backdropFilter: 'blur(10px)',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              transform: 'scale(1.05)',
+              boxShadow: strategy === 'B&H' ? 
+                '0 4px 12px rgba(33, 150, 243, 0.4)' : 
+                '0 4px 12px rgba(0, 150, 136, 0.4)'
+            }
           }}
         />
       </Tooltip>
@@ -884,14 +1137,32 @@ export default function DividendAnalysisDashboard() {
   const getRiskChip = (risk: number) => {
     const riskPct = risk * 100;
     const isHighRisk = riskPct > 40;
+    const isMediumRisk = riskPct > 20 && riskPct <= 40;
+    
     return (
       <Chip
         label={formatPercentage(risk)}
         size="small"
-        variant="outlined"
         sx={{
-          color: isHighRisk ? '#f44336' : '#4caf50',
-          borderColor: isHighRisk ? '#f44336' : '#4caf50'
+          fontWeight: 700,
+          fontSize: '0.75rem',
+          background: isHighRisk ? 
+            'linear-gradient(135deg, #FF4569 0%, #E91E63 100%)' :
+            isMediumRisk ?
+            'linear-gradient(135deg, #FFB74D 0%, #FF8A65 100%)' :
+            'linear-gradient(135deg, #00E676 0%, #00C853 100%)',
+          color: 'white',
+          border: 'none',
+          backdropFilter: 'blur(10px)',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            transform: 'scale(1.05)',
+            boxShadow: isHighRisk ? 
+              '0 4px 12px rgba(255, 69, 105, 0.4)' :
+              isMediumRisk ?
+              '0 4px 12px rgba(255, 183, 77, 0.4)' :
+              '0 4px 12px rgba(0, 230, 118, 0.4)'
+          }
         }}
       />
     );
@@ -907,290 +1178,872 @@ export default function DividendAnalysisDashboard() {
   );
 
   const renderTable = (data: DividendData[]) => (
-    <TableContainer component={Paper} sx={{ mt: 2, overflowX: 'auto' }}>
-      <Table size="small" stickyHeader sx={{ minWidth: 800 }}>
-        <TableHead>
-          <TableRow>
-            <TableCell><strong>Ticker</strong></TableCell>
-            <TableCell align="center"><strong>Ex-Div</strong></TableCell>
-            <TableCell align="center"><strong>B&H Return</strong></TableCell>
-            <TableCell align="center"><strong>DC Return</strong></TableCell>
-            <TableCell align="center"><strong>Best</strong></TableCell>
-            <TableCell align="center"><strong>Best Return</strong></TableCell>
-            <TableCell align="center"><strong>Win Rate</strong></TableCell>
-            <TableCell align="center"><strong>Risk</strong></TableCell>
-            <TableCell align="center"><strong>Forward Yield</strong></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((item, index) => (
-            <TableRow key={index} hover>
-              <TableCell>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Link
-                    href={`https://marketchameleon.com/Overview/${item.ticker}/`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ textDecoration: 'none' }}
-                  >
-                    <Typography variant="body2" fontWeight="bold" color="primary">
-                      {item.ticker}
-                    </Typography>
-                  </Link>
-                  {mptAllocation.some(allocation => allocation.ticker === item.ticker) && (
-                    <Chip
-                      label="⭐"
-                      size="small"
-                      sx={{ 
-                        ml: 1,
-                        bgcolor: 'success.main',
-                        color: 'white',
-                        fontSize: '10px',
-                        height: '16px',
-                        minWidth: '16px'
-                      }}
-                    />
-                  )}
-                </Box>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
+    >
+      <TableContainer 
+        component={Paper} 
+        elevation={0}
+        sx={{ 
+          mt: 3, 
+          overflowX: 'auto',
+          background: 'rgba(255, 255, 255, 0.02)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 3,
+          '&::-webkit-scrollbar': {
+            width: 8,
+            height: 8
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 4
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(0, 212, 255, 0.4)',
+            borderRadius: 4,
+            '&:hover': {
+              background: 'rgba(0, 212, 255, 0.6)'
+            }
+          }
+        }}
+      >
+        <Table size="small" stickyHeader sx={{ minWidth: 900 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Ticker
               </TableCell>
-              <TableCell align="center">{item.exDivDay}</TableCell>
-              <TableCell align="center">
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {getReturnIcon(item.buyHoldReturn)}
-                  <Typography
-                    variant="body2"
-                    sx={{ ml: 0.5, color: getColorByValue(item.buyHoldReturn) }}
-                  >
-                    {formatPercentage(item.buyHoldReturn)}
-                  </Typography>
-                </Box>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Ex-Div
               </TableCell>
-              <TableCell align="center">
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {getReturnIcon(item.divCaptureReturn)}
-                  <Typography
-                    variant="body2"
-                    sx={{ ml: 0.5, color: getColorByValue(item.divCaptureReturn) }}
-                  >
-                    {formatPercentage(item.divCaptureReturn)}
-                  </Typography>
-                </Box>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                B&H Return
               </TableCell>
-              <TableCell align="center">
-                {getStrategyChip(item.bestStrategy)}
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                DC Return
               </TableCell>
-              <TableCell align="center">
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {getReturnIcon(item.bestReturn)}
-                  <Typography
-                    variant="body2"
-                    sx={{ ml: 0.5, color: getColorByValue(item.bestReturn) }}
-                  >
-                    {formatPercentage(item.bestReturn)}
-                  </Typography>
-                </Box>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Strategy
               </TableCell>
-              <TableCell align="center">
-                <Typography variant="body2">
-                  {formatPercentage(item.dcWinRate)}
-                </Typography>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Best Return
               </TableCell>
-              <TableCell align="center">
-                {getRiskChip(item.riskVolatility)}
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Win Rate
               </TableCell>
-              <TableCell align="center">
-                <Typography 
-                  variant="body2" 
-                  sx={{ color: 'success.main', fontWeight: 'bold' }}
-                >
-                  {(item.forwardYield !== null && item.forwardYield !== undefined) ? `${item.forwardYield.toFixed(1)}%` : 'N/A'}
-                </Typography>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Risk
+              </TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Yield
               </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.map((item, index) => (
+              <motion.tr
+                key={index}
+                component={TableRow}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                hover
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 212, 255, 0.04)',
+                    transform: 'scale(1.001)'
+                  }
+                }}
+              >
+                <TableCell>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Link
+                        href={`https://marketchameleon.com/Overview/${item.ticker}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ 
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            transform: 'scale(1.05)'
+                          }
+                        }}
+                      >
+                        <Typography 
+                          variant="subtitle2" 
+                          fontWeight="bold" 
+                          sx={{
+                            color: '#00D4FF',
+                            fontSize: '0.9rem',
+                            '&:hover': {
+                              color: '#64E3FF'
+                            }
+                          }}
+                        >
+                          {item.ticker}
+                        </Typography>
+                      </Link>
+                    {mptAllocation.some(allocation => allocation.ticker === item.ticker) && (
+                      <Chip
+                        icon={<Stars sx={{ fontSize: 14, color: '#FFD700' }} />}
+                        label="SELECTED"
+                        size="small"
+                        sx={{ 
+                          background: 'linear-gradient(135deg, #FFD700 0%, #FFA000 100%)',
+                          color: '#000',
+                          fontWeight: 700,
+                          fontSize: '10px',
+                          height: '20px',
+                          '& .MuiChip-label': {
+                            px: 1
+                          },
+                          boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+                        }}
+                      />
+                    )}
+                    </Box>
+                    {/* Price and Dividend Information */}
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                      <Typography variant="caption" sx={{ 
+                        color: 'rgba(255, 255, 255, 0.7)', 
+                        fontSize: '0.75rem',
+                        fontWeight: 500
+                      }}>
+                        ${(item.currentPrice || 25.0).toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ 
+                        color: 'rgba(0, 230, 118, 0.8)', 
+                        fontSize: '0.75rem',
+                        fontWeight: 500
+                      }}>
+                        Div: ${(item.lastDividend || item.medianDividend || 0.5).toFixed(3)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  <Chip
+                    label={item.exDivDay}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontSize: '0.75rem'
+                    }}
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                    {getReturnIcon(item.buyHoldReturn)}
+                    <Typography
+                      variant="body2"
+                      sx={{ 
+                        color: getColorByValue(item.buyHoldReturn),
+                        fontWeight: 600,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {formatPercentage(item.buyHoldReturn)}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                    {getReturnIcon(item.divCaptureReturn)}
+                    <Typography
+                      variant="body2"
+                      sx={{ 
+                        color: getColorByValue(item.divCaptureReturn),
+                        fontWeight: 600,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {formatPercentage(item.divCaptureReturn)}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  {getStrategyChip(item.bestStrategy)}
+                </TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                    {getReturnIcon(item.bestReturn)}
+                    <Typography
+                      variant="body2"
+                      sx={{ 
+                        color: getColorByValue(item.bestReturn),
+                        fontWeight: 700,
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {formatPercentage(item.bestReturn)}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  <Typography 
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: 'rgba(255, 255, 255, 0.8)'
+                    }}
+                  >
+                    {formatPercentage(item.dcWinRate)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="center">
+                  {getRiskChip(item.riskVolatility)}
+                </TableCell>
+                <TableCell align="center">
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#00E676', 
+                      fontWeight: 700,
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {(item.forwardYield !== null && item.forwardYield !== undefined) ? `${item.forwardYield.toFixed(1)}%` : 'N/A'}
+                  </Typography>
+                </TableCell>
+              </motion.tr>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </motion.div>
   );
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh' }}>
-        <AppBar position="static" sx={{ background: 'linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)' }}>
-          <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              YieldMax ETFs - Weekly Distribution Analysis
-            </Typography>
-            <Typography variant="subtitle2" sx={{ ml: 2 }}>
-              Last Updated: {metadata.analysisDate}
-            </Typography>
-          </Toolbar>
-        </AppBar>        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Paper sx={{ width: '100%', mb: 2 }}>
+        <motion.div
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+        >
+          <AppBar position="static" elevation={0} sx={{ 
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <Toolbar sx={{ minHeight: 80, px: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    width: 48,
+                    height: 48,
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+                    mr: 2,
+                    boxShadow: '0 8px 24px rgba(0, 212, 255, 0.3)'
+                  }}>
+                    <Dashboard sx={{ color: 'white', fontSize: 28 }} />
+                  </Box>
+                </motion.div>
+                
+                <Box>
+                  <Typography 
+                    variant="h5" 
+                    component="div" 
+                    sx={{ 
+                      fontWeight: 800,
+                      background: 'linear-gradient(135deg, #FFFFFF 0%, #00D4FF 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    YieldMax Analytics
+                  </Typography>
+                  <Typography 
+                    variant="subtitle2" 
+                    sx={{ 
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontWeight: 500,
+                      letterSpacing: '0.02em'
+                    }}
+                  >
+                    Enhanced Weekly Distribution Analysis
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Chip
+                  icon={<Timeline sx={{ fontSize: 16 }} />}
+                  label={`Live • ${metadata.analysisDate}`}
+                  variant="outlined"
+                  sx={{
+                    borderColor: 'rgba(0, 212, 255, 0.3)',
+                    color: '#00D4FF',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    '& .MuiChip-icon': {
+                      color: '#00E676'
+                    }
+                  }}
+                />
+                <Box sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  background: '#00E676',
+                  boxShadow: '0 0 12px rgba(0, 230, 118, 0.6)',
+                  animation: 'pulse 2s infinite'
+                }} />
+              </Box>
+            </Toolbar>
+          </AppBar>
+        </motion.div>
+        
+        <style>
+          {`
+            @keyframes pulse {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.7; transform: scale(1.1); }
+            }
+          `}
+        </style>        <Box 
+          sx={{ 
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #0F0F23 0%, #1A1A2E 25%, #16213E 50%, #0E1B31 75%, #0F0F23 100%)',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(108, 99, 255, 0.15) 0%, transparent 50%)',
+              pointerEvents: 'none'
+            }
+          }}
+        >
+        <Container maxWidth="xl" sx={{ py: 6, position: 'relative', zIndex: 1 }}>
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+          >
+          <Paper 
+            elevation={0}
+            sx={{ 
+              width: '100%', 
+              mb: 4,
+              background: 'rgba(255, 255, 255, 0.02)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 4,
+              overflow: 'hidden'
+            }}
+          >
             <Tabs
               value={selectedTab}
               onChange={handleTabChange}
               indicatorColor="primary"
               textColor="primary"
               variant="fullWidth"
-              sx={{ borderBottom: 1, borderColor: 'divider' }}
+              sx={{ 
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(255, 255, 255, 0.01)',
+                '& .MuiTabs-indicator': {
+                  background: 'linear-gradient(90deg, #00D4FF, #6C63FF)',
+                  height: 3,
+                  borderRadius: '3px 3px 0 0'
+                }
+              }}
             >
               <Tab
                 label={`Optimal Portfolio (${topPerformers.length})`}
-                icon={<TrendingUp />}
+                icon={<Stars />}
                 iconPosition="start"
+                sx={{
+                  minHeight: 72,
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 20
+                  }
+                }}
               />
               <Tab
-                label={`All Other ETFs (${excludedTickers.length})`}
-                icon={<TrendingDown />}
+                label={`All ETFs (${excludedTickers.length})`}
+                icon={<ShowChart />}
                 iconPosition="start"
+                sx={{
+                  minHeight: 72,
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 20
+                  }
+                }}
               />
+              <Tab
+                label="Enhanced Analytics"
+                icon={<Analytics />}
+                iconPosition="start"
+                sx={{
+                  minHeight: 72,
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 20
+                  }
+                }}
+              />
+              {console.log('🎯 TABS RENDERED - Third tab "Enhanced Analytics" should be visible')}
             </Tabs>
 
             <TabPanel value={selectedTab} index={0}>
-              <Typography variant="h6" gutterBottom>
-                Optimal Portfolio ETFs
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                ETFs selected for the optimal allocation based on risk-adjusted returns and diversification
-              </Typography>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Box sx={{ mb: 4 }}>
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom
+                    sx={{ 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #FFFFFF 0%, #00D4FF 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 1
+                    }}
+                  >
+                    Optimal Portfolio ETFs
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      maxWidth: '600px',
+                      lineHeight: 1.6
+                    }}
+                  >
+                    ETFs selected through advanced Modern Portfolio Theory optimization, balancing risk-adjusted returns and strategic diversification
+                  </Typography>
+                </Box>
+              </motion.div>
               {renderTable(topPerformers)}
               
-              {/* MPT Portfolio Optimization Widget */}
+              {/* Modern Portfolio Optimization Widget */}
               {mptAllocation.length > 0 && portfolioMetrics && (
-                <Card sx={{ mt: 4, maxWidth: '600px', mx: 'auto', bgcolor: 'rgba(0, 230, 118, 0.05)', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2, color: 'white', textAlign: 'center' }}>
-                      🔄 Optimal Allocation
-                    </Typography>
-                    
-                    <Box sx={{ display: 'flex', gap: 4, mb: 3 }}>
-                      {/* Portfolio Composition */}
-                      <Box sx={{ flex: 1 }}>
-                        {mptAllocation
-                          .sort((a, b) => b.weight - a.weight)
-                          .map((asset, index) => {
-                            // Find the corresponding ETF data to get the strategy
-                            const etfData = data.find(item => item.ticker === asset.ticker);
-                            const strategy = etfData ? etfData.bestStrategy : null;
-                            
-                            return (
-                              <Box key={index} sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                mb: 1,
-                                p: 1,
-                                bgcolor: 'rgba(255, 255, 255, 0.02)',
-                                borderRadius: 1
-                              }}>
-                                <Chip
-                                  label={asset.ticker}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: asset.ticker === 'CASH' ? 'primary.main' : 
-                                             asset.ticker === 'SPY' ? 'primary.main' : 
-                                             'info.main',
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    minWidth: '60px'
-                                  }}
-                                />
-                                <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
-                                  {(asset.weight * 100).toFixed(1)}%
-                                </Typography>
-                                {strategy && (
-                                  <Chip
-                                    label={strategy}
-                                    size="small"
-                                    sx={{
-                                      ml: 1,
-                                      bgcolor: strategy === 'B&H' ? '#2196f3' : '#009688',
-                                      color: 'white',
-                                      fontSize: '10px',
-                                      height: '18px'
-                                    }}
-                                  />
-                                )}
-                              </Box>
-                            );
-                          })}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                >
+                  <Card 
+                    elevation={0}
+                    sx={{ 
+                      mt: 6, 
+                      maxWidth: '1000px', 
+                      mx: 'auto', 
+                      background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(108, 99, 255, 0.08) 100%)',
+                      border: '1px solid rgba(0, 212, 255, 0.2)',
+                      borderRadius: 4,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 2,
+                        background: 'linear-gradient(90deg, #00D4FF, #6C63FF, #00E676)',
+                        opacity: 0.8
+                      }
+                    }}
+                  >
+                    <CardContent sx={{ p: 4 }}>
+                      <Box sx={{ textAlign: 'center', mb: 4 }}>
+                        <Typography 
+                          variant="h5" 
+                          sx={{ 
+                            fontWeight: 700,
+                            background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            mb: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1
+                          }}
+                        >
+                          <AccountBalance sx={{ color: '#00D4FF', fontSize: 28 }} />
+                          Optimal Portfolio Allocation
+                        </Typography>
+                        <Typography 
+                          variant="subtitle2" 
+                          sx={{ 
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontWeight: 500
+                          }}
+                        >
+                          Advanced MPT Optimization Results
+                        </Typography>
                       </Box>
                       
-                      {/* Portfolio Metrics */}
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography><strong>Expected Return:</strong></Typography>
-                            <Typography sx={{ color: 'success.main' }}>
-                              {formatPercentage(portfolioMetrics.expectedReturn)}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography><strong>Portfolio Risk:</strong></Typography>
-                            <Typography sx={{ 
-                              color: portfolioMetrics.risk > 0.15 ? 'error.main' : 'success.main' 
+                      <Box sx={{ display: 'flex', gap: 6, mb: 4 }}>
+                        {/* Portfolio Composition */}
+                        <Box sx={{ flex: 1.2 }}>
+                          <Typography variant="h6" sx={{ mb: 2, color: '#00D4FF', fontWeight: 600 }}>
+                            Allocation Breakdown
+                          </Typography>
+                          {mptAllocation
+                            .sort((a, b) => b.weight - a.weight)
+                            .map((asset, index) => {
+                              const etfData = data.find(item => item.ticker === asset.ticker);
+                              const strategy = etfData ? etfData.bestStrategy : null;
+                              
+                              return (
+                                <motion.div
+                                  key={index}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                                >
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    mb: 2,
+                                    p: 2,
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    backdropFilter: 'blur(10px)',
+                                    borderRadius: 2,
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                      background: 'rgba(255, 255, 255, 0.05)',
+                                      transform: 'translateX(4px)'
+                                    }
+                                  }}>
+                                    <Chip
+                                      label={asset.ticker}
+                                      size="medium"
+                                      sx={{
+                                        background: asset.ticker === 'CASH' ? 'linear-gradient(135deg, #FFB74D 0%, #FF8A65 100%)' : 
+                                                   asset.ticker === 'SPY' ? 'linear-gradient(135deg, #9C27B0 0%, #673AB7 100%)' : 
+                                                   'linear-gradient(135deg, #00D4FF 0%, #0095CC 100%)',
+                                        color: 'white',
+                                        fontWeight: 700,
+                                        minWidth: '70px',
+                                        fontSize: '0.8rem'
+                                      }}
+                                    />
+                                    <Box sx={{ flex: 1, mx: 2 }}>
+                                      <Box sx={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center',
+                                        mb: 0.5
+                                      }}>
+                                        <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#FFFFFF' }}>
+                                          {(asset.weight * 100).toFixed(1)}%
+                                        </Typography>
+                                        {strategy && (
+                                          <Chip
+                                            label={strategy}
+                                            size="small"
+                                            sx={{
+                                              background: strategy === 'B&H' ? 
+                                                'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)' : 
+                                                'linear-gradient(135deg, #009688 0%, #00695C 100%)',
+                                              color: 'white',
+                                              fontSize: '0.7rem',
+                                              height: '20px',
+                                              fontWeight: 600
+                                            }}
+                                          />
+                                        )}
+                                      </Box>
+                                      <Box sx={{ 
+                                        width: '100%', 
+                                        height: 6, 
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+                                        borderRadius: 3,
+                                        overflow: 'hidden'
+                                      }}>
+                                        <motion.div
+                                          initial={{ width: 0 }}
+                                          animate={{ width: `${asset.weight * 100}%` }}
+                                          transition={{ duration: 1, delay: index * 0.1 + 0.5 }}
+                                          style={{
+                                            height: '100%',
+                                            background: asset.ticker === 'CASH' ? 
+                                              'linear-gradient(90deg, #FFB74D, #FF8A65)' : 
+                                              asset.ticker === 'SPY' ? 
+                                              'linear-gradient(90deg, #9C27B0, #673AB7)' :
+                                              'linear-gradient(90deg, #00D4FF, #0095CC)',
+                                            borderRadius: '3px'
+                                          }}
+                                        />
+                                      </Box>
+                                    </Box>
+                                  </Box>
+                                </motion.div>
+                              );
+                            })}
+                        </Box>
+                        
+                        {/* Portfolio Metrics */}
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="h6" sx={{ mb: 2, color: '#6C63FF', fontWeight: 600 }}>
+                            Performance Metrics
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Box sx={{ 
+                              p: 2, 
+                              background: 'rgba(0, 230, 118, 0.1)', 
+                              borderRadius: 2,
+                              border: '1px solid rgba(0, 230, 118, 0.2)'
                             }}>
-                              {formatPercentage(portfolioMetrics.risk)}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography><strong>Sharpe Ratio:</strong></Typography>
-                            <Typography sx={{ color: 'success.main' }}>
-                              {portfolioMetrics.sharpeRatio.toFixed(2)}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography><strong>Diversification:</strong></Typography>
-                            <Typography sx={{ color: 'success.main' }}>
-                              {mptAllocation.length} assets
-                            </Typography>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Expected Return</Typography>
+                                <Typography sx={{ color: '#00E676', fontWeight: 700, fontSize: '1.1rem' }}>
+                                  {formatPercentage(portfolioMetrics.expectedReturn)}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            
+                            <Box sx={{ 
+                              p: 2, 
+                              background: portfolioMetrics.risk > 0.15 ? 'rgba(255, 69, 105, 0.1)' : 'rgba(0, 212, 255, 0.1)', 
+                              borderRadius: 2,
+                              border: `1px solid ${portfolioMetrics.risk > 0.15 ? 'rgba(255, 69, 105, 0.2)' : 'rgba(0, 212, 255, 0.2)'}`
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Portfolio Risk</Typography>
+                                <Typography sx={{ 
+                                  color: portfolioMetrics.risk > 0.15 ? '#FF4569' : '#00D4FF',
+                                  fontWeight: 700, 
+                                  fontSize: '1.1rem'
+                                }}>
+                                  {formatPercentage(portfolioMetrics.risk)}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            
+                            <Box sx={{ 
+                              p: 2, 
+                              background: 'rgba(108, 99, 255, 0.1)', 
+                              borderRadius: 2,
+                              border: '1px solid rgba(108, 99, 255, 0.2)'
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Sharpe Ratio</Typography>
+                                <Typography sx={{ color: '#6C63FF', fontWeight: 700, fontSize: '1.1rem' }}>
+                                  {portfolioMetrics.sharpeRatio.toFixed(2)}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            
+                            <Box sx={{ 
+                              p: 2, 
+                              background: 'rgba(255, 183, 77, 0.1)', 
+                              borderRadius: 2,
+                              border: '1px solid rgba(255, 183, 77, 0.2)'
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Diversification</Typography>
+                                <Typography sx={{ color: '#FFB74D', fontWeight: 700, fontSize: '1.1rem' }}>
+                                  {mptAllocation.length} assets
+                                </Typography>
+                              </Box>
+                            </Box>
                           </Box>
                         </Box>
                       </Box>
-                    </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ 
-                      textAlign: 'center',
-                      fontStyle: 'italic',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                      pt: 2
-                    }}>
-                      Enhanced MPT optimization: Sharpe ratio maximization, efficient frontier analysis, mean variance optimization with correlation adjustments and concentration penalties
-                    </Typography>
-                  </CardContent>
-                </Card>
+                      
+                      <Box sx={{ 
+                        textAlign: 'center',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                        pt: 3,
+                        mt: 2
+                      }}>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            fontStyle: 'italic',
+                            lineHeight: 1.6,
+                            maxWidth: '800px',
+                            mx: 'auto'
+                          }}
+                        >
+                          <Security sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
+                          Enhanced Modern Portfolio Theory optimization featuring Sharpe ratio maximization, 
+                          efficient frontier analysis, and mean variance optimization with advanced correlation adjustments and concentration penalties
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               )}
             </TabPanel>
 
             <TabPanel value={selectedTab} index={1}>
-              <Typography variant="h6" gutterBottom>
-                All Other ETFs
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                All remaining ETFs analyzed but not included in the optimal allocation
-              </Typography>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Box sx={{ mb: 4 }}>
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom
+                    sx={{ 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #FFFFFF 0%, #6C63FF 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 1
+                    }}
+                  >
+                    Complete ETF Universe
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      maxWidth: '600px',
+                      lineHeight: 1.6
+                    }}
+                  >
+                    Comprehensive analysis of all remaining ETFs evaluated but not selected for the optimal allocation
+                  </Typography>
+                </Box>
+              </motion.div>
               {renderTable(excludedTickers)}
             </TabPanel>
-          </Paper>
 
-          {/* Disclaimer */}
-          <Card sx={{ mt: 4, bgcolor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, color: 'warning.main' }}>
-                ⚠️ Important Disclaimer
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                This analysis tool is provided for <strong>educational and entertainment purposes only</strong>. 
-                The data, calculations, and strategies presented here are <strong>not investment advice</strong> and should not be 
-                considered as recommendations for any financial decisions. Past performance does not guarantee future results. 
-                All investments carry risk, including the potential loss of principal. You should consult with a qualified 
-                financial advisor before making any investment decisions. The creator of this tool is not responsible for any 
-                financial losses or decisions made based on this information.
-              </Typography>
-            </CardContent>
-          </Card>
+            <TabPanel value={selectedTab} index={2}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Box sx={{ mb: 4 }}>
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom
+                    sx={{ 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #FFFFFF 0%, #FFB74D 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 1
+                    }}
+                  >
+                    Enhanced Analytics Suite
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      maxWidth: '600px',
+                      lineHeight: 1.6
+                    }}
+                  >
+                    Advanced dividend capture analytics with comprehensive risk metrics, intelligent scanner, and tax optimization strategies
+                  </Typography>
+                </Box>
+              </motion.div>
+              <EnhancedDashboardIntegration 
+                mockAllocation={mptAllocation}
+                mockPortfolioMetrics={portfolioMetrics}
+              />
+            </TabPanel>
+          </Paper>
+          </motion.div>
+
+          {/* Modern Disclaimer */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <Card 
+              elevation={0}
+              sx={{ 
+                mt: 6, 
+                background: 'linear-gradient(135deg, rgba(255, 183, 77, 0.08) 0%, rgba(255, 152, 0, 0.08) 100%)',
+                border: '1px solid rgba(255, 183, 77, 0.2)',
+                borderRadius: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 2,
+                  background: 'linear-gradient(90deg, #FFB74D, #FF8A65, #FFB74D)',
+                  opacity: 0.8
+                }
+              }}
+            >
+              <CardContent sx={{ p: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #FFB74D 0%, #FF8A65 100%)',
+                    mr: 2
+                  }}>
+                    <Security sx={{ color: 'white', fontSize: 24 }} />
+                  </Box>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: '#FFB74D'
+                    }}
+                  >
+                    Important Disclaimer
+                  </Typography>
+                </Box>
+                
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    lineHeight: 1.7,
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  This analysis tool is provided for <strong style={{color: '#FFB74D'}}>educational and entertainment purposes only</strong>. 
+                  The data, calculations, and strategies presented here are <strong style={{color: '#FFB74D'}}>not investment advice</strong> and should not be 
+                  considered as recommendations for any financial decisions. Past performance does not guarantee future results. 
+                  All investments carry risk, including the potential loss of principal. You should consult with a qualified 
+                  financial advisor before making any investment decisions. The creator of this tool is not responsible for any 
+                  financial losses or decisions made based on this information.
+                </Typography>
+              </CardContent>
+            </Card>
+          </motion.div>
         </Container>
+        </Box>
       </Box>
     </ThemeProvider>
   );

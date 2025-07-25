@@ -15,6 +15,8 @@ export interface Asset {
   exDivDay: string;
   dividendCapture: number;
   forwardYield?: number;
+  currentPrice?: number;  // Current stock price
+  lastDividend?: number;  // Most recent dividend payment
 }
 
 export const dividendData: Asset[] = [
