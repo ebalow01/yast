@@ -38,7 +38,8 @@ import {
   AccountBalance,
   ShowChart,
   Security,
-  TrendingFlat
+  TrendingFlat,
+  TableView
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -2045,6 +2046,17 @@ export default function DividendAnalysisDashboard() {
                   }
                 }}
               />
+              <Tab
+                label={`Full Analysis (${data.length})`}
+                icon={<TableView />}
+                iconPosition="start"
+                sx={{
+                  minHeight: 72,
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 20
+                  }
+                }}
+              />
               {console.log('🎯 TABS RENDERED - Third tab "Enhanced Analytics" should be visible')}
             </Tabs>
 
@@ -2535,6 +2547,43 @@ export default function DividendAnalysisDashboard() {
                 mockAllocation={mptAllocation}
                 mockPortfolioMetrics={portfolioMetrics}
               />
+            </TabPanel>
+
+            <TabPanel value={selectedTab} index={3}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Box sx={{ mb: 4 }}>
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom
+                    sx={{ 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #FFFFFF 0%, #00D4FF 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 1
+                    }}
+                  >
+                    Comprehensive 25-Ticker Weekly Distribution ETF Analysis
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      maxWidth: '800px',
+                      lineHeight: 1.6
+                    }}
+                  >
+                    Complete analysis of all dividend capture opportunities across the YieldMax universe. 
+                    Compare buy & hold vs dividend capture strategies, win rates, risk metrics, and forward yields 
+                    for informed investment decisions.
+                  </Typography>
+                </Box>
+              </motion.div>
+              {renderLegacyTable(data)}
             </TabPanel>
           </Paper>
           </motion.div>
