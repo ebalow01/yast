@@ -1638,7 +1638,7 @@ export default function DividendAnalysisDashboard() {
     </Card>
   );
 
-  // Table layout for Full Analysis (matching the High/Medium/Low Performers format)
+  // Table layout for Full Analysis broken into performance tiers
   const renderFullAnalysisTable = (data: DividendData[]) => {
     console.log('🎯 RENDERING FULL ANALYSIS TABLE - data length:', data.length);
     console.log('🎯 First item data sample:', data[0]);
@@ -1647,11 +1647,18 @@ export default function DividendAnalysisDashboard() {
       return <Typography color="white">No data available</Typography>;
     }
     
-    return (
+    // Sort data by best return and categorize
+    const sortedData = [...data].sort((a, b) => b.bestReturn - a.bestReturn);
+    const highPerformers = sortedData.filter(item => item.bestReturn > 0.50); // >50% returns
+    const mediumPerformers = sortedData.filter(item => item.bestReturn > 0.20 && item.bestReturn <= 0.50); // 20-50% returns  
+    const lowPerformers = sortedData.filter(item => item.bestReturn <= 0.20); // ≤20% returns
+    
+    const renderPerformanceSection = (title: string, performers: DividendData[], delay: number = 0) => (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
+        transition={{ duration: 0.6, delay }}
+        style={{ marginBottom: '2rem' }}
       >
         <Box sx={{ 
           fontFamily: 'monospace',
@@ -1660,7 +1667,7 @@ export default function DividendAnalysisDashboard() {
           borderRadius: 2,
           border: '1px solid rgba(0, 212, 255, 0.2)'
         }}>
-          {/* Header */}
+          {/* Section Header */}
           <Typography sx={{ 
             color: '#00D4FF', 
             fontSize: '0.9rem', 
@@ -1670,13 +1677,13 @@ export default function DividendAnalysisDashboard() {
             pb: 1,
             mb: 2
           }}>
-            COMPREHENSIVE 25-TICKER WEEKLY DISTRIBUTION ETF ANALYSIS (SORTED BY BEST STRATEGY PERFORMANCE)
+            {title}
           </Typography>
           
           {/* Table Header */}
           <Box sx={{ 
             display: 'grid', 
-            gridTemplateColumns: '80px 50px 120px 120px 120px 120px 120px 100px 100px 100px 120px',
+            gridTemplateColumns: '80px 50px 120px 120px 120px 120px 100px 100px 100px 120px',
             gap: 1,
             color: '#FFFFFF',
             fontSize: '0.8rem',
@@ -1691,7 +1698,6 @@ export default function DividendAnalysisDashboard() {
             <Box>Buy & Hold</Box>
             <Box>Div Capture</Box>
             <Box>Best Strategy</Box>
-            <Box>Final Value</Box>
             <Box>DC Win Rate</Box>
             <Box>Risk (Vol)</Box>
             <Box>Yield</Box>
@@ -1699,18 +1705,16 @@ export default function DividendAnalysisDashboard() {
           </Box>
           
           {/* Data Rows */}
-          {data
-            .sort((a, b) => b.bestReturn - a.bestReturn)
-            .map((item, index) => (
+          {performers.map((item, index) => (
             <motion.div
               key={item.ticker}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.02 }}
+              transition={{ duration: 0.4, delay: (delay + 0.2) + index * 0.02 }}
             >
               <Box sx={{ 
                 display: 'grid', 
-                gridTemplateColumns: '80px 50px 120px 120px 120px 120px 120px 100px 100px 100px 120px',
+                gridTemplateColumns: '80px 50px 120px 120px 120px 120px 100px 100px 100px 120px',
                 gap: 1,
                 py: 0.5,
                 fontSize: '0.75rem',
@@ -1734,9 +1738,6 @@ export default function DividendAnalysisDashboard() {
                 }}>
                   {item.bestStrategy === 'Buy & Hold' ? 'B&H' : 'DC'}: {formatPercentage(item.bestReturn)}
                 </Box>
-                <Box sx={{ color: '#34C759', fontWeight: 600 }}>
-                  ${item.finalValue?.toLocaleString() || 'N/A'}
-                </Box>
                 <Box sx={{ color: '#FFFFFF' }}>
                   {formatPercentage(item.dcWinRate)}
                 </Box>
@@ -1754,6 +1755,28 @@ export default function DividendAnalysisDashboard() {
           ))}
         </Box>
       </motion.div>
+    );
+    
+    return (
+      <Box>
+        {highPerformers.length > 0 && renderPerformanceSection(
+          `HIGH PERFORMERS (>50% RETURNS, SORTED BY BEST STRATEGY PERFORMANCE)`,
+          highPerformers,
+          0
+        )}
+        
+        {mediumPerformers.length > 0 && renderPerformanceSection(
+          `MEDIUM PERFORMERS (20-50% RETURNS, SORTED BY BEST STRATEGY PERFORMANCE)`,
+          mediumPerformers,
+          0.3
+        )}
+        
+        {lowPerformers.length > 0 && renderPerformanceSection(
+          `LOW PERFORMERS (≤20% RETURNS, SORTED BY BEST STRATEGY PERFORMANCE)`,
+          lowPerformers,
+          0.6
+        )}
+      </Box>
     );
   };
 
@@ -2714,7 +2737,7 @@ export default function DividendAnalysisDashboard() {
                       mb: 1
                     }}
                   >
-                    Comprehensive 25-Ticker Weekly Distribution ETF Analysis
+                    Comprehensive Weekly Distribution ETF Analysis
                   </Typography>
                   <Typography 
                     variant="subtitle1" 
