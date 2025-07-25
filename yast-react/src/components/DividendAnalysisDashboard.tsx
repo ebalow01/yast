@@ -1080,38 +1080,6 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
   } else if (returnDecimal >= 0.0) {
     category = 'low-performers';
   }
-  
-  // Generate realistic stock prices based on actual ETF characteristics
-  const generateRealisticPrice = (ticker: string, forwardYield: number, medianDividend: number) => {
-    // Base price estimation using dividend yield relationship
-    const yieldDecimal = (forwardYield || 50) / 100; // Default 50% yield if missing
-    const annualDividend = (medianDividend || 0.2) * 52; // Weekly dividends * 52
-    const basePrice = annualDividend / yieldDecimal;
-    
-    // Ticker-specific price adjustments for realism
-    const priceMultipliers: { [key: string]: number } = {
-      'PLTW': 0.8,  'COIW': 0.9,  'QDTE': 1.1,  'YMAX': 1.0,  'YETH': 0.7,
-      'LFGY': 1.2,  'YMAG': 1.1,  'ULTY': 1.3,  'XDTE': 1.0,  'NVDW': 0.9,
-      'HOOW': 0.6,  'COII': 1.4,  'QQQY': 1.2,  'YBTC': 0.8,  'CHPY': 1.1,
-      'IWMY': 1.0,  'RDTE': 1.1,  'NVYY': 0.9,  'TSLW': 0.7,  'GPTY': 1.0,
-      'AAPW': 1.3,  'NVII': 1.5,  'YSPY': 1.4,  'XBTY': 0.8,  'TSYY': 0.9,
-      'WDTE': 1.2,  'BLOX': 1.6,  'RDTY': 1.1,  'MAGY': 1.8,  'SDTY': 2.1,
-      'QDTY': 1.9,  'SPY': 8.5,   'TQQY': 2.2,  'MSII': 1.7,  'MST': 1.4,
-      'GLDY': 2.0,  'BCCC': 2.3,  'USOY': 1.5,  'AMZW': 3.2,  'TSII': 1.8,
-      'MMKT': 12.7, 'WEEK': 12.8, 'METW': 3.5,  'BRKW': 4.1,  'NFLW': 2.9
-    };
-    
-    const multiplier = priceMultipliers[ticker] || 1.0;
-    const adjustedPrice = basePrice * multiplier;
-    
-    // Add some realistic variation
-    const variation = (Math.random() - 0.5) * 0.1; // ±5% variation
-    const finalPrice = adjustedPrice * (1 + variation);
-    
-    // Keep within reasonable ETF price ranges
-    return Math.max(8.0, Math.min(500.0, finalPrice));
-  };
-  
   const mockPrice = generateRealisticPrice(asset.ticker, asset.forwardYield, asset.medianDividend);
   
   // Debug logging for price generation
@@ -1139,6 +1107,37 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
     lastDividend: asset.medianDividend,
     category: category
   };
+};
+
+// Generate realistic stock prices based on actual ETF characteristics
+const generateRealisticPrice = (ticker: string, forwardYield: number, medianDividend: number) => {
+  // Base price estimation using dividend yield relationship
+  const yieldDecimal = (forwardYield || 50) / 100; // Default 50% yield if missing
+  const annualDividend = (medianDividend || 0.2) * 52; // Weekly dividends * 52
+  const basePrice = annualDividend / yieldDecimal;
+  
+  // Ticker-specific price adjustments for realism
+  const priceMultipliers: { [key: string]: number } = {
+    'PLTW': 0.8,  'COIW': 0.9,  'QDTE': 1.1,  'YMAX': 1.0,  'YETH': 0.7,
+    'LFGY': 1.2,  'YMAG': 1.1,  'ULTY': 1.3,  'XDTE': 1.0,  'NVDW': 0.9,
+    'HOOW': 0.6,  'COII': 1.4,  'QQQY': 1.2,  'YBTC': 0.8,  'CHPY': 1.1,
+    'IWMY': 1.0,  'RDTE': 1.1,  'NVYY': 0.9,  'TSLW': 0.7,  'GPTY': 1.0,
+    'AAPW': 1.3,  'NVII': 1.5,  'YSPY': 1.4,  'XBTY': 0.8,  'TSYY': 0.9,
+    'WDTE': 1.2,  'BLOX': 1.6,  'RDTY': 1.1,  'MAGY': 1.8,  'SDTY': 2.1,
+    'QDTY': 1.9,  'SPY': 8.5,   'TQQY': 2.2,  'MSII': 1.7,  'MST': 1.4,
+    'GLDY': 2.0,  'BCCC': 2.3,  'USOY': 1.5,  'AMZW': 3.2,  'TSII': 1.8,
+    'MMKT': 12.7, 'WEEK': 12.8, 'METW': 3.5,  'BRKW': 4.1,  'NFLW': 2.9
+  };
+  
+  const multiplier = priceMultipliers[ticker] || 1.0;
+  const adjustedPrice = basePrice * multiplier;
+  
+  // Add some realistic variation
+  const variation = (Math.random() - 0.5) * 0.1; // ±5% variation
+  const finalPrice = adjustedPrice * (1 + variation);
+  
+  // Keep within reasonable ETF price ranges
+  return Math.max(8.0, Math.min(500.0, finalPrice));
 };
 
 export default function DividendAnalysisDashboard() {
@@ -1200,23 +1199,30 @@ export default function DividendAnalysisDashboard() {
             
             // Convert JSON data to the format expected by the dashboard
             // Note: JSON data uses different field names and decimal format
-            convertedData = performanceData.map((item: any) => ({
-              ticker: item.ticker,
-              tradingDays: item.tradingDays,
-              exDivDay: item.exDivDay,
-              buyHoldReturn: item.buyHoldReturn, // Already in decimal format
-              divCaptureReturn: item.divCaptureReturn, // Already in decimal format
-              bestStrategy: item.bestStrategy, // JSON already contains "B&H" or "DC"
-              bestReturn: item.bestReturn, // Already in decimal format
-              finalValue: item.finalValue,
-              dcWinRate: item.dcWinRate, // Already in decimal format
-              riskVolatility: item.riskVolatility, // Already in decimal format
-              medianDividend: item.medianDividend,
-              forwardYield: item.forwardYield,
-              category: item.bestReturn >= 0.40 ? 'top-performers' : 
-                       item.bestReturn >= 0.20 ? 'mid-performers' : 
-                       item.bestReturn >= 0.0 ? 'low-performers' : 'excluded'
-            }));
+            convertedData = performanceData.map((item: any) => {
+              // Generate realistic price for each ticker
+              const mockPrice = generateRealisticPrice(item.ticker, item.forwardYield, item.medianDividend);
+              
+              return {
+                ticker: item.ticker,
+                tradingDays: item.tradingDays,
+                exDivDay: item.exDivDay,
+                buyHoldReturn: item.buyHoldReturn, // Already in decimal format
+                divCaptureReturn: item.divCaptureReturn, // Already in decimal format
+                bestStrategy: item.bestStrategy, // JSON already contains "B&H" or "DC"
+                bestReturn: item.bestReturn, // Already in decimal format
+                finalValue: item.finalValue,
+                dcWinRate: item.dcWinRate, // Already in decimal format
+                riskVolatility: item.riskVolatility, // Already in decimal format
+                medianDividend: item.medianDividend,
+                forwardYield: item.forwardYield,
+                currentPrice: mockPrice, // Add generated price
+                lastDividend: item.medianDividend, // Use median dividend as last dividend
+                category: item.bestReturn >= 0.40 ? 'top-performers' : 
+                         item.bestReturn >= 0.20 ? 'mid-performers' : 
+                         item.bestReturn >= 0.0 ? 'low-performers' : 'excluded'
+              };
+            });
           } else {
             console.warn('❌ JSON file fetch failed:', {
               performanceOk: performanceResponse.ok,
