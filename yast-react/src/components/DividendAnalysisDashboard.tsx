@@ -1142,7 +1142,7 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
 };
 
 export default function DividendAnalysisDashboard() {
-  console.log('🚀 DASHBOARD LOADED - Enhanced version with 3 tabs including Enhanced Analytics');
+  console.log('🚀 DASHBOARD LOADED v2.1 - Enhanced version with 4 tabs including Full Analysis Cards');
   const [selectedTab, setSelectedTab] = useState(0);
   const [data, setData] = useState<DividendData[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
@@ -1631,7 +1631,14 @@ export default function DividendAnalysisDashboard() {
   );
 
   // Card-based layout for Full Analysis (like High/Medium/Low Performers)
-  const renderFullAnalysisCards = (data: DividendData[]) => (
+  const renderFullAnalysisCards = (data: DividendData[]) => {
+    console.log('🎯 RENDERING FULL ANALYSIS CARDS - data length:', data.length);
+    
+    if (!data || data.length === 0) {
+      return <Typography color="white">No data available</Typography>;
+    }
+    
+    return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -1757,7 +1764,8 @@ export default function DividendAnalysisDashboard() {
         })}
       </Box>
     </motion.div>
-  );
+    );
+  };
 
   const renderLegacyTable = (data: DividendData[]) => (
     <motion.div
