@@ -1113,6 +1113,14 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
   };
   
   const mockPrice = generateRealisticPrice(asset.ticker, asset.forwardYield, asset.medianDividend);
+  
+  // Debug logging for price generation
+  console.log('💰 PRICE GENERATION:', {
+    ticker: asset.ticker,
+    forwardYield: asset.forwardYield,
+    medianDividend: asset.medianDividend,
+    generatedPrice: mockPrice.toFixed(2)
+  });
 
   return {
     ticker: asset.ticker,
@@ -1620,6 +1628,135 @@ export default function DividendAnalysisDashboard() {
         {renderLegacyTable(data)}
       </CardContent>
     </Card>
+  );
+
+  // Card-based layout for Full Analysis (like High/Medium/Low Performers)
+  const renderFullAnalysisCards = (data: DividendData[]) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
+    >
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 3 }}>
+        {data.map((item, index) => {
+          const returnIndicator = getPerformanceIcon(item.bestReturn * 100, 'return');
+          const riskIndicator = getPerformanceIcon(item.riskVolatility * 100, 'risk');
+          const strategyInfo = getStrategyIndicator(item.bestStrategy);
+          
+          return (
+            <motion.div
+              key={item.ticker}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+            >
+              <Card sx={{ 
+                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                border: '1px solid rgba(0, 212, 255, 0.2)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  border: '1px solid rgba(0, 212, 255, 0.4)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 32px rgba(0, 212, 255, 0.1)'
+                }
+              }}>
+                <CardContent sx={{ p: 2.5 }}>
+                  {/* Header with Ticker and Price */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#FFFFFF', fontWeight: 700, mb: 0.5 }}>
+                        {item.ticker}
+                      </Typography>
+                      <Typography variant="caption" sx={{ 
+                        color: 'rgba(255, 255, 255, 0.7)', 
+                        fontSize: '0.75rem'
+                      }}>
+                        ${item.currentPrice?.toFixed(2) || '---'} • Div: ${(item.lastDividend || item.medianDividend || 0.5).toFixed(3)}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={item.exDivDay}
+                      size="small"
+                      sx={{
+                        background: 'rgba(0, 212, 255, 0.1)',
+                        color: '#00D4FF',
+                        fontSize: '0.7rem',
+                        height: '20px'
+                      }}
+                    />
+                  </Box>
+                  
+                  {/* Strategy and Best Return */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography sx={{ fontSize: '1rem' }}>{strategyInfo.icon}</Typography>
+                      <Typography variant="body2" sx={{ color: strategyInfo.color, fontWeight: 600 }}>
+                        {strategyInfo.label}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography sx={{ fontSize: '1.1rem' }}>{returnIndicator.icon}</Typography>
+                      <Typography variant="h6" sx={{ color: returnIndicator.color, fontWeight: 700 }}>
+                        {formatPercentage(item.bestReturn)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* Performance Metrics Grid */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2, mb: 2 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="body2" sx={{ color: getColorByValue(item.buyHoldReturn), fontWeight: 600, mb: 0.5 }}>
+                        {formatPercentage(item.buyHoldReturn)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        B&H Return
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="body2" sx={{ color: getColorByValue(item.divCaptureReturn), fontWeight: 600, mb: 0.5 }}>
+                        {formatPercentage(item.divCaptureReturn)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        DC Return
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 600, mb: 0.5 }}>
+                        {formatPercentage(item.dcWinRate)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Win Rate
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* Risk and Yield Footer */}
+                  <Box sx={{ 
+                    pt: 1.5, 
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography sx={{ fontSize: '1rem' }}>{riskIndicator.icon}</Typography>
+                      <Typography variant="caption" sx={{ color: riskIndicator.color, fontWeight: 500 }}>
+                        {formatPercentage(item.riskVolatility)} risk
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ color: '#34C759', fontWeight: 500 }}>
+                      {item.forwardYield?.toFixed(1) || 'N/A'}% yield
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </Box>
+    </motion.div>
   );
 
   const renderLegacyTable = (data: DividendData[]) => (
@@ -2595,7 +2732,7 @@ export default function DividendAnalysisDashboard() {
                   </Typography>
                 </Box>
               </motion.div>
-              {renderLegacyTable(data)}
+              {renderFullAnalysisCards(data)}
             </TabPanel>
           </Paper>
           </motion.div>
