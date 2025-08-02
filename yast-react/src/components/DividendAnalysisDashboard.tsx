@@ -59,6 +59,7 @@ export interface DividendData {
   riskVolatility: number;
   medianDividend: number;
   forwardYield?: number;
+  currentPrice?: number;
   category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
 }
 
@@ -1170,6 +1171,8 @@ export default function DividendAnalysisDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [mptAllocation, setMptAllocation] = useState<any[]>([]);
   const [portfolioMetrics, setPortfolioMetrics] = useState<any>(null);
+  const [realtimeData, setRealtimeData] = useState<any>(null);
+  const [useRealtimeData, setUseRealtimeData] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -1182,9 +1185,15 @@ export default function DividendAnalysisDashboard() {
         try {
           // Add cache busting to ensure fresh data from GitHub Actions
           const cacheBuster = new Date().getTime();
-          const [performanceResponse, metadataResponse] = await Promise.all([
+          const [performanceResponse, metadataResponse, realtimeResponse] = await Promise.all([
             fetch(`/data/performance_data.json?v=${cacheBuster}`),
-            fetch(`/data/metadata.json?v=${cacheBuster}`)
+            fetch(`/data/metadata.json?v=${cacheBuster}`),
+            // In development, try local file first since Netlify functions don't work locally
+            location.hostname === 'localhost' ? 
+              fetch(`/data/realtime_data.json?v=${cacheBuster}`) :
+              fetch(`/.netlify/functions/realtime-data?v=${cacheBuster}`).catch(() => 
+                fetch(`/data/realtime_data.json?v=${cacheBuster}`).catch(() => null)
+              )
           ]);
           
           if (performanceResponse.ok && metadataResponse.ok) {
@@ -1197,11 +1206,46 @@ export default function DividendAnalysisDashboard() {
             console.log('🏗️ Build ID:', metadataValue.build_id || 'N/A');
             console.log('📈 Performance data entries:', performanceData.length);
             
+            // Try to load real-time data
+            let realtimeDataValue: any = null;
+            if (realtimeResponse && realtimeResponse.ok) {
+              try {
+                const realtimeJson = await realtimeResponse.json();
+                if (realtimeJson && realtimeJson.data && typeof realtimeJson.data === 'object') {
+                  realtimeDataValue = realtimeJson.data || {};
+                  setRealtimeData(realtimeDataValue);
+                  console.log('💹 Real-time data loaded:', Object.keys(realtimeDataValue).length, 'tickers');
+                  console.log('💹 QDTE real-time data:', realtimeDataValue.QDTE);
+                  console.log('💹 ULTY real-time data:', realtimeDataValue.ULTY);
+                } else {
+                  console.log('❌ Real-time response not in expected format');
+                }
+              } catch (e) {
+                console.log('❌ Real-time data JSON parse error:', e);
+              }
+            } else {
+              console.log('❌ Real-time data not available:', realtimeResponse?.status);
+            }
+            
             // Convert JSON data to the format expected by the dashboard
             // Note: JSON data uses different field names and decimal format
             convertedData = performanceData.map((item: any) => {
-              // Generate realistic price for each ticker
-              const mockPrice = generateRealisticPrice(item.ticker, item.forwardYield, item.medianDividend);
+              // Use real-time data if available, otherwise use calculated price
+              const rtData = realtimeDataValue?.[item.ticker];
+              const currentPrice = rtData?.currentPrice || generateRealisticPrice(item.ticker, item.forwardYield, item.medianDividend);
+              const lastDividend = rtData?.lastDividend || item.medianDividend;
+              const actualYield = rtData?.actualYield || item.forwardYield;
+              
+              // Debug logging for specific tickers
+              if (item.ticker === 'QDTE' || item.ticker === 'ULTY') {
+                console.log(`🔍 ${item.ticker} data:`, {
+                  rtData: rtData,
+                  currentPrice: currentPrice,
+                  actualYield: actualYield,
+                  originalPrice: generateRealisticPrice(item.ticker, item.forwardYield, item.medianDividend),
+                  originalYield: item.forwardYield
+                });
+              }
               
               return {
                 ticker: item.ticker,
@@ -1214,10 +1258,10 @@ export default function DividendAnalysisDashboard() {
                 finalValue: item.finalValue,
                 dcWinRate: item.dcWinRate, // Already in decimal format
                 riskVolatility: item.riskVolatility, // Already in decimal format
-                medianDividend: item.medianDividend,
-                forwardYield: item.forwardYield,
-                currentPrice: mockPrice, // Add generated price
-                lastDividend: item.medianDividend, // Use median dividend as last dividend
+                medianDividend: rtData?.medianDividend || item.medianDividend,
+                forwardYield: actualYield,
+                currentPrice: currentPrice,
+                lastDividend: lastDividend,
                 category: item.bestReturn >= 0.40 ? 'top-performers' : 
                          item.bestReturn >= 0.20 ? 'mid-performers' : 
                          item.bestReturn >= 0.0 ? 'low-performers' : 'excluded'
@@ -1236,7 +1280,33 @@ export default function DividendAnalysisDashboard() {
           console.log('📁 JSON files not available, using static imported data');
           console.error('JSON fetch error:', jsonError);
           // Fallback to static imported data
-          convertedData = dividendData.map(convertAssetToData);
+          // Try to fetch real-time data even with static data
+          let realtimeDataValue: any = null;
+          try {
+            const rtResponse = location.hostname === 'localhost' ? 
+              await fetch(`/data/realtime_data.json`) :
+              await fetch(`/.netlify/functions/realtime-data`).catch(() => null);
+            if (rtResponse && rtResponse.ok) {
+              const rtJson = await rtResponse.json();
+              realtimeDataValue = rtJson.data || {};
+              setRealtimeData(realtimeDataValue);
+              console.log('💹 Real-time data loaded (fallback):', Object.keys(realtimeDataValue).length, 'tickers');
+            }
+          } catch (e) {
+            console.log('Could not fetch real-time data');
+          }
+          
+          convertedData = dividendData.map(asset => {
+            const rtData = realtimeDataValue?.[asset.ticker];
+            const converted = convertAssetToData(asset);
+            if (rtData) {
+              converted.currentPrice = rtData.currentPrice;
+              converted.lastDividend = rtData.lastDividend;
+              converted.medianDividend = rtData.medianDividend;
+              converted.forwardYield = rtData.actualYield;
+            }
+            return converted;
+          });
           metadataValue = analysisMetadata;
         }
         
@@ -1464,9 +1534,6 @@ export default function DividendAnalysisDashboard() {
                       const indicator = getPerformanceIcon(asset.return * 100, 'return');
                       return (
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                          <Typography variant="body2" sx={{ fontSize: '1rem' }}>
-                            {indicator.icon}
-                          </Typography>
                           <Typography variant="body2" sx={{ 
                             color: indicator.color,
                             fontWeight: 500
@@ -1482,9 +1549,6 @@ export default function DividendAnalysisDashboard() {
                       const indicator = getPerformanceIcon(asset.risk * 100, 'risk');
                       return (
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                          <Typography variant="body2" sx={{ fontSize: '1rem' }}>
-                            {indicator.icon}
-                          </Typography>
                           <Typography variant="body2" sx={{ 
                             color: indicator.color,
                             fontWeight: 500
@@ -1500,7 +1564,7 @@ export default function DividendAnalysisDashboard() {
                       color: '#FFFFFF',
                       fontWeight: 500
                     }}>
-                      {asset.sharpe?.toFixed(2) || 'N/A'}
+                      {asset.sharpe ? (isFinite(asset.sharpe) ? asset.sharpe.toFixed(2) : '---') : 'N/A'}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -1562,7 +1626,6 @@ export default function DividendAnalysisDashboard() {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                        <Typography sx={{ fontSize: '1.1rem' }}>{returnIndicator.icon}</Typography>
                         <Typography variant="body2" sx={{ color: returnIndicator.color, fontWeight: 600 }}>
                           {(asset.return * 100).toFixed(1)}%
                         </Typography>
@@ -1574,7 +1637,6 @@ export default function DividendAnalysisDashboard() {
                     
                     <Box sx={{ textAlign: 'center' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
-                        <Typography sx={{ fontSize: '1.1rem' }}>{riskIndicator.icon}</Typography>
                         <Typography variant="body2" sx={{ color: riskIndicator.color, fontWeight: 600 }}>
                           {(asset.risk * 100).toFixed(1)}%
                         </Typography>
@@ -1586,7 +1648,7 @@ export default function DividendAnalysisDashboard() {
                     
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="body2" sx={{ color: '#FFFFFF', fontWeight: 600, mb: 0.5 }}>
-                        {asset.sharpe?.toFixed(2) || 'N/A'}
+                        {asset.sharpe ? (isFinite(asset.sharpe) ? asset.sharpe.toFixed(2) : '---') : 'N/A'}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                         Sharpe
@@ -1621,28 +1683,280 @@ export default function DividendAnalysisDashboard() {
   );
 
   // Detailed ETF Performance Table (Expandable)
-  const renderDetailedETFTable = (data: DividendData[]) => (
-    <Card sx={{ 
-      background: 'rgba(255, 255, 255, 0.02)',
-      border: '1px solid rgba(255, 255, 255, 0.1)'
-    }}>
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ 
-          color: '#FFFFFF', 
-          fontWeight: 600, 
-          mb: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
+  const renderDetailedETFTable = (data: DividendData[]) => {
+    // Calculate comprehensive performance metrics
+    const calculatePerformanceMetrics = () => {
+      const avgBuyHold = data.reduce((sum, item) => sum + item.buyHoldReturn, 0) / data.length;
+      const avgDivCapture = data.reduce((sum, item) => sum + item.divCaptureReturn, 0) / data.length;
+      const avgWinRate = data.reduce((sum, item) => sum + item.dcWinRate, 0) / data.length;
+      const avgRisk = data.reduce((sum, item) => sum + item.riskVolatility, 0) / data.length;
+      const avgYield = data.reduce((sum, item) => sum + (item.forwardYield || 0), 0) / data.length;
+      
+      const outperformingDC = data.filter(item => item.divCaptureReturn > item.buyHoldReturn).length;
+      const lowRiskHighReturn = data.filter(item => item.bestReturn > 0.3 && item.riskVolatility < 0.3).length;
+      
+      const bestPerformer = data.reduce((best, item) => 
+        item.bestReturn > best.bestReturn ? item : best
+      );
+      
+      const lowestRisk = data.reduce((best, item) => 
+        item.riskVolatility < best.riskVolatility ? item : best
+      );
+      
+      const highestYield = data.reduce((best, item) => 
+        (item.forwardYield || 0) > (best.forwardYield || 0) ? item : best
+      );
+      
+      return {
+        avgBuyHold,
+        avgDivCapture,
+        avgWinRate,
+        avgRisk,
+        avgYield,
+        outperformingDC,
+        lowRiskHighReturn,
+        bestPerformer,
+        lowestRisk,
+        highestYield,
+        totalCount: data.length
+      };
+    };
+    
+    const metrics = calculatePerformanceMetrics();
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Card sx={{ 
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          mb: 3
         }}>
-          <ShowChart sx={{ color: '#00D4FF', fontSize: 20 }} />
-          Detailed Performance Analysis
-        </Typography>
-        
-        {renderLegacyTable(data)}
-      </CardContent>
-    </Card>
-  );
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ 
+              color: '#FFFFFF', 
+              fontWeight: 600, 
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <ShowChart sx={{ color: '#00D4FF', fontSize: 20 }} />
+              Detailed Performance Analysis
+            </Typography>
+            
+            {/* Performance Overview Cards */}
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+              gap: 2, 
+              mb: 4 
+            }}>
+              {/* Average Returns Card */}
+              <Box sx={{ 
+                p: 2.5, 
+                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%)',
+                borderRadius: 2,
+                border: '1px solid rgba(0, 212, 255, 0.2)'
+              }}>
+                <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                  Average Strategy Returns
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
+                  <Typography variant="h5" sx={{ color: '#00D4FF', fontWeight: 700 }}>
+                    {formatPercentage(metrics.avgDivCapture)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    Div Capture
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                  <Typography variant="h5" sx={{ color: '#007AFF', fontWeight: 700 }}>
+                    {formatPercentage(metrics.avgBuyHold)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    Buy & Hold
+                  </Typography>
+                </Box>
+              </Box>
+              
+              {/* Win Rate & Risk Card */}
+              <Box sx={{ 
+                p: 2.5, 
+                background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)',
+                borderRadius: 2,
+                border: '1px solid rgba(52, 199, 89, 0.2)'
+              }}>
+                <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                  Risk-Adjusted Performance
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
+                  <Typography variant="h5" sx={{ color: '#34C759', fontWeight: 700 }}>
+                    {formatPercentage(metrics.avgWinRate)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    Avg Win Rate
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                  <Typography variant="h5" sx={{ color: '#FF9500', fontWeight: 700 }}>
+                    {formatPercentage(metrics.avgRisk)}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    Avg Volatility
+                  </Typography>
+                </Box>
+              </Box>
+              
+              {/* Yield & Opportunities Card */}
+              <Box sx={{ 
+                p: 2.5, 
+                background: 'linear-gradient(135deg, rgba(108, 99, 255, 0.1) 0%, rgba(108, 99, 255, 0.05) 100%)',
+                borderRadius: 2,
+                border: '1px solid rgba(108, 99, 255, 0.2)'
+              }}>
+                <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                  Income Opportunities
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
+                  <Typography variant="h5" sx={{ color: '#6C63FF', fontWeight: 700 }}>
+                    {metrics.avgYield.toFixed(1)}%
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    Avg Yield
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h5" sx={{ color: '#00E676', fontWeight: 700 }}>
+                    {metrics.lowRiskHighReturn}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                    Low Risk/High Return
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            
+            {/* Key Insights Section */}
+            <Box sx={{ 
+              mb: 3, 
+              p: 2, 
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: 2,
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}>
+              <Typography variant="subtitle1" sx={{ 
+                color: '#FFFFFF', 
+                fontWeight: 600, 
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <Analytics sx={{ color: '#FFB74D', fontSize: 18 }} />
+                Key Performance Insights
+              </Typography>
+              
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 2 }}>
+                {/* Best Performer */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2,
+                  p: 1.5,
+                  background: 'rgba(0, 212, 255, 0.05)',
+                  borderRadius: 1
+                }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      Top Performer
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
+                      {metrics.bestPerformer.ticker} - {formatPercentage(metrics.bestPerformer.bestReturn)}
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                {/* Lowest Risk */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2,
+                  p: 1.5,
+                  background: 'rgba(52, 199, 89, 0.05)',
+                  borderRadius: 1
+                }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      Lowest Risk
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
+                      {metrics.lowestRisk.ticker} - {formatPercentage(metrics.lowestRisk.riskVolatility)} volatility
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                {/* Highest Yield */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2,
+                  p: 1.5,
+                  background: 'rgba(108, 99, 255, 0.05)',
+                  borderRadius: 1
+                }}>
+                  <AccountBalance sx={{ color: '#6C63FF', fontSize: 24 }} />
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      Highest Yield
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
+                      {metrics.highestYield.ticker} - {metrics.highestYield.forwardYield?.toFixed(1)}%
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                {/* DC Success Rate */}
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2,
+                  p: 1.5,
+                  background: 'rgba(255, 183, 77, 0.05)',
+                  borderRadius: 1
+                }}>
+                  <Timeline sx={{ color: '#FFB74D', fontSize: 24 }} />
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      DC Strategy Success
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
+                      {metrics.outperformingDC}/{metrics.totalCount} ETFs outperform B&H
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            
+            {/* Detailed Table */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ 
+                color: 'rgba(255, 255, 255, 0.7)', 
+                mb: 2,
+                fontWeight: 600
+              }}>
+                Individual ETF Performance
+              </Typography>
+              {renderLegacyTable(data)}
+            </Box>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
 
   // Table layout for Full Analysis broken into performance tiers
   const renderFullAnalysisTable = (data: DividendData[]) => {
@@ -1699,7 +2013,6 @@ export default function DividendAnalysisDashboard() {
             mb: 1
           }}>
             <Box>Ticker</Box>
-            <Box>Days</Box>
             <Box>Ex-Div Day</Box>
             <Box>Buy & Hold</Box>
             <Box>Div Capture</Box>
@@ -1730,7 +2043,6 @@ export default function DividendAnalysisDashboard() {
                 }
               }}>
                 <Box sx={{ color: '#00D4FF', fontWeight: 700 }}>{item.ticker}</Box>
-                <Box sx={{ color: '#FFFFFF' }}>{item.tradingDays}</Box>
                 <Box sx={{ color: '#FFFFFF' }}>{item.exDivDay}</Box>
                 <Box sx={{ color: getColorByValue(item.buyHoldReturn), fontWeight: 600 }}>
                   {formatPercentage(item.buyHoldReturn)}
@@ -1739,10 +2051,10 @@ export default function DividendAnalysisDashboard() {
                   {formatPercentage(item.divCaptureReturn)}
                 </Box>
                 <Box sx={{ 
-                  color: item.bestStrategy === 'Buy & Hold' ? '#007AFF' : '#00D4FF',
+                  color: item.bestStrategy === 'B&H' ? '#007AFF' : '#00D4FF',
                   fontWeight: 700
                 }}>
-                  {item.bestStrategy === 'Buy & Hold' ? 'B&H' : 'DC'}: {formatPercentage(item.bestReturn)}
+                  {item.bestStrategy}: {formatPercentage(item.bestReturn)}
                 </Box>
                 <Box sx={{ color: '#FFFFFF' }}>
                   {formatPercentage(item.dcWinRate)}
@@ -2100,15 +2412,15 @@ export default function DividendAnalysisDashboard() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Chip
                   icon={<Timeline sx={{ fontSize: 16 }} />}
-                  label={`Live • ${metadata.analysisDate}`}
+                  label={realtimeData ? `Real-Time Data • ${new Date().toLocaleDateString()}` : `Analysis • ${metadata.analysisDate}`}
                   variant="outlined"
                   sx={{
-                    borderColor: 'rgba(0, 212, 255, 0.3)',
-                    color: '#00D4FF',
+                    borderColor: realtimeData ? 'rgba(0, 230, 118, 0.3)' : 'rgba(0, 212, 255, 0.3)',
+                    color: realtimeData ? '#00E676' : '#00D4FF',
                     fontWeight: 600,
                     fontSize: '0.75rem',
                     '& .MuiChip-icon': {
-                      color: '#00E676'
+                      color: realtimeData ? '#00E676' : '#00D4FF'
                     }
                   }}
                 />
@@ -2116,10 +2428,25 @@ export default function DividendAnalysisDashboard() {
                   width: 12,
                   height: 12,
                   borderRadius: '50%',
-                  background: '#00E676',
-                  boxShadow: '0 0 12px rgba(0, 230, 118, 0.6)',
+                  background: realtimeData ? '#00E676' : '#FF9500',
+                  boxShadow: realtimeData ? '0 0 12px rgba(0, 230, 118, 0.6)' : '0 0 12px rgba(255, 149, 0, 0.6)',
                   animation: 'pulse 2s infinite'
                 }} />
+                {realtimeData && (
+                  <Tooltip title="Stock prices and dividends fetched from Yahoo Finance">
+                    <Chip
+                      label="YAHOO FINANCE"
+                      size="small"
+                      sx={{
+                        background: 'linear-gradient(135deg, #6B46C1 0%, #805AD5 100%)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '0.65rem',
+                        height: '18px'
+                      }}
+                    />
+                  </Tooltip>
+                )}
               </Box>
             </Toolbar>
           </AppBar>
@@ -2195,7 +2522,7 @@ export default function DividendAnalysisDashboard() {
                 }}
               />
               <Tab
-                label={`All ETFs (${excludedTickers.length})`}
+                label={`Suboptimal ETFs (${excludedTickers.length})`}
                 icon={<ShowChart />}
                 iconPosition="start"
                 sx={{
@@ -2231,7 +2558,7 @@ export default function DividendAnalysisDashboard() {
                 tabCount: 4,
                 selectedTab,
                 dataLength: data.length,
-                tabs: ['Optimal Portfolio', 'All ETFs', 'Enhanced Analytics', 'Full Analysis']
+                tabs: ['Optimal Portfolio', 'Suboptimal ETFs', 'Enhanced Analytics', 'Full Analysis']
               })}
             </Tabs>
 
@@ -2291,7 +2618,7 @@ export default function DividendAnalysisDashboard() {
                         </Box>
                         <Box>
                           <Typography variant="h5" sx={{ color: '#00D4FF', fontWeight: 700 }}>
-                            {portfolioMetrics ? portfolioMetrics.sharpeRatio.toFixed(2) : '---'}
+                            {portfolioMetrics ? (isFinite(portfolioMetrics.sharpeRatio) ? portfolioMetrics.sharpeRatio.toFixed(2) : '---') : '---'}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                             Sharpe Ratio
@@ -2339,9 +2666,6 @@ export default function DividendAnalysisDashboard() {
                                   const indicator = getPerformanceIcon(asset.return * 100, 'return');
                                   return (
                                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                                      <Typography variant="body2" sx={{ fontSize: '1rem' }}>
-                                        {indicator.icon}
-                                      </Typography>
                                       <Typography variant="body2" sx={{ 
                                         color: indicator.color,
                                         fontWeight: 500
@@ -2357,9 +2681,6 @@ export default function DividendAnalysisDashboard() {
                                   const indicator = getPerformanceIcon(asset.risk * 100, 'risk');
                                   return (
                                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                                      <Typography variant="body2" sx={{ fontSize: '1rem' }}>
-                                        {indicator.icon}
-                                      </Typography>
                                       <Typography variant="body2" sx={{ 
                                         color: indicator.color,
                                         fontWeight: 500
@@ -2375,7 +2696,7 @@ export default function DividendAnalysisDashboard() {
                                   color: '#FFFFFF',
                                   fontWeight: 500
                                 }}>
-                                  {asset.sharpe?.toFixed(2) || 'N/A'}
+                                  {asset.sharpe ? (isFinite(asset.sharpe) ? asset.sharpe.toFixed(2) : '---') : 'N/A'}
                                 </Typography>
                               </TableCell>
                             </TableRow>
@@ -2392,263 +2713,6 @@ export default function DividendAnalysisDashboard() {
                   {renderDetailedETFTable(topPerformers)}
                 </Box>
               </motion.div>
-              
-              {/* Modern Portfolio Optimization Widget */}
-              {mptAllocation.length > 0 && portfolioMetrics && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                >
-                  <Card 
-                    elevation={0}
-                    sx={{ 
-                      mt: 6, 
-                      maxWidth: '1000px', 
-                      mx: 'auto', 
-                      background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(108, 99, 255, 0.08) 100%)',
-                      border: '1px solid rgba(0, 212, 255, 0.2)',
-                      borderRadius: 4,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 2,
-                        background: 'linear-gradient(90deg, #00D4FF, #6C63FF, #00E676)',
-                        opacity: 0.8
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ p: 4 }}>
-                      <Box sx={{ textAlign: 'center', mb: 4 }}>
-                        <Typography 
-                          variant="h5" 
-                          sx={{ 
-                            fontWeight: 700,
-                            background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            mb: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 1
-                          }}
-                        >
-                          <AccountBalance sx={{ color: '#00D4FF', fontSize: 28 }} />
-                          Optimal Portfolio Allocation
-                        </Typography>
-                        <Typography 
-                          variant="subtitle2" 
-                          sx={{ 
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            fontWeight: 500
-                          }}
-                        >
-                          Advanced MPT Optimization Results
-                        </Typography>
-                      </Box>
-                      
-                      <Box sx={{ display: 'flex', gap: 6, mb: 4 }}>
-                        {/* Portfolio Composition */}
-                        <Box sx={{ flex: 1.2 }}>
-                          <Typography variant="h6" sx={{ mb: 2, color: '#00D4FF', fontWeight: 600 }}>
-                            Allocation Breakdown
-                          </Typography>
-                          {mptAllocation
-                            .sort((a, b) => b.weight - a.weight)
-                            .map((asset, index) => {
-                              const etfData = data.find(item => item.ticker === asset.ticker);
-                              const strategy = etfData ? etfData.bestStrategy : null;
-                              
-                              return (
-                                <motion.div
-                                  key={index}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                                >
-                                  <Box sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    mb: 2,
-                                    p: 2,
-                                    background: 'rgba(255, 255, 255, 0.03)',
-                                    backdropFilter: 'blur(10px)',
-                                    borderRadius: 2,
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                    transition: 'all 0.2s ease',
-                                    '&:hover': {
-                                      background: 'rgba(255, 255, 255, 0.05)',
-                                      transform: 'translateX(4px)'
-                                    }
-                                  }}>
-                                    <Chip
-                                      label={asset.ticker}
-                                      size="medium"
-                                      sx={{
-                                        background: asset.ticker === 'CASH' ? 'linear-gradient(135deg, #FFB74D 0%, #FF8A65 100%)' : 
-                                                   asset.ticker === 'SPY' ? 'linear-gradient(135deg, #9C27B0 0%, #673AB7 100%)' : 
-                                                   'linear-gradient(135deg, #00D4FF 0%, #0095CC 100%)',
-                                        color: 'white',
-                                        fontWeight: 700,
-                                        minWidth: '70px',
-                                        fontSize: '0.8rem'
-                                      }}
-                                    />
-                                    <Box sx={{ flex: 1, mx: 2 }}>
-                                      <Box sx={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        alignItems: 'center',
-                                        mb: 0.5
-                                      }}>
-                                        <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#FFFFFF' }}>
-                                          {(asset.weight * 100).toFixed(1)}%
-                                        </Typography>
-                                        {strategy && (
-                                          <Chip
-                                            label={strategy}
-                                            size="small"
-                                            sx={{
-                                              background: strategy === 'B&H' ? 
-                                                'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)' : 
-                                                'linear-gradient(135deg, #009688 0%, #00695C 100%)',
-                                              color: 'white',
-                                              fontSize: '0.7rem',
-                                              height: '20px',
-                                              fontWeight: 600
-                                            }}
-                                          />
-                                        )}
-                                      </Box>
-                                      <Box sx={{ 
-                                        width: '100%', 
-                                        height: 6, 
-                                        backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-                                        borderRadius: 3,
-                                        overflow: 'hidden'
-                                      }}>
-                                        <motion.div
-                                          initial={{ width: 0 }}
-                                          animate={{ width: `${asset.weight * 100}%` }}
-                                          transition={{ duration: 1, delay: index * 0.1 + 0.5 }}
-                                          style={{
-                                            height: '100%',
-                                            background: asset.ticker === 'CASH' ? 
-                                              'linear-gradient(90deg, #FFB74D, #FF8A65)' : 
-                                              asset.ticker === 'SPY' ? 
-                                              'linear-gradient(90deg, #9C27B0, #673AB7)' :
-                                              'linear-gradient(90deg, #00D4FF, #0095CC)',
-                                            borderRadius: '3px'
-                                          }}
-                                        />
-                                      </Box>
-                                    </Box>
-                                  </Box>
-                                </motion.div>
-                              );
-                            })}
-                        </Box>
-                        
-                        {/* Portfolio Metrics */}
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" sx={{ mb: 2, color: '#6C63FF', fontWeight: 600 }}>
-                            Performance Metrics
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Box sx={{ 
-                              p: 2, 
-                              background: 'rgba(0, 230, 118, 0.1)', 
-                              borderRadius: 2,
-                              border: '1px solid rgba(0, 230, 118, 0.2)'
-                            }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Expected Return</Typography>
-                                <Typography sx={{ color: '#00E676', fontWeight: 700, fontSize: '1.1rem' }}>
-                                  {formatPercentage(portfolioMetrics.expectedReturn)}
-                                </Typography>
-                              </Box>
-                            </Box>
-                            
-                            <Box sx={{ 
-                              p: 2, 
-                              background: portfolioMetrics.risk > 0.15 ? 'rgba(255, 69, 105, 0.1)' : 'rgba(0, 212, 255, 0.1)', 
-                              borderRadius: 2,
-                              border: `1px solid ${portfolioMetrics.risk > 0.15 ? 'rgba(255, 69, 105, 0.2)' : 'rgba(0, 212, 255, 0.2)'}`
-                            }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Portfolio Risk</Typography>
-                                <Typography sx={{ 
-                                  color: portfolioMetrics.risk > 0.15 ? '#FF4569' : '#00D4FF',
-                                  fontWeight: 700, 
-                                  fontSize: '1.1rem'
-                                }}>
-                                  {formatPercentage(portfolioMetrics.risk)}
-                                </Typography>
-                              </Box>
-                            </Box>
-                            
-                            <Box sx={{ 
-                              p: 2, 
-                              background: 'rgba(108, 99, 255, 0.1)', 
-                              borderRadius: 2,
-                              border: '1px solid rgba(108, 99, 255, 0.2)'
-                            }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Sharpe Ratio</Typography>
-                                <Typography sx={{ color: '#6C63FF', fontWeight: 700, fontSize: '1.1rem' }}>
-                                  {portfolioMetrics.sharpeRatio.toFixed(2)}
-                                </Typography>
-                              </Box>
-                            </Box>
-                            
-                            <Box sx={{ 
-                              p: 2, 
-                              background: 'rgba(255, 183, 77, 0.1)', 
-                              borderRadius: 2,
-                              border: '1px solid rgba(255, 183, 77, 0.2)'
-                            }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Diversification</Typography>
-                                <Typography sx={{ color: '#FFB74D', fontWeight: 700, fontSize: '1.1rem' }}>
-                                  {mptAllocation.length} assets
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                      
-                      <Box sx={{ 
-                        textAlign: 'center',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                        pt: 3,
-                        mt: 2
-                      }}>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            color: 'rgba(255, 255, 255, 0.6)',
-                            fontStyle: 'italic',
-                            lineHeight: 1.6,
-                            maxWidth: '800px',
-                            mx: 'auto'
-                          }}
-                        >
-                          <Security sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                          Enhanced Modern Portfolio Theory optimization featuring Sharpe ratio maximization, 
-                          efficient frontier analysis, and mean variance optimization with advanced correlation adjustments and concentration penalties
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
             </TabPanel>
 
             <TabPanel value={selectedTab} index={1}>
