@@ -350,6 +350,7 @@ interface Asset {
   sharpe: number;
   dividendCapture: number;
   exDivDay?: string;
+  strategy?: string;
   isRule1?: boolean;  // Flag for Rule 1 ETFs (>40% return AND <40% risk)
   isRule2?: boolean;  // Flag for Rule 2 ETFs (>30% div capture)
 }
@@ -360,6 +361,7 @@ interface AllocationItem {
   return: number;
   risk: number;
   sharpe?: number;
+  strategy?: string;
 }
 
 interface PortfolioMetrics {
@@ -399,6 +401,7 @@ function calculateMPTAllocation(allData: DividendData[]): { allocation: Allocati
         sharpe: etf.riskVolatility > 0 ? etf.bestReturn / etf.riskVolatility : 0,
         dividendCapture: etf.divCaptureReturn,
         exDivDay: etf.exDivDay,
+        strategy: etf.bestStrategy,
         isRule1: isRule1,
         isRule2: false // Will be set later after filtering logic
       };
@@ -657,18 +660,21 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     }
     
     // Sharpe-weighted allocation: Higher Sharpe ratio = higher allocation
-    // First asset gets 20%, second gets 15%, third gets 12%, others get declining weights
+    // Fewer stocks with higher minimum allocation (15%)
+    // Only include top 4-5 stocks to reduce complexity
+    if (i >= 4) break; // Limit to maximum 4 ETFs for cleaner allocation
+    
     let weight;
     if (i === 0) {
-      weight = 0.20; // Best Sharpe ratio gets 20%
+      weight = 0.30; // Best Sharpe ratio gets 30%
     } else if (i === 1) {
-      weight = 0.15; // Second best gets 15%
+      weight = 0.25; // Second best gets 25%
     } else if (i === 2) {
-      weight = 0.12; // Third best gets 12%
+      weight = 0.20; // Third best gets 20%
     } else if (i === 3) {
-      weight = 0.08; // Fourth gets 8%
+      weight = 0.15; // Fourth gets 15% (minimum allocation)
     } else {
-      weight = Math.max(0.05, 0.15 / (i + 1)); // Declining weights for others, minimum 5%
+      weight = 0.15; // Minimum 15% allocation for any included ETF
     }
     
     // Cap weight based on remaining capacity
@@ -681,7 +687,8 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         weight: weight,
         return: asset.return,
         risk: asset.risk,
-        sharpe: asset.sharpe
+        sharpe: asset.sharpe,
+        strategy: asset.strategy
       });
       totalWeight += weight;
       console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, rank: ${i+1})`);
@@ -715,14 +722,15 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         weight: weight,
         return: asset.return,
         risk: asset.risk,
-        sharpe: asset.sharpe
+        sharpe: asset.sharpe,
+        strategy: asset.strategy
       });
       totalWeight += weight;
       console.log(`Added div capture ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, div rank: ${i+1})${asset.isRule2 ? ' [RULE2]' : ''}`);
     } else {
       // Even if we're over capacity, Rule 2 ETFs get minimum allocation by reducing others
-      if (asset.isRule2 && weight >= 0.05) {
-        const minWeight = 0.05; // Minimum 5% for Rule 2 ETFs
+      if (asset.isRule2 && weight >= 0.15) {
+        const minWeight = 0.15; // Minimum 15% for Rule 2 ETFs
         const reductionNeeded = minWeight;
         const currentTotal = allocation.reduce((sum, a) => sum + a.weight, 0);
         const reductionFactor = Math.max(0.5, (currentTotal - reductionNeeded) / currentTotal);
@@ -738,7 +746,8 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
           weight: minWeight,
           return: asset.return,
           risk: asset.risk,
-          sharpe: asset.sharpe
+          sharpe: asset.sharpe,
+          strategy: asset.strategy
         });
         
         totalWeight = allocation.reduce((sum, a) => sum + a.weight, 0);
@@ -1504,6 +1513,7 @@ export default function DividendAnalysisDashboard() {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>ETF</TableCell>
+                <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Strategy</TableCell>
                 <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Weight</TableCell>
                 <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Expected Return</TableCell>
                 <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Risk</TableCell>
@@ -1522,6 +1532,9 @@ export default function DividendAnalysisDashboard() {
                         {asset.ticker}
                       </Typography>
                     </Box>
+                  </TableCell>
+                  <TableCell align="center">
+                    {getStrategyChip(asset.strategy || 'N/A')}
                   </TableCell>
                   <TableCell align="center">
                     <Typography variant="body2" sx={{ 
