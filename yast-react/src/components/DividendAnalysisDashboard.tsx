@@ -1188,12 +1188,12 @@ export default function DividendAnalysisDashboard() {
           const [performanceResponse, metadataResponse, realtimeResponse] = await Promise.all([
             fetch(`/data/performance_data.json?v=${cacheBuster}`),
             fetch(`/data/metadata.json?v=${cacheBuster}`),
-            // In development, try local file first since Netlify functions don't work locally
-            location.hostname === 'localhost' ? 
-              fetch(`/data/realtime_data.json?v=${cacheBuster}`) :
-              fetch(`/.netlify/functions/realtime-data?v=${cacheBuster}`).catch(() => 
-                fetch(`/data/realtime_data.json?v=${cacheBuster}`).catch(() => null)
-              )
+            // Always try static realtime data file first, then function if that fails
+            fetch(`/data/realtime_data.json?v=${cacheBuster}`).catch(() =>
+              location.hostname !== 'localhost' ? 
+                fetch(`/.netlify/functions/realtime-data?v=${cacheBuster}`).catch(() => null) :
+                null
+            )
           ]);
           
           if (performanceResponse.ok && metadataResponse.ok) {
@@ -1283,9 +1283,12 @@ export default function DividendAnalysisDashboard() {
           // Try to fetch real-time data even with static data
           let realtimeDataValue: any = null;
           try {
-            const rtResponse = location.hostname === 'localhost' ? 
-              await fetch(`/data/realtime_data.json`) :
-              await fetch(`/.netlify/functions/realtime-data`).catch(() => null);
+            // Always try static file first in fallback mode
+            const rtResponse = await fetch(`/data/realtime_data.json`).catch(() =>
+              location.hostname !== 'localhost' ? 
+                fetch(`/.netlify/functions/realtime-data`).catch(() => null) :
+                null
+            );
             if (rtResponse && rtResponse.ok) {
               const rtJson = await rtResponse.json();
               realtimeDataValue = rtJson.data || {};
@@ -1293,7 +1296,7 @@ export default function DividendAnalysisDashboard() {
               console.log('💹 Real-time data loaded (fallback):', Object.keys(realtimeDataValue).length, 'tickers');
             }
           } catch (e) {
-            console.log('Could not fetch real-time data');
+            console.log('Could not fetch real-time data (fallback):', e);
           }
           
           convertedData = dividendData.map(asset => {
