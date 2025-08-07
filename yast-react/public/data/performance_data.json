@@ -37,7 +37,7 @@
     "divCaptureReturn": 1.1408,
     "bestStrategy": "DC",
     "bestReturn": 1.1408,
-    "finalValue": 214079.0,
+    "finalValue": 214078.0,
     "dcWinRate": 0.9,
     "riskVolatility": 0.20199999999999999,
     "medianDividend": 0.246,
@@ -52,7 +52,7 @@
     "divCaptureReturn": 0.8674,
     "bestStrategy": "DC",
     "bestReturn": 0.8674,
-    "finalValue": 186737.0,
+    "finalValue": 186736.0,
     "dcWinRate": 0.889,
     "riskVolatility": 0.47,
     "medianDividend": 0.475,
@@ -390,6 +390,21 @@
     "category": "excluded"
   },
   {
+    "ticker": "QDTY",
+    "tradingDays": 21,
+    "exDivDay": "Thursday",
+    "buyHoldReturn": 0.1567,
+    "divCaptureReturn": 0.20350000000000001,
+    "bestStrategy": "DC",
+    "bestReturn": 0.20350000000000001,
+    "finalValue": 120355.0,
+    "dcWinRate": 0.905,
+    "riskVolatility": 0.384,
+    "medianDividend": 0.24,
+    "forwardYield": 27.7,
+    "category": "excluded"
+  },
+  {
     "ticker": "BLOX",
     "tradingDays": 4,
     "exDivDay": "Friday",
@@ -417,21 +432,6 @@
     "riskVolatility": 0.239,
     "medianDividend": 0.223,
     "forwardYield": 25.6,
-    "category": "excluded"
-  },
-  {
-    "ticker": "QDTY",
-    "tradingDays": 22,
-    "exDivDay": "Thursday",
-    "buyHoldReturn": 0.1745,
-    "divCaptureReturn": 0.18960000000000002,
-    "bestStrategy": "DC",
-    "bestReturn": 0.18960000000000002,
-    "finalValue": 118964.0,
-    "dcWinRate": 0.909,
-    "riskVolatility": 0.384,
-    "medianDividend": 0.246,
-    "forwardYield": 28.4,
     "category": "excluded"
   },
   {
@@ -654,7 +654,7 @@
     "bestReturn": -0.0023,
     "finalValue": 99770.0,
     "dcWinRate": 0.545,
-    "riskVolatility": 0.932,
+    "riskVolatility": 0.9329999999999999,
     "medianDividend": 0.269,
     "forwardYield": 96.2,
     "category": "excluded"
