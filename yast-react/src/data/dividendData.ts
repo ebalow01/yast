@@ -81,6 +81,21 @@ export const dividendData: Asset[] = [
     "forwardYield": 64.0
   },
   {
+    "ticker": "COYY",
+    "return": 62.54,
+    "risk": 31.2,
+    "buyHoldReturn": 58.32,
+    "dividendCaptureReturn": 62.54,
+    "bestStrategy": "Dividend Capture",
+    "finalValue": 162540,
+    "winRate": 86.7,
+    "medianDividend": 0.285,
+    "tradingDays": 15,
+    "exDivDay": "Thursday",
+    "dividendCapture": 62.54,
+    "forwardYield": 45.8
+  },
+  {
     "ticker": "YETH",
     "return": 86.12,
     "risk": 52.1,
