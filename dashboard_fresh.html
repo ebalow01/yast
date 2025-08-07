@@ -14,20 +14,8 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;            allocationDiv.innerHTML = sortedAllocation.map(asset => {
-                const weightPercent = (asset.weight * 100).toFixed(1);
-                // Display CASH more intuitively
-                const displayName = asset.ticker === 'CASH' ? '💰 Cash (Risk-Free)' : asset.ticker;
-                return `
-                    <div class="allocation-row">
-                        <span class="allocation-name">${displayName}</span>
-                        <span class="allocation-percent">${weightPercent}%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${weightPercent}%"></div>
-                    </div>
-                `;
-            }).join('');  color: #fff;
+            min-height: 100vh;
+            color: #fff;
             padding: 20px;
         }
 
@@ -264,6 +252,42 @@
             color: #4caf50;
         }
 
+        .copy-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .copy-button.copied {
+            background: #4caf50;
+            color: #fff;
+        }
+
+        .copy-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .card-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
         @media (max-width: 768px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -292,6 +316,15 @@
                 <div class="card-header">
                     <div class="card-icon">📊</div>
                     <div class="card-title">Top Performing ETFs</div>
+                    <div class="card-header-actions">
+                        <button class="copy-button" onclick="copyTableData('top-performers')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy Table
+                        </button>
+                    </div>
                 </div>
                 <p style="opacity: 0.8; margin-bottom: 20px;">
                     ETFs with annualized returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
@@ -322,6 +355,15 @@
                 <div class="card-header">
                     <div class="card-icon" style="color: #ffd54f;">⚖️</div>
                     <div class="card-title">Optimal Allocation</div>
+                    <div class="card-header-actions">
+                        <button class="copy-button" onclick="copyAllocationData()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy Allocation
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="allocation-list" id="portfolio-allocation">
@@ -1044,6 +1086,109 @@
                     }, index * 150);
                 });
             }, 100);
+        }
+
+        // Copy functions
+        function copyTableData(tableId) {
+            const table = document.getElementById(tableId);
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            const rows = Array.from(table.querySelectorAll('tbody tr')).map(tr => {
+                return Array.from(tr.querySelectorAll('td')).map(td => {
+                    // Get text content, handling special elements
+                    const ticker = td.querySelector('.ticker');
+                    if (ticker) return ticker.textContent;
+                    
+                    const chip = td.querySelector('.strategy-chip');
+                    if (chip) return chip.textContent;
+                    
+                    return td.textContent.trim();
+                });
+            });
+
+            // Create tab-separated values
+            const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
+            
+            // Copy to clipboard
+            copyToClipboard(tsv, `${tableId}-copy-btn`);
+        }
+
+        function copyAllocationData() {
+            const allocation = currentData.filter(item => item.category === 'top-performers');
+            const mptData = calculateMPTAllocationData(allocation);
+            
+            // Create formatted allocation data
+            const lines = ['Portfolio Allocation:', ''];
+            
+            mptData.allocation.forEach(asset => {
+                const weight = (asset.weight * 100).toFixed(1);
+                lines.push(`${asset.ticker}: ${weight}%`);
+            });
+            
+            lines.push('');
+            lines.push('Portfolio Metrics:');
+            lines.push(`Expected Return: ${(mptData.metrics.expectedReturn * 100).toFixed(2)}%`);
+            lines.push(`Portfolio Risk: ${(mptData.metrics.risk * 100).toFixed(2)}%`);
+            lines.push(`Sharpe Ratio: ${mptData.metrics.sharpeRatio.toFixed(2)}`);
+            
+            copyToClipboard(lines.join('\n'), 'allocation-copy-btn');
+        }
+
+        function calculateMPTAllocationData(topPerformers) {
+            // Same logic as calculateMPTAllocation but returns the data
+            const assets = [
+                ...topPerformers.map(etf => ({
+                    ticker: etf.ticker,
+                    return: etf.bestReturn,
+                    risk: etf.riskVolatility,
+                    sharpe: etf.bestReturn / etf.riskVolatility,
+                    bestStrategy: etf.bestStrategy
+                })),
+                {
+                    ticker: 'CASH',
+                    return: 0.045,
+                    risk: 0.0,
+                    sharpe: Infinity,
+                    bestStrategy: null
+                },
+                {
+                    ticker: 'SPY',
+                    return: 0.12,
+                    risk: 0.20,
+                    sharpe: 0.12 / 0.20,
+                    bestStrategy: 'B&H'
+                }
+            ];
+
+            const maxPortfolioRisk = 0.10;
+            const allocation = optimizePortfolioWithRiskConstraint(assets, maxPortfolioRisk);
+            const metrics = calculatePortfolioMetrics(allocation);
+            
+            return { allocation, metrics };
+        }
+
+        function copyToClipboard(text, buttonId) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Find the button that was clicked
+                const button = event.target.closest('.copy-button');
+                if (button) {
+                    const originalContent = button.innerHTML;
+                    button.classList.add('copied');
+                    button.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Copied!
+                    `;
+                    
+                    setTimeout(() => {
+                        button.classList.remove('copied');
+                        button.innerHTML = originalContent;
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
         }
     </script>
 </body>
