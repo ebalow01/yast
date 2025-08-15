@@ -1328,7 +1328,16 @@ export default function DividendAnalysisDashboard() {
         // Calculate MPT allocation for ALL ETFs, not just top performers
         if (convertedData.length > 0) {
           const { allocation, metrics } = calculateMPTAllocation(convertedData);
-          setMptAllocation(allocation);
+          // Enrich allocation with original ETF data (exDivDay, strategy)
+          const enrichedAllocation = allocation.map(asset => {
+            const originalETF = convertedData.find(etf => etf.ticker === asset.ticker);
+            return {
+              ...asset,
+              exDivDay: originalETF?.exDivDay,
+              strategy: originalETF?.bestStrategy
+            };
+          });
+          setMptAllocation(enrichedAllocation);
           setPortfolioMetrics(metrics);
         }
       } catch (err) {
@@ -2650,6 +2659,8 @@ export default function DividendAnalysisDashboard() {
                           <TableRow>
                             <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>ETF</TableCell>
                             <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Weight</TableCell>
+                            <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Ex-Div Day</TableCell>
+                            <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Strategy</TableCell>
                             <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Expected Return</TableCell>
                             <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>45-Day Vol</TableCell>
                             <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Sharpe</TableCell>
@@ -2676,6 +2687,17 @@ export default function DividendAnalysisDashboard() {
                                 }}>
                                   {(asset.weight * 100).toFixed(1)}%
                                 </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography variant="body2" sx={{ 
+                                  color: '#FFFFFF',
+                                  fontWeight: 500
+                                }}>
+                                  {asset.exDivDay || 'N/A'}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                {getStrategyChip(asset.strategy || 'N/A')}
                               </TableCell>
                               <TableCell align="center">
                                 {(() => {
