@@ -280,7 +280,7 @@ export const EnhancedDividendScanner: React.FC<EnhancedDividendScannerProps> = (
             <TextField
               fullWidth
               size="small"
-              label="Max Risk %"
+              label="Max 45-Day Vol %"
               type="number"
               value={filters.maxRisk}
               onChange={(e) => setFilters({
@@ -359,7 +359,7 @@ export const EnhancedDividendScanner: React.FC<EnhancedDividendScannerProps> = (
                   )}
                 </TableCell>
                 <TableCell align="center">
-                  <strong>Risk</strong>
+                  <strong>45-Day Vol</strong>
                 </TableCell>
                 <TableCell align="center">
                   <strong>Yield</strong>

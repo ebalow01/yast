@@ -276,7 +276,7 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
     print("\n5. Creating comprehensive sorted analysis table...")
     
     # Calculate risk metrics for all tickers
-    print("   - Calculating risk metrics...")
+    print("   - Calculating 45-day volatility metrics...")
     risk_metrics = {}
     for ticker, results in all_results.items():
         if results and results['hist_data'] is not None:
@@ -284,18 +284,28 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
                 # Calculate daily returns
                 hist_data = results['hist_data']
                 hist_data['Daily_Return'] = hist_data['Close'].pct_change()
-                daily_returns = hist_data['Daily_Return'].dropna()
                 
-                # Calculate annualized volatility
-                volatility = daily_returns.std() * np.sqrt(252) * 100
-                risk_metrics[ticker] = volatility
+                # Use only last 45 trading days for volatility calculation
+                last_45_days = hist_data['Daily_Return'].tail(45).dropna()
+                
+                # Calculate annualized 45-day volatility
+                if len(last_45_days) > 0:
+                    volatility_45day = last_45_days.std() * np.sqrt(252) * 100
+                    risk_metrics[ticker] = volatility_45day
+                    print(f"      {ticker}: 45-day volatility = {volatility_45day:.2f}%")
+                else:
+                    # Fallback to all available data if less than 45 days
+                    daily_returns = hist_data['Daily_Return'].dropna()
+                    volatility = daily_returns.std() * np.sqrt(252) * 100
+                    risk_metrics[ticker] = volatility
+                    print(f"      {ticker}: Using full period volatility = {volatility:.2f}% (insufficient 45-day data)")
                 
             except Exception as e:
                 print(f"   Warning: Could not calculate risk for {ticker}: {e}")
                 risk_metrics[ticker] = 0.0
     
     # Get SPY benchmark data
-    print("   - Downloading SPY benchmark data...")
+    print("   - Downloading SPY benchmark data (with 45-day volatility)...")
     spy_data = {}
     try:
         import yfinance as yf
@@ -307,8 +317,18 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
             spy_end_price = spy_hist['Close'].iloc[-1]
             spy_return = ((spy_end_price / spy_start_price) - 1) * 100
             
-            spy_daily_returns = spy_hist['Close'].pct_change().dropna()
-            spy_volatility = spy_daily_returns.std() * np.sqrt(252) * 100
+            # Calculate 45-day volatility for SPY
+            spy_daily_returns = spy_hist['Close'].pct_change()
+            spy_last_45_days = spy_daily_returns.tail(45).dropna()
+            
+            if len(spy_last_45_days) > 0:
+                spy_volatility = spy_last_45_days.std() * np.sqrt(252) * 100
+                print(f"      SPY: 45-day volatility = {spy_volatility:.2f}%")
+            else:
+                # Fallback to full period if insufficient data
+                spy_daily_returns_all = spy_daily_returns.dropna()
+                spy_volatility = spy_daily_returns_all.std() * np.sqrt(252) * 100
+                print(f"      SPY: Using full period volatility = {spy_volatility:.2f}% (insufficient 45-day data)")
             
             spy_data = {
                 'return': spy_return,
@@ -399,7 +419,7 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
         f.write("=" * 100 + "\n")
         f.write("HIGH PERFORMERS (>50% RETURNS, SORTED BY BEST STRATEGY PERFORMANCE)\n")
         f.write("=" * 100 + "\n")
-        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'Risk (Vol)':<12} {'Median Div':<12}\n")
+        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'45-Day Vol':<12} {'Median Div':<12}\n")
         f.write("-" * 100 + "\n")
         
         high_performers = [d for d in performance_data if d['best_return'] >= 50]
@@ -411,7 +431,7 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
         f.write("\n" + "=" * 100 + "\n")
         f.write("MEDIUM PERFORMERS (20-50% RETURNS, SORTED BY BEST STRATEGY PERFORMANCE)\n")
         f.write("=" * 100 + "\n")
-        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'Risk (Vol)':<12} {'Median Div':<12}\n")
+        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'45-Day Vol':<12} {'Median Div':<12}\n")
         f.write("-" * 100 + "\n")
         
         medium_performers = [d for d in performance_data if 20 <= d['best_return'] < 50]
@@ -423,7 +443,7 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
         f.write("\n" + "=" * 100 + "\n")
         f.write("LOW PERFORMERS (<20% RETURNS, SORTED BY BEST STRATEGY PERFORMANCE)\n")
         f.write("=" * 100 + "\n")
-        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'Risk (Vol)':<12} {'Median Div':<12}\n")
+        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'45-Day Vol':<12} {'Median Div':<12}\n")
         f.write("-" * 100 + "\n")
         
         low_performers = [d for d in performance_data if d['best_return'] < 20]
@@ -435,7 +455,7 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
         f.write("\n" + "=" * 100 + "\n")
         f.write("BENCHMARK COMPARISON\n")
         f.write("=" * 100 + "\n")
-        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'Risk (Vol)':<12} {'Median Div':<12}\n")
+        f.write(f"{'Ticker':<8} {'Days':<6} {'Ex-Div Day':<12} {'Buy & Hold':<12} {'Div Capture':<12} {'Best Strategy':<15} {'Final Value':<12} {'DC Win Rate':<12} {'45-Day Vol':<12} {'Median Div':<12}\n")
         f.write("-" * 100 + "\n")
         spy_final_value = 100000 * (1 + spy_data['return']/100)
         f.write(f"{'SPY':<8} {spy_data['trading_days']:<6} {'N/A':<12} {spy_data['return']:<11.2f}% {'N/A':<12} {'B&H':<15} ${spy_final_value:<11,.0f} {'N/A':<12} {spy_data['volatility']:<11.1f}% {'N/A':<12}\n")

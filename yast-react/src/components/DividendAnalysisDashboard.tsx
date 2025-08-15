@@ -1516,7 +1516,7 @@ export default function DividendAnalysisDashboard() {
                 <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Strategy</TableCell>
                 <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Weight</TableCell>
                 <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Expected Return</TableCell>
-                <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Risk</TableCell>
+                <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>45-Day Vol</TableCell>
                 <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Sharpe</TableCell>
               </TableRow>
             </TableHead>
@@ -1822,7 +1822,7 @@ export default function DividendAnalysisDashboard() {
                     {formatPercentage(metrics.avgRisk)}
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                    Avg Volatility
+                    Avg 45-Day Vol
                   </Typography>
                 </Box>
               </Box>
@@ -2629,7 +2629,7 @@ export default function DividendAnalysisDashboard() {
                             {portfolioMetrics ? `${(portfolioMetrics.risk * 100).toFixed(1)}%` : '---'}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            Risk
+                            45-Day Vol
                           </Typography>
                         </Box>
                         <Box>
@@ -2651,7 +2651,7 @@ export default function DividendAnalysisDashboard() {
                             <TableCell sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>ETF</TableCell>
                             <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Weight</TableCell>
                             <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Expected Return</TableCell>
-                            <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Risk</TableCell>
+                            <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>45-Day Vol</TableCell>
                             <TableCell align="center" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 600 }}>Sharpe</TableCell>
                           </TableRow>
                         </TableHead>
