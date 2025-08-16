@@ -26,7 +26,18 @@ import {
   Fade,
   Grow,
   Slide,
-  alpha
+  alpha,
+  TextField,
+  Button,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  InputAdornment,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import {
   TrendingUp,
@@ -39,7 +50,12 @@ import {
   ShowChart,
   Security,
   TrendingFlat,
-  TableView
+  TableView,
+  BusinessCenter,
+  Add,
+  Delete,
+  Edit,
+  Save
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -71,6 +87,46 @@ export interface DividendData {
   alertCount?: number;
   riskLastUpdated?: string;
 }
+
+// Portfolio Management Types
+export interface PortfolioHolding {
+  ticker: string;
+  shares: number;
+  averagePrice: number;
+  currentPrice?: number;
+  totalValue?: number;
+  gainLoss?: number;
+  gainLossPercent?: number;
+  dateAdded: string;
+}
+
+export interface UserPortfolio {
+  id: string;
+  name: string;
+  holdings: PortfolioHolding[];
+  totalValue: number;
+  totalGainLoss: number;
+  totalGainLossPercent: number;
+  lastUpdated: string;
+}
+
+// Cookie utilities
+const setCookie = (name: string, value: string, days: number = 365) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
 
 // Accessible 2025 Design System - Semantic Colors + Patterns
 const theme = createTheme({
@@ -1160,11 +1216,29 @@ const generateRealisticPrice = (ticker: string, forwardYield: number, medianDivi
 };
 
 export default function DividendAnalysisDashboard() {
-  console.log('🚀 DASHBOARD LOADED v2.1 - Enhanced version with 4 tabs including Full Analysis Cards');
+  console.log('🚀 DASHBOARD LOADED v2.2 - Enhanced version with 5 tabs including Portfolio Management');
   const [selectedTab, setSelectedTab] = useState(0);
   const [data, setData] = useState<DividendData[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Portfolio Management State
+  const [portfolio, setPortfolio] = useState<UserPortfolio>({
+    id: 'default',
+    name: 'My Portfolio',
+    holdings: [],
+    totalValue: 0,
+    totalGainLoss: 0,
+    totalGainLossPercent: 0,
+    lastUpdated: new Date().toISOString()
+  });
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingHolding, setEditingHolding] = useState<PortfolioHolding | null>(null);
+  const [newTicker, setNewTicker] = useState('');
+  const [newShares, setNewShares] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   // Accessibility helpers - Pattern-based indicators for colorblind users
   const getPerformanceIcon = (value: number, type: 'return' | 'risk' = 'return') => {
@@ -1367,6 +1441,152 @@ export default function DividendAnalysisDashboard() {
 
     loadData();
   }, []);
+
+  // Portfolio Management - Load from cookies on mount
+  useEffect(() => {
+    const savedPortfolio = getCookie('userPortfolio');
+    if (savedPortfolio) {
+      try {
+        const parsedPortfolio = JSON.parse(savedPortfolio);
+        setPortfolio(parsedPortfolio);
+        updatePortfolioValues(parsedPortfolio);
+      } catch (error) {
+        console.error('Error loading portfolio from cookies:', error);
+      }
+    }
+  }, [data]); // Re-run when data loads to get current prices
+
+  // Portfolio Management Functions
+  const savePortfolioToCookie = (updatedPortfolio: UserPortfolio) => {
+    setCookie('userPortfolio', JSON.stringify(updatedPortfolio));
+  };
+
+  const updatePortfolioValues = (currentPortfolio: UserPortfolio) => {
+    const updatedHoldings = currentPortfolio.holdings.map(holding => {
+      const tickerData = data.find(d => d.ticker === holding.ticker);
+      const currentPrice = tickerData?.currentPrice || calculateCurrentPrice(tickerData || null);
+      const totalValue = holding.shares * currentPrice;
+      const gainLoss = totalValue - (holding.shares * holding.averagePrice);
+      const gainLossPercent = ((currentPrice - holding.averagePrice) / holding.averagePrice) * 100;
+
+      return {
+        ...holding,
+        currentPrice,
+        totalValue,
+        gainLoss,
+        gainLossPercent
+      };
+    });
+
+    const totalValue = updatedHoldings.reduce((sum, holding) => sum + (holding.totalValue || 0), 0);
+    const totalGainLoss = updatedHoldings.reduce((sum, holding) => sum + (holding.gainLoss || 0), 0);
+    const totalGainLossPercent = totalValue > 0 ? (totalGainLoss / (totalValue - totalGainLoss)) * 100 : 0;
+
+    const updatedPortfolio = {
+      ...currentPortfolio,
+      holdings: updatedHoldings,
+      totalValue,
+      totalGainLoss,
+      totalGainLossPercent,
+      lastUpdated: new Date().toISOString()
+    };
+
+    setPortfolio(updatedPortfolio);
+    savePortfolioToCookie(updatedPortfolio);
+  };
+
+  const addHolding = () => {
+    if (!newTicker || !newShares || !newPrice) {
+      setSnackbarMessage('Please fill in all fields');
+      setShowSnackbar(true);
+      return;
+    }
+
+    const ticker = newTicker.toUpperCase();
+    const shares = parseFloat(newShares);
+    const price = parseFloat(newPrice);
+
+    if (isNaN(shares) || isNaN(price) || shares <= 0 || price <= 0) {
+      setSnackbarMessage('Please enter valid numbers for shares and price');
+      setShowSnackbar(true);
+      return;
+    }
+
+    // Check if ticker exists in our data
+    const tickerExists = data.some(d => d.ticker === ticker);
+    if (!tickerExists) {
+      setSnackbarMessage(`Warning: ${ticker} not found in our database. Adding anyway.`);
+      setShowSnackbar(true);
+    }
+
+    const newHolding: PortfolioHolding = {
+      ticker,
+      shares,
+      averagePrice: price,
+      dateAdded: new Date().toISOString()
+    };
+
+    const updatedPortfolio = {
+      ...portfolio,
+      holdings: [...portfolio.holdings, newHolding]
+    };
+
+    updatePortfolioValues(updatedPortfolio);
+    setShowAddDialog(false);
+    setNewTicker('');
+    setNewShares('');
+    setNewPrice('');
+    setSnackbarMessage(`Added ${shares} shares of ${ticker} at $${price.toFixed(2)}`);
+    setShowSnackbar(true);
+  };
+
+  const removeHolding = (ticker: string) => {
+    const updatedPortfolio = {
+      ...portfolio,
+      holdings: portfolio.holdings.filter(h => h.ticker !== ticker)
+    };
+    updatePortfolioValues(updatedPortfolio);
+    setSnackbarMessage(`Removed ${ticker} from portfolio`);
+    setShowSnackbar(true);
+  };
+
+  // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE)
+  const getRiskLevelChip = (riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE') => {
+    if (!riskLevel) {
+      return {
+        color: 'rgba(255, 255, 255, 0.1)',
+        textColor: 'rgba(255, 255, 255, 0.6)'
+      };
+    }
+
+    switch (riskLevel) {
+      case 'HIGH':
+        return {
+          color: '#dc3545',
+          textColor: 'white'
+        };
+      case 'MEDIUM':
+        return {
+          color: '#ffc107',
+          textColor: 'black'
+        };
+      case 'LOW':
+        return {
+          color: '#fd7e14',
+          textColor: 'white'
+        };
+      case 'SAFE':
+        return {
+          color: '#28a745',
+          textColor: 'white'
+        };
+      default:
+        return {
+          color: 'rgba(255, 255, 255, 0.1)',
+          textColor: 'rgba(255, 255, 255, 0.6)'
+        };
+    }
+  };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     console.log('🔄 TAB CHANGE - from:', selectedTab, 'to:', newValue);
@@ -2720,11 +2940,23 @@ export default function DividendAnalysisDashboard() {
                   }
                 }}
               />
+              <Tab
+                label={`My Portfolio (${portfolio.holdings.length})`}
+                icon={<BusinessCenter />}
+                iconPosition="start"
+                sx={{
+                  minHeight: 72,
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 20
+                  }
+                }}
+              />
               {console.log('🎯 TABS RENDERED - All tabs:', {
-                tabCount: 4,
+                tabCount: 5,
                 selectedTab,
                 dataLength: data.length,
-                tabs: ['Optimal Portfolio', 'Suboptimal ETFs', 'Enhanced Analytics', 'Full Analysis']
+                portfolioHoldings: portfolio.holdings.length,
+                tabs: ['Optimal Portfolio', 'Suboptimal ETFs', 'Enhanced Analytics', 'Full Analysis', 'My Portfolio']
               })}
             </Tabs>
 
@@ -3004,6 +3236,279 @@ export default function DividendAnalysisDashboard() {
               </motion.div>
               {renderFullAnalysisTable(data)}
             </TabPanel>
+
+            <TabPanel value={selectedTab} index={4}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <Box sx={{ mb: 4 }}>
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom
+                    sx={{ 
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #FFFFFF 0%, #00D4FF 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      mb: 1
+                    }}
+                  >
+                    My Portfolio
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      mb: 3
+                    }}
+                  >
+                    Track your personal holdings with real-time valuations and performance metrics
+                  </Typography>
+
+                  {/* Portfolio Overview Cards */}
+                  <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid item xs={12} md={3}>
+                      <Card sx={{ 
+                        background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)',
+                        border: '1px solid rgba(52, 199, 89, 0.2)',
+                        backdropFilter: 'blur(20px)'
+                      }}>
+                        <CardContent>
+                          <Typography variant="h6" sx={{ color: '#34C759', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <AccountBalance sx={{ fontSize: 20 }} />
+                            Total Value
+                          </Typography>
+                          <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
+                            ${portfolio.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} md={3}>
+                      <Card sx={{ 
+                        background: portfolio.totalGainLoss >= 0 
+                          ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 59, 48, 0.1) 0%, rgba(255, 59, 48, 0.05) 100%)',
+                        border: portfolio.totalGainLoss >= 0 
+                          ? '1px solid rgba(52, 199, 89, 0.2)'
+                          : '1px solid rgba(255, 59, 48, 0.2)',
+                        backdropFilter: 'blur(20px)'
+                      }}>
+                        <CardContent>
+                          <Typography variant="h6" sx={{ 
+                            color: portfolio.totalGainLoss >= 0 ? '#34C759' : '#FF3B30', 
+                            mb: 1, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1 
+                          }}>
+                            {portfolio.totalGainLoss >= 0 ? <TrendingUp sx={{ fontSize: 20 }} /> : <TrendingDown sx={{ fontSize: 20 }} />}
+                            Total Gain/Loss
+                          </Typography>
+                          <Typography variant="h4" sx={{ 
+                            color: portfolio.totalGainLoss >= 0 ? '#34C759' : '#FF3B30', 
+                            fontWeight: 700 
+                          }}>
+                            {portfolio.totalGainLoss >= 0 ? '+' : ''}${portfolio.totalGainLoss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </Typography>
+                          <Typography variant="body2" sx={{ 
+                            color: portfolio.totalGainLoss >= 0 ? '#34C759' : '#FF3B30', 
+                            opacity: 0.8 
+                          }}>
+                            {portfolio.totalGainLoss >= 0 ? '+' : ''}{portfolio.totalGainLossPercent.toFixed(2)}%
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                      <Card sx={{ 
+                        background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%)',
+                        border: '1px solid rgba(0, 212, 255, 0.2)',
+                        backdropFilter: 'blur(20px)'
+                      }}>
+                        <CardContent>
+                          <Typography variant="h6" sx={{ color: '#00D4FF', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Stars sx={{ fontSize: 20 }} />
+                            Holdings
+                          </Typography>
+                          <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
+                            {portfolio.holdings.length}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                            Positions
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                      <Card sx={{ 
+                        background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.1) 0%, rgba(255, 149, 0, 0.05) 100%)',
+                        border: '1px solid rgba(255, 149, 0, 0.2)',
+                        backdropFilter: 'blur(20px)'
+                      }}>
+                        <CardContent>
+                          <Typography variant="h6" sx={{ color: '#FF9500', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Security sx={{ fontSize: 20 }} />
+                            Last Updated
+                          </Typography>
+                          <Typography variant="body1" sx={{ color: 'white', fontWeight: 500 }}>
+                            {new Date(portfolio.lastUpdated).toLocaleDateString()}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                            {new Date(portfolio.lastUpdated).toLocaleTimeString()}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+
+                  {/* Add Position Button */}
+                  <Box sx={{ mb: 3 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => setShowAddDialog(true)}
+                      sx={{
+                        background: 'linear-gradient(135deg, #00D4FF 0%, #0095CC 100%)',
+                        color: 'black',
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1.5,
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #64E3FF 0%, #00D4FF 100%)',
+                        }
+                      }}
+                    >
+                      Add Position
+                    </Button>
+                  </Box>
+
+                  {/* Holdings Table */}
+                  {portfolio.holdings.length > 0 ? (
+                    <TableContainer component={Paper} sx={{ 
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow sx={{ '& th': { borderBottom: '1px solid rgba(255, 255, 255, 0.1)' } }}>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }}>Ticker</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Shares</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Avg Price</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Current Price</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Total Value</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Gain/Loss</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">%</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Risk Level</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Actions</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {portfolio.holdings.map((holding) => {
+                            const tickerData = data.find(d => d.ticker === holding.ticker);
+                            const riskChip = getRiskLevelChip(tickerData?.riskLevel);
+                            return (
+                              <TableRow key={holding.ticker} sx={{ 
+                                '& td': { borderBottom: '1px solid rgba(255, 255, 255, 0.05)' },
+                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' }
+                              }}>
+                                <TableCell sx={{ color: 'white', fontWeight: 600 }}>
+                                  {holding.ticker}
+                                  {tickerData && (
+                                    <Typography variant="caption" sx={{ display: 'block', color: 'rgba(255, 255, 255, 0.6)' }}>
+                                      {tickerData.exDivDay}
+                                    </Typography>
+                                  )}
+                                </TableCell>
+                                <TableCell sx={{ color: 'white' }} align="right">{holding.shares.toLocaleString()}</TableCell>
+                                <TableCell sx={{ color: 'white' }} align="right">${holding.averagePrice.toFixed(2)}</TableCell>
+                                <TableCell sx={{ color: 'white' }} align="right">${(holding.currentPrice || 0).toFixed(2)}</TableCell>
+                                <TableCell sx={{ color: 'white' }} align="right">
+                                  ${(holding.totalValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                                <TableCell sx={{ 
+                                  color: (holding.gainLoss || 0) >= 0 ? '#34C759' : '#FF3B30' 
+                                }} align="right">
+                                  {(holding.gainLoss || 0) >= 0 ? '+' : ''}${(holding.gainLoss || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                                <TableCell sx={{ 
+                                  color: (holding.gainLossPercent || 0) >= 0 ? '#34C759' : '#FF3B30' 
+                                }} align="right">
+                                  {(holding.gainLossPercent || 0) >= 0 ? '+' : ''}{(holding.gainLossPercent || 0).toFixed(2)}%
+                                </TableCell>
+                                <TableCell align="right">
+                                  {tickerData ? (
+                                    <Chip
+                                      label={tickerData.riskLevel || 'N/A'}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor: riskChip.color,
+                                        color: riskChip.textColor,
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem'
+                                      }}
+                                    />
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                                      N/A
+                                    </Typography>
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => removeHolding(holding.ticker)}
+                                    sx={{ color: '#FF3B30' }}
+                                  >
+                                    <Delete fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Card sx={{ 
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      textAlign: 'center',
+                      py: 6
+                    }}>
+                      <CardContent>
+                        <BusinessCenter sx={{ fontSize: 60, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
+                        <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
+                          No holdings yet
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', mb: 3 }}>
+                          Add your first position to start tracking your portfolio
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          startIcon={<Add />}
+                          onClick={() => setShowAddDialog(true)}
+                          sx={{
+                            background: 'linear-gradient(135deg, #00D4FF 0%, #0095CC 100%)',
+                            color: 'black',
+                            fontWeight: 600
+                          }}
+                        >
+                          Add Your First Position
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </Box>
+              </motion.div>
+            </TabPanel>
           </Paper>
           </motion.div>
 
@@ -3080,6 +3585,134 @@ export default function DividendAnalysisDashboard() {
         </Container>
         </Box>
       </Box>
+
+      {/* Add Position Dialog */}
+      <Dialog 
+        open={showAddDialog} 
+        onClose={() => setShowAddDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(13, 13, 13, 0.9) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: 'white', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          Add New Position
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="Ticker Symbol"
+                value={newTicker}
+                onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
+                fullWidth
+                placeholder="e.g. YMAX, ULTY, QDTE"
+                sx={{
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.5)' },
+                    '&.Mui-focused fieldset': { borderColor: '#00D4FF' }
+                  }
+                }}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Number of Shares"
+                value={newShares}
+                onChange={(e) => setNewShares(e.target.value)}
+                fullWidth
+                type="number"
+                inputProps={{ min: 0, step: 1 }}
+                sx={{
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.5)' },
+                    '&.Mui-focused fieldset': { borderColor: '#00D4FF' }
+                  }
+                }}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Average Price"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                fullWidth
+                type="number"
+                inputProps={{ min: 0, step: 0.01 }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>$</InputAdornment>
+                }}
+                sx={{
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.5)' },
+                    '&.Mui-focused fieldset': { borderColor: '#00D4FF' }
+                  }
+                }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <Button 
+            onClick={() => setShowAddDialog(false)}
+            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={addHolding}
+            variant="contained"
+            startIcon={<Save />}
+            sx={{
+              background: 'linear-gradient(135deg, #00D4FF 0%, #0095CC 100%)',
+              color: 'black',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #64E3FF 0%, #00D4FF 100%)',
+              }
+            }}
+          >
+            Add Position
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success/Error Snackbar */}
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={4000}
+        onClose={() => setShowSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setShowSnackbar(false)} 
+          severity={snackbarMessage.includes('Error') || snackbarMessage.includes('Warning') ? 'warning' : 'success'}
+          sx={{ 
+            background: snackbarMessage.includes('Error') || snackbarMessage.includes('Warning') 
+              ? 'linear-gradient(135deg, rgba(255, 149, 0, 0.9) 0%, rgba(255, 149, 0, 0.8) 100%)'
+              : 'linear-gradient(135deg, rgba(52, 199, 89, 0.9) 0%, rgba(52, 199, 89, 0.8) 100%)',
+            color: 'white',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </ThemeProvider>
   );
 }
