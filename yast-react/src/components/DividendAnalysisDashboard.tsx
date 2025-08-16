@@ -1303,14 +1303,16 @@ export default function DividendAnalysisDashboard() {
             if (realtimeResponse && realtimeResponse.ok) {
               try {
                 const realtimeJson = await realtimeResponse.json();
+                console.log('🔄 Raw realtime response:', realtimeJson);
                 if (realtimeJson && realtimeJson.data && typeof realtimeJson.data === 'object') {
                   realtimeDataValue = realtimeJson.data || {};
                   setRealtimeData(realtimeDataValue);
                   console.log('💹 Real-time data loaded:', Object.keys(realtimeDataValue).length, 'tickers');
                   console.log('💹 QDTE real-time data:', realtimeDataValue.QDTE);
                   console.log('💹 ULTY real-time data:', realtimeDataValue.ULTY);
+                  console.log('💹 AAPW real-time data:', realtimeDataValue.AAPW);
                 } else {
-                  console.log('❌ Real-time response not in expected format');
+                  console.log('❌ Real-time response not in expected format:', realtimeJson);
                 }
               } catch (e) {
                 console.log('❌ Real-time data JSON parse error:', e);
@@ -1329,13 +1331,15 @@ export default function DividendAnalysisDashboard() {
               const actualYield = rtData?.actualYield || item.forwardYield;
               
               // Debug logging for specific tickers
-              if (item.ticker === 'QDTE' || item.ticker === 'ULTY') {
+              if (item.ticker === 'QDTE' || item.ticker === 'ULTY' || item.ticker === 'AAPW') {
                 console.log(`🔍 ${item.ticker} data:`, {
                   rtData: rtData,
                   currentPrice: currentPrice,
                   actualYield: actualYield,
                   originalPrice: generateRealisticPrice(item.ticker, item.forwardYield, item.medianDividend),
-                  originalYield: item.forwardYield
+                  originalYield: item.forwardYield,
+                  realtimeDataAvailable: !!realtimeDataValue,
+                  realtimeKeys: realtimeDataValue ? Object.keys(realtimeDataValue).slice(0, 5) : []
                 });
               }
               
@@ -1792,6 +1796,82 @@ export default function DividendAnalysisDashboard() {
     }
     
     return indicators.join('\n');
+  };
+
+  // Calculate expected dividend based on ex-div day
+  const getExpectedDividend = (exDivDay: string, medianDividend: number) => {
+    if (!exDivDay || !medianDividend) return null;
+    
+    const dayMap = {
+      'Monday': 1,
+      'Tuesday': 2, 
+      'Wednesday': 3,
+      'Thursday': 4,
+      'Friday': 5
+    };
+    
+    const today = new Date();
+    const currentDay = today.getDay(); // 0=Sunday, 1=Monday, etc
+    const targetDay = dayMap[exDivDay as keyof typeof dayMap];
+    
+    if (!targetDay) return null;
+    
+    // Calculate days until next ex-div day
+    let daysUntil = targetDay - currentDay;
+    if (daysUntil <= 0) daysUntil += 7; // Next week if already passed
+    
+    return {
+      daysUntil,
+      expectedDividend: medianDividend,
+      nextExDivDate: new Date(today.getTime() + daysUntil * 24 * 60 * 60 * 1000)
+    };
+  };
+
+  // Copy text to clipboard with user feedback
+  const copyToClipboard = async (text: string, ticker: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setSnackbarMessage(`${ticker} risk analysis copied to clipboard!`);
+      setShowSnackbar(true);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setSnackbarMessage(`${ticker} risk analysis copied to clipboard!`);
+        setShowSnackbar(true);
+      } catch (fallbackErr) {
+        setSnackbarMessage('Failed to copy to clipboard');
+        setShowSnackbar(true);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  // Clean up indicators by removing redundant dividend timing info
+  const getCleanedIndicators = (rationale: string | undefined) => {
+    if (!rationale) return 'No indicators available';
+    
+    // Remove dividend timing patterns like "PREPARE: Dividend likely in ~1 days, Low risk"
+    let cleaned = rationale
+      .replace(/PREPARE:\s*Dividend likely in ~\d+\s*days?,?\s*/gi, '')
+      .replace(/CAUTION:\s*Dividend likely in ~\d+\s*days?,?\s*/gi, '')
+      .replace(/,?\s*Low risk$/gi, '')
+      .replace(/,?\s*Medium risk$/gi, '')
+      .replace(/,?\s*High risk$/gi, '')
+      .replace(/,?\s*Safe$/gi, '')
+      .trim();
+    
+    // If we removed everything and just have "Low risk" or similar, show a more meaningful message
+    if (!cleaned || cleaned.match(/^(Low|Medium|High|Safe)\s*risk?$/i)) {
+      return 'Normal trading conditions';
+    }
+    
+    return cleaned;
   };
 
   const topPerformers = data.filter(item => 
@@ -2664,6 +2744,15 @@ export default function DividendAnalysisDashboard() {
                           <Typography variant="body2">
                             {generateRiskTooltip(item)}
                           </Typography>
+                          <Typography variant="caption" sx={{ 
+                            color: 'rgba(255, 255, 255, 0.6)', 
+                            fontSize: '0.7rem',
+                            fontStyle: 'italic',
+                            mt: 1,
+                            display: 'block'
+                          }}>
+                            Click to copy analysis to clipboard
+                          </Typography>
                         </Box>
                       }
                       arrow
@@ -2680,17 +2769,23 @@ export default function DividendAnalysisDashboard() {
                       <Chip
                         label={item.riskLevel}
                         size="small"
+                        onClick={() => {
+                          const analysisText = `${item.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(item)}`;
+                          copyToClipboard(analysisText, item.ticker);
+                        }}
                         sx={{
                           fontWeight: 700,
                           fontSize: '0.75rem',
                           backgroundColor: item.riskColor || '#6c757d',
                           color: '#FFFFFF',
-                          cursor: 'help',
+                          cursor: 'pointer',
                           '&:hover': {
                             backgroundColor: item.riskColor || '#6c757d',
                             opacity: 0.8,
-                            transform: 'scale(1.05)'
-                          }
+                            transform: 'scale(1.05)',
+                            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)'
+                          },
+                          transition: 'all 0.2s ease'
                         }}
                       />
                     </Tooltip>
@@ -2709,7 +2804,7 @@ export default function DividendAnalysisDashboard() {
                       textOverflow: 'ellipsis'
                     }}
                   >
-                    {item.rationale || 'No rationale available'}
+                    {getCleanedIndicators(item.rationale)}
                   </Typography>
                 </TableCell>
                 <TableCell align="center">
@@ -3399,13 +3494,14 @@ export default function DividendAnalysisDashboard() {
                         <TableHead>
                           <TableRow sx={{ '& th': { borderBottom: '1px solid rgba(255, 255, 255, 0.1)' } }}>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }}>Ticker</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Ex-Div Day</TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Shares</TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Avg Price</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Current Price</TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Total Value</TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Gain/Loss</TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">%</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Risk Level</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Risk Level</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Indicators</TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
@@ -3413,22 +3509,66 @@ export default function DividendAnalysisDashboard() {
                           {portfolio.holdings.map((holding) => {
                             const tickerData = data.find(d => d.ticker === holding.ticker);
                             const riskChip = getRiskLevelChip(tickerData?.riskLevel);
+                            const expectedDiv = getExpectedDividend(tickerData?.exDivDay || '', tickerData?.medianDividend || 0);
+                            
                             return (
                               <TableRow key={holding.ticker} sx={{ 
                                 '& td': { borderBottom: '1px solid rgba(255, 255, 255, 0.05)' },
                                 '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' }
                               }}>
-                                <TableCell sx={{ color: 'white', fontWeight: 600 }}>
-                                  {holding.ticker}
-                                  {tickerData && (
-                                    <Typography variant="caption" sx={{ display: 'block', color: 'rgba(255, 255, 255, 0.6)' }}>
-                                      {tickerData.exDivDay}
+                                {/* Ticker with Price and Dividend */}
+                                <TableCell>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 600 }}>
+                                      {holding.ticker}
                                     </Typography>
-                                  )}
+                                    {/* Price and Dividend Information */}
+                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                      <Typography variant="caption" sx={{ 
+                                        color: 'rgba(255, 255, 255, 0.7)', 
+                                        fontSize: '0.75rem',
+                                        fontWeight: 500
+                                      }}>
+                                        ${(holding.currentPrice || 0).toFixed(2)}
+                                      </Typography>
+                                      <Typography variant="caption" sx={{ 
+                                        color: 'rgba(0, 230, 118, 0.8)', 
+                                        fontSize: '0.75rem',
+                                        fontWeight: 500
+                                      }}>
+                                        Div: ${(tickerData?.lastDividend || tickerData?.medianDividend || 0).toFixed(3)}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
                                 </TableCell>
+
+                                {/* Ex-Div Day with Expected Dividend */}
+                                <TableCell align="center">
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'center' }}>
+                                    <Chip
+                                      label={tickerData?.exDivDay || 'N/A'}
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                                        color: 'rgba(255, 255, 255, 0.8)',
+                                        fontSize: '0.75rem'
+                                      }}
+                                    />
+                                    {expectedDiv && (
+                                      <Typography variant="caption" sx={{ 
+                                        color: '#00E676', 
+                                        fontSize: '0.7rem',
+                                        fontWeight: 500
+                                      }}>
+                                        ~${expectedDiv.expectedDividend.toFixed(3)} in {expectedDiv.daysUntil}d
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                </TableCell>
+
                                 <TableCell sx={{ color: 'white' }} align="right">{holding.shares.toLocaleString()}</TableCell>
                                 <TableCell sx={{ color: 'white' }} align="right">${holding.averagePrice.toFixed(2)}</TableCell>
-                                <TableCell sx={{ color: 'white' }} align="right">${(holding.currentPrice || 0).toFixed(2)}</TableCell>
                                 <TableCell sx={{ color: 'white' }} align="right">
                                   ${(holding.totalValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </TableCell>
@@ -3442,24 +3582,91 @@ export default function DividendAnalysisDashboard() {
                                 }} align="right">
                                   {(holding.gainLossPercent || 0) >= 0 ? '+' : ''}{(holding.gainLossPercent || 0).toFixed(2)}%
                                 </TableCell>
-                                <TableCell align="right">
-                                  {tickerData ? (
+
+                                {/* Risk Level with Tooltip */}
+                                <TableCell align="center">
+                                  {tickerData && tickerData.riskLevel ? (
+                                    <Tooltip
+                                      title={
+                                        <Box sx={{ whiteSpace: 'pre-line', maxWidth: '300px' }}>
+                                          <Typography variant="body2">
+                                            {generateRiskTooltip(tickerData)}
+                                          </Typography>
+                                          <Typography variant="caption" sx={{ 
+                                            color: 'rgba(255, 255, 255, 0.6)', 
+                                            fontSize: '0.7rem',
+                                            fontStyle: 'italic',
+                                            mt: 1,
+                                            display: 'block'
+                                          }}>
+                                            Click to copy analysis to clipboard
+                                          </Typography>
+                                        </Box>
+                                      }
+                                      arrow
+                                      placement="top"
+                                      sx={{
+                                        '& .MuiTooltip-tooltip': {
+                                          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                          fontSize: '0.75rem',
+                                          maxWidth: '350px',
+                                          fontFamily: 'monospace'
+                                        }
+                                      }}
+                                    >
+                                      <Chip
+                                        label={tickerData.riskLevel}
+                                        size="small"
+                                        onClick={() => {
+                                          const analysisText = `${holding.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(tickerData)}`;
+                                          copyToClipboard(analysisText, holding.ticker);
+                                        }}
+                                        sx={{
+                                          fontWeight: 700,
+                                          fontSize: '0.75rem',
+                                          backgroundColor: tickerData.riskColor || '#6c757d',
+                                          color: '#FFFFFF',
+                                          cursor: 'pointer',
+                                          '&:hover': {
+                                            backgroundColor: tickerData.riskColor || '#6c757d',
+                                            opacity: 0.8,
+                                            transform: 'scale(1.05)',
+                                            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)'
+                                          },
+                                          transition: 'all 0.2s ease'
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  ) : (
                                     <Chip
-                                      label={tickerData.riskLevel || 'N/A'}
+                                      label="N/A"
                                       size="small"
                                       sx={{
-                                        backgroundColor: riskChip.color,
-                                        color: riskChip.textColor,
+                                        backgroundColor: '#6c757d',
+                                        color: '#FFFFFF',
                                         fontWeight: 600,
                                         fontSize: '0.75rem'
                                       }}
                                     />
-                                  ) : (
-                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                                      N/A
-                                    </Typography>
                                   )}
                                 </TableCell>
+
+                                {/* Indicators */}
+                                <TableCell align="center" sx={{ maxWidth: '200px' }}>
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                      color: 'rgba(255, 255, 255, 0.8)', 
+                                      fontSize: '0.8rem',
+                                      wordWrap: 'break-word',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {getCleanedIndicators(tickerData?.rationale)}
+                                  </Typography>
+                                </TableCell>
+
                                 <TableCell align="center">
                                   <IconButton
                                     size="small"
