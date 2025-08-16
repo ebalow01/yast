@@ -61,6 +61,15 @@ export interface DividendData {
   forwardYield?: number;
   currentPrice?: number;
   category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
+  // New risk assessment fields
+  riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE';
+  riskColor?: string;
+  riskPriority?: number;
+  rationale?: string;
+  rsi?: number;
+  momentum5d?: number;
+  alertCount?: number;
+  riskLastUpdated?: string;
 }
 
 // Accessible 2025 Design System - Semantic Colors + Patterns
@@ -1273,7 +1282,16 @@ export default function DividendAnalysisDashboard() {
                 lastDividend: lastDividend,
                 category: item.bestReturn >= 0.40 ? 'top-performers' : 
                          item.bestReturn >= 0.20 ? 'mid-performers' : 
-                         item.bestReturn >= 0.0 ? 'low-performers' : 'excluded'
+                         item.bestReturn >= 0.0 ? 'low-performers' : 'excluded',
+                // New risk assessment fields
+                riskLevel: item.riskLevel,
+                riskColor: item.riskColor,
+                riskPriority: item.riskPriority,
+                rationale: item.rationale,
+                rsi: item.rsi,
+                momentum5d: item.momentum5d,
+                alertCount: item.alertCount,
+                riskLastUpdated: item.riskLastUpdated
               };
             });
           } else {
@@ -1487,6 +1505,73 @@ export default function DividendAnalysisDashboard() {
         }}
       />
     );
+  };
+
+  const generateRiskTooltip = (item: DividendData) => {
+    if (!item.riskLevel) {
+      return `Volatility Risk: ${formatPercentage(item.riskVolatility)}`;
+    }
+
+    const riskExplanations = {
+      'HIGH': 'Multiple concerning technical signals indicate elevated risk',
+      'MEDIUM': 'Some caution warranted due to mixed technical signals', 
+      'LOW': 'Minor technical concerns but generally stable',
+      'SAFE': 'Strong technical position with minimal risk indicators'
+    };
+
+    const indicators = [];
+    
+    // Add risk level explanation
+    indicators.push(`${item.riskLevel} RISK: ${riskExplanations[item.riskLevel]}`);
+    indicators.push(''); // Empty line
+    
+    // Add technical details
+    indicators.push('Technical Analysis:');
+    
+    if (item.rsi) {
+      if (item.rsi > 80) {
+        indicators.push(`• RSI: ${item.rsi.toFixed(1)} - Severely overbought, correction likely`);
+      } else if (item.rsi > 70) {
+        indicators.push(`• RSI: ${item.rsi.toFixed(1)} - Overbought conditions`);
+      } else if (item.rsi < 20) {
+        indicators.push(`• RSI: ${item.rsi.toFixed(1)} - Severely oversold, bounce potential`);
+      } else if (item.rsi < 30) {
+        indicators.push(`• RSI: ${item.rsi.toFixed(1)} - Oversold conditions`);
+      } else {
+        indicators.push(`• RSI: ${item.rsi.toFixed(1)} - Neutral momentum`);
+      }
+    }
+    
+    if (item.momentum5d !== undefined) {
+      if (Math.abs(item.momentum5d) > 10) {
+        indicators.push(`• Momentum: ${item.momentum5d > 0 ? '+' : ''}${item.momentum5d.toFixed(1)}% - Extreme price movement`);
+      } else if (Math.abs(item.momentum5d) > 5) {
+        indicators.push(`• Momentum: ${item.momentum5d > 0 ? '+' : ''}${item.momentum5d.toFixed(1)}% - Strong ${item.momentum5d > 0 ? 'upward' : 'downward'} movement`);
+      } else {
+        indicators.push(`• Momentum: ${item.momentum5d > 0 ? '+' : ''}${item.momentum5d.toFixed(1)}% - Moderate price movement`);
+      }
+    }
+    
+    if (item.alertCount && item.alertCount > 0) {
+      indicators.push(`• Active Signals: ${item.alertCount} technical alert${item.alertCount > 1 ? 's' : ''}`);
+    }
+    
+    // Add volatility context
+    const volPct = item.riskVolatility * 100;
+    if (volPct > 50) {
+      indicators.push(`• Volatility: ${volPct.toFixed(1)}% - Highly volatile, expect large price swings`);
+    } else if (volPct > 30) {
+      indicators.push(`• Volatility: ${volPct.toFixed(1)}% - Elevated volatility`);
+    } else {
+      indicators.push(`• Volatility: ${volPct.toFixed(1)}% - Relatively stable`);
+    }
+    
+    if (item.riskLastUpdated) {
+      indicators.push(''); // Empty line
+      indicators.push(`Last updated: ${item.riskLastUpdated}`);
+    }
+    
+    return indicators.join('\n');
   };
 
   const topPerformers = data.filter(item => 
@@ -2181,7 +2266,10 @@ export default function DividendAnalysisDashboard() {
                 Win Rate
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Risk
+                Risk Level
+              </TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Indicators
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Yield
@@ -2349,7 +2437,60 @@ export default function DividendAnalysisDashboard() {
                   </Typography>
                 </TableCell>
                 <TableCell align="center">
-                  {getRiskChip(item.riskVolatility)}
+                  {item.riskLevel ? (
+                    <Tooltip
+                      title={
+                        <Box sx={{ whiteSpace: 'pre-line', maxWidth: '300px' }}>
+                          <Typography variant="body2">
+                            {generateRiskTooltip(item)}
+                          </Typography>
+                        </Box>
+                      }
+                      arrow
+                      placement="top"
+                      sx={{
+                        '& .MuiTooltip-tooltip': {
+                          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                          fontSize: '0.75rem',
+                          maxWidth: '350px',
+                          fontFamily: 'monospace'
+                        }
+                      }}
+                    >
+                      <Chip
+                        label={item.riskLevel}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          backgroundColor: item.riskColor || '#6c757d',
+                          color: '#FFFFFF',
+                          cursor: 'help',
+                          '&:hover': {
+                            backgroundColor: item.riskColor || '#6c757d',
+                            opacity: 0.8,
+                            transform: 'scale(1.05)'
+                          }
+                        }}
+                      />
+                    </Tooltip>
+                  ) : (
+                    getRiskChip(item.riskVolatility)
+                  )}
+                </TableCell>
+                <TableCell align="left" sx={{ maxWidth: '200px' }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'rgba(255, 255, 255, 0.8)', 
+                      fontSize: '0.8rem',
+                      wordWrap: 'break-word',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {item.rationale || 'No rationale available'}
+                  </Typography>
                 </TableCell>
                 <TableCell align="center">
                   <Typography 
