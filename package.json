@@ -1,0 +1,11 @@
+{
+  "name": "yast-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for YAST dashboard",
+  "dependencies": {
+    "yahoo-finance2": "^2.11.3"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.4.1"
+  }
+}

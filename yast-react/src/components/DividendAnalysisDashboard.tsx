@@ -1464,7 +1464,7 @@ export default function DividendAnalysisDashboard() {
   const updatePortfolioValues = (currentPortfolio: UserPortfolio) => {
     const updatedHoldings = currentPortfolio.holdings.map(holding => {
       const tickerData = data.find(d => d.ticker === holding.ticker);
-      const currentPrice = tickerData?.currentPrice || calculateCurrentPrice(tickerData || null);
+      const currentPrice = tickerData?.currentPrice || generateRealisticPrice(holding.ticker, tickerData?.forwardYield || 50, tickerData?.medianDividend || 0.2);
       const totalValue = holding.shares * currentPrice;
       const gainLoss = totalValue - (holding.shares * holding.averagePrice);
       const gainLossPercent = ((currentPrice - holding.averagePrice) / holding.averagePrice) * 100;

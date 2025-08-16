@@ -1,0 +1,92 @@
+YAST BACKTESTING SYSTEM - DEVELOPER REQUIREMENTS
+=====================================================
+Date: August 15, 2025
+Financial Analyst: Request for backtesting implementation
+
+PROJECT OVERVIEW:
+Build a comprehensive backtesting system for the YAST weekly dividend ETF strategy described in investment_strategy_summary.txt
+
+TECHNICAL REQUIREMENTS:
+=======================
+
+1. DATA PIPELINE
+   - Integrate with existing yfinance data feeds (see scripts/ folder)
+   - Historical price data: OHLC for all ETFs (minimum 2 years)
+   - Dividend data: Ex-dates, payment dates, amounts per ETF
+   - Corporate actions: Stock splits, special dividends
+   - Market data: VIX, treasury rates for regime identification
+
+2. STRATEGY ENGINE
+   - Implement 4 trading strategies per ETF:
+     * Buy & Hold (B&H)
+     * Dividend Capture (DC): Enter T-2, exit T+1 around ex-div
+     * DD to DD+4: Declaration date to 4 days post ex-div  
+     * DD+2 to DD+4: Shortened capture window
+   
+   - Selection Rules Implementation:
+     * Rule 1: >40% returns AND <40% 45-day volatility (auto-include)
+     * Rule 2: >30% DC returns AND <80% 45-day volatility (conditional)
+
+3. PORTFOLIO OPTIMIZATION
+   - Modern Portfolio Theory (MPT) implementation
+   - 15% maximum portfolio volatility constraint
+   - 45-day rolling volatility calculation (annualized)
+   - Correlation matrix for diversification
+   - Daily rebalancing triggers
+
+4. PERFORMANCE ANALYTICS
+   - Returns: Absolute, Sharpe ratio, Sortino ratio
+   - Risk metrics: Max drawdown, VaR, volatility
+   - Win rate analysis by strategy and market regime
+   - Transaction cost estimation (bid-ask spreads)
+
+5. VALIDATION FRAMEWORK
+   - Walk-forward analysis (6-month train, 3-month test)
+   - Monte Carlo simulation (1000+ runs)
+   - Stress testing (2020 COVID, 2022 rate hikes)
+   - Benchmark comparison (SPY, dividend ETF indices)
+
+EXISTING CODEBASE INTEGRATION:
+==============================
+- Build on existing Python structure in scripts/
+- Leverage current ETF data in data/ folder
+- Use existing multi_ticker_*.py processing logic
+- Integrate with web dashboard output format
+
+DELIVERABLES:
+=============
+1. Backtesting engine (Python class/module)
+2. Strategy performance comparison module
+3. Risk analysis and visualization tools
+4. Validation results with confidence intervals
+5. Integration with existing GitHub Actions workflow
+
+TECHNICAL CONSTRAINTS:
+======================
+- Must work with existing Windows environment
+- Compatible with current yfinance data sources
+- Output format compatible with React dashboard
+- Execution time <30 minutes for full backtest
+
+PRIORITY FEATURES:
+==================
+1. Strategy comparison across different market regimes
+2. Risk-adjusted return optimization
+3. Drawdown analysis and recovery periods
+4. Parameter sensitivity testing
+5. Real-time portfolio allocation recommendations
+
+QUESTIONS FOR DEVELOPER:
+========================
+1. Preferred backtesting library (bt, zipline, custom)?
+2. Data storage approach (CSV, SQLite, parquet)?
+3. Parallel processing for Monte Carlo simulations?
+4. Visualization preferences (matplotlib, plotly)?
+5. Integration timeline and testing approach?
+
+CONTACT:
+========
+Financial Analyst Agent - Available for strategy clarification
+Existing codebase reference: Current YAST system files
+
+This system will validate the 50-80% annual forward yield claims and provide confidence intervals for the reported performance metrics.

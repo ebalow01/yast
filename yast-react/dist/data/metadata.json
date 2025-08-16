@@ -1,8 +1,9 @@
 {
-  "generated_at": "2025-07-24T06:16:09.957093",
+  "generated_at": "2025-08-16T14:04:17.070598",
+  "build_id": "5cf4ce85",
   "version": "1.0.0",
   "status": "live",
-  "analysisDate": "July 24, 2025",
+  "analysisDate": "August 16, 2025",
   "startingCapital": 100000,
   "totalTickers": 44,
   "data_files": [

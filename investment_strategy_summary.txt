@@ -1,0 +1,156 @@
+YAST INVESTMENT STRATEGY SUMMARY
+===============================
+Generated: August 15, 2025
+
+OVERVIEW
+--------
+The YAST (Yet Another Stock Tracker) system implements a sophisticated weekly distribution ETF portfolio strategy focused on high-income generation through algorithmic trading and dividend capture techniques.
+
+CORE STRATEGY PHILOSOPHY
+------------------------
+• Focus on weekly distribution ETFs that pay dividends every week
+• Combine systematic dividend capture with buy-and-hold strategies
+• Risk-balanced approach using 45-day volatility metrics
+• Automated portfolio optimization with strict risk constraints
+
+PRIMARY INVESTMENT TARGETS
+--------------------------
+Weekly distribution ETFs specializing in:
+- YieldMax options income strategies (YMAX, YMAG, ULTY, etc.)
+- Covered call ETFs (QDTE, XDTE, WDTE, etc.)
+- Sector-specific high-yield ETFs (NVDW, TSLW, CHPY, etc.)
+- Alternative income ETFs (YBTC, YETH, XBTY for crypto exposure)
+
+PORTFOLIO SELECTION CRITERIA
+----------------------------
+
+Rule 1 - Mandatory Inclusion:
+• ETFs with >40% returns AND <40% 45-day volatility
+• These automatically qualify for portfolio inclusion
+
+Rule 2 - Dividend Capture Focus:
+• ETFs with >30% dividend capture returns AND <80% 45-day volatility
+• Included unless better alternatives exist on same ex-dividend day
+
+Risk Management:
+• Maximum portfolio risk: 15% (45-day volatility constraint)
+• Individual asset risk cap: 80% for Rule 2 ETFs
+• Diversification across different ex-dividend days
+
+TRADING STRATEGIES
+------------------
+
+1. Buy & Hold (B&H):
+   - Traditional approach: buy ETF and hold for entire period
+   - Collect all dividends and capital appreciation
+   - Preferred for stable, consistently performing ETFs
+
+2. Dividend Capture (DC):
+   - Strategic trading around ex-dividend dates
+   - Enter positions before ex-dividend, exit shortly after
+   - Minimizes market exposure while capturing dividend income
+   - Higher win rates (often 80-95%) but more complex execution
+
+3. Enhanced Strategies:
+   - DD to DD+4: Hold from dividend declaration to 4 days post ex-div
+   - DD+2 to DD+4: Shorter holding period for volatile ETFs
+
+CURRENT TOP PERFORMERS (15 ETFs)
+--------------------------------
+YMAX    - 123.3% DC return, Thursday ex-div, 14.0% volatility
+QDTE    - 120.1% DC return, Thursday ex-div, 11.3% volatility  
+LFGY    - 96.0% DC return, Thursday ex-div, 25.7% volatility
+YMAG    - 93.7% DC return, Thursday ex-div, 12.2% volatility
+NVDW    - 82.7% B&H return, Monday ex-div, 30.8% volatility
+ULTY    - 78.2% B&H return, Thursday ex-div, 16.7% volatility
+XDTE    - 71.9% B&H return, Thursday ex-div, 8.8% volatility
+IWMY    - 61.2% DC return, Thursday ex-div, 12.5% volatility
+YBTC    - 59.9% B&H return, Wednesday ex-div, 23.3% volatility
+QQQY    - 59.4% B&H return, Thursday ex-div, 7.7% volatility
+CHPY    - 53.3% B&H return, Thursday ex-div, 14.8% volatility
+NVYY    - 50.9% B&H return, Friday ex-div, 18.7% volatility
+RDTE    - 47.8% B&H return, Thursday ex-div, 15.3% volatility
+GPTY    - 46.2% DC return, Thursday ex-div, 15.0% volatility
+AAPW    - 41.9% DC return, Monday ex-div, 28.0% volatility
+
+RISK MANAGEMENT FRAMEWORK
+-------------------------
+
+45-Day Volatility Calculation:
+• Uses trailing 45 trading days for more responsive risk assessment
+• Annualized using √252 scaling factor
+• Provides current market condition sensitivity
+
+Portfolio Optimization:
+• Modern Portfolio Theory (MPT) with correlation adjustments
+• Maximum 15% portfolio volatility constraint  
+• Efficient frontier analysis for optimal asset allocation
+• Sharpe ratio optimization within risk bounds
+
+Diversification Strategy:
+• Spread across different ex-dividend days (Monday through Friday)
+• Multiple underlying assets (tech, energy, crypto, broad market)
+• Balance between growth and income strategies
+
+AUTOMATION & EXECUTION
+----------------------
+
+Daily Updates:
+• GitHub Actions run at 6 AM UTC weekdays
+• Automatic data refresh and portfolio rebalancing signals
+• 45-day volatility recalculation for current market conditions
+
+Analysis Components:
+• Multi-ticker data processing and cleaning
+• Weekly dividend pattern analysis
+• Trading strategy backtesting (4 strategies per ETF)
+• Market exposure analysis and optimization
+
+Web Dashboard:
+• Real-time portfolio allocation visualization
+• Performance metrics and risk analysis
+• Strategy comparison and selection tools
+• Ex-dividend calendar and timing optimization
+
+KEY PERFORMANCE METRICS
+-----------------------
+
+Starting Capital: $100,000 per analysis
+Average Forward Yield: 50-80% annually
+Typical Win Rates: 75-95% for dividend capture strategies
+Risk-Adjusted Returns: Sharpe ratios typically 2.0+ for top performers
+Market Exposure: Minimized through strategic entry/exit timing
+
+COMPETITIVE ADVANTAGES
+---------------------
+
+1. Weekly Focus: Captures 52 dividend opportunities per year vs 4 for quarterly
+2. Algorithmic Selection: Systematic screening eliminates emotional bias
+3. Risk-First Approach: 45-day volatility prevents outdated risk assessments  
+4. Strategy Flexibility: Adapts between B&H and DC based on market conditions
+5. Automated Execution: Reduces manual intervention and timing errors
+
+INVESTMENT PHILOSOPHY
+--------------------
+
+"Generate consistent high income through systematic exploitation of weekly dividend patterns while maintaining strict risk controls and market-responsive positioning."
+
+This strategy prioritizes:
+• Income generation over pure capital appreciation
+• Risk-adjusted returns over absolute returns  
+• Systematic execution over discretionary trading
+• Adaptive positioning over static allocation
+• Data-driven decisions over market sentiment
+
+The YAST system represents a quantitative approach to income investing, 
+leveraging weekly distribution ETF inefficiencies while maintaining 
+institutional-grade risk management standards.
+
+DISCLAIMER
+----------
+This strategy summary is for informational purposes only. Past performance 
+does not guarantee future results. All investments carry risk of loss. 
+Consult with financial professionals before implementing any investment strategy.
+
+Generated by YAST Portfolio Management System
+© 2025 - Algorithmic Income Strategy Analysis

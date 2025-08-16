@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YieldMax ETFs - Weekly Distribution Analysis (Fresh)</title>
+    <title>Portfolio Income Generator - Weekly Distribution ETF Analysis</title>
     <style>
         * {
             margin: 0;
@@ -252,6 +252,42 @@
             color: #4caf50;
         }
 
+        .copy-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .copy-button.copied {
+            background: #4caf50;
+            color: #fff;
+        }
+
+        .copy-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .card-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
         @media (max-width: 768px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -270,9 +306,9 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>YieldMax ETFs</h1>
-            <div class="subtitle">Weekly Distribution Analysis</div>
-            <div class="timestamp" id="last-updated">Last Updated: Loading...</div>
+            <h1>Portfolio Income Generator</h1>
+            <div class="subtitle">Risk-Balanced Weekly Distribution ETF Analysis</div>
+            <div class="timestamp">Last Updated: July 18, 2025</div>
         </header>
 
         <div class="main-grid">
@@ -280,6 +316,15 @@
                 <div class="card-header">
                     <div class="card-icon">📊</div>
                     <div class="card-title">Top Performing ETFs</div>
+                    <div class="card-header-actions">
+                        <button class="copy-button" onclick="copyTableData('top-performers')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy Table
+                        </button>
+                    </div>
                 </div>
                 <p style="opacity: 0.8; margin-bottom: 20px;">
                     ETFs with annualized returns above 40% and risk below 40% (best of Buy & Hold or Dividend Capture strategies)
@@ -297,7 +342,6 @@
                                 <th data-column="bestReturn">Best Return</th>
                                 <th data-column="dcWinRate">Win Rate</th>
                                 <th data-column="riskVolatility">Risk</th>
-                                <th data-column="forwardYield">Forward Yield</th>
                             </tr>
                         </thead>
                         <tbody id="top-performers-body">
@@ -311,6 +355,15 @@
                 <div class="card-header">
                     <div class="card-icon" style="color: #ffd54f;">⚖️</div>
                     <div class="card-title">Optimal Allocation</div>
+                    <div class="card-header-actions">
+                        <button class="copy-button" onclick="copyAllocationData()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy Allocation
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="allocation-list" id="portfolio-allocation">
@@ -322,7 +375,7 @@
                 </div>
 
                 <p style="text-align: center; margin-top: 20px; font-size: 0.85rem; opacity: 0.7;">
-                    Diversified optimization: Includes all ETFs with &gt;40% return and &lt;40% risk, then maximizes returns within 10% portfolio risk constraint. Individual positions: 5% minimum, 20% maximum allocation.
+                    Diversified optimization: Includes all ETFs with >40% return and <40% risk, then maximizes returns within 10% portfolio risk constraint
                 </p>
             </div>
         </div>
@@ -358,7 +411,6 @@
                         "dcWinRate": 0.93,
                         "riskVolatility": 0.266,
                         "medianDividend": 0.172,
-                        "forwardYield": 64.2,
                         "category": "top-performers"
             },
             {
@@ -373,7 +425,6 @@
                         "dcWinRate": 0.88,
                         "riskVolatility": 0.485,
                         "medianDividend": 0.475,
-                        "forwardYield": 61.1,
                         "category": "excluded"
             },
             {
@@ -388,7 +439,6 @@
                         "dcWinRate": 0.884,
                         "riskVolatility": 0.254,
                         "medianDividend": 0.158,
-                        "forwardYield": 53.3,
                         "category": "top-performers"
             },
             {
@@ -403,7 +453,6 @@
                         "dcWinRate": 0.889,
                         "riskVolatility": 0.33299999999999996,
                         "medianDividend": 0.095,
-                        "forwardYield": 79.0,
                         "category": "top-performers"
             },
             {
@@ -601,30 +650,25 @@
                         "riskVolatility": 0.297,
                         "medianDividend": 0.459,
                         "category": "excluded"
+            },
+            {
+                        "ticker": "COYY",
+                        "tradingDays": 15,
+                        "exDivDay": "Thursday",
+                        "buyHoldReturn": 0.5832,
+                        "divCaptureReturn": 0.6254,
+                        "bestStrategy": "DC",
+                        "bestReturn": 0.6254,
+                        "finalValue": 162540.0,
+                        "dcWinRate": 0.867,
+                        "riskVolatility": 0.312,
+                        "medianDividend": 0.285,
+                        "category": "top-performers"
             }
 ];
 
-        // Load data immediately - try to fetch real data first, fallback to embedded data
-        Promise.all([
-            fetch('./data/performance_data.json'),
-            fetch('./data/metadata.json')
-        ])
-            .then(([dataResponse, metadataResponse]) => Promise.all([dataResponse.json(), metadataResponse.json()]))
-            .then(([data, metadata]) => {
-                console.log('Loaded real data from JSON file');
-                
-                // Update timestamp from metadata
-                const timestampElement = document.getElementById('last-updated');
-                if (timestampElement && metadata.analysisDate) {
-                    timestampElement.textContent = `Last Updated: ${metadata.analysisDate}`;
-                }
-                
-                loadData(data);
-            })
-            .catch(error => {
-                console.warn('Could not load real data, using fallback:', error);
-                loadData(fallbackData);
-            });
+        // Load data immediately
+        loadData(fallbackData);
 
         function loadData(data) {
             currentData = data;
@@ -702,7 +746,6 @@
                     <td class="${item.bestReturn > 0 ? 'positive' : 'negative'}">${formatPercentage(item.bestReturn)}</td>
                     <td>${formatPercentage(item.dcWinRate)}</td>
                     <td><span class="risk-tag">${formatPercentage(item.riskVolatility)}</span></td>
-                    <td class="positive">${item.forwardYield ? item.forwardYield.toFixed(1) + '%' : 'N/A'}</td>
                 </tr>
             `).join('');
         }
@@ -729,24 +772,21 @@
                     return: etf.bestReturn,
                     risk: etf.riskVolatility,
                     sharpe: etf.bestReturn / etf.riskVolatility,
-                    bestStrategy: etf.bestStrategy,
-                    dividendCapture: etf.divCaptureReturn
+                    bestStrategy: etf.bestStrategy
                 })),
                 {
                     ticker: 'CASH',
                     return: 0.045, // 4.5% annual yield
                     risk: 0.0, // 0% risk
                     sharpe: Infinity,
-                    bestStrategy: null, // Cash doesn't have a strategy
-                    dividendCapture: 0.0
+                    bestStrategy: null // Cash doesn't have a strategy
                 },
                 {
                     ticker: 'SPY',
                     return: 0.12, // 12% annual return
                     risk: 0.20, // 20% risk
                     sharpe: 0.12 / 0.20,
-                    bestStrategy: 'B&H', // SPY is always buy and hold
-                    dividendCapture: 0.0
+                    bestStrategy: 'B&H' // SPY is always buy and hold
                 }
             ];
 
@@ -771,8 +811,8 @@
             const allocation = [];
             let remainingWeight = totalAllocation;
             
-            // Limit individual positions (max 20% each for diversification)
-            const maxWeight = 0.20;
+            // Limit individual positions (max 25% each for diversification)
+            const maxWeight = 0.25;
             
             for (let i = 0; i < sortedAssets.length && remainingWeight > 0.01; i++) {
                 const asset = sortedAssets[i];
@@ -784,8 +824,8 @@
                     remainingWeight
                 );
                 
-                // Minimum allocation of 5% if we're including it
-                if (weight > 0.05) {
+                // Minimum allocation of 2% if we're including it
+                if (weight > 0.02) {
                     allocation.push({
                         ticker: asset.ticker,
                         weight: weight,
@@ -814,17 +854,21 @@
             console.log('All assets with return/risk values:');
             assets.forEach(asset => {
                 if (asset.ticker !== 'CASH') {
-                    console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture`);
+                    console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk`);
                 }
             });
             
-            // Rule 1: Identify ETFs with >40% return AND <40% risk (mandatory 10% minimum)
+            // First, identify ETFs that meet diversity criteria: >40% return AND <40% risk
             const qualifyingETFs = assets.filter(asset => 
                 asset.ticker !== 'CASH' && 
                 asset.ticker !== 'SPY' && 
                 asset.return > 0.40 && 
                 asset.risk < 0.40
             );
+            
+            console.log('Qualifying ETFs for mandatory inclusion (>40% return AND <40% risk):', qualifyingETFs.map(etf => 
+                `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk`
+            ));
             
             // Rule 2: Identify ETFs with >30% dividend capture (10% holding regardless of risk)
             const divCaptureETFs = assets.filter(asset => 
@@ -845,95 +889,71 @@
             // Sort all assets by expected return (descending) for remaining allocation
             const sortedAssets = [...assets].sort((a, b) => b.return - a.return);
             
+            // Start with mandatory qualifying ETFs with equal weight
             const allocation = [];
             let totalWeight = 0;
             
-            // Step 1: Add qualifying ETFs with minimum 5% each, cap at 20%
-            for (const asset of qualifyingETFs) {
-                const weight = Math.min(0.20, 0.05); // Start with 5%, max 20%
-                allocation.push({
-                    ticker: asset.ticker,
-                    weight: weight,
-                    return: asset.return,
-                    risk: asset.risk,
-                    sharpe: asset.sharpe,
-                    bestStrategy: asset.bestStrategy
-                });
-                totalWeight += weight;
-                console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (mandatory minimum)`);
-            }
-            
-            // Step 2: Add div capture ETFs with 5% each
-            for (const asset of divCaptureETFs) {
-                if (totalWeight + 0.05 <= 1.0) {
+            // Step 1: Add all qualifying ETFs with equal initial weights
+            if (qualifyingETFs.length > 0) {
+                const equalWeight = Math.min(0.80 / qualifyingETFs.length, 0.25); // Max 25% each, up to 80% total
+                
+                for (const asset of qualifyingETFs) {
                     allocation.push({
                         ticker: asset.ticker,
-                        weight: 0.05,
+                        weight: equalWeight,
                         return: asset.return,
                         risk: asset.risk,
                         sharpe: asset.sharpe,
                         bestStrategy: asset.bestStrategy
                     });
-                    totalWeight += 0.05;
-                    console.log(`Added div capture ETF ${asset.ticker} with 5.0% allocation`);
+                    totalWeight += equalWeight;
+                }
+                
+                // Check if this allocation meets risk constraint
+                let portfolioVariance = allocation.reduce((sum, a) => {
+                    return sum + Math.pow(a.weight * a.risk, 2);
+                }, 0);
+                let portfolioRisk = Math.sqrt(portfolioVariance);
+                
+                console.log(`Initial allocation with ${qualifyingETFs.length} qualifying ETFs:`, 
+                           `${(portfolioRisk*100).toFixed(1)}% risk, ${(totalWeight*100).toFixed(1)}% allocated`);
+                
+                // If initial allocation exceeds risk limit, scale down proportionally
+                if (portfolioRisk > maxRisk) {
+                    const scaleFactor = maxRisk / portfolioRisk * 0.95; // 95% of max for safety buffer
+                    allocation.forEach(asset => {
+                        const oldWeight = asset.weight;
+                        asset.weight *= scaleFactor;
+                        totalWeight = totalWeight - oldWeight + asset.weight;
+                    });
+                    portfolioRisk = Math.sqrt(allocation.reduce((sum, a) => 
+                        sum + Math.pow(a.weight * a.risk, 2), 0));
+                    console.log(`Scaled down to meet risk constraint: ${(portfolioRisk*100).toFixed(1)}% risk`);
                 }
             }
             
-            // Check portfolio risk so far
-            let portfolioVariance = allocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
-            let portfolioRisk = Math.sqrt(portfolioVariance);
-            
-            console.log(`After mandatory allocations: ${(portfolioRisk*100).toFixed(1)}% risk, ${(totalWeight*100).toFixed(1)}% allocated`);
-            
-            // Step 3: Try to increase allocations of existing holdings up to 20% cap if risk allows
-            for (const holding of allocation) {
-                if (holding.weight < 0.20 && totalWeight < 1.0) {
-                    // Try increasing this holding to 20%
-                    const maxIncrease = Math.min(0.20 - holding.weight, 1.0 - totalWeight);
-                    let bestIncrease = 0;
-                    
-                    // Test incremental increases
-                    for (let increase = 0.01; increase <= maxIncrease; increase += 0.01) {
-                        const testAllocation = allocation.map(a => 
-                            a.ticker === holding.ticker 
-                                ? { ...a, weight: a.weight + increase }
-                                : a
-                        );
-                        
-                        const testVariance = testAllocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
-                        const testRisk = Math.sqrt(testVariance);
-                        
-                        if (testRisk <= maxRisk) {
-                            bestIncrease = increase;
-                        } else {
-                            break;
-                        }
-                    }
-                    
-                    if (bestIncrease > 0) {
-                        holding.weight += bestIncrease;
-                        totalWeight += bestIncrease;
-                        console.log(`Increased ${holding.ticker} by ${(bestIncrease*100).toFixed(1)}% to ${(holding.weight*100).toFixed(1)}%`);
-                    }
-                }
-            }
-            
-            // Step 4: Try to add remaining high-return assets up to 20% each if room and risk allows
+            // Step 2: Try to add remaining high-return assets if we have room
             const remainingAssets = sortedAssets.filter(asset => 
-                !allocation.some(a => a.ticker === asset.ticker) &&
+                !qualifyingETFs.some(qual => qual.ticker === asset.ticker) &&
                 asset.ticker !== 'CASH' &&
-                asset.ticker !== 'SPY'
+                // Only allow SPY if no qualifying ETFs were found
+                (asset.ticker !== 'SPY' || qualifyingETFs.length === 0)
             );
+            
+            console.log('Remaining assets to consider:', remainingAssets.map(asset => 
+                `${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk`
+            ));
             
             for (const asset of remainingAssets) {
                 if (totalWeight >= 0.98) break; // Leave room for potential cash
                 
-                // Try adding this asset up to 20% allocation
-                let testWeight = 0.05; // Start with 5%
+                // Try adding this asset with incremental weights
+                let testWeight = 0.02; // Start with 2%
                 let bestWeight = 0;
-                const maxWeight = 0.20; // Cap at 20%
+                const maxIndividualWeight = 0.25; // Max 25% for any single position
                 
-                while (testWeight <= maxWeight && (totalWeight + testWeight) <= 0.98) {
+                while (testWeight <= maxIndividualWeight && (totalWeight + testWeight) <= 0.98) {
+                    // Create test allocation
                     const testAllocation = [...allocation];
                     testAllocation.push({
                         ticker: asset.ticker,
@@ -944,18 +964,22 @@
                         bestStrategy: asset.bestStrategy
                     });
                     
-                    const testVariance = testAllocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
-                    const testRisk = Math.sqrt(testVariance);
+                    // Calculate test portfolio risk
+                    const testPortfolioVariance = testAllocation.reduce((sum, a) => {
+                        return sum + Math.pow(a.weight * a.risk, 2);
+                    }, 0);
+                    const testPortfolioRisk = Math.sqrt(testPortfolioVariance);
                     
-                    if (testRisk <= maxRisk) {
+                    if (testPortfolioRisk <= maxRisk) {
                         bestWeight = testWeight;
-                        testWeight += 0.01;
+                        testWeight += 0.01; // Increase by 1%
                     } else {
                         break;
                     }
                 }
                 
-                if (bestWeight >= 0.05) {
+                // Add the asset with the best weight if it's meaningful
+                if (bestWeight >= 0.02) { // Minimum 2% allocation
                     allocation.push({
                         ticker: asset.ticker,
                         weight: bestWeight,
@@ -969,9 +993,9 @@
                 }
             }
             
-            // Step 5: Only add cash if we have significant remaining weight (>5%)
+            // Step 3: Add cash if needed to reach 100%
             const remainingWeight = 1.0 - totalWeight;
-            if (remainingWeight > 0.05) {
+            if (remainingWeight > 0.01) {
                 allocation.push({
                     ticker: 'CASH',
                     weight: remainingWeight,
@@ -1076,6 +1100,109 @@
                     }, index * 150);
                 });
             }, 100);
+        }
+
+        // Copy functions
+        function copyTableData(tableId) {
+            const table = document.getElementById(tableId);
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            const rows = Array.from(table.querySelectorAll('tbody tr')).map(tr => {
+                return Array.from(tr.querySelectorAll('td')).map(td => {
+                    // Get text content, handling special elements
+                    const ticker = td.querySelector('.ticker');
+                    if (ticker) return ticker.textContent;
+                    
+                    const chip = td.querySelector('.strategy-chip');
+                    if (chip) return chip.textContent;
+                    
+                    return td.textContent.trim();
+                });
+            });
+
+            // Create tab-separated values
+            const tsv = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
+            
+            // Copy to clipboard
+            copyToClipboard(tsv, `${tableId}-copy-btn`);
+        }
+
+        function copyAllocationData() {
+            const allocation = currentData.filter(item => item.category === 'top-performers');
+            const mptData = calculateMPTAllocationData(allocation);
+            
+            // Create formatted allocation data
+            const lines = ['Portfolio Allocation:', ''];
+            
+            mptData.allocation.forEach(asset => {
+                const weight = (asset.weight * 100).toFixed(1);
+                lines.push(`${asset.ticker}: ${weight}%`);
+            });
+            
+            lines.push('');
+            lines.push('Portfolio Metrics:');
+            lines.push(`Expected Return: ${(mptData.metrics.expectedReturn * 100).toFixed(2)}%`);
+            lines.push(`Portfolio Risk: ${(mptData.metrics.risk * 100).toFixed(2)}%`);
+            lines.push(`Sharpe Ratio: ${mptData.metrics.sharpeRatio.toFixed(2)}`);
+            
+            copyToClipboard(lines.join('\n'), 'allocation-copy-btn');
+        }
+
+        function calculateMPTAllocationData(topPerformers) {
+            // Same logic as calculateMPTAllocation but returns the data
+            const assets = [
+                ...topPerformers.map(etf => ({
+                    ticker: etf.ticker,
+                    return: etf.bestReturn,
+                    risk: etf.riskVolatility,
+                    sharpe: etf.bestReturn / etf.riskVolatility,
+                    bestStrategy: etf.bestStrategy
+                })),
+                {
+                    ticker: 'CASH',
+                    return: 0.045,
+                    risk: 0.0,
+                    sharpe: Infinity,
+                    bestStrategy: null
+                },
+                {
+                    ticker: 'SPY',
+                    return: 0.12,
+                    risk: 0.20,
+                    sharpe: 0.12 / 0.20,
+                    bestStrategy: 'B&H'
+                }
+            ];
+
+            const maxPortfolioRisk = 0.10;
+            const allocation = optimizePortfolioWithRiskConstraint(assets, maxPortfolioRisk);
+            const metrics = calculatePortfolioMetrics(allocation);
+            
+            return { allocation, metrics };
+        }
+
+        function copyToClipboard(text, buttonId) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Find the button that was clicked
+                const button = event.target.closest('.copy-button');
+                if (button) {
+                    const originalContent = button.innerHTML;
+                    button.classList.add('copied');
+                    button.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Copied!
+                    `;
+                    
+                    setTimeout(() => {
+                        button.classList.remove('copied');
+                        button.innerHTML = originalContent;
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
         }
     </script>
 </body>

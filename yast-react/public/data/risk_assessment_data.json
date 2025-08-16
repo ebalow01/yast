@@ -5,54 +5,131 @@
     "riskColor": "#dc3545",
     "riskPriority": 4,
     "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 38.5,
-    "momentum5d": -11.9,
+    "rsi": 51.8,
+    "momentum5d": -16.9,
     "alertCount": 3,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "BCCC",
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "SIGNALS: RSI Overbought (73.1), Down trend (3 days)",
+    "rsi": 73.1,
+    "momentum5d": 0.5,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "COII",
-    "riskLevel": "LOW",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Deeply Oversold (RSI: 30.9, Momentum: +0.1%)",
-    "rsi": 30.9,
-    "momentum5d": 5.4,
-    "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "SIGNALS: RSI Overbought (72.0), Down trend (3 days)",
+    "rsi": 72.0,
+    "momentum5d": -0.7,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "COIW",
-    "riskLevel": "LOW",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Deeply Oversold (RSI: 29.6, Momentum: +0.1%)",
-    "rsi": 29.6,
-    "momentum5d": 5.0,
-    "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
+    "rsi": 70.8,
+    "momentum5d": -0.1,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
-    "ticker": "GLDY",
-    "riskLevel": "LOW",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 50.2,
-    "momentum5d": -0.4,
-    "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "ticker": "NVDW",
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "SIGNALS: RSI Overbought (73.2), Down trend (3 days)",
+    "rsi": 73.2,
+    "momentum5d": -0.7,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
-    "ticker": "GPTY",
+    "ticker": "NVII",
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "SIGNALS: RSI Overbought (76.5), Down trend (3 days)",
+    "rsi": 76.5,
+    "momentum5d": 0.3,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "NVYY",
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "CAUTION: Dividend likely in ~2 days, Medium risk",
+    "rsi": 72.5,
+    "momentum5d": -0.5,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "PLTW",
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "SIGNALS: RSI Overbought (79.9), Down trend (3 days)",
+    "rsi": 79.9,
+    "momentum5d": 2.5,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "XDTE",
+    "riskLevel": "MEDIUM",
+    "riskColor": "#ffc107",
+    "riskPriority": 3,
+    "rationale": "CAUTION: Dividend likely in ~1 days, Medium risk",
+    "rsi": 72.7,
+    "momentum5d": 1.3,
+    "alertCount": 2,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "BLOX",
     "riskLevel": "LOW",
     "riskColor": "#fd7e14",
     "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 47.2,
-    "momentum5d": -1.1,
+    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
+    "rsi": 75.6,
+    "momentum5d": 1.3,
     "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "LFGY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 52.4,
+    "momentum5d": -1.5,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "MAGY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
+    "rsi": 78.0,
+    "momentum5d": 0.8,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "MSII",
@@ -60,65 +137,208 @@
     "riskColor": "#fd7e14",
     "riskPriority": 2,
     "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 43.1,
-    "momentum5d": -8.2,
+    "rsi": 55.4,
+    "momentum5d": -9.0,
     "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
-    "ticker": "NVYY",
+    "ticker": "NFLW",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Deeply Oversold (RSI: 30.8, Momentum: -0.1%)",
+    "rsi": 30.8,
+    "momentum5d": -7.2,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "QDTE",
     "riskLevel": "LOW",
     "riskColor": "#fd7e14",
     "riskPriority": 2,
     "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 81.5,
-    "momentum5d": 1.4,
+    "rsi": 72.4,
+    "momentum5d": 0.8,
     "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
-    "ticker": "PLTW",
+    "ticker": "QDTY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 74.4,
+    "momentum5d": 1.0,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "QQQY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 78.9,
+    "momentum5d": 0.9,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "RDTE",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 61.6,
+    "momentum5d": 2.4,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "SDTY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 71.6,
+    "momentum5d": 1.2,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "TQQY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
+    "rsi": 83.3,
+    "momentum5d": 1.7,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "TSII",
     "riskLevel": "LOW",
     "riskColor": "#fd7e14",
     "riskPriority": 2,
     "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 69.0,
-    "momentum5d": -1.0,
+    "rsi": 61.6,
+    "momentum5d": 3.2,
     "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "ULTY",
     "riskLevel": "LOW",
     "riskColor": "#fd7e14",
     "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 48.9,
-    "momentum5d": 0.2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 73.3,
+    "momentum5d": 0.9,
     "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "USOY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 60.7,
+    "momentum5d": -0.1,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "WDTE",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 80.8,
+    "momentum5d": 1.3,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "WEEK",
     "riskLevel": "LOW",
     "riskColor": "#fd7e14",
     "riskPriority": 2,
-    "rationale": "SIGNALS: RSI Overbought (97.0)",
-    "rsi": 97.0,
+    "rationale": "SIGNALS: RSI Overbought (91.4)",
+    "rsi": 91.4,
     "momentum5d": 0.1,
     "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "XBTY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
+    "rsi": 74.3,
+    "momentum5d": 1.5,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "YBTC",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~0 days, Low risk",
+    "rsi": 65.6,
+    "momentum5d": -0.8,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "YETH",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "SIGNALS: RSI Overbought (82.1)",
+    "rsi": 82.1,
+    "momentum5d": 1.6,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "YMAG",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 78.8,
+    "momentum5d": 1.8,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "YMAX",
     "riskLevel": "LOW",
     "riskColor": "#fd7e14",
     "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 39.1,
-    "momentum5d": 0.5,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 80.4,
+    "momentum5d": 0.8,
     "alertCount": 1,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "YSPY",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
+    "rsi": 82.7,
+    "momentum5d": 2.2,
+    "alertCount": 1,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "AAPW",
@@ -126,10 +346,10 @@
     "riskColor": "#28a745",
     "riskPriority": 1,
     "rationale": "Normal trading conditions",
-    "rsi": 69.6,
-    "momentum5d": 7.3,
+    "rsi": 57.1,
+    "momentum5d": 2.2,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "AMZW",
@@ -137,32 +357,10 @@
     "riskColor": "#28a745",
     "riskPriority": 1,
     "rationale": "Normal trading conditions",
-    "rsi": 50.3,
-    "momentum5d": 4.2,
+    "rsi": 64.5,
+    "momentum5d": 2.5,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "BCCC",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 64.1,
-    "momentum5d": 0.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "BLOX",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 51.6,
-    "momentum5d": 4.7,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "BRKW",
@@ -170,65 +368,65 @@
     "riskColor": "#28a745",
     "riskPriority": 1,
     "rationale": "Normal trading conditions",
-    "rsi": 45.2,
-    "momentum5d": 4.3,
+    "rsi": 52.9,
+    "momentum5d": 2.8,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "CHPY",
     "riskLevel": "SAFE",
     "riskColor": "#28a745",
     "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 65.0,
-    "momentum5d": 4.0,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 54.8,
+    "momentum5d": -0.9,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "GLDY",
+    "riskLevel": "SAFE",
+    "riskColor": "#28a745",
+    "riskPriority": 1,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 58.0,
+    "momentum5d": 0.8,
+    "alertCount": 0,
+    "lastUpdated": "2025-08-16 10:34"
+  },
+  {
+    "ticker": "GPTY",
+    "riskLevel": "SAFE",
+    "riskColor": "#28a745",
+    "riskPriority": 1,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 67.6,
+    "momentum5d": 0.6,
+    "alertCount": 0,
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "HOOW",
     "riskLevel": "SAFE",
     "riskColor": "#28a745",
     "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 58.0,
-    "momentum5d": -0.3,
+    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
+    "rsi": 56.8,
+    "momentum5d": -1.4,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "IWMY",
     "riskLevel": "SAFE",
     "riskColor": "#28a745",
     "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 52.2,
-    "momentum5d": 1.2,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "LFGY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 40.3,
-    "momentum5d": 1.1,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "MAGY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
     "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 58.2,
-    "momentum5d": 0.9,
+    "rsi": 56.8,
+    "momentum5d": 1.5,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "METW",
@@ -236,10 +434,10 @@
     "riskColor": "#28a745",
     "riskPriority": 1,
     "rationale": "Normal trading conditions",
-    "rsi": 66.6,
-    "momentum5d": 3.1,
+    "rsi": 49.6,
+    "momentum5d": 1.7,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "MMKT",
@@ -247,131 +445,21 @@
     "riskColor": "#28a745",
     "riskPriority": 1,
     "rationale": "Normal trading conditions",
-    "rsi": 68.8,
+    "rsi": 57.3,
     "momentum5d": -0.0,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "NFLW",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 62.0,
-    "momentum5d": 5.2,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "NVDW",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 63.8,
-    "momentum5d": 0.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "NVII",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 69.2,
-    "momentum5d": 1.6,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "QDTE",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 63.4,
-    "momentum5d": 1.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "QDTY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 61.8,
-    "momentum5d": 1.7,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "QQQY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 58.3,
-    "momentum5d": 1.1,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "RDTE",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 53.2,
-    "momentum5d": 2.2,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "RDTY",
     "riskLevel": "SAFE",
     "riskColor": "#28a745",
     "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 50.0,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 59.1,
     "momentum5d": 1.6,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "SDTY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 55.9,
-    "momentum5d": 1.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "TQQY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 50.0,
-    "momentum5d": 2.0,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "TSII",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 67.5,
-    "momentum5d": 4.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "TSLW",
@@ -379,108 +467,20 @@
     "riskColor": "#28a745",
     "riskPriority": 1,
     "rationale": "Normal trading conditions",
-    "rsi": 62.9,
-    "momentum5d": 4.7,
+    "rsi": 60.9,
+    "momentum5d": 4.0,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   },
   {
     "ticker": "TSYY",
     "riskLevel": "SAFE",
     "riskColor": "#28a745",
     "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 51.5,
-    "momentum5d": 2.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "USOY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 45.4,
-    "momentum5d": 1.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "WDTE",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 54.9,
+    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
+    "rsi": 61.0,
     "momentum5d": 1.2,
     "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "XBTY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 49.5,
-    "momentum5d": 0.9,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "XDTE",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 59.2,
-    "momentum5d": 1.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "YBTC",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 60.6,
-    "momentum5d": 1.6,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "YETH",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 65.3,
-    "momentum5d": 7.2,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "YMAG",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 67.6,
-    "momentum5d": 2.1,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
-  },
-  {
-    "ticker": "YSPY",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 42.2,
-    "momentum5d": 1.8,
-    "alertCount": 0,
-    "lastUpdated": "2025-08-16 09:22"
+    "lastUpdated": "2025-08-16 10:34"
   }
 ]
