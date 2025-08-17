@@ -12,78 +12,6 @@ let lastGlobalRequest = 0;
 const MIN_REQUEST_INTERVAL = 10000; // 10 seconds between requests for same ticker
 const MIN_GLOBAL_INTERVAL = 3000; // 3 seconds between any requests
 
-// Fallback price data for common tickers when API is rate limited
-const fallbackPrices = {
-  'ULTY': 5.95,
-  'AAPW': 13.50,
-  'PLTW': 28.75,
-  'QDTE': 19.80,
-  'QDTY': 20.15,
-  'YMAX': 17.25,
-  'XDTE': 49.50,
-  'TQQY': 18.90,
-  'NVDW': 12.85,
-  'MSII': 13.40
-};
-
-// Generate realistic candlestick data based on known price
-function generateRealisticCandlesticks(ticker, basePrice) {
-  const candlesticks = [];
-  const now = new Date();
-  
-  // Generate last 5 days of hourly data (market hours only)
-  for (let day = 4; day >= 0; day--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - day);
-    
-    // Skip weekends
-    if (date.getDay() === 0 || date.getDay() === 6) continue;
-    
-    let dayPrice = basePrice + (Math.random() - 0.5) * (basePrice * 0.02); // ±2% daily variance
-    
-    // Market hours: 9:30 AM to 4:00 PM
-    for (let hour = 9; hour <= 15; hour++) {
-      for (let minute = 30; minute < 60; minute += 30) {
-        if (hour === 9 && minute < 30) continue; // Start at 9:30
-        if (hour === 15 && minute > 30) continue; // End at 4:00
-        
-        const timestamp = new Date(date);
-        timestamp.setHours(hour, minute, 0, 0);
-        
-        // Small intraday movements
-        const variance = basePrice * 0.005; // ±0.5% per period
-        const open = dayPrice + (Math.random() - 0.5) * variance;
-        const volatility = variance * 0.8;
-        const high = open + Math.random() * volatility;
-        const low = open - Math.random() * volatility;
-        const close = low + Math.random() * (high - low);
-        const volume = Math.floor(Math.random() * 500000) + 50000;
-        
-        dayPrice = close; // Next period starts from this close
-        
-        candlesticks.push({
-          timestamp: timestamp.toISOString(),
-          open: Math.round(open * 100) / 100,
-          high: Math.round(high * 100) / 100,
-          low: Math.round(low * 100) / 100,
-          close: Math.round(close * 100) / 100,
-          volume: volume
-        });
-      }
-    }
-  }
-  
-  return {
-    ticker: ticker,
-    period: "7d",
-    interval: "1m",
-    data_points: candlesticks.length,
-    first_timestamp: candlesticks[0]?.timestamp,
-    last_timestamp: candlesticks[candlesticks.length - 1]?.timestamp,
-    candlesticks: candlesticks,
-    note: "Realistic fallback data - Yahoo Finance API rate limited"
-  };
-}
 
 
 // Fallback function to get candlestick data using Yahoo Finance API directly with retry logic
@@ -335,36 +263,17 @@ exports.handler = async (event, context) => {
     } catch (fallbackError) {
       console.error('Both Python and Node.js fallback failed:', fallbackError);
       
-      // Check if it's a rate limiting error and we have fallback price data
+      // Return error - no fallback data
       const isRateLimited = fallbackError.message.includes('Too Many Requests') || 
                            fallbackError.message.includes('429') ||
                            fallbackError.message.includes('rate limit');
-      
-      const fallbackPrice = fallbackPrices[cacheKey];
-      
-      if (isRateLimited && fallbackPrice) {
-        console.log(`Using realistic fallback data for ${cacheKey} at $${fallbackPrice}`);
-        const fallbackData = generateRealisticCandlesticks(cacheKey, fallbackPrice);
-        
-        // Cache the fallback data with shorter duration
-        cache.set(cacheKey, {
-          data: fallbackData,
-          timestamp: Date.now()
-        });
-        
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(fallbackData)
-        };
-      }
       
       return {
         statusCode: isRateLimited ? 429 : 500,
         headers,
         body: JSON.stringify({ 
           error: isRateLimited ? 
-            `Rate limited by Yahoo Finance. Please wait a moment and try again.` :
+            `Yahoo Finance API is rate limited. Chart data temporarily unavailable.` :
             `Failed to fetch candlestick data: ${fallbackError.message}`,
           ticker: ticker.toUpperCase(),
           isRateLimited: isRateLimited
