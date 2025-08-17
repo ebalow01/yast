@@ -3500,7 +3500,7 @@ export default function DividendAnalysisDashboard() {
                           <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
                             ${(() => {
                               const weeklyDividend = portfolio.holdings.reduce((total, holding) => {
-                                const tickerData = performanceData.find(d => d.ticker === holding.ticker);
+                                const tickerData = data.find(d => d.ticker === holding.ticker);
                                 const medianDividend = tickerData?.medianDividend || 0;
                                 return total + (medianDividend * holding.shares);
                               }, 0);
