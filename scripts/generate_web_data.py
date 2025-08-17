@@ -424,6 +424,21 @@ def generate_web_data():
     print("Processing data for web...")
     success = process_analysis_data(web_data_dir)
     
+    if success:
+        # Automatically integrate risk assessment data
+        print("Integrating risk assessment data...")
+        try:
+            # Import and run the risk integration script
+            os.chdir(project_root)
+            from dashboard_risk_integration import main as integrate_risk_data
+            integrate_risk_data()
+            print("SUCCESS: Risk assessment data integrated")
+        except Exception as e:
+            print(f"WARNING: Risk assessment integration failed: {e}")
+            # Don't fail the entire process for risk data issues
+        finally:
+            os.chdir(original_dir)
+    
     return success
 
 if __name__ == "__main__":

@@ -41,13 +41,13 @@ jobs:
         python multi_ticker_orchestrator.py || echo "Analysis completed with warnings"
         echo "Analysis step completed"
         
-    - name: Generate web data
+    - name: Generate web data with risk integration
       id: webdata  
       continue-on-error: true
       run: |
-        echo "Generating web data..."
+        echo "Generating web data with automatic risk assessment..."
         python scripts/generate_web_data.py || echo "Web data generation completed with warnings"
-        echo "Web data generation completed"
+        echo "Web data generation completed with risk assessment integration"
         
     - name: Check if files were created
       run: |
