@@ -12,7 +12,11 @@
       "Bash(npm run dev:*)",
       "Bash(git fetch:*)",
       "Bash(git reset:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)",
+      "Bash(node:*)"
     ],
     "defaultMode": "acceptEdits"
   }

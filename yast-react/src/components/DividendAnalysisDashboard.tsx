@@ -63,6 +63,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
 import EnhancedDashboardIntegration from './EnhancedDashboardIntegration';
+import CandlestickChart from './CandlestickChart';
 
 export interface DividendData {
   ticker: string;
@@ -1248,6 +1249,17 @@ export default function DividendAnalysisDashboard() {
     return !localStorage.getItem('cookieAccepted');
   });
   
+  // Candlestick chart tooltip state
+  const [candlestickTooltip, setCandlestickTooltip] = useState<{
+    open: boolean;
+    ticker: string;
+    anchorEl: HTMLElement | null;
+  }>({
+    open: false,
+    ticker: '',
+    anchorEl: null
+  });
+  
   // Portfolio table sorting state
   const [sortField, setSortField] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -1571,6 +1583,23 @@ export default function DividendAnalysisDashboard() {
   const handleAcceptCookies = () => {
     localStorage.setItem('cookieAccepted', 'true');
     setShowCookieBanner(false);
+  };
+
+  // Candlestick tooltip handlers
+  const handlePriceHover = (event: React.MouseEvent<HTMLElement>, ticker: string) => {
+    setCandlestickTooltip({
+      open: true,
+      ticker: ticker,
+      anchorEl: event.currentTarget
+    });
+  };
+
+  const handlePriceLeave = () => {
+    setCandlestickTooltip({
+      open: false,
+      ticker: '',
+      anchorEl: null
+    });
   };
 
   // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE)
@@ -3854,11 +3883,21 @@ export default function DividendAnalysisDashboard() {
                                     </Typography>
                                     {/* Price and Dividend Information */}
                                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                      <Typography variant="caption" sx={{ 
-                                        color: 'rgba(255, 255, 255, 0.7)', 
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500
-                                      }}>
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: 'rgba(255, 255, 255, 0.7)', 
+                                          fontSize: '0.75rem',
+                                          fontWeight: 500,
+                                          cursor: 'pointer',
+                                          '&:hover': {
+                                            color: '#00D4FF',
+                                            textDecoration: 'underline'
+                                          }
+                                        }}
+                                        onMouseEnter={(e) => handlePriceHover(e, holding.ticker)}
+                                        onMouseLeave={handlePriceLeave}
+                                      >
                                         ${(holding.currentPrice || 0).toFixed(2)}
                                       </Typography>
                                       <Typography variant="caption" sx={{ 
@@ -4259,6 +4298,41 @@ export default function DividendAnalysisDashboard() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      {/* Candlestick Chart Tooltip */}
+      <Tooltip
+        title={
+          candlestickTooltip.ticker ? (
+            <CandlestickChart ticker={candlestickTooltip.ticker} />
+          ) : null
+        }
+        open={candlestickTooltip.open}
+        anchorEl={candlestickTooltip.anchorEl}
+        placement="top"
+        arrow
+        enterDelay={500}
+        leaveDelay={200}
+        PopperProps={{
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -10],
+              },
+            },
+          ],
+        }}
+        sx={{
+          '& .MuiTooltip-tooltip': {
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            padding: 0,
+            maxWidth: 'none',
+            fontSize: '0.75rem'
+          }
+        }}
+      />
 
       {/* Cookie Banner */}
       {showCookieBanner && (
