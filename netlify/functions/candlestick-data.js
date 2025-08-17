@@ -2,51 +2,6 @@ const { spawn } = require('child_process');
 const path = require('path');
 const https = require('https');
 
-// Generate mock candlestick data for demonstration
-function generateMockCandlestickData(ticker) {
-  const candlesticks = [];
-  const now = new Date();
-  const basePrice = 200 + Math.random() * 100; // Random base price between 200-300
-  
-  // Generate 7 days of 1-minute data (simplified - just some sample points)
-  for (let day = 6; day >= 0; day--) {
-    for (let hour = 9; hour < 16; hour++) { // Market hours 9 AM to 4 PM
-      for (let minute = 0; minute < 60; minute += 5) { // Every 5 minutes for demo
-        const timestamp = new Date(now);
-        timestamp.setDate(timestamp.getDate() - day);
-        timestamp.setHours(hour, minute, 0, 0);
-        
-        // Generate realistic OHLCV data
-        const open = basePrice + (Math.random() - 0.5) * 10;
-        const volatility = Math.random() * 2;
-        const high = open + Math.random() * volatility;
-        const low = open - Math.random() * volatility;
-        const close = low + Math.random() * (high - low);
-        const volume = Math.floor(Math.random() * 1000000) + 100000;
-        
-        candlesticks.push({
-          timestamp: timestamp.toISOString(),
-          open: Math.round(open * 100) / 100,
-          high: Math.round(high * 100) / 100,
-          low: Math.round(low * 100) / 100,
-          close: Math.round(close * 100) / 100,
-          volume: volume
-        });
-      }
-    }
-  }
-  
-  return {
-    ticker: ticker,
-    period: "7d",
-    interval: "1m",
-    data_points: candlesticks.length,
-    first_timestamp: candlesticks[0]?.timestamp,
-    last_timestamp: candlesticks[candlesticks.length - 1]?.timestamp,
-    candlesticks: candlesticks,
-    note: "This is mock data for demonstration purposes"
-  };
-}
 
 // Fallback function to get candlestick data using Yahoo Finance API directly
 async function getCandlestickDataFallback(ticker) {
@@ -236,13 +191,14 @@ exports.handler = async (event, context) => {
     } catch (fallbackError) {
       console.error('Both Python and Node.js fallback failed:', fallbackError);
       
-      // Return mock data as last resort
-      const mockData = generateMockCandlestickData(ticker.toUpperCase());
-      
+      // Return error instead of mock data
       return {
-        statusCode: 200,
+        statusCode: 500,
         headers,
-        body: JSON.stringify(mockData)
+        body: JSON.stringify({ 
+          error: `Failed to fetch candlestick data: ${fallbackError.message}`,
+          ticker: ticker.toUpperCase()
+        })
       };
     }
   }
