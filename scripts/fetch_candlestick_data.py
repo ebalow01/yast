@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fetch 7-day 1-minute candlestick data for a given ticker using yfinance
+Fetch 7-day 15-minute candlestick data for a given ticker using yfinance
 """
 
 import yfinance as yf
@@ -11,16 +11,16 @@ import pandas as pd
 
 def fetch_candlestick_data(ticker):
     """
-    Fetch 7-day 1-minute candlestick data for a ticker
+    Fetch 7-day 15-minute candlestick data for a ticker
     Returns JSON formatted OHLCV data
     """
     try:
         # Create yfinance ticker object
         yf_ticker = yf.Ticker(ticker)
         
-        # Get 7 days of 1-minute data
-        # Note: yfinance typically only provides ~30 days of 1-minute data
-        data = yf_ticker.history(period="7d", interval="1m")
+        # Get 7 days of 15-minute data
+        # 15-minute intervals have much better rate limiting than 1-minute
+        data = yf_ticker.history(period="7d", interval="15m")
         
         if data.empty:
             return {"error": f"No data found for ticker {ticker}"}
@@ -40,7 +40,7 @@ def fetch_candlestick_data(ticker):
         result = {
             "ticker": ticker,
             "period": "7d",
-            "interval": "1m",
+            "interval": "15m",
             "data_points": len(candlesticks),
             "first_timestamp": candlesticks[0]["timestamp"] if candlesticks else None,
             "last_timestamp": candlesticks[-1]["timestamp"] if candlesticks else None,

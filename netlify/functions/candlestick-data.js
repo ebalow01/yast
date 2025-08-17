@@ -24,7 +24,7 @@ async function getCandlestickDataFallback(ticker, retryCount = 0) {
     const endDate = Math.floor(Date.now() / 1000);
     const startDate = endDate - (7 * 24 * 60 * 60); // 7 days ago
     
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1m&period1=${startDate}&period2=${endDate}`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=15m&period1=${startDate}&period2=${endDate}`;
     
     https.get(url, (res) => {
       let data = '';
@@ -58,7 +58,7 @@ async function getCandlestickDataFallback(ticker, retryCount = 0) {
           resolve({
             ticker: ticker,
             period: "7d",
-            interval: "1m",
+            interval: "15m",
             data_points: candlesticks.length,
             first_timestamp: candlesticks[0]?.timestamp,
             last_timestamp: candlesticks[candlesticks.length - 1]?.timestamp,

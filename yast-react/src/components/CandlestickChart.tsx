@@ -143,21 +143,23 @@ const CandlestickChart: React.FC<CandlestickChartProps> = ({ ticker }) => {
 
 
   return (
-    <Box sx={{ 
-      width: 800, 
-      height: 600,
-      backgroundColor: 'rgba(0,0,0,0.95)',
-      border: '1px solid rgba(255,255,255,0.2)',
-      borderRadius: 2,
-      p: 2
-    }}>
+    <Box 
+      data-ticker={ticker}
+      sx={{ 
+        width: 800, 
+        height: 600,
+        backgroundColor: 'rgba(0,0,0,0.95)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        borderRadius: 2,
+        p: 2
+      }}>
       <Typography variant="h6" sx={{ 
         mb: 2, 
         textAlign: 'center', 
         color: '#00D4FF',
         fontWeight: 600 
       }}>
-        {ticker} - 7 Day Chart ({data.data_points} points)
+        {ticker} - 7 Day Chart (15m)
       </Typography>
       
       <Box sx={{ position: 'relative', width: '100%', height: 520 }}>
