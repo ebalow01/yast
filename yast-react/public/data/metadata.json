@@ -1,9 +1,9 @@
 {
-  "generated_at": "2025-08-17T07:32:07.000000",
-  "build_id": "risk_assessment_live",
+  "generated_at": "2025-08-17T11:34:07.528907",
+  "build_id": "f0ecb6c5",
   "version": "1.0.0",
   "status": "live",
-  "analysisDate": "August 16, 2025",
+  "analysisDate": "August 17, 2025",
   "startingCapital": 100000,
   "totalTickers": 44,
   "data_files": [
