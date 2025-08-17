@@ -1799,15 +1799,26 @@ export default function DividendAnalysisDashboard() {
       indicators.push(`• Active Signals: ${item.alertCount} technical alert${item.alertCount > 1 ? 's' : ''}`);
       
       // Parse and list specific signals from rationale
-      if (item.rationale && item.rationale.includes('SIGNALS:')) {
-        const signalsSection = item.rationale.split('SIGNALS:')[1];
-        if (signalsSection) {
-          const signals = signalsSection.split(',').map(s => s.trim());
-          signals.forEach(signal => {
-            if (signal) {
-              indicators.push(`  - ${signal}`);
-            }
-          });
+      if (item.rationale) {
+        // Handle SIGNALS: format
+        if (item.rationale.includes('SIGNALS:')) {
+          const signalsSection = item.rationale.split('SIGNALS:')[1];
+          if (signalsSection) {
+            const signals = signalsSection.split(',').map(s => s.trim());
+            signals.forEach(signal => {
+              if (signal) {
+                indicators.push(`  - ${signal}`);
+              }
+            });
+          }
+        } 
+        // Handle other formats (WATCH:, PREPARE:, CAUTION:, etc.)
+        else {
+          const prefixMatch = item.rationale.match(/^(WATCH|PREPARE|CAUTION|OPPORTUNITY):\s*(.+)/);
+          if (prefixMatch) {
+            const [, prefix, description] = prefixMatch;
+            indicators.push(`  - ${prefix}: ${description}`);
+          }
         }
       }
     }
