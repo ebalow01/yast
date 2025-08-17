@@ -1786,6 +1786,19 @@ export default function DividendAnalysisDashboard() {
     
     if (item.alertCount && item.alertCount > 0) {
       indicators.push(`• Active Signals: ${item.alertCount} technical alert${item.alertCount > 1 ? 's' : ''}`);
+      
+      // Parse and list specific signals from rationale
+      if (item.rationale && item.rationale.includes('SIGNALS:')) {
+        const signalsSection = item.rationale.split('SIGNALS:')[1];
+        if (signalsSection) {
+          const signals = signalsSection.split(',').map(s => s.trim());
+          signals.forEach(signal => {
+            if (signal) {
+              indicators.push(`  - ${signal}`);
+            }
+          });
+        }
+      }
     }
     
     // Add volatility context
