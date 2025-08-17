@@ -1842,9 +1842,11 @@ export default function DividendAnalysisDashboard() {
       }
       
       // Display categorized signals
-      const totalSignals = warningSignals.length + opportunitySignals.length + neutralSignals.length;
-      if (totalSignals > 0) {
-        indicators.push(`• Active Signals: ${totalSignals} alert${totalSignals > 1 ? 's' : ''} (${warningSignals.length} warning${warningSignals.length !== 1 ? 's' : ''}, ${opportunitySignals.length} opportunit${opportunitySignals.length !== 1 ? 'ies' : 'y'})`);
+      const activeSignals = warningSignals.length + opportunitySignals.length;
+      
+      // Only count warnings and opportunities as "Active Signals"
+      if (activeSignals > 0) {
+        indicators.push(`• Active Signals: ${activeSignals} alert${activeSignals > 1 ? 's' : ''} (${warningSignals.length} warning${warningSignals.length !== 1 ? 's' : ''}, ${opportunitySignals.length} opportunit${opportunitySignals.length !== 1 ? 'ies' : 'y'})`);
         
         if (warningSignals.length > 0) {
           indicators.push('  ⚠️ Risk Factors:');
@@ -1855,11 +1857,12 @@ export default function DividendAnalysisDashboard() {
           indicators.push('  🎯 Opportunities:');
           opportunitySignals.forEach(signal => indicators.push(`    - ${signal}`));
         }
-        
-        if (neutralSignals.length > 0) {
-          indicators.push('  ℹ️ Information:');
-          neutralSignals.forEach(signal => indicators.push(`    - ${signal}`));
-        }
+      }
+      
+      // Show informational items separately (not counted as alerts)
+      if (neutralSignals.length > 0) {
+        indicators.push('• Additional Information:');
+        neutralSignals.forEach(signal => indicators.push(`  ℹ️ ${signal}`));
       }
     }
     
