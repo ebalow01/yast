@@ -1607,6 +1607,12 @@ export default function DividendAnalysisDashboard() {
 
   // State for managing two-step screenshot process
   const [waitingForScreenshot, setWaitingForScreenshot] = useState<string | null>(null);
+  
+  // State for storing AI outlooks
+  const [aiOutlooks, setAiOutlooks] = useState<Record<string, { analysis: string; timestamp: string }>>(() => {
+    const saved = localStorage.getItem('aiOutlooks');
+    return saved ? JSON.parse(saved) : {};
+  });
 
   // AI Analysis function - Step 1: Open chart
   const analyzeWithClaude = async (ticker: string) => {
@@ -1702,6 +1708,52 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
       const result = await response.json();
       const analysis = result.analysis;
+      
+      // Extract just the short-term outlook content
+      let shortOutlook = '';
+      
+      // Try to find short-term outlook section
+      const shortTermMatch = analysis.match(/(?:short[- ]?term outlook|1[- ]?week[^:]*?)[:.\s]*(.*?)(?:\n\n|\n\d+\.|$)/is);
+      if (shortTermMatch) {
+        shortOutlook = shortTermMatch[1].trim();
+      } else {
+        // Try to find any outlook or forecast
+        const outlookMatch = analysis.match(/(?:outlook|forecast|expect|anticipate)[:\s]*(.*?)(?:\.\s|$)/i);
+        if (outlookMatch) {
+          shortOutlook = outlookMatch[1].trim();
+        } else {
+          // Look for bullish/bearish sentiment
+          const sentimentMatch = analysis.match(/(?:bullish|bearish|neutral|positive|negative)\s+(?:outlook|momentum|trend|bias).*?([^.]+\.)/i);
+          shortOutlook = sentimentMatch ? sentimentMatch[0].trim() : 'Analysis pending';
+        }
+      }
+      
+      // Clean up the outlook - remove "Based on" phrases
+      shortOutlook = shortOutlook
+        .replace(/^based on.*?chart[,\s]*/i, '')
+        .replace(/^based on.*?analysis[,\s]*/i, '')
+        .replace(/^the candlestick.*?shows?[,\s]*/i, '')
+        .replace(/^the chart.*?indicates?[,\s]*/i, '')
+        .trim();
+      
+      // Capitalize first letter
+      if (shortOutlook) {
+        shortOutlook = shortOutlook.charAt(0).toUpperCase() + shortOutlook.slice(1);
+      }
+      
+      // Save outlook with timestamp
+      const newOutlook = {
+        analysis: shortOutlook || 'Analysis pending',
+        timestamp: new Date().toLocaleString()
+      };
+      
+      const updatedOutlooks = {
+        ...aiOutlooks,
+        [ticker]: newOutlook
+      };
+      
+      setAiOutlooks(updatedOutlooks);
+      localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
       
       setAiAnalysisResult(analysis);
       setShowAiModal(true);
@@ -3954,6 +4006,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 45-Day Volatility
                               </TableSortLabel>
                             </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">AI Outlook</TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
@@ -4159,6 +4212,68 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   </Typography>
                                 </TableCell>
 
+                                {/* AI Outlook */}
+                                <TableCell align="center">
+                                  {aiOutlooks[holding.ticker] ? (
+                                    <Tooltip
+                                      title={
+                                        <Box>
+                                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                                            AI Analysis ({aiOutlooks[holding.ticker].timestamp})
+                                          </Typography>
+                                          <Typography variant="body2">
+                                            {aiOutlooks[holding.ticker].analysis}
+                                          </Typography>
+                                        </Box>
+                                      }
+                                      arrow
+                                      placement="top"
+                                      sx={{
+                                        '& .MuiTooltip-tooltip': {
+                                          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                                          fontSize: '0.75rem',
+                                          maxWidth: '400px',
+                                          padding: '12px'
+                                        }
+                                      }}
+                                    >
+                                      <Box sx={{ cursor: 'pointer' }}>
+                                        <Typography 
+                                          variant="caption" 
+                                          sx={{ 
+                                            color: '#00D4FF',
+                                            fontWeight: 600,
+                                            fontSize: '0.75rem',
+                                            display: 'block'
+                                          }}
+                                        >
+                                          {aiOutlooks[holding.ticker].analysis.length > 60 
+                                            ? aiOutlooks[holding.ticker].analysis.substring(0, 60) + '...'
+                                            : aiOutlooks[holding.ticker].analysis}
+                                        </Typography>
+                                        <Typography 
+                                          variant="caption" 
+                                          sx={{ 
+                                            color: 'rgba(255, 255, 255, 0.5)',
+                                            fontSize: '0.65rem'
+                                          }}
+                                        >
+                                          {new Date(aiOutlooks[holding.ticker].timestamp).toLocaleDateString()}
+                                        </Typography>
+                                      </Box>
+                                    </Tooltip>
+                                  ) : (
+                                    <Typography 
+                                      variant="caption" 
+                                      sx={{ 
+                                        color: 'rgba(255, 255, 255, 0.3)',
+                                        fontSize: '0.75rem'
+                                      }}
+                                    >
+                                      No analysis yet
+                                    </Typography>
+                                  )}
+                                </TableCell>
 
                                 <TableCell align="center">
                                   <IconButton
