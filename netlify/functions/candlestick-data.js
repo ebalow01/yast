@@ -2,17 +2,22 @@ const { spawn } = require('child_process');
 const path = require('path');
 const https = require('https');
 
-// Simple in-memory cache with 5-minute expiration
+// Simple in-memory cache with 15-minute expiration
 const cache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 
-// Rate limiting - track last request time per ticker
+// Rate limiting - track last request time globally and per ticker
 const lastRequestTimes = new Map();
-const MIN_REQUEST_INTERVAL = 2000; // 2 seconds between requests for same ticker
+let lastGlobalRequest = 0;
+const MIN_REQUEST_INTERVAL = 5000; // 5 seconds between requests for same ticker
+const MIN_GLOBAL_INTERVAL = 1000; // 1 second between any requests
 
 
-// Fallback function to get candlestick data using Yahoo Finance API directly
-async function getCandlestickDataFallback(ticker) {
+// Fallback function to get candlestick data using Yahoo Finance API directly with retry logic
+async function getCandlestickDataFallback(ticker, retryCount = 0) {
+  const maxRetries = 3;
+  const baseDelay = 2000; // 2 seconds base delay
+  
   return new Promise((resolve, reject) => {
     // Use Yahoo Finance v8 API for historical data
     const endDate = Math.floor(Date.now() / 1000);
@@ -60,11 +65,27 @@ async function getCandlestickDataFallback(ticker) {
           });
           
         } catch (error) {
-          reject(new Error(`Failed to parse Yahoo Finance response: ${error.message}`));
+          const errorMsg = `Failed to parse Yahoo Finance response: ${error.message}`;
+          if (retryCount < maxRetries && (error.message.includes('Too Many Requests') || error.message.includes('Too many requests'))) {
+            console.log(`Rate limited, retrying in ${baseDelay * (retryCount + 1)}ms (attempt ${retryCount + 1}/${maxRetries})`);
+            setTimeout(() => {
+              getCandlestickDataFallback(ticker, retryCount + 1).then(resolve).catch(reject);
+            }, baseDelay * (retryCount + 1));
+          } else {
+            reject(new Error(errorMsg));
+          }
         }
       });
     }).on('error', (error) => {
-      reject(new Error(`HTTP request failed: ${error.message}`));
+      const errorMsg = `HTTP request failed: ${error.message}`;
+      if (retryCount < maxRetries) {
+        console.log(`Request failed, retrying in ${baseDelay * (retryCount + 1)}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => {
+          getCandlestickDataFallback(ticker, retryCount + 1).then(resolve).catch(reject);
+        }, baseDelay * (retryCount + 1));
+      } else {
+        reject(new Error(errorMsg));
+      }
     });
   });
 }
@@ -129,13 +150,22 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Rate limiting check
+    // Global rate limiting check
+    const timeSinceGlobalRequest = Date.now() - lastGlobalRequest;
+    if (timeSinceGlobalRequest < MIN_GLOBAL_INTERVAL) {
+      const waitTime = MIN_GLOBAL_INTERVAL - timeSinceGlobalRequest;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+
+    // Per-ticker rate limiting check
     const lastRequestTime = lastRequestTimes.get(cacheKey) || 0;
     const timeSinceLastRequest = Date.now() - lastRequestTime;
     if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
       const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
+    
+    lastGlobalRequest = Date.now();
     lastRequestTimes.set(cacheKey, Date.now());
 
     // Path to the Python script
