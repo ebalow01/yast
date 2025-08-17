@@ -2,6 +2,14 @@ const { spawn } = require('child_process');
 const path = require('path');
 const https = require('https');
 
+// Simple in-memory cache with 5-minute expiration
+const cache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Rate limiting - track last request time per ticker
+const lastRequestTimes = new Map();
+const MIN_REQUEST_INTERVAL = 2000; // 2 seconds between requests for same ticker
+
 
 // Fallback function to get candlestick data using Yahoo Finance API directly
 async function getCandlestickDataFallback(ticker) {
@@ -109,6 +117,27 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Check cache first
+    const cacheKey = ticker.toUpperCase();
+    const cachedData = cache.get(cacheKey);
+    if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_DURATION) {
+      console.log(`Returning cached data for ${cacheKey}`);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(cachedData.data)
+      };
+    }
+
+    // Rate limiting check
+    const lastRequestTime = lastRequestTimes.get(cacheKey) || 0;
+    const timeSinceLastRequest = Date.now() - lastRequestTime;
+    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+      const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    lastRequestTimes.set(cacheKey, Date.now());
+
     // Path to the Python script
     const scriptPath = path.join(process.cwd(), 'scripts', 'fetch_candlestick_data.py');
     
@@ -169,6 +198,12 @@ exports.handler = async (event, context) => {
       tryNextCommand();
     });
 
+    // Cache the successful result
+    cache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+
     return {
       statusCode: 200,
       headers,
@@ -182,6 +217,12 @@ exports.handler = async (event, context) => {
       // Try Node.js fallback
       const result = await getCandlestickDataFallback(ticker.toUpperCase());
       
+      // Cache the successful result
+      cache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now()
+      });
+      
       return {
         statusCode: 200,
         headers,
@@ -191,13 +232,20 @@ exports.handler = async (event, context) => {
     } catch (fallbackError) {
       console.error('Both Python and Node.js fallback failed:', fallbackError);
       
-      // Return error instead of mock data
+      // Check if it's a rate limiting error
+      const isRateLimited = fallbackError.message.includes('Too Many Requests') || 
+                           fallbackError.message.includes('429') ||
+                           fallbackError.message.includes('rate limit');
+      
       return {
-        statusCode: 500,
+        statusCode: isRateLimited ? 429 : 500,
         headers,
         body: JSON.stringify({ 
-          error: `Failed to fetch candlestick data: ${fallbackError.message}`,
-          ticker: ticker.toUpperCase()
+          error: isRateLimited ? 
+            `Rate limited by Yahoo Finance. Please wait a moment and try again.` :
+            `Failed to fetch candlestick data: ${fallbackError.message}`,
+          ticker: ticker.toUpperCase(),
+          isRateLimited: isRateLimited
         })
       };
     }
