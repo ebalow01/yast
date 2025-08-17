@@ -3846,7 +3846,7 @@ export default function DividendAnalysisDashboard() {
                                       }}
                                     >
                                       <Chip
-                                        label={tickerData.riskLevel}
+                                        label={tickerData?.riskLevel || 'N/A'}
                                         size="small"
                                         onClick={() => {
                                           const analysisText = `${holding.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(tickerData)}`;
@@ -3855,11 +3855,11 @@ export default function DividendAnalysisDashboard() {
                                         sx={{
                                           fontWeight: 700,
                                           fontSize: '0.75rem',
-                                          backgroundColor: tickerData.riskColor || '#6c757d',
-                                          color: '#FFFFFF',
+                                          backgroundColor: riskChip.color,
+                                          color: riskChip.textColor,
                                           cursor: 'pointer',
                                           '&:hover': {
-                                            backgroundColor: tickerData.riskColor || '#6c757d',
+                                            backgroundColor: riskChip.color,
                                             opacity: 0.8,
                                             transform: 'scale(1.05)',
                                             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)'
