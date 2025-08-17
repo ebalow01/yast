@@ -20,7 +20,7 @@
     "rsi": 79.9,
     "momentum5d": 2.5,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "YMAX",
@@ -30,7 +30,7 @@
     "divCaptureReturn": 1.2326000000000001,
     "bestStrategy": "DC",
     "bestReturn": 1.2326000000000001,
-    "finalValue": 223261.0,
+    "finalValue": 223262.0,
     "dcWinRate": 0.9359999999999999,
     "riskVolatility": 0.14,
     "medianDividend": 0.17,
@@ -43,7 +43,7 @@
     "rsi": 80.4,
     "momentum5d": 0.8,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "QDTE",
@@ -66,7 +66,7 @@
     "rsi": 72.4,
     "momentum5d": 0.8,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "LFGY",
@@ -89,7 +89,7 @@
     "rsi": 52.4,
     "momentum5d": -1.5,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "YMAG",
@@ -99,7 +99,7 @@
     "divCaptureReturn": 0.9366,
     "bestStrategy": "DC",
     "bestReturn": 0.9366,
-    "finalValue": 193664.0,
+    "finalValue": 193665.0,
     "dcWinRate": 0.894,
     "riskVolatility": 0.12,
     "medianDividend": 0.158,
@@ -112,7 +112,30 @@
     "rsi": 78.8,
     "momentum5d": 1.8,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
+  },
+  {
+    "ticker": "TSLW",
+    "tradingDays": 22,
+    "exDivDay": "Monday",
+    "buyHoldReturn": 0.36810000000000004,
+    "divCaptureReturn": 0.9142,
+    "bestStrategy": "DC",
+    "bestReturn": 0.9142,
+    "finalValue": 191418.0,
+    "dcWinRate": 0.727,
+    "riskVolatility": 0.583,
+    "medianDividend": 0.432,
+    "forwardYield": 68.1,
+    "category": "excluded",
+    "riskLevel": "SAFE",
+    "riskColor": "#28a745",
+    "riskPriority": 1,
+    "rationale": "Normal trading conditions",
+    "rsi": 60.9,
+    "momentum5d": 4.0,
+    "alertCount": 0,
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "NVDW",
@@ -135,30 +158,7 @@
     "rsi": 73.2,
     "momentum5d": -0.7,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
-  },
-  {
-    "ticker": "TSLW",
-    "tradingDays": 23,
-    "exDivDay": "Monday",
-    "buyHoldReturn": 0.4514,
-    "divCaptureReturn": 0.8034,
-    "bestStrategy": "DC",
-    "bestReturn": 0.8034,
-    "finalValue": 180336.0,
-    "dcWinRate": 0.696,
-    "riskVolatility": 0.583,
-    "medianDividend": 0.439,
-    "forwardYield": 69.2,
-    "category": "excluded",
-    "riskLevel": "SAFE",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 60.9,
-    "momentum5d": 4.0,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "HOOW",
@@ -181,7 +181,7 @@
     "rsi": 56.8,
     "momentum5d": -1.4,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "ULTY",
@@ -204,7 +204,7 @@
     "rsi": 73.3,
     "momentum5d": 0.9,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "COIW",
@@ -227,14 +227,14 @@
     "rsi": 70.8,
     "momentum5d": -0.1,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "XDTE",
     "tradingDays": 72,
     "exDivDay": "Thursday",
     "buyHoldReturn": 0.7170000000000001,
-    "divCaptureReturn": 0.6751999999999999,
+    "divCaptureReturn": 0.6751,
     "bestStrategy": "B&H",
     "bestReturn": 0.7170000000000001,
     "finalValue": 171698.0,
@@ -250,7 +250,7 @@
     "rsi": 72.7,
     "momentum5d": 1.3,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "IWMY",
@@ -273,7 +273,7 @@
     "rsi": 56.8,
     "momentum5d": 1.5,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "YBTC",
@@ -296,7 +296,7 @@
     "rsi": 65.6,
     "momentum5d": -0.8,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "QQQY",
@@ -319,7 +319,7 @@
     "rsi": 78.9,
     "momentum5d": 0.9,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "NVYY",
@@ -342,7 +342,7 @@
     "rsi": 72.5,
     "momentum5d": -0.5,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "CHPY",
@@ -365,7 +365,7 @@
     "rsi": 54.8,
     "momentum5d": -0.9,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "YETH",
@@ -388,7 +388,7 @@
     "rsi": 82.1,
     "momentum5d": 1.6,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "RDTE",
@@ -411,7 +411,7 @@
     "rsi": 61.6,
     "momentum5d": 2.4,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "GPTY",
@@ -434,7 +434,7 @@
     "rsi": 67.6,
     "momentum5d": 0.6,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "XBTY",
@@ -457,7 +457,7 @@
     "rsi": 74.3,
     "momentum5d": 1.5,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "AAPW",
@@ -480,7 +480,7 @@
     "rsi": 57.1,
     "momentum5d": 2.2,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "TSYY",
@@ -503,7 +503,7 @@
     "rsi": 61.0,
     "momentum5d": 1.2,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "NVII",
@@ -526,7 +526,7 @@
     "rsi": 76.5,
     "momentum5d": 0.3,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "WDTE",
@@ -549,7 +549,7 @@
     "rsi": 80.8,
     "momentum5d": 1.3,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "BLOX",
@@ -572,7 +572,7 @@
     "rsi": 75.6,
     "momentum5d": 1.3,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "COII",
@@ -595,7 +595,7 @@
     "rsi": 72.0,
     "momentum5d": -0.7,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "MAGY",
@@ -618,7 +618,7 @@
     "rsi": 78.0,
     "momentum5d": 0.8,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "RDTY",
@@ -641,7 +641,30 @@
     "rsi": 59.1,
     "momentum5d": 1.6,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
+  },
+  {
+    "ticker": "QDTY",
+    "tradingDays": 23,
+    "exDivDay": "Thursday",
+    "buyHoldReturn": 0.1787,
+    "divCaptureReturn": 0.22469999999999998,
+    "bestStrategy": "DC",
+    "bestReturn": 0.22469999999999998,
+    "finalValue": 122469.0,
+    "dcWinRate": 0.9129999999999999,
+    "riskVolatility": 0.105,
+    "medianDividend": 0.24,
+    "forwardYield": 27.7,
+    "category": "excluded",
+    "riskLevel": "LOW",
+    "riskColor": "#fd7e14",
+    "riskPriority": 2,
+    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
+    "rsi": 74.4,
+    "momentum5d": 1.0,
+    "alertCount": 1,
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "TQQY",
@@ -664,7 +687,7 @@
     "rsi": 83.3,
     "momentum5d": 1.7,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "SDTY",
@@ -687,7 +710,7 @@
     "rsi": 71.6,
     "momentum5d": 1.2,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "METW",
@@ -710,30 +733,7 @@
     "rsi": 49.6,
     "momentum5d": 1.7,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
-  },
-  {
-    "ticker": "QDTY",
-    "tradingDays": 24,
-    "exDivDay": "Thursday",
-    "buyHoldReturn": 0.1966,
-    "divCaptureReturn": 0.2107,
-    "bestStrategy": "DC",
-    "bestReturn": 0.2107,
-    "finalValue": 121066.0,
-    "dcWinRate": 0.917,
-    "riskVolatility": 0.105,
-    "medianDividend": 0.246,
-    "forwardYield": 28.4,
-    "category": "excluded",
-    "riskLevel": "LOW",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 74.4,
-    "momentum5d": 1.0,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "YSPY",
@@ -756,7 +756,7 @@
     "rsi": 82.7,
     "momentum5d": 2.2,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "BCCC",
@@ -779,7 +779,7 @@
     "rsi": 73.1,
     "momentum5d": 0.5,
     "alertCount": 2,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "USOY",
@@ -802,7 +802,7 @@
     "rsi": 60.7,
     "momentum5d": -0.1,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "AMZW",
@@ -825,7 +825,7 @@
     "rsi": 64.5,
     "momentum5d": 2.5,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "MSII",
@@ -848,7 +848,7 @@
     "rsi": 55.4,
     "momentum5d": -9.0,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "TSII",
@@ -871,7 +871,7 @@
     "rsi": 61.6,
     "momentum5d": 3.2,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "NFLW",
@@ -894,7 +894,7 @@
     "rsi": 30.8,
     "momentum5d": -7.2,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "GLDY",
@@ -917,7 +917,7 @@
     "rsi": 58.0,
     "momentum5d": 0.8,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "BRKW",
@@ -940,7 +940,7 @@
     "rsi": 52.9,
     "momentum5d": 2.8,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "MMKT",
@@ -963,7 +963,7 @@
     "rsi": 57.3,
     "momentum5d": -0.0,
     "alertCount": 0,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "WEEK",
@@ -986,7 +986,7 @@
     "rsi": 91.4,
     "momentum5d": 0.1,
     "alertCount": 1,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   },
   {
     "ticker": "MST",
@@ -1009,6 +1009,6 @@
     "rsi": 51.8,
     "momentum5d": -16.9,
     "alertCount": 3,
-    "riskLastUpdated": "2025-08-16 11:09"
+    "riskLastUpdated": "2025-08-17 07:32"
   }
 ]

@@ -74,6 +74,7 @@ export interface DividendData {
   dcWinRate: number;
   riskVolatility: number;
   medianDividend: number;
+  medianLast3?: number;
   forwardYield?: number;
   currentPrice?: number;
   category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
@@ -1355,6 +1356,7 @@ export default function DividendAnalysisDashboard() {
                 dcWinRate: item.dcWinRate, // Already in decimal format
                 riskVolatility: item.riskVolatility, // Already in decimal format
                 medianDividend: rtData?.medianDividend || item.medianDividend,
+                medianLast3: rtData?.medianLast3 || item.medianDividend,
                 forwardYield: actualYield,
                 currentPrice: currentPrice,
                 lastDividend: lastDividend,
@@ -1798,9 +1800,15 @@ export default function DividendAnalysisDashboard() {
     return indicators.join('\n');
   };
 
-  // Calculate expected dividend based on ex-div day
-  const getExpectedDividend = (exDivDay: string, medianDividend: number) => {
-    if (!exDivDay || !medianDividend) return null;
+  // Calculate expected dividend based on ex-div day using median of last 3 dividends
+  const getExpectedDividend = (exDivDay: string, medianDividend: number, tickerData?: DividendData) => {
+    if (!exDivDay) return null;
+    
+    // Get median of last 3 dividends from tickerData (which already includes real-time data)
+    const medianLast3 = tickerData?.medianLast3 || medianDividend;
+    const currentPrice = tickerData?.currentPrice;
+    
+    if (!medianLast3) return null;
     
     const dayMap = {
       'Monday': 1,
@@ -1820,9 +1828,13 @@ export default function DividendAnalysisDashboard() {
     let daysUntil = targetDay - currentDay;
     if (daysUntil <= 0) daysUntil += 7; // Next week if already passed
     
+    // Calculate forward yield: (median of last 3 dividends / current price) * 100
+    const forwardYield = currentPrice && currentPrice > 0 ? (medianLast3 / currentPrice) * 100 : 0;
+    
     return {
       daysUntil,
-      expectedDividend: medianDividend,
+      expectedDividend: medianLast3,
+      forwardYield: forwardYield,
       nextExDivDate: new Date(today.getTime() + daysUntil * 24 * 60 * 60 * 1000)
     };
   };
@@ -3509,7 +3521,7 @@ export default function DividendAnalysisDashboard() {
                           {portfolio.holdings.map((holding) => {
                             const tickerData = data.find(d => d.ticker === holding.ticker);
                             const riskChip = getRiskLevelChip(tickerData?.riskLevel);
-                            const expectedDiv = getExpectedDividend(tickerData?.exDivDay || '', tickerData?.medianDividend || 0);
+                            const expectedDiv = getExpectedDividend(tickerData?.exDivDay || '', tickerData?.medianDividend || 0, tickerData);
                             
                             return (
                               <TableRow key={holding.ticker} sx={{ 
@@ -3561,7 +3573,7 @@ export default function DividendAnalysisDashboard() {
                                         fontSize: '0.7rem',
                                         fontWeight: 500
                                       }}>
-                                        ~${expectedDiv.expectedDividend.toFixed(3)} in {expectedDiv.daysUntil}d
+                                        ~${expectedDiv.expectedDividend.toFixed(3)} ({expectedDiv.forwardYield.toFixed(1)}%)
                                       </Typography>
                                     )}
                                   </Box>
