@@ -63,7 +63,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
 import EnhancedDashboardIntegration from './EnhancedDashboardIntegration';
-import CandlestickChart from './CandlestickChart';
+// import CandlestickChart from './CandlestickChart';
 
 export interface DividendData {
   ticker: string;
@@ -1243,6 +1243,9 @@ export default function DividendAnalysisDashboard() {
   const [newPrice, setNewPrice] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [aiAnalysisLoading, setAiAnalysisLoading] = useState<string | null>(null);
+  const [aiAnalysisResult, setAiAnalysisResult] = useState<string | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
   
   // Cookie banner state
   const [showCookieBanner, setShowCookieBanner] = useState(() => {
@@ -1602,6 +1605,129 @@ export default function DividendAnalysisDashboard() {
     });
   };
 
+  // State for managing two-step screenshot process
+  const [waitingForScreenshot, setWaitingForScreenshot] = useState<string | null>(null);
+
+  // AI Analysis function - Step 1: Open chart
+  const analyzeWithClaude = async (ticker: string) => {
+    try {
+      // If we're already waiting for a screenshot, this is step 2
+      if (waitingForScreenshot === ticker) {
+        setAiAnalysisLoading(ticker);
+        
+        // Create file input for screenshot upload
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+        document.body.appendChild(fileInput);
+
+        // Wait for user to select screenshot
+        const file = await new Promise<File | null>((resolve) => {
+          fileInput.onchange = (e: any) => {
+            const file = e.target.files[0];
+            document.body.removeChild(fileInput);
+            resolve(file);
+          };
+          fileInput.click();
+        });
+
+        if (!file) {
+          setAiAnalysisLoading(null);
+          setWaitingForScreenshot(null);
+          return;
+        }
+
+        // Convert image to base64
+        const base64Image = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // Get stock data for the analysis
+        const stockData = data.find(d => d.ticker === ticker);
+        if (!stockData) {
+          throw new Error('Stock data not found');
+        }
+
+        // Prepare the prompt for image analysis
+        const prompt = `Analyze this ${ticker} candlestick chart screenshot for trading opportunities:
+
+STOCK FUNDAMENTALS:
+Ticker: ${ticker}
+Current Price: $${stockData.currentPrice?.toFixed(2) || 'N/A'}
+Risk Level: ${stockData.riskLevel || 'Unknown'}
+Volatility: ${stockData.riskVolatility ? (stockData.riskVolatility * 100).toFixed(1) + '%' : 'N/A'}
+Median Dividend: $${stockData.medianDividend?.toFixed(3) || 'N/A'}
+Forward Yield: ${stockData.forwardYield ? stockData.forwardYield.toFixed(2) + '%' : 'N/A'}
+Best Strategy Return: ${stockData.bestReturn?.toFixed(2) || 'N/A'}%
+Win Rate: ${stockData.dcWinRate?.toFixed(1) || 'N/A'}%
+Current Rationale: ${stockData.rationale || 'None'}
+
+CHART ANALYSIS REQUEST:
+Please analyze the candlestick chart image and provide:
+
+1. **Pattern Recognition**: Identify any candlestick patterns (doji, hammer, engulfing, hanging man, shooting star, etc.)
+2. **Support & Resistance**: Key levels visible on the chart
+3. **Trend Analysis**: Current trend direction and strength
+4. **Volume Analysis**: Volume patterns and their significance
+5. **Entry/Exit Points**: Specific price levels for trades based on chart patterns
+6. **Risk Management**: Stop-loss and take-profit recommendations
+7. **Short-term Outlook**: 1-week technical forecast
+8. **Dividend Timing**: Best timing for dividend capture based on chart patterns
+
+Focus on actionable insights from the visual chart patterns and price action.`;
+
+      // Call our Netlify function with image and prompt
+      const response = await fetch('/.netlify/functions/claude-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          image: base64Image
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API request failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const analysis = result.analysis;
+      
+      setAiAnalysisResult(analysis);
+      setShowAiModal(true);
+      setSnackbarMessage(`AI analysis complete for ${ticker}`);
+      setShowSnackbar(true);
+      setWaitingForScreenshot(null);
+
+      } else {
+        // Step 1: Open chart and set waiting state
+        const chartUrl = `https://finance.yahoo.com/quote/${ticker}/chart?interval=30m&range=5d`;
+        window.open(chartUrl, '_blank', 'width=1200,height=800');
+        setWaitingForScreenshot(ticker);
+        setSnackbarMessage(`Chart opened. Take a screenshot, then click the robot button again to upload it.`);
+        setShowSnackbar(true);
+      }
+
+    } catch (error) {
+      console.error('AI Analysis error:', error);
+      setSnackbarMessage(`AI Analysis failed: ${error.message}`);
+      setShowSnackbar(true);
+      setWaitingForScreenshot(null);
+    } finally {
+      setAiAnalysisLoading(null);
+    }
+  };
+
   // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE)
   const getRiskLevelChip = (riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE') => {
     if (!riskLevel) {
@@ -1792,6 +1918,7 @@ export default function DividendAnalysisDashboard() {
     };
 
     const indicators = [];
+    let signalsToDisplay = null;
     
     // Add risk level explanation
     indicators.push(`${item.riskLevel} RISK: ${riskExplanations[item.riskLevel]}`);
@@ -1870,29 +1997,10 @@ export default function DividendAnalysisDashboard() {
         }
       }
       
-      // Display categorized signals
-      const activeSignals = warningSignals.length + opportunitySignals.length;
-      
-      // Only count warnings and opportunities as "Active Signals"
-      if (activeSignals > 0) {
-        indicators.push(`• Active Signals: ${activeSignals} alert${activeSignals > 1 ? 's' : ''} (${warningSignals.length} warning${warningSignals.length !== 1 ? 's' : ''}, ${opportunitySignals.length} opportunit${opportunitySignals.length !== 1 ? 'ies' : 'y'})`);
-        
-        if (warningSignals.length > 0) {
-          indicators.push('  ⚠️ Risk Factors:');
-          warningSignals.forEach(signal => indicators.push(`    - ${signal}`));
-        }
-        
-        if (opportunitySignals.length > 0) {
-          indicators.push('  🎯 Opportunities:');
-          opportunitySignals.forEach(signal => indicators.push(`    - ${signal}`));
-        }
-      }
-      
-      // Show informational items separately (not counted as alerts)
-      if (neutralSignals.length > 0) {
-        indicators.push('• Additional Information:');
-        neutralSignals.forEach(signal => indicators.push(`  ℹ️ ${signal}`));
-      }
+      // Store signals for later display (moved to end)
+      signalsToDisplay = { warningSignals, opportunitySignals, neutralSignals };
+    } else {
+      signalsToDisplay = null;
     }
     
     // Add volatility context
@@ -1903,6 +2011,30 @@ export default function DividendAnalysisDashboard() {
       indicators.push(`• Volatility: ${volPct.toFixed(1)}% - Elevated volatility`);
     } else {
       indicators.push(`• Volatility: ${volPct.toFixed(1)}% - Relatively stable`);
+    }
+    
+    // Display signals at the end (moved from earlier)
+    if (item.rationale && item.rationale !== 'Normal trading conditions' && signalsToDisplay) {
+      const { warningSignals, opportunitySignals, neutralSignals } = signalsToDisplay;
+      
+      if (warningSignals.length > 0) {
+        indicators.push('');
+        indicators.push('⚠️ Risk Factors:');
+        warningSignals.forEach(signal => indicators.push(`  - ${signal}`));
+      }
+      
+      if (opportunitySignals.length > 0) {
+        indicators.push('');
+        indicators.push('🎯 Opportunities:');
+        opportunitySignals.forEach(signal => indicators.push(`  - ${signal}`));
+      }
+      
+      // Show informational items separately (not counted as alerts)
+      if (neutralSignals.length > 0) {
+        indicators.push('');
+        indicators.push('ℹ️ Additional Information:');
+        neutralSignals.forEach(signal => indicators.push(`  - ${signal}`));
+      }
     }
     
     if (item.riskLastUpdated) {
@@ -2806,9 +2938,6 @@ export default function DividendAnalysisDashboard() {
                 Risk Level
               </TableCell>
               <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Indicators
-              </TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Yield
               </TableCell>
             </TableRow>
@@ -3029,20 +3158,6 @@ export default function DividendAnalysisDashboard() {
                   ) : (
                     getRiskChip(item.riskVolatility)
                   )}
-                </TableCell>
-                <TableCell align="left" sx={{ maxWidth: '200px' }}>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      color: 'rgba(255, 255, 255, 0.8)', 
-                      fontSize: '0.8rem',
-                      wordWrap: 'break-word',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
-                    {getCleanedIndicators(item.rationale)}
-                  </Typography>
                 </TableCell>
                 <TableCell align="center">
                   <Typography 
@@ -3839,16 +3954,6 @@ export default function DividendAnalysisDashboard() {
                                 45-Day Volatility
                               </TableSortLabel>
                             </TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
-                              <TableSortLabel
-                                active={sortField === 'indicators'}
-                                direction={sortField === 'indicators' ? sortDirection : 'asc'}
-                                onClick={() => handleSort('indicators')}
-                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
-                              >
-                                Indicators
-                              </TableSortLabel>
-                            </TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
@@ -3895,11 +4000,36 @@ export default function DividendAnalysisDashboard() {
                                             textDecoration: 'underline'
                                           }
                                         }}
-                                        onMouseEnter={(e) => handlePriceHover(e, holding.ticker)}
+                                        onMouseEnter={() => {}} // Disabled hover chart
                                         onMouseLeave={handlePriceLeave}
+                                        onClick={() => {
+                                          // Open Yahoo Finance chart in new window
+                                          window.open(`https://finance.yahoo.com/quote/${holding.ticker}/chart?interval=30m&range=5d`, '_blank');
+                                          setSnackbarMessage(`Opened ${holding.ticker} chart in new window`);
+                                          setShowSnackbar(true);
+                                        }}
                                       >
                                         ${(holding.currentPrice || 0).toFixed(2)}
                                       </Typography>
+                                      <Button
+                                        size="small"
+                                        variant="text"
+                                        sx={{
+                                          minWidth: 'auto',
+                                          padding: '4px 6px',
+                                          fontSize: '1rem',
+                                          height: '24px',
+                                          backgroundColor: waitingForScreenshot === holding.ticker ? 'rgba(255, 183, 77, 0.2)' : 'transparent',
+                                          border: waitingForScreenshot === holding.ticker ? '1px solid rgba(255, 183, 77, 0.5)' : 'none',
+                                          '&:hover': {
+                                            backgroundColor: waitingForScreenshot === holding.ticker ? 'rgba(255, 183, 77, 0.3)' : 'rgba(255, 255, 255, 0.1)'
+                                          }
+                                        }}
+                                        onClick={() => analyzeWithClaude(holding.ticker)}
+                                        disabled={aiAnalysisLoading === holding.ticker}
+                                      >
+                                        {waitingForScreenshot === holding.ticker ? '📸' : '🤖'}
+                                      </Button>
                                       <Typography variant="caption" sx={{ 
                                         color: 'rgba(0, 230, 118, 0.8)', 
                                         fontSize: '0.75rem',
@@ -4029,21 +4159,6 @@ export default function DividendAnalysisDashboard() {
                                   </Typography>
                                 </TableCell>
 
-                                {/* Indicators */}
-                                <TableCell align="center" sx={{ maxWidth: '200px' }}>
-                                  <Typography 
-                                    variant="body2" 
-                                    sx={{ 
-                                      color: 'rgba(255, 255, 255, 0.8)', 
-                                      fontSize: '0.8rem',
-                                      wordWrap: 'break-word',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis'
-                                    }}
-                                  >
-                                    {getCleanedIndicators(tickerData?.rationale)}
-                                  </Typography>
-                                </TableCell>
 
                                 <TableCell align="center">
                                   <IconButton
@@ -4303,7 +4418,7 @@ export default function DividendAnalysisDashboard() {
       <Tooltip
         title={
           candlestickTooltip.ticker ? (
-            <CandlestickChart ticker={candlestickTooltip.ticker} />
+            <div>Chart for {candlestickTooltip.ticker} (temporarily disabled)</div>
           ) : null
         }
         open={candlestickTooltip.open}
@@ -4375,6 +4490,66 @@ export default function DividendAnalysisDashboard() {
           </Button>
         </Box>
       )}
+
+      {/* AI Analysis Modal */}
+      <Dialog
+        open={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 2,
+            color: 'white'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          color: '#00D4FF', 
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          pb: 1
+        }}>
+          🤖 AI Market Analysis
+        </DialogTitle>
+        <DialogContent>
+          {aiAnalysisResult ? (
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'rgba(255, 255, 255, 0.9)',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap'
+              }}
+            >
+              {aiAnalysisResult}
+            </Typography>
+          ) : (
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              No analysis available
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button
+            onClick={() => setShowAiModal(false)}
+            sx={{
+              color: '#00D4FF',
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: 'rgba(0, 212, 255, 0.1)'
+              }
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ThemeProvider>
   );
 }

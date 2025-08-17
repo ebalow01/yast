@@ -75,3 +75,6 @@ output*.txt
 *_output.txt
 comprehensive_sorted_table_*.txt
 multi_ticker_analysis_*.txt
+
+# Local Netlify folder
+.netlify

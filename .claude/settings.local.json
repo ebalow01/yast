@@ -16,7 +16,9 @@
       "Bash(grep:*)",
       "Bash(npm install:*)",
       "Bash(rm:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(netlify dev:*)",
+      "Bash(taskkill:*)"
     ],
     "defaultMode": "acceptEdits"
   }
