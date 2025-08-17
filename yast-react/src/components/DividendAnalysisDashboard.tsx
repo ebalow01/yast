@@ -2023,10 +2023,19 @@ export default function DividendAnalysisDashboard() {
                 <TableRow key={asset.ticker} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" sx={{ 
-                        fontWeight: 600, 
-                        color: asset.ticker === 'CASH' ? '#FFB74D' : '#FFFFFF' 
-                      }}>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 600, 
+                          color: asset.ticker === 'CASH' ? '#FFB74D' : '#00D4FF',
+                          cursor: asset.ticker === 'CASH' ? 'default' : 'pointer',
+                          '&:hover': asset.ticker === 'CASH' ? {} : {
+                            textDecoration: 'underline',
+                            color: '#40E0FF'
+                          }
+                        }}
+                        onClick={asset.ticker === 'CASH' ? undefined : () => window.open(`https://finance.yahoo.com/quote/${asset.ticker}`, '_blank')}
+                      >
                         {asset.ticker}
                       </Typography>
                     </Box>
@@ -2128,7 +2137,19 @@ export default function DividendAnalysisDashboard() {
                 <CardContent sx={{ p: 2.5 }}>
                   {/* Header */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="h6" sx={{ color: '#FFFFFF', fontWeight: 700 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        color: '#00D4FF', 
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          color: '#40E0FF'
+                        }
+                      }}
+                      onClick={() => window.open(`https://finance.yahoo.com/quote/${asset.ticker}`, '_blank')}
+                    >
                       {asset.ticker}
                     </Typography>
                     <Typography variant="h5" sx={{ color: '#00D4FF', fontWeight: 700 }}>
@@ -3722,7 +3743,19 @@ export default function DividendAnalysisDashboard() {
                                 {/* Ticker with Price and Dividend */}
                                 <TableCell>
                                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                    <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 600 }}>
+                                    <Typography 
+                                      variant="subtitle2" 
+                                      sx={{ 
+                                        color: '#00D4FF', 
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                          textDecoration: 'underline',
+                                          color: '#40E0FF'
+                                        }
+                                      }}
+                                      onClick={() => window.open(`https://finance.yahoo.com/quote/${holding.ticker}`, '_blank')}
+                                    >
                                       {holding.ticker}
                                     </Typography>
                                     {/* Price and Dividend Information */}
