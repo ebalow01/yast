@@ -5,8 +5,6 @@ on:
     # Run daily at 6am UTC
     - cron: '0 6 * * 1-5'  # Monday-Friday at 6am UTC (weekdays only)
   workflow_dispatch:  # Allow manual triggers
-  push:
-    branches: [ main ]  # Auto-deploy on push to main
 
 permissions:
   contents: write  # Allow the action to push commits
@@ -22,6 +20,14 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0  # Fetch full history for git operations
+        
+    - name: Create and switch to data-updates branch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        # Create or switch to data-updates branch
+        git checkout -B data-updates
+        git reset --hard origin/main  # Ensure it's based on latest main
       
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -55,10 +61,8 @@ jobs:
         ls -la yast-react/public/data/ || echo "No web data directory found"
         echo "Analysis completed. Text files are in local directory but not committed (ignored by .gitignore)"
         
-    - name: Commit and push if data changed
+    - name: Commit and push data updates to separate branch
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
         git config --local advice.addIgnoredFile false
         
         # Add web data files (these are the important ones for Netlify)
@@ -69,10 +73,18 @@ jobs:
           echo "No changes to commit"
           exit 0
         else
-          echo "Changes detected, committing..."
+          echo "Changes detected, committing to data-updates branch..."
           git commit -m "Daily ETF data update $(date +%Y-%m-%d)" || echo "Commit failed"
-          git push origin main || echo "Push failed"
+          git push -f origin data-updates || echo "Push to data-updates failed"
         fi
+        
+    - name: Merge data-updates into main
+      run: |
+        # Switch back to main and merge the data updates
+        git checkout main
+        git pull origin main  # Get latest main
+        git merge data-updates -m "Auto-merge daily data updates $(date +%Y-%m-%d)" || echo "Merge failed"
+        git push origin main || echo "Push to main failed"
         
     - name: Trigger Netlify deploy
       if: success()
