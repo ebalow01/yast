@@ -56,7 +56,8 @@ import {
   Add,
   Delete,
   Edit,
-  Save
+  Save,
+  MonetizationOn
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -3467,7 +3468,7 @@ export default function DividendAnalysisDashboard() {
 
                   {/* Portfolio Overview Cards */}
                   <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={2.4}>
                       <Card sx={{ 
                         background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)',
                         border: '1px solid rgba(52, 199, 89, 0.2)',
@@ -3484,8 +3485,36 @@ export default function DividendAnalysisDashboard() {
                         </CardContent>
                       </Card>
                     </Grid>
+
+                    <Grid item xs={12} md={2.4}>
+                      <Card sx={{ 
+                        background: 'linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(138, 43, 226, 0.05) 100%)',
+                        border: '1px solid rgba(138, 43, 226, 0.2)',
+                        backdropFilter: 'blur(20px)'
+                      }}>
+                        <CardContent>
+                          <Typography variant="h6" sx={{ color: '#8A2BE2', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <MonetizationOn sx={{ fontSize: 20 }} />
+                            Weekly Dividend
+                          </Typography>
+                          <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
+                            ${(() => {
+                              const weeklyDividend = portfolio.holdings.reduce((total, holding) => {
+                                const tickerData = performanceData.find(d => d.ticker === holding.ticker);
+                                const medianDividend = tickerData?.medianDividend || 0;
+                                return total + (medianDividend * holding.shares);
+                              }, 0);
+                              return weeklyDividend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            })()}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                            Per Week
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
                     
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={2.4}>
                       <Card sx={{ 
                         background: portfolio.totalGainLoss >= 0 
                           ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
@@ -3522,7 +3551,7 @@ export default function DividendAnalysisDashboard() {
                       </Card>
                     </Grid>
 
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={2.4}>
                       <Card sx={{ 
                         background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%)',
                         border: '1px solid rgba(0, 212, 255, 0.2)',
@@ -3543,7 +3572,7 @@ export default function DividendAnalysisDashboard() {
                       </Card>
                     </Grid>
 
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={2.4}>
                       <Card sx={{ 
                         background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.1) 0%, rgba(255, 149, 0, 0.05) 100%)',
                         border: '1px solid rgba(255, 149, 0, 0.2)',
