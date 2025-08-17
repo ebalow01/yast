@@ -1795,30 +1795,70 @@ export default function DividendAnalysisDashboard() {
       }
     }
     
-    if (item.alertCount && item.alertCount > 0) {
-      indicators.push(`• Active Signals: ${item.alertCount} technical alert${item.alertCount > 1 ? 's' : ''}`);
+    // Categorize and display signals with appropriate context
+    if (item.rationale && item.rationale !== 'Normal trading conditions') {
+      const warningSignals = [];
+      const opportunitySignals = [];
+      const neutralSignals = [];
       
-      // Parse and list specific signals from rationale
-      if (item.rationale) {
-        // Handle SIGNALS: format
-        if (item.rationale.includes('SIGNALS:')) {
-          const signalsSection = item.rationale.split('SIGNALS:')[1];
-          if (signalsSection) {
-            const signals = signalsSection.split(',').map(s => s.trim());
-            signals.forEach(signal => {
-              if (signal) {
-                indicators.push(`  - ${signal}`);
+      // Parse different rationale formats
+      if (item.rationale.includes('SIGNALS:')) {
+        const signalsSection = item.rationale.split('SIGNALS:')[1];
+        if (signalsSection) {
+          const signals = signalsSection.split(',').map(s => s.trim());
+          signals.forEach(signal => {
+            if (signal) {
+              if (signal.includes('RSI Overbought') || signal.includes('Down trend') || signal.includes('Consecutive Down')) {
+                warningSignals.push(signal);
+              } else if (signal.includes('Oversold') || signal.includes('Below BB Lower')) {
+                opportunitySignals.push(signal);
+              } else {
+                neutralSignals.push(signal);
               }
-            });
-          }
-        } 
-        // Handle other formats (WATCH:, PREPARE:, CAUTION:, etc.)
-        else {
-          const prefixMatch = item.rationale.match(/^(WATCH|PREPARE|CAUTION|OPPORTUNITY):\s*(.+)/);
-          if (prefixMatch) {
-            const [, prefix, description] = prefixMatch;
-            indicators.push(`  - ${prefix}: ${description}`);
-          }
+            }
+          });
+        }
+      } else {
+        // Handle other formats
+        if (item.rationale.includes('WATCH:') && item.rationale.includes('potential entry opportunity')) {
+          opportunitySignals.push(item.rationale.replace('WATCH: ', ''));
+        } else if (item.rationale.includes('PREPARE:')) {
+          neutralSignals.push(item.rationale.replace('PREPARE: ', 'Dividend timing: ') + '');
+        } else if (item.rationale.includes('CAUTION:')) {
+          warningSignals.push(item.rationale.replace('CAUTION: ', ''));
+        } else if (item.rationale.includes('OPPORTUNITY:')) {
+          opportunitySignals.push(item.rationale.replace('OPPORTUNITY: ', ''));
+        }
+        
+        // Handle compound rationales (e.g., WATCH + OPPORTUNITY)
+        if (item.rationale.includes('|')) {
+          const parts = item.rationale.split('|').map(s => s.trim());
+          parts.forEach(part => {
+            if (part.includes('OPPORTUNITY:')) {
+              opportunitySignals.push(part.replace('OPPORTUNITY: ', ''));
+            }
+          });
+        }
+      }
+      
+      // Display categorized signals
+      const totalSignals = warningSignals.length + opportunitySignals.length + neutralSignals.length;
+      if (totalSignals > 0) {
+        indicators.push(`• Active Signals: ${totalSignals} alert${totalSignals > 1 ? 's' : ''} (${warningSignals.length} warning${warningSignals.length !== 1 ? 's' : ''}, ${opportunitySignals.length} opportunit${opportunitySignals.length !== 1 ? 'ies' : 'y'})`);
+        
+        if (warningSignals.length > 0) {
+          indicators.push('  ⚠️ Risk Factors:');
+          warningSignals.forEach(signal => indicators.push(`    - ${signal}`));
+        }
+        
+        if (opportunitySignals.length > 0) {
+          indicators.push('  🎯 Opportunities:');
+          opportunitySignals.forEach(signal => indicators.push(`    - ${signal}`));
+        }
+        
+        if (neutralSignals.length > 0) {
+          indicators.push('  ℹ️ Information:');
+          neutralSignals.forEach(signal => indicators.push(`    - ${signal}`));
         }
       }
     }
