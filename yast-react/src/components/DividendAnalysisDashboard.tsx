@@ -37,7 +37,8 @@ import {
   Grid,
   InputAdornment,
   Alert,
-  Snackbar
+  Snackbar,
+  TableSortLabel
 } from '@mui/material';
 import {
   TrendingUp,
@@ -1240,6 +1241,10 @@ export default function DividendAnalysisDashboard() {
   const [newPrice, setNewPrice] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [showSnackbar, setShowSnackbar] = useState(false);
+  
+  // Portfolio table sorting state
+  const [sortField, setSortField] = useState<string>('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Accessibility helpers - Pattern-based indicators for colorblind users
   const getPerformanceIcon = (value: number, type: 'return' | 'risk' = 'return') => {
@@ -1862,6 +1867,92 @@ export default function DividendAnalysisDashboard() {
       }
       document.body.removeChild(textArea);
     }
+  };
+
+  // Portfolio table sorting functions
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortedHoldings = (holdings: PortfolioHolding[]) => {
+    if (!sortField) return holdings;
+
+    return [...holdings].sort((a, b) => {
+      const tickerDataA = data.find(d => d.ticker === a.ticker);
+      const tickerDataB = data.find(d => d.ticker === b.ticker);
+      
+      let valueA: any, valueB: any;
+      
+      switch (sortField) {
+        case 'ticker':
+          valueA = a.ticker;
+          valueB = b.ticker;
+          break;
+        case 'exDivDay':
+          // Sort by weekday order, then by yield (highest first)
+          const dayOrder = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5 };
+          const dayA = dayOrder[tickerDataA?.exDivDay as keyof typeof dayOrder] || 99;
+          const dayB = dayOrder[tickerDataB?.exDivDay as keyof typeof dayOrder] || 99;
+          
+          if (dayA !== dayB) {
+            valueA = dayA;
+            valueB = dayB;
+          } else {
+            // Same day, sort by yield (highest first)
+            const expectedDivA = getExpectedDividend(tickerDataA?.exDivDay || '', tickerDataA?.medianDividend || 0, tickerDataA);
+            const expectedDivB = getExpectedDividend(tickerDataB?.exDivDay || '', tickerDataB?.medianDividend || 0, tickerDataB);
+            valueA = -(expectedDivA?.forwardYield || 0); // Negative for descending
+            valueB = -(expectedDivB?.forwardYield || 0);
+          }
+          break;
+        case 'shares':
+          valueA = a.shares;
+          valueB = b.shares;
+          break;
+        case 'avgPrice':
+          valueA = a.averagePrice;
+          valueB = b.averagePrice;
+          break;
+        case 'totalValue':
+          valueA = a.totalValue || 0;
+          valueB = b.totalValue || 0;
+          break;
+        case 'gainLoss':
+          valueA = a.gainLoss || 0;
+          valueB = b.gainLoss || 0;
+          break;
+        case 'gainLossPercent':
+          valueA = a.gainLossPercent || 0;
+          valueB = b.gainLossPercent || 0;
+          break;
+        case 'riskLevel':
+          // Sort by risk priority: SAFE(1) -> LOW(2) -> MEDIUM(3) -> HIGH(4)
+          const riskOrder = { 'SAFE': 1, 'LOW': 2, 'MEDIUM': 3, 'HIGH': 4 };
+          valueA = riskOrder[tickerDataA?.riskLevel as keyof typeof riskOrder] || 99;
+          valueB = riskOrder[tickerDataB?.riskLevel as keyof typeof riskOrder] || 99;
+          break;
+        case 'indicators':
+          // Alphabetical sort on indicators/rationale
+          valueA = tickerDataA?.rationale || '';
+          valueB = tickerDataB?.rationale || '';
+          break;
+        default:
+          return 0;
+      }
+      
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        const result = valueA.localeCompare(valueB);
+        return sortDirection === 'asc' ? result : -result;
+      } else {
+        const result = valueA - valueB;
+        return sortDirection === 'asc' ? result : -result;
+      }
+    });
   };
 
   // Clean up indicators by removing redundant dividend timing info
@@ -3505,20 +3596,101 @@ export default function DividendAnalysisDashboard() {
                       <Table>
                         <TableHead>
                           <TableRow sx={{ '& th': { borderBottom: '1px solid rgba(255, 255, 255, 0.1)' } }}>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }}>Ticker</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Ex-Div Day</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Shares</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Avg Price</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Total Value</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">Gain/Loss</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">%</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Risk Level</TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Indicators</TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }}>
+                              <TableSortLabel
+                                active={sortField === 'ticker'}
+                                direction={sortField === 'ticker' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('ticker')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Ticker
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
+                              <TableSortLabel
+                                active={sortField === 'exDivDay'}
+                                direction={sortField === 'exDivDay' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('exDivDay')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Ex-Div Day
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
+                              <TableSortLabel
+                                active={sortField === 'shares'}
+                                direction={sortField === 'shares' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('shares')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Shares
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
+                              <TableSortLabel
+                                active={sortField === 'avgPrice'}
+                                direction={sortField === 'avgPrice' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('avgPrice')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Avg Price
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
+                              <TableSortLabel
+                                active={sortField === 'totalValue'}
+                                direction={sortField === 'totalValue' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('totalValue')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Total Value
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
+                              <TableSortLabel
+                                active={sortField === 'gainLoss'}
+                                direction={sortField === 'gainLoss' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('gainLoss')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Gain/Loss
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
+                              <TableSortLabel
+                                active={sortField === 'gainLossPercent'}
+                                direction={sortField === 'gainLossPercent' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('gainLossPercent')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                %
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
+                              <TableSortLabel
+                                active={sortField === 'riskLevel'}
+                                direction={sortField === 'riskLevel' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('riskLevel')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Risk Level
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
+                              <TableSortLabel
+                                active={sortField === 'indicators'}
+                                direction={sortField === 'indicators' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('indicators')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                Indicators
+                              </TableSortLabel>
+                            </TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {portfolio.holdings.map((holding) => {
+                          {getSortedHoldings(portfolio.holdings).map((holding) => {
                             const tickerData = data.find(d => d.ticker === holding.ticker);
                             const riskChip = getRiskLevelChip(tickerData?.riskLevel);
                             const expectedDiv = getExpectedDividend(tickerData?.exDivDay || '', tickerData?.medianDividend || 0, tickerData);
