@@ -1243,6 +1243,11 @@ export default function DividendAnalysisDashboard() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [showSnackbar, setShowSnackbar] = useState(false);
   
+  // Cookie banner state
+  const [showCookieBanner, setShowCookieBanner] = useState(() => {
+    return !localStorage.getItem('cookieAccepted');
+  });
+  
   // Portfolio table sorting state
   const [sortField, setSortField] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -1560,6 +1565,12 @@ export default function DividendAnalysisDashboard() {
     updatePortfolioValues(updatedPortfolio);
     setSnackbarMessage(`Removed ${ticker} from portfolio`);
     setShowSnackbar(true);
+  };
+
+  // Cookie banner handler
+  const handleAcceptCookies = () => {
+    localStorage.setItem('cookieAccepted', 'true');
+    setShowCookieBanner(false);
   };
 
   // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE)
@@ -4194,6 +4205,48 @@ export default function DividendAnalysisDashboard() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      {/* Cookie Banner */}
+      {showCookieBanner && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderBottom: 'none',
+            p: 2,
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 2
+          }}
+        >
+          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', flex: 1, minWidth: '300px' }}>
+            This site uses cookies to store your portfolio data locally in your browser. No data is shared with third parties.
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={handleAcceptCookies}
+            sx={{
+              background: 'linear-gradient(135deg, #00D4FF 0%, #0095CC 100%)',
+              color: 'black',
+              fontWeight: 600,
+              px: 3,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #40E0FF 0%, #00B8E6 100%)',
+              }
+            }}
+          >
+            Got it
+          </Button>
+        </Box>
+      )}
     </ThemeProvider>
   );
 }
