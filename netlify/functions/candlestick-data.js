@@ -2,22 +2,20 @@ const { spawn } = require('child_process');
 const path = require('path');
 const https = require('https');
 
-// Simple in-memory cache with 2-hour expiration for rate-limited environment
+// Simple in-memory cache with 4-hour expiration for rate-limited environment
 const cache = new Map();
-const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
+const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours
 
-// Rate limiting - track last request time globally and per ticker
+// Aggressive rate limiting - track last request time globally and per ticker
 const lastRequestTimes = new Map();
 let lastGlobalRequest = 0;
-const MIN_REQUEST_INTERVAL = 10000; // 10 seconds between requests for same ticker
-const MIN_GLOBAL_INTERVAL = 3000; // 3 seconds between any requests
+const MIN_REQUEST_INTERVAL = 30000; // 30 seconds between requests for same ticker
+const MIN_GLOBAL_INTERVAL = 10000; // 10 seconds between any requests
 
 
 
-// Fallback function to get candlestick data using Yahoo Finance API directly with retry logic
-async function getCandlestickDataFallback(ticker, retryCount = 0) {
-  const maxRetries = 3;
-  const baseDelay = 2000; // 2 seconds base delay
+// Fallback function to get candlestick data using Yahoo Finance API directly (no retries)
+async function getCandlestickDataFallback(ticker) {
   
   return new Promise((resolve, reject) => {
     // Use Yahoo Finance v8 API for historical data
@@ -66,27 +64,11 @@ async function getCandlestickDataFallback(ticker, retryCount = 0) {
           });
           
         } catch (error) {
-          const errorMsg = `Failed to parse Yahoo Finance response: ${error.message}`;
-          if (retryCount < maxRetries && (error.message.includes('Too Many Requests') || error.message.includes('Too many requests'))) {
-            console.log(`Rate limited, retrying in ${baseDelay * (retryCount + 1)}ms (attempt ${retryCount + 1}/${maxRetries})`);
-            setTimeout(() => {
-              getCandlestickDataFallback(ticker, retryCount + 1).then(resolve).catch(reject);
-            }, baseDelay * (retryCount + 1));
-          } else {
-            reject(new Error(errorMsg));
-          }
+          reject(new Error(`Failed to parse Yahoo Finance response: ${error.message}`));
         }
       });
     }).on('error', (error) => {
-      const errorMsg = `HTTP request failed: ${error.message}`;
-      if (retryCount < maxRetries) {
-        console.log(`Request failed, retrying in ${baseDelay * (retryCount + 1)}ms (attempt ${retryCount + 1}/${maxRetries})`);
-        setTimeout(() => {
-          getCandlestickDataFallback(ticker, retryCount + 1).then(resolve).catch(reject);
-        }, baseDelay * (retryCount + 1));
-      } else {
-        reject(new Error(errorMsg));
-      }
+      reject(new Error(`HTTP request failed: ${error.message}`));
     });
   });
 }
@@ -242,43 +224,23 @@ exports.handler = async (event, context) => {
     };
 
   } catch (pythonError) {
-    console.error('Python candlestick fetch failed, trying Node.js fallback:', pythonError);
+    console.error('Python candlestick fetch failed:', pythonError);
     
-    try {
-      // Try Node.js fallback
-      const result = await getCandlestickDataFallback(ticker.toUpperCase());
-      
-      // Cache the successful result
-      cache.set(cacheKey, {
-        data: result,
-        timestamp: Date.now()
-      });
-      
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(result)
-      };
-      
-    } catch (fallbackError) {
-      console.error('Both Python and Node.js fallback failed:', fallbackError);
-      
-      // Return error - no fallback data
-      const isRateLimited = fallbackError.message.includes('Too Many Requests') || 
-                           fallbackError.message.includes('429') ||
-                           fallbackError.message.includes('rate limit');
-      
-      return {
-        statusCode: isRateLimited ? 429 : 500,
-        headers,
-        body: JSON.stringify({ 
-          error: isRateLimited ? 
-            `Yahoo Finance API is rate limited. Chart data temporarily unavailable.` :
-            `Failed to fetch candlestick data: ${fallbackError.message}`,
-          ticker: ticker.toUpperCase(),
-          isRateLimited: isRateLimited
-        })
-      };
-    }
+    // Return error immediately - no fallback to reduce API calls
+    const isRateLimited = pythonError.message.includes('Too Many Requests') || 
+                         pythonError.message.includes('429') ||
+                         pythonError.message.includes('rate limit');
+    
+    return {
+      statusCode: isRateLimited ? 429 : 500,
+      headers,
+      body: JSON.stringify({ 
+        error: isRateLimited ? 
+          `Yahoo Finance API is rate limited. Chart data temporarily unavailable.` :
+          `Failed to fetch candlestick data: ${pythonError.message}`,
+        ticker: ticker.toUpperCase(),
+        isRateLimited: isRateLimited
+      })
+    };
   }
 };
