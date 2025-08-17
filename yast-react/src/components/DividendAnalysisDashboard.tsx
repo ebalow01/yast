@@ -1828,8 +1828,8 @@ export default function DividendAnalysisDashboard() {
     let daysUntil = targetDay - currentDay;
     if (daysUntil <= 0) daysUntil += 7; // Next week if already passed
     
-    // Calculate forward yield: (median of last 3 dividends / current price) * 100
-    const forwardYield = currentPrice && currentPrice > 0 ? (medianLast3 / currentPrice) * 100 : 0;
+    // Calculate annualized forward yield: (median of last 3 dividends / current price) * 100 * 52 weeks
+    const forwardYield = currentPrice && currentPrice > 0 ? (medianLast3 / currentPrice) * 100 * 52 : 0;
     
     return {
       daysUntil,
