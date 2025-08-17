@@ -1955,6 +1955,11 @@ export default function DividendAnalysisDashboard() {
           valueA = tickerDataA?.rationale || '';
           valueB = tickerDataB?.rationale || '';
           break;
+        case 'volatility':
+          // Sort by volatility (risk volatility percentage)
+          valueA = tickerDataA?.riskVolatility || 0;
+          valueB = tickerDataB?.riskVolatility || 0;
+          break;
         default:
           return 0;
       }
@@ -3732,6 +3737,16 @@ export default function DividendAnalysisDashboard() {
                             </TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
                               <TableSortLabel
+                                active={sortField === 'volatility'}
+                                direction={sortField === 'volatility' ? sortDirection : 'asc'}
+                                onClick={() => handleSort('volatility')}
+                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+                              >
+                                45-Day Volatility
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
+                              <TableSortLabel
                                 active={sortField === 'indicators'}
                                 direction={sortField === 'indicators' ? sortDirection : 'asc'}
                                 onClick={() => handleSort('indicators')}
@@ -3894,6 +3909,20 @@ export default function DividendAnalysisDashboard() {
                                       }}
                                     />
                                   )}
+                                </TableCell>
+
+                                {/* 45-Day Volatility */}
+                                <TableCell align="center">
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                      color: 'white', 
+                                      fontWeight: 600,
+                                      fontSize: '0.9rem'
+                                    }}
+                                  >
+                                    {tickerData?.riskVolatility ? `${(tickerData.riskVolatility * 100).toFixed(1)}%` : 'N/A'}
+                                  </Typography>
                                 </TableCell>
 
                                 {/* Indicators */}
