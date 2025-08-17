@@ -3653,17 +3653,7 @@ export default function DividendAnalysisDashboard() {
                                 onClick={() => handleSort('gainLoss')}
                                 sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
                               >
-                                Gain/Loss
-                              </TableSortLabel>
-                            </TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
-                              <TableSortLabel
-                                active={sortField === 'gainLossPercent'}
-                                direction={sortField === 'gainLossPercent' ? sortDirection : 'asc'}
-                                onClick={() => handleSort('gainLossPercent')}
-                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
-                              >
-                                %
+                                Gain
                               </TableSortLabel>
                             </TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
@@ -3759,12 +3749,7 @@ export default function DividendAnalysisDashboard() {
                                 <TableCell sx={{ 
                                   color: (holding.gainLoss || 0) >= 0 ? '#34C759' : '#FF3B30' 
                                 }} align="right">
-                                  {(holding.gainLoss || 0) >= 0 ? '+' : ''}${(holding.gainLoss || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </TableCell>
-                                <TableCell sx={{ 
-                                  color: (holding.gainLossPercent || 0) >= 0 ? '#34C759' : '#FF3B30' 
-                                }} align="right">
-                                  {(holding.gainLossPercent || 0) >= 0 ? '+' : ''}{(holding.gainLossPercent || 0).toFixed(2)}%
+                                  {(holding.gainLoss || 0) >= 0 ? '+' : ''}${(holding.gainLoss || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({(holding.gainLossPercent || 0) >= 0 ? '+' : ''}{(holding.gainLossPercent || 0).toFixed(2)}%)
                                 </TableCell>
 
                                 {/* Risk Level with Tooltip */}
