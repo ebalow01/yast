@@ -3525,11 +3525,12 @@ export default function DividendAnalysisDashboard() {
                                 const medianDividend = tickerData?.medianDividend || 0;
                                 return total + (medianDividend * holding.shares);
                               }, 0);
-                              return weeklyDividend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                              const annualizedYield = portfolio.totalValue > 0 ? (weeklyDividend / portfolio.totalValue * 52 * 100) : 0;
+                              return `${weeklyDividend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${annualizedYield.toFixed(1)}%)`;
                             })()}
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                            Per Week
+                            Per Week (Annualized Yield)
                           </Typography>
                         </CardContent>
                       </Card>
