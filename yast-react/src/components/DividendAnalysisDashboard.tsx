@@ -2152,13 +2152,17 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
     const refreshButton = document.activeElement as HTMLElement;
     if (refreshButton) refreshButton.blur(); // Remove focus to prevent stuck hover
     
-    // Clear existing AI analysis for these tickers to eliminate confusion
-    const clearedOutlooks = { ...aiOutlooks };
+    // Set "Refreshing..." status for all tickers being processed
+    const refreshingOutlooks = { ...aiOutlooks };
     tickers.forEach(ticker => {
-      delete clearedOutlooks[ticker];
+      refreshingOutlooks[ticker] = {
+        sentiment: 'Refreshing...',
+        shortOutlook: 'Analysis in progress',
+        fullAnalysis: 'Please wait while we analyze this ticker...',
+        timestamp: new Date().toLocaleString()
+      };
     });
-    setAiOutlooks(clearedOutlooks);
-    localStorage.setItem('aiOutlooks', JSON.stringify(clearedOutlooks));
+    setAiOutlooks(refreshingOutlooks);
     
     setSnackbarMessage(`🔄 Refreshing AI analysis for ${tickers.length} ETFs...`);
     setShowSnackbar(true);
@@ -2176,6 +2180,17 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       } catch (error) {
         console.error(`Failed to analyze ${ticker}:`, error);
         errorCount++;
+        
+        // Set error status for failed ticker
+        const errorOutlooks = { ...aiOutlooks };
+        errorOutlooks[ticker] = {
+          sentiment: 'Error',
+          shortOutlook: 'Analysis failed',
+          fullAnalysis: `Failed to analyze ${ticker}: ${error.message}`,
+          timestamp: new Date().toLocaleString()
+        };
+        setAiOutlooks(errorOutlooks);
+        localStorage.setItem('aiOutlooks', JSON.stringify(errorOutlooks));
       }
     }
     
@@ -4732,37 +4747,44 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                     // First try to extract from sentiment field (which might have full text)
                                     let sentimentText = aiData.sentiment || aiData.shortOutlook || '';
                                     
-                                    // Extract just the sentiment part using regex patterns
-                                    const sentimentPatterns = [
-                                      /^(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i,
-                                      /(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i
-                                    ];
-                                    
-                                    for (const pattern of sentimentPatterns) {
-                                      const match = sentimentText.match(pattern);
-                                      if (match) {
-                                        displaySentiment = match[1].trim();
-                                        break;
+                                    // Handle special states first
+                                    if (sentimentText.includes('Refreshing')) {
+                                      displaySentiment = 'Refreshing...';
+                                    } else if (sentimentText.includes('Error')) {
+                                      displaySentiment = 'Error';
+                                    } else {
+                                      // Extract just the sentiment part using regex patterns
+                                      const sentimentPatterns = [
+                                        /^(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i,
+                                        /(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i
+                                      ];
+                                      
+                                      for (const pattern of sentimentPatterns) {
+                                        const match = sentimentText.match(pattern);
+                                        if (match) {
+                                          displaySentiment = match[1].trim();
+                                          break;
+                                        }
                                       }
-                                    }
-                                    
-                                    // If still no match, do keyword-based extraction
-                                    if (displaySentiment === 'Unknown') {
-                                      const lowerText = sentimentText.toLowerCase();
-                                      if (lowerText.includes('cautiously') && lowerText.includes('bullish')) {
-                                        displaySentiment = 'Cautiously Bullish';
-                                      } else if (lowerText.includes('cautiously') && lowerText.includes('bearish')) {
-                                        displaySentiment = 'Cautiously Bearish';
-                                      } else if (lowerText.includes('strong') && lowerText.includes('bullish')) {
-                                        displaySentiment = 'Strong Bullish';
-                                      } else if (lowerText.includes('strong') && lowerText.includes('bearish')) {
-                                        displaySentiment = 'Strong Bearish';
-                                      } else if (lowerText.includes('bullish')) {
-                                        displaySentiment = 'Bullish';
-                                      } else if (lowerText.includes('bearish')) {
-                                        displaySentiment = 'Bearish';
-                                      } else if (lowerText.includes('neutral')) {
-                                        displaySentiment = 'Neutral';
+                                      
+                                      // If still no match, do keyword-based extraction
+                                      if (displaySentiment === 'Unknown') {
+                                        const lowerText = sentimentText.toLowerCase();
+                                        if (lowerText.includes('cautiously') && lowerText.includes('bullish')) {
+                                          displaySentiment = 'Cautiously Bullish';
+                                        } else if (lowerText.includes('cautiously') && lowerText.includes('bearish')) {
+                                          displaySentiment = 'Cautiously Bearish';
+                                        } else if (lowerText.includes('strong') && lowerText.includes('bullish')) {
+                                          displaySentiment = 'Strong Bullish';
+                                        } else if (lowerText.includes('strong') && lowerText.includes('bearish')) {
+                                          displaySentiment = 'Strong Bearish';
+                                        } else if (lowerText.includes('bullish')) {
+                                          displaySentiment = 'Bullish';
+                                        } else if (lowerText.includes('bearish')) {
+                                          displaySentiment = 'Bearish';
+                                        } else if (lowerText.includes('neutral')) {
+                                          displaySentiment = 'Neutral';
+                                        }
                                       }
                                     }
                                     
@@ -4785,6 +4807,8 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                           variant="body2" 
                                           sx={{ 
                                             color: (() => {
+                                              if (displaySentiment === 'Refreshing...') return '#00D4FF';
+                                              if (displaySentiment === 'Error') return '#FF3B30';
                                               if (displaySentiment.toLowerCase().includes('bullish')) return '#4CAF50';
                                               if (displaySentiment.toLowerCase().includes('bearish')) return '#F44336';
                                               if (displaySentiment.toLowerCase().includes('neutral')) return '#FFC107';
