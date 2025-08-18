@@ -2096,8 +2096,21 @@ ${dataSummary}
 
 Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
 
-**IMPORTANT: Start your response with exactly one of these sentiment classifications for the next week:**
-SENTIMENT: [Strong Bullish | Bullish | Cautiously Bullish | Neutral | Cautiously Bearish | Bearish | Strong Bearish]
+**IMPORTANT: Start your response with a sentiment rating using this exact format:**
+SENTIMENT: [Bullish 5/5 | Bullish 4/5 | Bullish 3/5 | Bullish 2/5 | Bullish 1/5 | Neutral | Bearish 1/5 | Bearish 2/5 | Bearish 3/5 | Bearish 4/5 | Bearish 5/5]
+
+Rating Scale:
+- Bullish 5/5: Extremely strong upward momentum, all indicators positive
+- Bullish 4/5: Strong positive indicators, high conviction buy
+- Bullish 3/5: Moderately positive, good opportunity with some risk
+- Bullish 2/5: Slightly positive, weak bullish signals
+- Bullish 1/5: Barely positive, minimal upside potential
+- Neutral: Mixed signals, no clear direction
+- Bearish 1/5: Barely negative, minimal downside risk
+- Bearish 2/5: Slightly negative, weak bearish signals
+- Bearish 3/5: Moderately negative, caution advised
+- Bearish 4/5: Strong negative indicators, high conviction sell
+- Bearish 5/5: Extremely weak, all indicators negative
 
 1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
 
@@ -2135,7 +2148,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       const result = await response.json();
       const fullAnalysis = result.analysis;
       
-      // Extract sentiment classification from the response
+      // Extract sentiment classification from the response (now includes rating like "Bullish 4/5")
       const sentimentMatch = fullAnalysis.match(/SENTIMENT:\s*\[?([^\]]+)\]?/i);
       let sentiment = 'Neutral';
       if (sentimentMatch) {
@@ -4858,8 +4871,11 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                     } else if (sentimentText.includes('Error')) {
                                       displaySentiment = 'Error';
                                     } else {
-                                      // Extract just the sentiment part using regex patterns
+                                      // Extract just the sentiment part using regex patterns (now handles "Bullish 4/5" format)
                                       const sentimentPatterns = [
+                                        /^(Bullish \d\/5|Bearish \d\/5|Neutral)/i,
+                                        /(Bullish \d\/5|Bearish \d\/5|Neutral)/i,
+                                        // Fallback patterns for old format
                                         /^(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i,
                                         /(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i
                                       ];
@@ -4914,8 +4930,30 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                             color: (() => {
                                               if (displaySentiment === 'Refreshing...') return '#00D4FF';
                                               if (displaySentiment === 'Error') return '#FF3B30';
-                                              if (displaySentiment.toLowerCase().includes('bullish')) return '#4CAF50';
-                                              if (displaySentiment.toLowerCase().includes('bearish')) return '#F44336';
+                                              
+                                              // Handle new rating format "Bullish X/5" or "Bearish X/5"
+                                              if (displaySentiment.includes('Bullish')) {
+                                                const ratingMatch = displaySentiment.match(/(\d)\/5/);
+                                                if (ratingMatch) {
+                                                  const rating = parseInt(ratingMatch[1]);
+                                                  if (rating >= 4) return '#00C853'; // Strong green for 4-5
+                                                  if (rating >= 2) return '#4CAF50'; // Medium green for 2-3
+                                                  return '#66BB6A'; // Light green for 1
+                                                }
+                                                return '#4CAF50'; // Default green
+                                              }
+                                              
+                                              if (displaySentiment.includes('Bearish')) {
+                                                const ratingMatch = displaySentiment.match(/(\d)\/5/);
+                                                if (ratingMatch) {
+                                                  const rating = parseInt(ratingMatch[1]);
+                                                  if (rating >= 4) return '#D32F2F'; // Strong red for 4-5
+                                                  if (rating >= 2) return '#F44336'; // Medium red for 2-3
+                                                  return '#EF5350'; // Light red for 1
+                                                }
+                                                return '#F44336'; // Default red
+                                              }
+                                              
                                               if (displaySentiment.toLowerCase().includes('neutral')) return '#FFC107';
                                               return '#00D4FF';
                                             })(),
