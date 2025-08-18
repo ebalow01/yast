@@ -447,12 +447,36 @@ interface PortfolioMetrics {
   volatilityRegime?: 'Low' | 'Normal' | 'High' | 'Crisis';
 }
 
-function calculateMPTAllocation(allData: DividendData[]): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
+function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<string, { sentiment: string; shortOutlook: string; fullAnalysis: string; timestamp: string }>): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
   console.log('🚀 Starting MPT allocation with', allData.length, 'total ETFs');
   
   // Use ALL data (not just top performers) so filtering logic can work properly
-  const allETFs = allData.filter(etf => etf.ticker !== 'SPY' && etf.category !== 'benchmark');
+  let allETFs = allData.filter(etf => etf.ticker !== 'SPY' && etf.category !== 'benchmark');
   console.log('📊 Found', allETFs.length, 'ETFs for analysis (excluding SPY)');
+  
+  // Filter out bearish ETFs if AI sentiment data is available
+  if (aiOutlooks) {
+    const beforeFilterCount = allETFs.length;
+    const bearishTickers: string[] = [];
+    
+    allETFs = allETFs.filter(etf => {
+      const sentiment = aiOutlooks[etf.ticker]?.sentiment;
+      if (sentiment) {
+        const isBearish = sentiment.toLowerCase().includes('bearish');
+        if (isBearish) {
+          bearishTickers.push(etf.ticker);
+          return false; // Exclude bearish ETFs
+        }
+      }
+      return true; // Include neutral, bullish, or ETFs without sentiment data
+    });
+    
+    const afterFilterCount = allETFs.length;
+    console.log(`🐻 Filtered out ${bearishTickers.length} bearish ETFs: ${bearishTickers.join(', ')}`);
+    console.log(`📈 Portfolio now uses ${afterFilterCount} ETFs (was ${beforeFilterCount})`);
+  }
+  
+  console.log('📊 Final ETF count for optimization:', allETFs.length);
   
   // Log the ETFs we're working with
   console.log('Available ETFs:', allETFs.map(etf => `${etf.ticker}(${(etf.bestReturn*100).toFixed(1)}%)`).join(', '));
@@ -1451,7 +1475,7 @@ export default function DividendAnalysisDashboard() {
         
         // Calculate MPT allocation for ALL ETFs, not just top performers
         if (convertedData.length > 0) {
-          const { allocation, metrics } = calculateMPTAllocation(convertedData);
+          const { allocation, metrics } = calculateMPTAllocation(convertedData, aiOutlooks);
           // Enrich allocation with original ETF data (exDivDay, strategy)
           const enrichedAllocation = allocation.map(asset => {
             const originalETF = convertedData.find(etf => etf.ticker === asset.ticker);
@@ -1527,6 +1551,24 @@ export default function DividendAnalysisDashboard() {
       }, 2000);
     }
   }, [data]); // Re-run when data loads to get current prices
+  
+  // Recalculate optimal portfolio when AI sentiment data changes
+  useEffect(() => {
+    if (data.length > 0 && Object.keys(aiOutlooks).length > 0) {
+      console.log('🔄 Recalculating portfolio due to AI sentiment changes...');
+      const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
+      const enrichedAllocation = allocation.map(asset => {
+        const originalETF = data.find(etf => etf.ticker === asset.ticker);
+        return {
+          ...asset,
+          exDivDay: originalETF?.exDivDay,
+          strategy: originalETF?.bestStrategy
+        };
+      });
+      setMptAllocation(enrichedAllocation);
+      setPortfolioMetrics(metrics);
+    }
+  }, [aiOutlooks, data]); // Re-run when AI sentiments change
 
   // Portfolio Management Functions
   const savePortfolioToCookie = (updatedPortfolio: UserPortfolio) => {
