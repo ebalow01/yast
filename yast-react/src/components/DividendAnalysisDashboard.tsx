@@ -4217,22 +4217,47 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       Track your personal holdings with real-time valuations and performance metrics
                     </Typography>
                   </Box>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    onClick={() => refreshAiAnalysis(portfolio.holdings.map(h => h.ticker).filter(ticker => ticker !== 'CASH'))}
-                    sx={{
-                      borderColor: '#00D4FF',
-                      color: '#00D4FF',
-                      '&:hover': {
-                        borderColor: '#ffffff',
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)'
-                      }
-                    }}
-                  >
-                    Refresh AI
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Refresh />}
+                      onClick={() => refreshAiAnalysis(portfolio.holdings.map(h => h.ticker).filter(ticker => ticker !== 'CASH'))}
+                      sx={{
+                        borderColor: '#00D4FF',
+                        color: '#00D4FF',
+                        '&:hover': {
+                          borderColor: '#ffffff',
+                          color: '#ffffff',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                        }
+                      }}
+                    >
+                      Refresh AI
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => {
+                        localStorage.removeItem('aiOutlooks');
+                        setAiOutlooks({});
+                        setSnackbarMessage('🗑️ Cleared AI data cache - click Refresh AI');
+                        setShowSnackbar(true);
+                      }}
+                      sx={{
+                        borderColor: '#FF3B30',
+                        color: '#FF3B30',
+                        minWidth: 'auto',
+                        px: 1,
+                        '&:hover': {
+                          borderColor: '#ffffff',
+                          color: '#ffffff',
+                          backgroundColor: 'rgba(255, 59, 48, 0.1)'
+                        }
+                      }}
+                    >
+                      🐛 Clear Cache
+                    </Button>
+                  </Box>
                 </Box>
 
                   {/* Portfolio Overview Cards */}
@@ -4683,60 +4708,84 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
 
                                 {/* AI Outlook */}
                                 <TableCell align="center">
-                                  {aiOutlooks[holding.ticker] ? (
-                                    <Box 
-                                      sx={{ 
-                                        cursor: 'pointer',
-                                        '&:hover': {
-                                          opacity: 0.8
-                                        }
-                                      }}
-                                      onClick={() => {
-                                        setAiAnalysisResult(aiOutlooks[holding.ticker].fullAnalysis);
-                                        setShowAiModal(true);
-                                      }}
-                                    >
-                                      <Typography 
-                                        variant="body2" 
+                                  {(() => {
+                                    const aiData = aiOutlooks[holding.ticker];
+                                    console.log(`🐛 DEBUG Portfolio AI Data for ${holding.ticker}:`, aiData);
+                                    
+                                    if (!aiData) {
+                                      return (
+                                        <Typography 
+                                          variant="caption" 
+                                          sx={{ 
+                                            color: 'rgba(255, 255, 255, 0.3)',
+                                            fontSize: '0.75rem'
+                                          }}
+                                        >
+                                          No analysis yet
+                                        </Typography>
+                                      );
+                                    }
+
+                                    // Extract just the sentiment - be very aggressive about it
+                                    let displaySentiment = 'Unknown';
+                                    if (aiData.sentiment && aiData.sentiment.trim() !== '') {
+                                      displaySentiment = aiData.sentiment.trim();
+                                    } else if (aiData.shortOutlook) {
+                                      // Try to extract sentiment from shortOutlook if sentiment is missing
+                                      if (aiData.shortOutlook.toLowerCase().includes('bullish')) {
+                                        displaySentiment = aiData.shortOutlook.toLowerCase().includes('cautiously') ? 'Cautiously Bullish' : 'Bullish';
+                                      } else if (aiData.shortOutlook.toLowerCase().includes('bearish')) {
+                                        displaySentiment = aiData.shortOutlook.toLowerCase().includes('strong') ? 'Strong Bearish' : 'Bearish';
+                                      } else if (aiData.shortOutlook.toLowerCase().includes('neutral')) {
+                                        displaySentiment = 'Neutral';
+                                      }
+                                    }
+                                    
+                                    console.log(`🐛 DEBUG Displaying sentiment for ${holding.ticker}: "${displaySentiment}"`);
+
+                                    return (
+                                      <Box 
                                         sx={{ 
-                                          color: (() => {
-                                            const sentiment = aiOutlooks[holding.ticker].sentiment;
-                                            if (!sentiment) return '#FFB74D'; // Orange for "needs refresh"
-                                            if (sentiment.includes('Bullish')) return '#4CAF50';
-                                            if (sentiment.includes('Bearish')) return '#F44336';
-                                            if (sentiment === 'Neutral') return '#FFC107';
-                                            return '#00D4FF';
-                                          })(),
-                                          fontWeight: 600,
-                                          fontSize: '0.85rem',
-                                          textAlign: 'center',
-                                          mb: 0.5
+                                          cursor: 'pointer',
+                                          '&:hover': {
+                                            opacity: 0.8
+                                          }
+                                        }}
+                                        onClick={() => {
+                                          setAiAnalysisResult(aiData.fullAnalysis);
+                                          setShowAiModal(true);
                                         }}
                                       >
-                                        {aiOutlooks[holding.ticker].sentiment || 'Need Refresh'}
-                                      </Typography>
-                                      <Typography 
-                                        variant="caption" 
-                                        sx={{ 
-                                          color: 'rgba(255, 255, 255, 0.5)',
-                                          fontSize: '0.65rem',
-                                          textAlign: 'center'
-                                        }}
-                                      >
-                                        Click for details
-                                      </Typography>
-                                    </Box>
-                                  ) : (
-                                    <Typography 
-                                      variant="caption" 
-                                      sx={{ 
-                                        color: 'rgba(255, 255, 255, 0.3)',
-                                        fontSize: '0.75rem'
-                                      }}
-                                    >
-                                      No analysis yet
-                                    </Typography>
-                                  )}
+                                        <Typography 
+                                          variant="body2" 
+                                          sx={{ 
+                                            color: (() => {
+                                              if (displaySentiment.toLowerCase().includes('bullish')) return '#4CAF50';
+                                              if (displaySentiment.toLowerCase().includes('bearish')) return '#F44336';
+                                              if (displaySentiment.toLowerCase().includes('neutral')) return '#FFC107';
+                                              return '#00D4FF';
+                                            })(),
+                                            fontWeight: 600,
+                                            fontSize: '0.85rem',
+                                            textAlign: 'center',
+                                            mb: 0.5
+                                          }}
+                                        >
+                                          {displaySentiment}
+                                        </Typography>
+                                        <Typography 
+                                          variant="caption" 
+                                          sx={{ 
+                                            color: 'rgba(255, 255, 255, 0.5)',
+                                            fontSize: '0.65rem',
+                                            textAlign: 'center'
+                                          }}
+                                        >
+                                          Click for details
+                                        </Typography>
+                                      </Box>
+                                    );
+                                  })()}
                                 </TableCell>
 
                                 <TableCell align="center">
