@@ -2238,17 +2238,27 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
 
     setQuickAnalysisLoading(true);
     setQuickAnalysisResult('');
+    const upperTicker = ticker.toUpperCase().trim();
 
     try {
-      await analyzeWithPolygon(ticker.toUpperCase().trim());
+      await analyzeWithPolygon(upperTicker);
       
-      // Get the analysis result from aiOutlooks
-      const analysisData = aiOutlooks[ticker.toUpperCase().trim()];
-      if (analysisData && analysisData.fullAnalysis) {
-        setQuickAnalysisResult(analysisData.fullAnalysis);
-      } else {
-        setQuickAnalysisResult('Analysis completed but no detailed results available.');
+      // Wait a moment for state to update, then check multiple times
+      let attempts = 0;
+      let analysisData;
+      
+      while (attempts < 10) {
+        analysisData = aiOutlooks[upperTicker];
+        if (analysisData && analysisData.fullAnalysis && analysisData.fullAnalysis !== 'Please wait while we analyze this ticker...') {
+          setQuickAnalysisResult(analysisData.fullAnalysis);
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+        attempts++;
       }
+      
+      // If we get here, analysis didn't complete properly
+      setQuickAnalysisResult('Analysis timed out. Please try again.');
     } catch (error) {
       console.error('Quick analysis error:', error);
       setQuickAnalysisResult(`Analysis failed: ${error.message}`);
