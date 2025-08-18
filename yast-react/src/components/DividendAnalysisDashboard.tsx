@@ -2247,18 +2247,22 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       let attempts = 0;
       let analysisData;
       
-      while (attempts < 10) {
+      while (attempts < 20) { // Increased from 10 to 20 attempts (20 × 1000ms = 20 seconds)
         analysisData = aiOutlooks[upperTicker];
-        if (analysisData && analysisData.fullAnalysis && analysisData.fullAnalysis !== 'Please wait while we analyze this ticker...') {
+        console.log(`🐛 Quick Analysis attempt ${attempts + 1}: `, analysisData?.fullAnalysis?.substring(0, 50) + '...');
+        
+        if (analysisData && analysisData.fullAnalysis && 
+            analysisData.fullAnalysis !== 'Please wait while we analyze this ticker...' &&
+            !analysisData.fullAnalysis.startsWith('Failed to analyze')) {
           setQuickAnalysisResult(analysisData.fullAnalysis);
           return;
         }
-        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased from 500ms to 1000ms
         attempts++;
       }
       
       // If we get here, analysis didn't complete properly
-      setQuickAnalysisResult('Analysis timed out. Please try again.');
+      setQuickAnalysisResult('Analysis timed out. The AI analysis takes longer than expected. Please try again - the data should be cached and faster the second time.');
     } catch (error) {
       console.error('Quick analysis error:', error);
       setQuickAnalysisResult(`Analysis failed: ${error.message}`);
