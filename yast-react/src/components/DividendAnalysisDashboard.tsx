@@ -1609,9 +1609,29 @@ export default function DividendAnalysisDashboard() {
   const [waitingForScreenshot, setWaitingForScreenshot] = useState<string | null>(null);
   
   // State for storing AI outlooks
-  const [aiOutlooks, setAiOutlooks] = useState<Record<string, { analysis: string; timestamp: string }>>(() => {
+  const [aiOutlooks, setAiOutlooks] = useState<Record<string, { shortOutlook: string; fullAnalysis: string; timestamp: string }>>(() => {
     const saved = localStorage.getItem('aiOutlooks');
-    return saved ? JSON.parse(saved) : {};
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Handle backward compatibility with old structure
+      const converted: Record<string, { shortOutlook: string; fullAnalysis: string; timestamp: string }> = {};
+      for (const [ticker, data] of Object.entries(parsed)) {
+        const oldData = data as any;
+        if (oldData.analysis && !oldData.shortOutlook) {
+          // Old structure - convert to new structure
+          converted[ticker] = {
+            shortOutlook: oldData.analysis,
+            fullAnalysis: oldData.analysis,
+            timestamp: oldData.timestamp
+          };
+        } else {
+          // New structure already
+          converted[ticker] = data as { shortOutlook: string; fullAnalysis: string; timestamp: string };
+        }
+      }
+      return converted;
+    }
+    return {};
   });
 
   // AI Analysis function - Step 1: Open chart
@@ -1741,9 +1761,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         shortOutlook = shortOutlook.charAt(0).toUpperCase() + shortOutlook.slice(1);
       }
       
-      // Save outlook with timestamp
+      // Save both short outlook and full analysis with timestamp
       const newOutlook = {
-        analysis: shortOutlook || 'Analysis pending',
+        shortOutlook: shortOutlook || 'Analysis pending',
+        fullAnalysis: analysis,
         timestamp: new Date().toLocaleString()
       };
       
@@ -4219,10 +4240,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       title={
                                         <Box>
                                           <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                                            AI Analysis ({aiOutlooks[holding.ticker].timestamp})
+                                            Full AI Analysis ({aiOutlooks[holding.ticker].timestamp})
                                           </Typography>
                                           <Typography variant="body2">
-                                            {aiOutlooks[holding.ticker].analysis}
+                                            {aiOutlooks[holding.ticker].fullAnalysis}
                                           </Typography>
                                         </Box>
                                       }
@@ -4247,9 +4268,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                             display: 'block'
                                           }}
                                         >
-                                          {aiOutlooks[holding.ticker].analysis.length > 60 
-                                            ? aiOutlooks[holding.ticker].analysis.substring(0, 60) + '...'
-                                            : aiOutlooks[holding.ticker].analysis}
+                                          {aiOutlooks[holding.ticker].shortOutlook.length > 60 
+                                            ? aiOutlooks[holding.ticker].shortOutlook.substring(0, 60) + '...'
+                                            : aiOutlooks[holding.ticker].shortOutlook}
                                         </Typography>
                                         <Typography 
                                           variant="caption" 
