@@ -1815,13 +1815,14 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         timestamp: new Date().toLocaleString()
       };
       
-      const updatedOutlooks = {
-        ...aiOutlooks,
-        [ticker]: newOutlook
-      };
-      
-      setAiOutlooks(updatedOutlooks);
-      localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+      setAiOutlooks(currentOutlooks => {
+        const updatedOutlooks = {
+          ...currentOutlooks,
+          [ticker]: newOutlook
+        };
+        localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+        return updatedOutlooks;
+      });
       
       setAiAnalysisResult(analysis);
       setShowAiModal(true);
@@ -2127,13 +2128,14 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
         timestamp: new Date().toLocaleString()
       };
       
-      const updatedOutlooks = {
-        ...aiOutlooks,
-        [ticker]: newOutlook
-      };
-      
-      setAiOutlooks(updatedOutlooks);
-      localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+      setAiOutlooks(currentOutlooks => {
+        const updatedOutlooks = {
+          ...currentOutlooks,
+          [ticker]: newOutlook
+        };
+        localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+        return updatedOutlooks;
+      });
       
       setSnackbarMessage(`✅ ${ticker} analysis completed with Polygon data!`);
       setShowSnackbar(true);
@@ -2153,16 +2155,18 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
     if (refreshButton) refreshButton.blur(); // Remove focus to prevent stuck hover
     
     // Set "Refreshing..." status for all tickers being processed
-    const refreshingOutlooks = { ...aiOutlooks };
-    tickers.forEach(ticker => {
-      refreshingOutlooks[ticker] = {
-        sentiment: 'Refreshing...',
-        shortOutlook: 'Analysis in progress',
-        fullAnalysis: 'Please wait while we analyze this ticker...',
-        timestamp: new Date().toLocaleString()
-      };
+    setAiOutlooks(currentOutlooks => {
+      const refreshingOutlooks = { ...currentOutlooks };
+      tickers.forEach(ticker => {
+        refreshingOutlooks[ticker] = {
+          sentiment: 'Refreshing...',
+          shortOutlook: 'Analysis in progress',
+          fullAnalysis: 'Please wait while we analyze this ticker...',
+          timestamp: new Date().toLocaleString()
+        };
+      });
+      return refreshingOutlooks;
     });
-    setAiOutlooks(refreshingOutlooks);
     
     setSnackbarMessage(`🔄 Refreshing AI analysis for ${tickers.length} ETFs...`);
     setShowSnackbar(true);
@@ -2182,15 +2186,17 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
         errorCount++;
         
         // Set error status for failed ticker
-        const errorOutlooks = { ...aiOutlooks };
-        errorOutlooks[ticker] = {
-          sentiment: 'Error',
-          shortOutlook: 'Analysis failed',
-          fullAnalysis: `Failed to analyze ${ticker}: ${error.message}`,
-          timestamp: new Date().toLocaleString()
-        };
-        setAiOutlooks(errorOutlooks);
-        localStorage.setItem('aiOutlooks', JSON.stringify(errorOutlooks));
+        setAiOutlooks(currentOutlooks => {
+          const errorOutlooks = { ...currentOutlooks };
+          errorOutlooks[ticker] = {
+            sentiment: 'Error',
+            shortOutlook: 'Analysis failed',
+            fullAnalysis: `Failed to analyze ${ticker}: ${error.message}`,
+            timestamp: new Date().toLocaleString()
+          };
+          localStorage.setItem('aiOutlooks', JSON.stringify(errorOutlooks));
+          return errorOutlooks;
+        });
       }
     }
     
