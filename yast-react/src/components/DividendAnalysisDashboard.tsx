@@ -4777,8 +4777,9 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                 </Box>
               </motion.div>
             </TabPanel>
+          </Paper>
 
-            {/* Modern Disclaimer */}
+          {/* Modern Disclaimer */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -5115,6 +5116,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
           </Button>
         </DialogActions>
       </Dialog>
+      </Box>
     </ThemeProvider>
   );
 }
