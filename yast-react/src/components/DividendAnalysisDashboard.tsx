@@ -2112,6 +2112,14 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
     const refreshButton = document.activeElement as HTMLElement;
     if (refreshButton) refreshButton.blur(); // Remove focus to prevent stuck hover
     
+    // Clear existing AI analysis for these tickers to eliminate confusion
+    const clearedOutlooks = { ...aiOutlooks };
+    tickers.forEach(ticker => {
+      delete clearedOutlooks[ticker];
+    });
+    setAiOutlooks(clearedOutlooks);
+    localStorage.setItem('aiOutlooks', JSON.stringify(clearedOutlooks));
+    
     setSnackbarMessage(`🔄 Refreshing AI analysis for ${tickers.length} ETFs...`);
     setShowSnackbar(true);
     
