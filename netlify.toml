@@ -9,6 +9,10 @@
   NPM_FLAGS = "--legacy-peer-deps"
   CI = "true"
 
+# Plugin to install function dependencies
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
+
 # Daily scheduled function (if using Netlify scheduled functions - requires Pro plan)
 # [[functions]]
 #   schedule = "0 23 * * 1-5"  # Daily at 6 PM EST, Monday-Friday
