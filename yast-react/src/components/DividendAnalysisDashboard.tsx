@@ -456,7 +456,7 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
   
   // Filter out bearish ETFs if AI sentiment data is available
   if (aiOutlooks) {
-    const beforeFilterCount = allETFs.length;
+    const initialCount = allETFs.length;
     const bearishTickers: string[] = [];
     
     allETFs = allETFs.filter(etf => {
@@ -471,9 +471,9 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
       return true; // Include neutral, bullish, or ETFs without sentiment data
     });
     
-    const afterFilterCount = allETFs.length;
+    const finalCount = allETFs.length;
     console.log(`🐻 Filtered out ${bearishTickers.length} bearish ETFs: ${bearishTickers.join(', ')}`);
-    console.log(`📈 Portfolio now uses ${afterFilterCount} ETFs (was ${beforeFilterCount})`);
+    console.log(`📈 Portfolio now uses ${finalCount} ETFs (was ${initialCount})`);
   }
   
   console.log('📊 Final ETF count for optimization:', allETFs.length);
@@ -876,8 +876,8 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     if (holding.weight < 0.20 && totalWeight < 1.0) {
       // Calculate optimal increase based on Sharpe ratio and risk constraints
       const maxIncrease = Math.min(0.20 - holding.weight, 1.0 - totalWeight);
-      let bestIncrease = 0;
-      let bestSharpe = 0;
+      let optimalIncrease = 0;
+      let maxSharpe = 0;
       
       // Test incremental increases with Sharpe optimization
       for (let increase = 0.01; increase <= maxIncrease; increase += 0.01) {
@@ -890,16 +890,16 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         const testMetrics = calculatePortfolioMetrics(testAllocation);
         
         // Accept if risk constraint met AND Sharpe ratio improved
-        if (testMetrics.risk <= maxRisk && testMetrics.sharpeRatio > bestSharpe) {
-          bestIncrease = increase;
-          bestSharpe = testMetrics.sharpeRatio;
+        if (testMetrics.risk <= maxRisk && testMetrics.sharpeRatio > maxSharpe) {
+          optimalIncrease = increase;
+          maxSharpe = testMetrics.sharpeRatio;
         }
       }
       
-      if (bestIncrease > 0) {
-        holding.weight += bestIncrease;
-        totalWeight += bestIncrease;
-        console.log(`📊 Optimized ${holding.ticker} by ${(bestIncrease*100).toFixed(1)}% to ${(holding.weight*100).toFixed(1)}% (Sharpe: ${bestSharpe.toFixed(2)})`);
+      if (optimalIncrease > 0) {
+        holding.weight += optimalIncrease;
+        totalWeight += optimalIncrease;
+        console.log(`📊 Optimized ${holding.ticker} by ${(optimalIncrease*100).toFixed(1)}% to ${(holding.weight*100).toFixed(1)}% (Sharpe: ${maxSharpe.toFixed(2)})`);
       }
     }
   }
@@ -3016,16 +3016,16 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       const outperformingDC = data.filter(item => item.divCaptureReturn > item.buyHoldReturn).length;
       const lowRiskHighReturn = data.filter(item => item.bestReturn > 0.3 && item.riskVolatility < 0.3).length;
       
-      const bestPerformer = data.reduce((best, item) => 
-        item.bestReturn > best.bestReturn ? item : best
+      const bestPerformer = data.reduce((current, item) => 
+        item.bestReturn > current.bestReturn ? item : current
       );
       
-      const lowestRisk = data.reduce((best, item) => 
-        item.riskVolatility < best.riskVolatility ? item : best
+      const lowestRisk = data.reduce((current, item) => 
+        item.riskVolatility < current.riskVolatility ? item : current
       );
       
-      const highestYield = data.reduce((best, item) => 
-        (item.forwardYield || 0) > (best.forwardYield || 0) ? item : best
+      const highestYield = data.reduce((current, item) => 
+        (item.forwardYield || 0) > (current.forwardYield || 0) ? item : current
       );
       
       return {
