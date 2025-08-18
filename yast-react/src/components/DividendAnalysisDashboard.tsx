@@ -62,7 +62,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
-import EnhancedDashboardIntegration from './EnhancedDashboardIntegration';
 // import CandlestickChart from './CandlestickChart';
 
 export interface DividendData {
@@ -1801,6 +1800,294 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
   };
 
+  // Real Polygon API analysis function
+  const analyzeWithPolygon = async (ticker: string) => {
+    try {
+      setAiAnalysisLoading(ticker);
+      
+      // Fetch real data from Polygon API
+      const POLYGON_API_KEY = import.meta.env.VITE_POLYGON_API_KEY || process.env.POLYGON_API_KEY;
+      const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY || process.env.CLAUDE_API_KEY;
+      
+      // Get date range for 15-minute data (last 5 trading days)
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 7 calendar days to ensure 5 trading days
+      
+      // Call Polygon API for 15-minute aggregates
+      const polygonUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/15/minute/${startDate}/${endDate}?adjusted=true&sort=asc&apikey=${POLYGON_API_KEY}`;
+      
+      const polygonResponse = await fetch(polygonUrl);
+      if (!polygonResponse.ok) {
+        throw new Error(`Polygon API error: ${polygonResponse.status}`);
+      }
+      
+      const polygonData = await polygonResponse.json();
+      if (!polygonData.results || polygonData.results.length === 0) {
+        throw new Error('No data available from Polygon API');
+      }
+
+      // Process the real 15-minute market data
+      const results = polygonData.results;
+      const latest = results[results.length - 1];
+      
+      // For 15-minute data, calculate recent performance
+      const currentPrice = latest.c;
+      const oneDayAgo = results[results.length - 26] || results[0]; // ~26 15-min bars = 1 trading day
+      const twoDaysAgo = results[results.length - 52] || results[0]; // ~52 15-min bars = 2 trading days
+      
+      const dailyChange = oneDayAgo ? ((currentPrice - oneDayAgo.c) / oneDayAgo.c) * 100 : 0;
+      const twoDayChange = twoDaysAgo ? ((currentPrice - twoDaysAgo.c) / twoDaysAgo.c) * 100 : 0;
+
+      // Calculate technical indicators with real data
+      let rsi = 0;
+      if (results.length >= 14) {
+        const prices = results.slice(-15).map((r: any) => r.c);
+        const gains = [];
+        const losses = [];
+        
+        for (let i = 1; i < prices.length; i++) {
+          const change = prices[i] - prices[i - 1];
+          gains.push(change > 0 ? change : 0);
+          losses.push(change < 0 ? -change : 0);
+        }
+        
+        const avgGain = gains.reduce((a, b) => a + b, 0) / gains.length;
+        const avgLoss = losses.reduce((a, b) => a + b, 0) / losses.length;
+        
+        if (avgLoss > 0) {
+          const rs = avgGain / avgLoss;
+          rsi = 100 - (100 / (1 + rs));
+        }
+      }
+
+      // Calculate SMAs with 15-minute data (shorter periods for intraday)
+      const sma20 = results.length >= 20 ? 
+        results.slice(-20).reduce((sum: number, r: any) => sum + r.c, 0) / 20 : currentPrice; // ~5 hour SMA
+      const sma50 = results.length >= 50 ? 
+        results.slice(-50).reduce((sum: number, r: any) => sum + r.c, 0) / 50 : currentPrice; // ~12.5 hour SMA
+
+      // Get latest trading session high/low
+      const recentBars = results.slice(-26); // Last trading day
+      const sessionHigh = Math.max(...recentBars.map((r: any) => r.h));
+      const sessionLow = Math.min(...recentBars.map((r: any) => r.l));
+
+      // Enhanced technical analysis preprocessing (like Claude does)
+      
+      // Fibonacci retracement levels
+      const range = sessionHigh - sessionLow;
+      const fib236 = sessionLow + (range * 0.236);
+      const fib382 = sessionLow + (range * 0.382);
+      const fib50 = sessionLow + (range * 0.5);
+      const fib618 = sessionLow + (range * 0.618);
+
+      // Identify key support and resistance from recent price action
+      const recentBars = results.slice(-30);
+      const highs = recentBars.map((r: any) => r.h);
+      const lows = recentBars.map((r: any) => r.l);
+
+      // Find most tested levels (price areas hit multiple times)
+      const priceHits: Record<number, number> = {};
+      highs.concat(lows).forEach(price => {
+        const roundedPrice = Math.round(price * 4) / 4; // Round to nearest quarter
+        priceHits[roundedPrice] = (priceHits[roundedPrice] || 0) + 1;
+      });
+
+      const significantLevels = Object.entries(priceHits)
+        .filter(([price, hits]) => hits >= 2)
+        .sort((a, b) => Number(b[1]) - Number(a[1]))
+        .slice(0, 6)
+        .map(([price, hits]) => {
+          const level = parseFloat(price);
+          const type = level > currentPrice ? 'RESISTANCE' : 'SUPPORT';
+          return `$${level.toFixed(2)} (${hits} hits) - ${type}`;
+        });
+
+      // Candlestick pattern analysis - only show patterns worth points
+      const recentBars = results.slice(-20); // Check more bars to find patterns worth points
+      let patternStrength = 0;
+      const candlestickAnalysis: string[] = [];
+
+      recentBars.forEach((bar: any) => {
+        const bodySize = Math.abs(bar.c - bar.o);
+        const totalRange = bar.h - bar.l;
+        const upperWick = bar.h - Math.max(bar.o, bar.c);
+        const lowerWick = Math.min(bar.o, bar.c) - bar.l;
+        
+        let pattern = "";
+        let points = 0;
+        
+        if (bodySize < 0.03) {
+          pattern += "DOJI ";
+          points += 1;
+        }
+        if (lowerWick > bodySize * 2) {
+          pattern += "HAMMER ";
+          if (bar.c > bar.o) points += 2; // Only bullish hammers get points
+        }
+        
+        // Only include bars that score points
+        if (points > 0) {
+          const direction = bar.c > bar.o ? "BULLISH" : "BEARISH";
+          // Convert UTC to ET (Eastern Time)
+          const utcDate = new Date(bar.t);
+          // Format date in ET timezone
+          const etString = utcDate.toLocaleString("en-US", {
+            timeZone: "America/New_York",
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+          // Convert MM/DD/YYYY, HH:MM to YYYY-MM-DD HH:MM ET
+          const [date, time] = etString.split(', ');
+          const [month, day, year] = date.split('/');
+          const datetime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${time} ET`;
+          patternStrength += points;
+          
+          candlestickAnalysis.push(`${datetime}: ${direction} ${pattern.trim()} | Body: ${bodySize.toFixed(2)} | Range: ${totalRange.toFixed(2)} [+${points}pts]`);
+        }
+      });
+
+      // Take only the most recent 5 pattern bars that scored points
+      const recentPatterns = candlestickAnalysis.slice(-5);
+
+      // Volume analysis  
+      const avgVolume = results.slice(-20).reduce((sum: number, bar: any) => sum + bar.v, 0) / 20;
+      const latestVolume = latest.v;
+      const volumeRatio = latestVolume / avgVolume;
+      const volumeStatus = volumeRatio > 1.5 ? 'HIGH' : volumeRatio < 0.5 ? 'LOW' : 'NORMAL';
+
+      // Create enhanced data summary with comprehensive preprocessing
+      const dataSummary = `COMPREHENSIVE TECHNICAL ANALYSIS for ${ticker}:
+
+== PRICE DATA ==
+- Current Price: $${currentPrice.toFixed(2)}
+- Daily Change: ${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(2)}%
+- 2-Day Change: ${twoDayChange > 0 ? '+' : ''}${twoDayChange.toFixed(2)}%
+- Session High: $${sessionHigh.toFixed(2)}
+- Session Low: $${sessionLow.toFixed(2)}
+- RSI (14-period): ${rsi.toFixed(1)}
+- Price vs 20-period SMA: ${currentPrice > sma20 ? 'above' : 'below'} ($${sma20.toFixed(2)})
+- Price vs 50-period SMA: ${currentPrice > sma50 ? 'above' : 'below'} ($${sma50.toFixed(2)})
+
+== FIBONACCI RETRACEMENT LEVELS ==
+- 23.6% Retracement: $${fib236.toFixed(2)}
+- 38.2% Retracement: $${fib382.toFixed(2)}
+- 50.0% Retracement: $${fib50.toFixed(2)}
+- 61.8% Retracement: $${fib618.toFixed(2)}
+
+== KEY SUPPORT/RESISTANCE LEVELS (most tested) ==
+${significantLevels.join('\n')}
+
+== RECENT CANDLESTICK PATTERNS (Bars with signals) ==
+${recentPatterns.length > 0 ? recentPatterns.join('\n') : 'No significant patterns in recent bars'}
+Pattern Strength Score: ${patternStrength}/10
+
+== VOLUME ANALYSIS ==
+- Latest Volume: ${latestVolume.toLocaleString()}
+- 20-Bar Average: ${Math.round(avgVolume).toLocaleString()}
+- Volume Ratio: ${volumeRatio.toFixed(2)}x average (${volumeStatus})
+
+Data points: ${results.length} 15-minute bars (${Math.floor(results.length/26)} trading days)`;
+
+      // Use our existing claude-analysis Netlify function
+      const response = await fetch('/.netlify/functions/claude-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: `Analyze this real market data for ${ticker}:
+
+${dataSummary}
+
+Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
+
+1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
+
+2. **Candlestick Pattern Analysis**: 
+   - Identify specific candlestick patterns (doji, hammer, shooting star, engulfing, etc.)
+   - Note any reversal or continuation patterns in the recent 15-minute bars
+   - Analyze the significance of wicks/shadows and body sizes
+   - Comment on volume confirmation with candlestick patterns
+
+3. **Technical pattern analysis** based on price movement and chart patterns
+
+4. **RSI interpretation** (current reading: ${rsi.toFixed(1)})
+
+5. **Moving average analysis** (price vs SMA 20/50)
+
+6. **Risk assessment**: 
+   - SPECIFIC price level where you should cut losses (exact $ amount)
+   - SPECIFIC price level that signals danger (exact $ amount)
+   - Maximum acceptable loss as specific dollar amount from current price
+
+7. **Trading recommendations**:
+   - EXACT entry price if buying (specific $ amount)
+   - EXACT exit price for profit-taking (specific $ amount) 
+   - EXACT stop-loss price (specific $ amount)
+   - Target price for 1-week, 2-week timeframes
+
+DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $${currentPrice.toFixed(2)}.`
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Claude analysis failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const fullAnalysis = result.analysis;
+      
+      // Extract short outlook from the real analysis
+      const outlookMatch = fullAnalysis.match(/1\.\s*\*\*Short-term outlook[^:]*:\*\*\s*([^.]*\.?[^1-9]*)/i);
+      let shortOutlook = `${ticker} analysis: RSI ${rsi.toFixed(1)}, price $${currentPrice.toFixed(2)} (${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(1)}% daily)`;
+      
+      if (outlookMatch) {
+        shortOutlook = outlookMatch[1].replace(/\n.*$/s, '').trim();
+        shortOutlook = shortOutlook.replace(/^\s*-?\s*/, '').replace(/\*\*/g, '');
+        if (shortOutlook.length > 100) {
+          shortOutlook = shortOutlook.substring(0, 97) + '...';
+        }
+      }
+
+      const analysisData = {
+        ticker,
+        timestamp: new Date().toISOString(),
+        shortOutlook,
+        fullAnalysis,
+        dataSummary
+      };
+      
+      // Save the analysis result
+      const newOutlook = {
+        shortOutlook: analysisData.shortOutlook || 'Analysis pending',
+        fullAnalysis: analysisData.fullAnalysis,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      const updatedOutlooks = {
+        ...aiOutlooks,
+        [ticker]: newOutlook
+      };
+      
+      setAiOutlooks(updatedOutlooks);
+      localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+      
+      setSnackbarMessage(`✅ ${ticker} analysis completed with Polygon data!`);
+      setShowSnackbar(true);
+
+    } catch (error) {
+      console.error('Polygon Analysis error:', error);
+      setSnackbarMessage(`Polygon Analysis failed: ${error.message}`);
+      setShowSnackbar(true);
+    } finally {
+      setAiAnalysisLoading(null);
+    }
+  };
+
   // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE)
   const getRiskLevelChip = (riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE') => {
     if (!riskLevel) {
@@ -3013,6 +3300,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Yield
               </TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                AI Analysis
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -3061,29 +3351,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           {item.ticker}
                         </Typography>
                       </Link>
-                    {mptAllocation.some(allocation => allocation.ticker === item.ticker) && (
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 0.5,
-                        px: 0.75,
-                        py: 0.25,
-                        border: '2px solid #00D4FF',
-                        borderRadius: 1,
-                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                        height: '20px'
-                      }}>
-                        <Typography sx={{ fontSize: '0.7rem' }}>⭐</Typography>
-                        <Typography sx={{ 
-                          color: '#00D4FF',
-                          fontWeight: 600,
-                          fontSize: '0.65rem',
-                          lineHeight: 1
-                        }}>
-                          IN PORTFOLIO
-                        </Typography>
-                      </Box>
-                    )}
                     </Box>
                     {/* Price and Dividend Information */}
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
@@ -3243,6 +3510,82 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   >
                     {(item.forwardYield !== null && item.forwardYield !== undefined) ? `${item.forwardYield.toFixed(1)}%` : 'N/A'}
                   </Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                    {aiOutlooks[item.ticker] ? (
+                      <Box
+                        onClick={() => {
+                          setAiAnalysisResult(aiOutlooks[item.ticker].fullAnalysis);
+                          setShowAiModal(true);
+                        }}
+                        sx={{
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          p: 1,
+                          borderRadius: 2,
+                          backgroundColor: 'rgba(0, 212, 255, 0.08)',
+                          border: '1px solid rgba(0, 212, 255, 0.2)',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 212, 255, 0.15)',
+                            border: '1px solid rgba(0, 212, 255, 0.4)',
+                            transform: 'scale(1.02)'
+                          }
+                        }}
+                      >
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: '#00D4FF',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            textAlign: 'center',
+                            maxWidth: '120px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {aiOutlooks[item.ticker].shortOutlook.length > 60 
+                            ? aiOutlooks[item.ticker].shortOutlook.substring(0, 60) + '...'
+                            : aiOutlooks[item.ticker].shortOutlook}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            fontSize: '0.65rem'
+                          }}
+                        >
+                          {new Date(aiOutlooks[item.ticker].timestamp).toLocaleDateString()} • Click for details
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Button
+                        variant="text"
+                        size="small"
+                        sx={{
+                          minWidth: 'auto',
+                          padding: '4px 6px',
+                          fontSize: '1rem',
+                          height: '24px',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                          }
+                        }}
+                        onClick={() => analyzeWithPolygon(item.ticker)}
+                        disabled={aiAnalysisLoading === item.ticker}
+                      >
+                        🤖
+                      </Button>
+                    )}
+                  </Box>
                 </TableCell>
               </motion.tr>
             ))}
@@ -3439,17 +3782,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                 }}
               />
               <Tab
-                label="Enhanced Analytics"
-                icon={<Analytics />}
-                iconPosition="start"
-                sx={{
-                  minHeight: 72,
-                  '& .MuiSvgIcon-root': {
-                    fontSize: 20
-                  }
-                }}
-              />
-              <Tab
                 label={`Full Analysis (${data.length})`}
                 icon={<TableView />}
                 iconPosition="start"
@@ -3472,11 +3804,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                 }}
               />
               {console.log('🎯 TABS RENDERED - All tabs:', {
-                tabCount: 5,
+                tabCount: 4,
                 selectedTab,
                 dataLength: data.length,
                 portfolioHoldings: portfolio.holdings.length,
-                tabs: ['Optimal Portfolio', 'Suboptimal ETFs', 'Enhanced Analytics', 'Full Analysis', 'My Portfolio']
+                tabs: ['Optimal Portfolio', 'Suboptimal ETFs', 'Full Analysis', 'My Portfolio']
               })}
             </Tabs>
 
@@ -3682,45 +4014,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             </TabPanel>
 
             <TabPanel value={selectedTab} index={2}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Box sx={{ mb: 4 }}>
-                  <Typography 
-                    variant="h4" 
-                    gutterBottom
-                    sx={{ 
-                      fontWeight: 700,
-                      background: 'linear-gradient(135deg, #FFFFFF 0%, #FFB74D 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      mb: 1
-                    }}
-                  >
-                    Enhanced Analytics Suite
-                  </Typography>
-                  <Typography 
-                    variant="subtitle1" 
-                    sx={{ 
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      maxWidth: '600px',
-                      lineHeight: 1.6
-                    }}
-                  >
-                    Advanced dividend capture analytics with comprehensive risk metrics, intelligent scanner, and tax optimization strategies
-                  </Typography>
-                </Box>
-              </motion.div>
-              <EnhancedDashboardIntegration 
-                mockAllocation={mptAllocation}
-                mockPortfolioMetrics={portfolioMetrics}
-              />
-            </TabPanel>
-
-            <TabPanel value={selectedTab} index={3}>
-              {console.log('🎯 RENDERING FULL ANALYSIS TAB - selectedTab:', selectedTab, 'should show:', selectedTab === 3)}
+              {console.log('🎯 RENDERING FULL ANALYSIS TAB - selectedTab:', selectedTab, 'should show:', selectedTab === 2)}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -3757,7 +4051,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               {renderFullAnalysisTable(data)}
             </TabPanel>
 
-            <TabPanel value={selectedTab} index={4}>
+            <TabPanel value={selectedTab} index={3}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -4099,7 +4393,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                             backgroundColor: waitingForScreenshot === holding.ticker ? 'rgba(255, 183, 77, 0.3)' : 'rgba(255, 255, 255, 0.1)'
                                           }
                                         }}
-                                        onClick={() => analyzeWithClaude(holding.ticker)}
+                                        onClick={() => analyzeWithPolygon(holding.ticker)}
                                         disabled={aiAnalysisLoading === holding.ticker}
                                       >
                                         {waitingForScreenshot === holding.ticker ? '📸' : '🤖'}

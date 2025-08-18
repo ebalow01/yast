@@ -19,10 +19,16 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
-    open: true
+    port: 5173,
+    open: true,
+    proxy: {
+      '/.netlify/functions': {
+        target: 'http://localhost:9999',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
-    port: 3000
+    port: 5173
   }
 })
