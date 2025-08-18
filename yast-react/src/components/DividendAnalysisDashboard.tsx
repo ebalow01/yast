@@ -4848,6 +4848,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
               </CardContent>
             </Card>
           </motion.div>
+          </motion.div>
         </Container>
       </Box>
 
