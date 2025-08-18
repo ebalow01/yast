@@ -1995,7 +1995,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
       // Candlestick pattern analysis - only show patterns worth points
       const patternBars = results.slice(-20); // Check more bars to find patterns worth points
-      let patternStrength = 0;
+      let totalPatternPoints = 0;
+      let patternCount = 0;
       const candlestickAnalysis: string[] = [];
 
       patternBars.forEach((bar: any) => {
@@ -2035,11 +2036,25 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           const [date, time] = etString.split(', ');
           const [month, day, year] = date.split('/');
           const datetime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${time} ET`;
-          patternStrength += points;
+          totalPatternPoints += points;
+          patternCount++;
           
           candlestickAnalysis.push(`${datetime}: ${direction} ${pattern.trim()} | Body: ${bodySize.toFixed(2)} | Range: ${totalRange.toFixed(2)} [+${points}pts]`);
         }
       });
+
+      // Calculate pattern strength score (0-10 scale)
+      // Base it on both total points and frequency of patterns
+      let patternStrength = 0;
+      if (patternCount > 0) {
+        // Average points per pattern (max 3 points per pattern)
+        const avgPointsPerPattern = totalPatternPoints / patternCount;
+        // Frequency score (how many patterns out of 20 bars)
+        const frequencyScore = (patternCount / 20) * 10;
+        // Combine both metrics and cap at 10
+        patternStrength = Math.min((avgPointsPerPattern * 3) + (frequencyScore * 0.5), 10);
+        patternStrength = Math.round(patternStrength * 10) / 10; // Round to 1 decimal
+      }
 
       // Take only the most recent 5 pattern bars that scored points
       const recentPatterns = candlestickAnalysis.slice(-5);
@@ -2074,7 +2089,7 @@ ${significantLevels.join('\n')}
 
 == RECENT CANDLESTICK PATTERNS (Bars with signals) ==
 ${recentPatterns.length > 0 ? recentPatterns.join('\n') : 'No significant patterns in recent bars'}
-Pattern Strength Score: ${patternStrength}/10
+Pattern Strength Score: ${patternStrength.toFixed(1)}/10
 
 == VOLUME ANALYSIS ==
 - Latest Volume: ${latestVolume.toLocaleString()}
