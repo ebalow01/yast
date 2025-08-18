@@ -4689,12 +4689,21 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                         sx={{ 
                                           color: 'rgba(255, 255, 255, 0.7)',
                                           fontSize: '0.65rem',
-                                          display: 'block'
+                                          display: 'block',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                          maxWidth: '150px'
                                         }}
                                       >
-                                        {aiOutlooks[holding.ticker].shortOutlook.length > 45 
-                                          ? aiOutlooks[holding.ticker].shortOutlook.substring(0, 45) + '...'
-                                          : aiOutlooks[holding.ticker].shortOutlook}
+                                        {(() => {
+                                          const outlook = aiOutlooks[holding.ticker].shortOutlook || 'Click to analyze';
+                                          // If outlook is too long (likely old full analysis), truncate aggressively
+                                          if (outlook.length > 100) {
+                                            return outlook.substring(0, 35) + '...';
+                                          }
+                                          return outlook.length > 45 ? outlook.substring(0, 45) + '...' : outlook;
+                                        })()}
                                       </Typography>
                                       <Typography 
                                         variant="caption" 
