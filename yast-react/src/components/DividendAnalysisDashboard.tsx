@@ -1886,20 +1886,33 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       
       // Fetch real data from Polygon API via serverless function
       // This ensures API keys stay secure on the server side
+      console.log(`🔍 Sending request to Polygon API for ticker: "${ticker}"`);
+      const requestBody = { ticker };
+      console.log(`📤 Request body:`, requestBody);
+      
       const polygonResponse = await fetch('/.netlify/functions/polygon-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ticker })
+        body: JSON.stringify(requestBody)
       });
       
+      console.log(`📡 Polygon response status: ${polygonResponse.status}`);
+      const responseText = await polygonResponse.text();
+      console.log(`📥 Raw response:`, responseText);
+      
       if (!polygonResponse.ok) {
-        const errorData = await polygonResponse.json().catch(() => ({}));
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { error: responseText };
+        }
         throw new Error(errorData.error || `Polygon API error: ${polygonResponse.status}`);
       }
       
-      const polygonData = await polygonResponse.json();
+      const polygonData = JSON.parse(responseText);
       if (!polygonData.results || polygonData.results.length === 0) {
         throw new Error('No data available from Polygon API');
       }
