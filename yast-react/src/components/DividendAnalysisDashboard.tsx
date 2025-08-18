@@ -2218,6 +2218,9 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       
       setSnackbarMessage(`✅ ${ticker} analysis completed with Polygon data!`);
       setShowSnackbar(true);
+      
+      // Return the analysis result for Quick Analysis
+      return newOutlook;
 
     } catch (error) {
       console.error('Polygon Analysis error:', error);
@@ -2241,28 +2244,14 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
     const upperTicker = ticker.toUpperCase().trim();
 
     try {
-      await analyzeWithPolygon(upperTicker);
+      // Call analyzeWithPolygon and wait for the complete analysis
+      const analysisResult = await analyzeWithPolygon(upperTicker);
       
-      // Wait a moment for state to update, then check multiple times
-      let attempts = 0;
-      let analysisData;
-      
-      while (attempts < 20) { // Increased from 10 to 20 attempts (20 × 1000ms = 20 seconds)
-        analysisData = aiOutlooks[upperTicker];
-        console.log(`🐛 Quick Analysis attempt ${attempts + 1}: `, analysisData?.fullAnalysis?.substring(0, 50) + '...');
-        
-        if (analysisData && analysisData.fullAnalysis && 
-            analysisData.fullAnalysis !== 'Please wait while we analyze this ticker...' &&
-            !analysisData.fullAnalysis.startsWith('Failed to analyze')) {
-          setQuickAnalysisResult(analysisData.fullAnalysis);
-          return;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased from 500ms to 1000ms
-        attempts++;
+      if (analysisResult && analysisResult.fullAnalysis) {
+        setQuickAnalysisResult(analysisResult.fullAnalysis);
+      } else {
+        setQuickAnalysisResult('Analysis completed but no detailed results available.');
       }
-      
-      // If we get here, analysis didn't complete properly
-      setQuickAnalysisResult('Analysis timed out. The AI analysis takes longer than expected. Please try again - the data should be cached and faster the second time.');
     } catch (error) {
       console.error('Quick analysis error:', error);
       setQuickAnalysisResult(`Analysis failed: ${error.message}`);
