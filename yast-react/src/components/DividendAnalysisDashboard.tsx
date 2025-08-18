@@ -1805,20 +1805,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     try {
       setAiAnalysisLoading(ticker);
       
-      // Fetch real data from Polygon API
-      // API keys are stored in Netlify environment variables
-      const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
+      // Fetch real data from Polygon API via serverless function
+      // This ensures API keys stay secure on the server side
+      const polygonResponse = await fetch('/.netlify/functions/polygon-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ticker })
+      });
       
-      // Get date range for 15-minute data (last 5 trading days)
-      const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 7 calendar days to ensure 5 trading days
-      
-      // Call Polygon API for 15-minute aggregates
-      const polygonUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/15/minute/${startDate}/${endDate}?adjusted=true&sort=asc&apikey=${POLYGON_API_KEY}`;
-      
-      const polygonResponse = await fetch(polygonUrl);
       if (!polygonResponse.ok) {
-        throw new Error(`Polygon API error: ${polygonResponse.status}`);
+        const errorData = await polygonResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `Polygon API error: ${polygonResponse.status}`);
       }
       
       const polygonData = await polygonResponse.json();
