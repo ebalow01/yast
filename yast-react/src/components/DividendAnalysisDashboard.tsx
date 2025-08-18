@@ -4774,7 +4774,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       </CardContent>
                     </Card>
                   )}
-                </Box>
               </motion.div>
             </TabPanel>
           </Paper>
