@@ -38,6 +38,10 @@ exports.handler = async (event, context) => {
 
     // Get Claude API key from environment variable
     const claudeApiKey = process.env.CLAUDE_API_KEY;
+    console.log('Environment variables available:', Object.keys(process.env));
+    console.log('Claude API key exists:', !!claudeApiKey);
+    console.log('Claude API key length:', claudeApiKey ? claudeApiKey.length : 0);
+    
     if (!claudeApiKey) {
       return {
         statusCode: 500,
