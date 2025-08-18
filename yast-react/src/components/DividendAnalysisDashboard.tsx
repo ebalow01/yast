@@ -1608,24 +1608,30 @@ export default function DividendAnalysisDashboard() {
   const [waitingForScreenshot, setWaitingForScreenshot] = useState<string | null>(null);
   
   // State for storing AI outlooks
-  const [aiOutlooks, setAiOutlooks] = useState<Record<string, { shortOutlook: string; fullAnalysis: string; timestamp: string }>>(() => {
+  const [aiOutlooks, setAiOutlooks] = useState<Record<string, { sentiment: string; shortOutlook: string; fullAnalysis: string; timestamp: string }>>(() => {
     const saved = localStorage.getItem('aiOutlooks');
     if (saved) {
       const parsed = JSON.parse(saved);
       // Handle backward compatibility with old structure
-      const converted: Record<string, { shortOutlook: string; fullAnalysis: string; timestamp: string }> = {};
+      const converted: Record<string, { sentiment: string; shortOutlook: string; fullAnalysis: string; timestamp: string }> = {};
       for (const [ticker, data] of Object.entries(parsed)) {
         const oldData = data as any;
         if (oldData.analysis && !oldData.shortOutlook) {
           // Old structure - convert to new structure
           converted[ticker] = {
+            sentiment: 'Neutral',
             shortOutlook: oldData.analysis,
             fullAnalysis: oldData.analysis,
             timestamp: oldData.timestamp
           };
         } else {
-          // New structure already
-          converted[ticker] = data as { shortOutlook: string; fullAnalysis: string; timestamp: string };
+          // New structure already - ensure sentiment field exists
+          converted[ticker] = {
+            sentiment: (data as any).sentiment || 'Neutral',
+            shortOutlook: (data as any).shortOutlook,
+            fullAnalysis: (data as any).fullAnalysis,
+            timestamp: (data as any).timestamp
+          };
         }
       }
       return converted;
@@ -1762,6 +1768,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       
       // Save both short outlook and full analysis with timestamp
       const newOutlook = {
+        sentiment: 'Neutral', // Default for legacy analysis
         shortOutlook: shortOutlook || 'Analysis pending',
         fullAnalysis: analysis,
         timestamp: new Date().toLocaleString()
@@ -2004,6 +2011,9 @@ ${dataSummary}
 
 Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
 
+**IMPORTANT: Start your response with exactly one of these sentiment classifications for the next week:**
+SENTIMENT: [Strong Bullish | Bullish | Cautiously Bullish | Neutral | Cautiously Bearish | Bearish | Strong Bearish]
+
 1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
 
 2. **Candlestick Pattern Analysis**: 
@@ -2040,6 +2050,13 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       const result = await response.json();
       const fullAnalysis = result.analysis;
       
+      // Extract sentiment classification from the response
+      const sentimentMatch = fullAnalysis.match(/SENTIMENT:\s*\[?([^\]]+)\]?/i);
+      let sentiment = 'Neutral';
+      if (sentimentMatch) {
+        sentiment = sentimentMatch[1].trim();
+      }
+      
       // Extract short outlook from the real analysis
       const outlookMatch = fullAnalysis.match(/1\.\s*\*\*Short-term outlook[^:]*:\*\*\s*([^.]*\.?[^1-9]*)/i);
       let shortOutlook = `${ticker} analysis: RSI ${rsi.toFixed(1)}, price $${currentPrice.toFixed(2)} (${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(1)}% daily)`;
@@ -2055,6 +2072,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       const analysisData = {
         ticker,
         timestamp: new Date().toISOString(),
+        sentiment,
         shortOutlook,
         fullAnalysis,
         dataSummary
@@ -2062,6 +2080,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       
       // Save the analysis result
       const newOutlook = {
+        sentiment: analysisData.sentiment || 'Neutral',
         shortOutlook: analysisData.shortOutlook || 'Analysis pending',
         fullAnalysis: analysisData.fullAnalysis,
         timestamp: new Date().toLocaleString()
@@ -3539,9 +3558,11 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                         <Typography 
                           variant="caption" 
                           sx={{ 
-                            color: '#00D4FF',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
+                            color: aiOutlooks[item.ticker].sentiment?.includes('Bullish') ? '#4CAF50' :
+                                   aiOutlooks[item.ticker].sentiment?.includes('Bearish') ? '#F44336' :
+                                   aiOutlooks[item.ticker].sentiment === 'Neutral' ? '#FFC107' : '#00D4FF',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
                             textAlign: 'center',
                             maxWidth: '120px',
                             overflow: 'hidden',
@@ -3549,8 +3570,22 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          {aiOutlooks[item.ticker].shortOutlook.length > 60 
-                            ? aiOutlooks[item.ticker].shortOutlook.substring(0, 60) + '...'
+                          {aiOutlooks[item.ticker].sentiment || 'Neutral'}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: '0.65rem',
+                            textAlign: 'center',
+                            maxWidth: '120px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {aiOutlooks[item.ticker].shortOutlook.length > 40 
+                            ? aiOutlooks[item.ticker].shortOutlook.substring(0, 40) + '...'
                             : aiOutlooks[item.ticker].shortOutlook}
                         </Typography>
                         <Typography 
@@ -4544,14 +4579,26 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                       <Typography 
                                         variant="caption" 
                                         sx={{ 
-                                          color: '#00D4FF',
-                                          fontWeight: 600,
-                                          fontSize: '0.75rem',
+                                          color: aiOutlooks[holding.ticker].sentiment?.includes('Bullish') ? '#4CAF50' :
+                                                 aiOutlooks[holding.ticker].sentiment?.includes('Bearish') ? '#F44336' :
+                                                 aiOutlooks[holding.ticker].sentiment === 'Neutral' ? '#FFC107' : '#00D4FF',
+                                          fontWeight: 700,
+                                          fontSize: '0.8rem',
                                           display: 'block'
                                         }}
                                       >
-                                        {aiOutlooks[holding.ticker].shortOutlook.length > 60 
-                                          ? aiOutlooks[holding.ticker].shortOutlook.substring(0, 60) + '...'
+                                        {aiOutlooks[holding.ticker].sentiment || 'Neutral'}
+                                      </Typography>
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: 'rgba(255, 255, 255, 0.7)',
+                                          fontSize: '0.65rem',
+                                          display: 'block'
+                                        }}
+                                      >
+                                        {aiOutlooks[holding.ticker].shortOutlook.length > 45 
+                                          ? aiOutlooks[holding.ticker].shortOutlook.substring(0, 45) + '...'
                                           : aiOutlooks[holding.ticker].shortOutlook}
                                       </Typography>
                                       <Typography 
