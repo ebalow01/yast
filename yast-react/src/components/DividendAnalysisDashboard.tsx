@@ -3656,27 +3656,12 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                         <Typography 
                           variant="caption" 
                           sx={{ 
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            fontSize: '0.65rem',
-                            textAlign: 'center',
-                            maxWidth: '120px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {aiOutlooks[item.ticker].shortOutlook.length > 40 
-                            ? aiOutlooks[item.ticker].shortOutlook.substring(0, 40) + '...'
-                            : aiOutlooks[item.ticker].shortOutlook}
-                        </Typography>
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
                             color: 'rgba(255, 255, 255, 0.5)',
-                            fontSize: '0.65rem'
+                            fontSize: '0.65rem',
+                            textAlign: 'center'
                           }}
                         >
-                          {new Date(aiOutlooks[item.ticker].timestamp).toLocaleDateString()} • Click for details
+                          Click for details
                         </Typography>
                       </Box>
                     ) : (
