@@ -4712,7 +4712,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                       }}
                                     >
                                       <Typography 
-                                        variant="caption" 
+                                        variant="body2" 
                                         sx={{ 
                                           color: (() => {
                                             const sentiment = aiOutlooks[holding.ticker].sentiment;
@@ -4723,8 +4723,9 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                             return '#00D4FF';
                                           })(),
                                           fontWeight: 600,
-                                          fontSize: '0.7rem',
-                                          display: 'block'
+                                          fontSize: '0.85rem',
+                                          textAlign: 'center',
+                                          mb: 0.5
                                         }}
                                       >
                                         {aiOutlooks[holding.ticker].sentiment || 'Need Refresh'}
@@ -4732,43 +4733,12 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                       <Typography 
                                         variant="caption" 
                                         sx={{ 
-                                          color: 'rgba(255, 255, 255, 0.7)',
-                                          fontSize: '0.65rem',
-                                          display: 'block',
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
-                                          maxWidth: '150px'
-                                        }}
-                                      >
-                                        {(() => {
-                                          const outlook = aiOutlooks[holding.ticker].shortOutlook;
-                                          const sentiment = aiOutlooks[holding.ticker].sentiment;
-                                          
-                                          // If no sentiment, it's old data
-                                          if (!sentiment) {
-                                            return 'Click Refresh AI for new format';
-                                          }
-                                          
-                                          if (!outlook) {
-                                            return 'Click to analyze';
-                                          }
-                                          
-                                          // If outlook is too long (likely old full analysis), truncate aggressively
-                                          if (outlook.length > 100) {
-                                            return outlook.substring(0, 35) + '...';
-                                          }
-                                          return outlook.length > 45 ? outlook.substring(0, 45) + '...' : outlook;
-                                        })()}
-                                      </Typography>
-                                      <Typography 
-                                        variant="caption" 
-                                        sx={{ 
                                           color: 'rgba(255, 255, 255, 0.5)',
-                                          fontSize: '0.65rem'
+                                          fontSize: '0.65rem',
+                                          textAlign: 'center'
                                         }}
                                       >
-                                        {new Date(aiOutlooks[holding.ticker].timestamp).toLocaleDateString()} • Click for details
+                                        Click for details
                                       </Typography>
                                     </Box>
                                   ) : (
