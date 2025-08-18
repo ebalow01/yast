@@ -4044,23 +4044,55 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                             Sharpe Ratio
                           </Typography>
                         </Box>
-                        <Button
-                          variant="outlined"
-                          startIcon={<Refresh />}
-                          onClick={() => refreshAiAnalysis(mptAllocation.map(item => item.ticker).filter(ticker => ticker !== 'CASH'))}
-                          sx={{
-                            ml: 2,
-                            borderColor: '#00D4FF',
-                            color: '#00D4FF',
-                            '&:hover': {
-                              borderColor: '#ffffff',
-                              color: '#ffffff',
-                              backgroundColor: 'rgba(255, 255, 255, 0.1)'
-                            }
-                          }}
-                        >
-                          Refresh AI
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
+                          <Button
+                            variant="outlined"
+                            startIcon={<Refresh />}
+                            onClick={() => refreshAiAnalysis(mptAllocation.map(item => item.ticker).filter(ticker => ticker !== 'CASH'))}
+                            sx={{
+                              borderColor: '#00D4FF',
+                              color: '#00D4FF',
+                              '&:hover': {
+                                borderColor: '#ffffff',
+                                color: '#ffffff',
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                              }
+                            }}
+                          >
+                            Refresh AI
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            startIcon={<AccountBalance />}
+                            onClick={() => {
+                              console.log('🔄 Manually refreshing portfolio with AI sentiment filtering...');
+                              const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
+                              const enrichedAllocation = allocation.map(asset => {
+                                const originalETF = data.find(etf => etf.ticker === asset.ticker);
+                                return {
+                                  ...asset,
+                                  exDivDay: originalETF?.exDivDay,
+                                  strategy: originalETF?.bestStrategy
+                                };
+                              });
+                              setMptAllocation(enrichedAllocation);
+                              setPortfolioMetrics(metrics);
+                              setSnackbarMessage('✅ Portfolio updated with AI sentiment filtering!');
+                              setShowSnackbar(true);
+                            }}
+                            sx={{
+                              borderColor: '#34C759',
+                              color: '#34C759',
+                              '&:hover': {
+                                borderColor: '#ffffff',
+                                color: '#ffffff',
+                                backgroundColor: 'rgba(52, 199, 89, 0.1)'
+                              }
+                            }}
+                          >
+                            Refresh Portfolio
+                          </Button>
+                        </Box>
                       </Box>
                     </Box>
                     
