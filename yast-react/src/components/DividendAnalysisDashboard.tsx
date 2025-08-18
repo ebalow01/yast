@@ -4167,29 +4167,48 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <Box sx={{ mb: 4 }}>
-                  <Typography 
-                    variant="h4" 
-                    gutterBottom
-                    sx={{ 
-                      fontWeight: 700,
-                      background: 'linear-gradient(135deg, #FFFFFF 0%, #00D4FF 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      mb: 1
+                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography 
+                      variant="h4" 
+                      gutterBottom
+                      sx={{ 
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #FFFFFF 0%, #00D4FF 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        mb: 1
+                      }}
+                    >
+                      My Portfolio
+                    </Typography>
+                    <Typography 
+                      variant="subtitle1" 
+                      sx={{ 
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        mb: 3
+                      }}
+                    >
+                      Track your personal holdings with real-time valuations and performance metrics
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Refresh />}
+                    onClick={() => refreshAiAnalysis(portfolio.holdings.map(h => h.ticker).filter(ticker => ticker !== 'CASH'))}
+                    sx={{
+                      borderColor: '#00D4FF',
+                      color: '#00D4FF',
+                      '&:hover': {
+                        borderColor: '#ffffff',
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                      }
                     }}
                   >
-                    My Portfolio
-                  </Typography>
-                  <Typography 
-                    variant="subtitle1" 
-                    sx={{ 
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      mb: 3
-                    }}
-                  >
-                    Track your personal holdings with real-time valuations and performance metrics
-                  </Typography>
+                    Refresh AI
+                  </Button>
+                </Box>
 
                   {/* Portfolio Overview Cards */}
                   <Grid container spacing={2} sx={{ mb: 4 }}>
