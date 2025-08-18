@@ -4728,15 +4728,40 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
 
                                     // Extract just the sentiment - be very aggressive about it
                                     let displaySentiment = 'Unknown';
-                                    if (aiData.sentiment && aiData.sentiment.trim() !== '') {
-                                      displaySentiment = aiData.sentiment.trim();
-                                    } else if (aiData.shortOutlook) {
-                                      // Try to extract sentiment from shortOutlook if sentiment is missing
-                                      if (aiData.shortOutlook.toLowerCase().includes('bullish')) {
-                                        displaySentiment = aiData.shortOutlook.toLowerCase().includes('cautiously') ? 'Cautiously Bullish' : 'Bullish';
-                                      } else if (aiData.shortOutlook.toLowerCase().includes('bearish')) {
-                                        displaySentiment = aiData.shortOutlook.toLowerCase().includes('strong') ? 'Strong Bearish' : 'Bearish';
-                                      } else if (aiData.shortOutlook.toLowerCase().includes('neutral')) {
+                                    
+                                    // First try to extract from sentiment field (which might have full text)
+                                    let sentimentText = aiData.sentiment || aiData.shortOutlook || '';
+                                    
+                                    // Extract just the sentiment part using regex patterns
+                                    const sentimentPatterns = [
+                                      /^(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i,
+                                      /(Cautiously Bullish|Strong Bullish|Bullish|Cautiously Bearish|Strong Bearish|Bearish|Neutral)/i
+                                    ];
+                                    
+                                    for (const pattern of sentimentPatterns) {
+                                      const match = sentimentText.match(pattern);
+                                      if (match) {
+                                        displaySentiment = match[1].trim();
+                                        break;
+                                      }
+                                    }
+                                    
+                                    // If still no match, do keyword-based extraction
+                                    if (displaySentiment === 'Unknown') {
+                                      const lowerText = sentimentText.toLowerCase();
+                                      if (lowerText.includes('cautiously') && lowerText.includes('bullish')) {
+                                        displaySentiment = 'Cautiously Bullish';
+                                      } else if (lowerText.includes('cautiously') && lowerText.includes('bearish')) {
+                                        displaySentiment = 'Cautiously Bearish';
+                                      } else if (lowerText.includes('strong') && lowerText.includes('bullish')) {
+                                        displaySentiment = 'Strong Bullish';
+                                      } else if (lowerText.includes('strong') && lowerText.includes('bearish')) {
+                                        displaySentiment = 'Strong Bearish';
+                                      } else if (lowerText.includes('bullish')) {
+                                        displaySentiment = 'Bullish';
+                                      } else if (lowerText.includes('bearish')) {
+                                        displaySentiment = 'Bearish';
+                                      } else if (lowerText.includes('neutral')) {
                                         displaySentiment = 'Neutral';
                                       }
                                     }
