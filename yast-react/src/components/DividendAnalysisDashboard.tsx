@@ -1881,9 +1881,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const fib618 = sessionLow + (range * 0.618);
 
       // Identify key support and resistance from recent price action
-      const recentBars = results.slice(-30);
-      const highs = recentBars.map((r: any) => r.h);
-      const lows = recentBars.map((r: any) => r.l);
+      const supportResistanceBars = results.slice(-30);
+      const highs = supportResistanceBars.map((r: any) => r.h);
+      const lows = supportResistanceBars.map((r: any) => r.l);
 
       // Find most tested levels (price areas hit multiple times)
       const priceHits: Record<number, number> = {};
@@ -1903,11 +1903,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         });
 
       // Candlestick pattern analysis - only show patterns worth points
-      const recentBars = results.slice(-20); // Check more bars to find patterns worth points
+      const patternBars = results.slice(-20); // Check more bars to find patterns worth points
       let patternStrength = 0;
       const candlestickAnalysis: string[] = [];
 
-      recentBars.forEach((bar: any) => {
+      patternBars.forEach((bar: any) => {
         const bodySize = Math.abs(bar.c - bar.o);
         const totalRange = bar.h - bar.l;
         const upperWick = bar.h - Math.max(bar.o, bar.c);
