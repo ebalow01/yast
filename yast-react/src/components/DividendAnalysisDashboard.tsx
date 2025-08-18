@@ -58,7 +58,9 @@ import {
   Edit,
   Save,
   MonetizationOn,
-  Refresh
+  Refresh,
+  Search,
+  ContentCopy
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -1296,6 +1298,12 @@ export default function DividendAnalysisDashboard() {
   const [sortField, setSortField] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Quick Analysis state
+  const [quickAnalysisOpen, setQuickAnalysisOpen] = useState(false);
+  const [quickTicker, setQuickTicker] = useState('');
+  const [quickAnalysisResult, setQuickAnalysisResult] = useState('');
+  const [quickAnalysisLoading, setQuickAnalysisLoading] = useState(false);
+
   // Accessibility helpers - Pattern-based indicators for colorblind users
   const getPerformanceIcon = (value: number, type: 'return' | 'risk' = 'return') => {
     if (type === 'return') {
@@ -2220,6 +2228,48 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
     }
   };
 
+  // Quick Analysis function
+  const performQuickAnalysis = async (ticker: string) => {
+    if (!ticker || ticker.trim() === '') {
+      setSnackbarMessage('❌ Please enter a ticker symbol');
+      setShowSnackbar(true);
+      return;
+    }
+
+    setQuickAnalysisLoading(true);
+    setQuickAnalysisResult('');
+
+    try {
+      await analyzeWithPolygon(ticker.toUpperCase().trim());
+      
+      // Get the analysis result from aiOutlooks
+      const analysisData = aiOutlooks[ticker.toUpperCase().trim()];
+      if (analysisData && analysisData.fullAnalysis) {
+        setQuickAnalysisResult(analysisData.fullAnalysis);
+      } else {
+        setQuickAnalysisResult('Analysis completed but no detailed results available.');
+      }
+    } catch (error) {
+      console.error('Quick analysis error:', error);
+      setQuickAnalysisResult(`Analysis failed: ${error.message}`);
+    } finally {
+      setQuickAnalysisLoading(false);
+    }
+  };
+
+  // Copy to clipboard function
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setSnackbarMessage('✅ Analysis copied to clipboard!');
+      setShowSnackbar(true);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      setSnackbarMessage('❌ Failed to copy to clipboard');
+      setShowSnackbar(true);
+    }
+  };
+
   // Function to refresh AI analysis for multiple tickers
   const refreshAiAnalysis = async (tickers: string[]) => {
     console.log('🐛 DEBUG refreshAiAnalysis called with tickers:', tickers);
@@ -2655,7 +2705,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
   };
 
   // Copy text to clipboard with user feedback
-  const copyToClipboard = async (text: string, ticker: string) => {
+  const copyAnalysisToClipboard = async (text: string, ticker: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setSnackbarMessage(`${ticker} risk analysis copied to clipboard!`);
@@ -3687,7 +3737,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                         size="small"
                         onClick={() => {
                           const analysisText = `${item.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(item)}`;
-                          copyToClipboard(analysisText, item.ticker);
+                          copyAnalysisToClipboard(analysisText, item.ticker);
                         }}
                         sx={{
                           fontWeight: 700,
@@ -3908,6 +3958,24 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                   </Tooltip>
                 )}
               </Box>
+              
+              {/* Quick Analysis Button */}
+              <Button
+                variant="outlined"
+                startIcon={<Search />}
+                onClick={() => setQuickAnalysisOpen(true)}
+                sx={{
+                  borderColor: '#00D4FF',
+                  color: '#00D4FF',
+                  '&:hover': {
+                    borderColor: '#ffffff',
+                    color: '#ffffff',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                  }
+                }}
+              >
+                Quick Analysis
+              </Button>
             </Toolbar>
           </AppBar>
         </motion.div>
@@ -4808,7 +4876,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                         size="small"
                                         onClick={() => {
                                           const analysisText = `${holding.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(tickerData)}`;
-                                          copyToClipboard(analysisText, holding.ticker);
+                                          copyAnalysisToClipboard(analysisText, holding.ticker);
                                         }}
                                         sx={{
                                           fontWeight: 700,
@@ -5323,6 +5391,130 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
           </Button>
         </Box>
       )}
+
+      {/* Quick Analysis Modal */}
+      <Dialog
+        open={quickAnalysisOpen}
+        onClose={() => setQuickAnalysisOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'rgba(30, 30, 30, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            color: 'white'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)', 
+          color: '#00D4FF',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <Search />
+          Quick AI Analysis
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              label="Enter Ticker Symbol"
+              value={quickTicker}
+              onChange={(e) => setQuickTicker(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !quickAnalysisLoading) {
+                  performQuickAnalysis(quickTicker);
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: 'white',
+                  '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
+                  '&:hover fieldset': { borderColor: '#00D4FF' },
+                  '&.Mui-focused fieldset': { borderColor: '#00D4FF' }
+                },
+                '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+              }}
+              InputProps={{
+                endAdornment: (
+                  <Button
+                    variant="contained"
+                    onClick={() => performQuickAnalysis(quickTicker)}
+                    disabled={quickAnalysisLoading || !quickTicker.trim()}
+                    sx={{
+                      ml: 1,
+                      background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+                      minWidth: 'auto',
+                      px: 2
+                    }}
+                  >
+                    {quickAnalysisLoading ? 'Analyzing...' : 'Analyze'}
+                  </Button>
+                )
+              }}
+            />
+          </Box>
+          
+          {quickAnalysisResult && (
+            <Box sx={{ 
+              mt: 2, 
+              p: 2, 
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 2,
+              maxHeight: '400px',
+              overflowY: 'auto'
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ color: '#00D4FF' }}>
+                  Analysis Result
+                </Typography>
+                <Button
+                  startIcon={<ContentCopy />}
+                  onClick={() => copyToClipboard(quickAnalysisResult)}
+                  size="small"
+                  sx={{
+                    color: '#34C759',
+                    '&:hover': { backgroundColor: 'rgba(52, 199, 89, 0.1)' }
+                  }}
+                >
+                  Copy
+                </Button>
+              </Box>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'monospace',
+                  lineHeight: 1.5
+                }}
+              >
+                {quickAnalysisResult}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button
+            onClick={() => {
+              setQuickAnalysisOpen(false);
+              setQuickTicker('');
+              setQuickAnalysisResult('');
+            }}
+            sx={{
+              color: '#00D4FF',
+              fontWeight: 600,
+              '&:hover': { backgroundColor: 'rgba(0, 212, 255, 0.1)' }
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* AI Analysis Modal */}
       <Dialog
