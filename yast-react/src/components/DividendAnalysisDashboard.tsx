@@ -4048,7 +4048,12 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                           <Button
                             variant="outlined"
                             startIcon={<Refresh />}
-                            onClick={() => refreshAiAnalysis(mptAllocation.map(item => item.ticker).filter(ticker => ticker !== 'CASH'))}
+                            onClick={() => {
+                              console.log('🐛 DEBUG mptAllocation before extraction:', mptAllocation);
+                              const tickers = mptAllocation.map(item => item.ticker).filter(ticker => ticker !== 'CASH');
+                              console.log('🐛 DEBUG extracted tickers:', tickers);
+                              refreshAiAnalysis(tickers);
+                            }}
                             sx={{
                               borderColor: '#00D4FF',
                               color: '#00D4FF',
