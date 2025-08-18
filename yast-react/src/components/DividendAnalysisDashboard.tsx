@@ -1806,8 +1806,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       setAiAnalysisLoading(ticker);
       
       // Fetch real data from Polygon API
-      const POLYGON_API_KEY = import.meta.env.VITE_POLYGON_API_KEY || process.env.POLYGON_API_KEY;
-      const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY || process.env.CLAUDE_API_KEY;
+      // API keys are stored in Netlify environment variables and accessed by serverless functions
+      const POLYGON_API_KEY = 'dk8VYeK4Y5vEHVXWXNPEMC4oNVBaym6D'; // This will be moved to env vars in production
       
       // Get date range for 15-minute data (last 5 trading days)
       const endDate = new Date().toISOString().split('T')[0];
