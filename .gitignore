@@ -54,6 +54,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+yast-react/.env
+*/.env
 
 # IDE
 .vscode/
