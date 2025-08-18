@@ -4777,10 +4777,8 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                 </Box>
               </motion.div>
             </TabPanel>
-          </Paper>
-          </motion.div>
 
-          {/* Modern Disclaimer */}
+            {/* Modern Disclaimer */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -4851,7 +4849,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
             </Card>
           </motion.div>
         </Container>
-        </Box>
       </Box>
 
       {/* Add Position Dialog */}
