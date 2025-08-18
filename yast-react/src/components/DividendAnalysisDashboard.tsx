@@ -57,7 +57,8 @@ import {
   Delete,
   Edit,
   Save,
-  MonetizationOn
+  MonetizationOn,
+  Refresh
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -2106,6 +2107,38 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
     }
   };
 
+  // Function to refresh AI analysis for multiple tickers
+  const refreshAiAnalysis = async (tickers: string[]) => {
+    const refreshButton = document.activeElement as HTMLElement;
+    if (refreshButton) refreshButton.blur(); // Remove focus to prevent stuck hover
+    
+    setSnackbarMessage(`🔄 Refreshing AI analysis for ${tickers.length} ETFs...`);
+    setShowSnackbar(true);
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Process tickers sequentially to avoid rate limits
+    for (const ticker of tickers) {
+      try {
+        await analyzeWithPolygon(ticker);
+        successCount++;
+        // Small delay to prevent overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error(`Failed to analyze ${ticker}:`, error);
+        errorCount++;
+      }
+    }
+    
+    const message = successCount > 0 
+      ? `✅ Refreshed ${successCount} ETF${successCount !== 1 ? 's' : ''}${errorCount > 0 ? `, ${errorCount} failed` : ''}` 
+      : `❌ Failed to refresh AI analysis`;
+      
+    setSnackbarMessage(message);
+    setShowSnackbar(true);
+  };
+
   // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE)
   const getRiskLevelChip = (riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE') => {
     if (!riskLevel) {
@@ -3561,8 +3594,8 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                             color: aiOutlooks[item.ticker].sentiment?.includes('Bullish') ? '#4CAF50' :
                                    aiOutlooks[item.ticker].sentiment?.includes('Bearish') ? '#F44336' :
                                    aiOutlooks[item.ticker].sentiment === 'Neutral' ? '#FFC107' : '#00D4FF',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
                             textAlign: 'center',
                             maxWidth: '120px',
                             overflow: 'hidden',
@@ -3908,6 +3941,23 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                             Sharpe Ratio
                           </Typography>
                         </Box>
+                        <Button
+                          variant="outlined"
+                          startIcon={<Refresh />}
+                          onClick={() => refreshAiAnalysis(mptAllocation.map(item => item.ticker))}
+                          sx={{
+                            ml: 2,
+                            borderColor: '#00D4FF',
+                            color: '#00D4FF',
+                            '&:hover': {
+                              borderColor: '#ffffff',
+                              color: '#ffffff',
+                              backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                            }
+                          }}
+                        >
+                          Refresh AI
+                        </Button>
                       </Box>
                     </Box>
                     
@@ -4018,30 +4068,48 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <Box sx={{ mb: 4 }}>
-                  <Typography 
-                    variant="h4" 
-                    gutterBottom
-                    sx={{ 
-                      fontWeight: 700,
-                      background: 'linear-gradient(135deg, #FFFFFF 0%, #6C63FF 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      mb: 1
+                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography 
+                      variant="h4" 
+                      gutterBottom
+                      sx={{ 
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #FFFFFF 0%, #6C63FF 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        mb: 1
+                      }}
+                    >
+                      Complete ETF Universe
+                    </Typography>
+                    <Typography 
+                      variant="subtitle1" 
+                      sx={{ 
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        maxWidth: '600px',
+                        lineHeight: 1.6
+                      }}
+                    >
+                      Comprehensive analysis of all remaining ETFs evaluated but not selected for the optimal allocation
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Refresh />}
+                    onClick={() => refreshAiAnalysis(excludedTickers)}
+                    sx={{
+                      borderColor: '#6C63FF',
+                      color: '#6C63FF',
+                      '&:hover': {
+                        borderColor: '#ffffff',
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                      }
                     }}
                   >
-                    Complete ETF Universe
-                  </Typography>
-                  <Typography 
-                    variant="subtitle1" 
-                    sx={{ 
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      maxWidth: '600px',
-                      lineHeight: 1.6
-                    }}
-                  >
-                    Comprehensive analysis of all remaining ETFs evaluated but not selected for the optimal allocation
-                  </Typography>
+                    Refresh AI
+                  </Button>
                 </Box>
               </motion.div>
               {renderLegacyTable(excludedTickers)}
@@ -4582,8 +4650,8 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                           color: aiOutlooks[holding.ticker].sentiment?.includes('Bullish') ? '#4CAF50' :
                                                  aiOutlooks[holding.ticker].sentiment?.includes('Bearish') ? '#F44336' :
                                                  aiOutlooks[holding.ticker].sentiment === 'Neutral' ? '#FFC107' : '#00D4FF',
-                                          fontWeight: 700,
-                                          fontSize: '0.8rem',
+                                          fontWeight: 600,
+                                          fontSize: '0.7rem',
                                           display: 'block'
                                         }}
                                       >
