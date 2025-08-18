@@ -2122,18 +2122,22 @@ Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
 **IMPORTANT: Start your response with a sentiment rating using this exact format:**
 SENTIMENT: [Bullish 5/5 | Bullish 4/5 | Bullish 3/5 | Bullish 2/5 | Bullish 1/5 | Neutral | Bearish 1/5 | Bearish 2/5 | Bearish 3/5 | Bearish 4/5 | Bearish 5/5]
 
-Rating Scale:
-- Bullish 5/5: Extremely strong upward momentum, all indicators positive
-- Bullish 4/5: Strong positive indicators, high conviction buy
-- Bullish 3/5: Moderately positive, good opportunity with some risk
-- Bullish 2/5: Slightly positive, weak bullish signals
-- Bullish 1/5: Barely positive, minimal upside potential
-- Neutral: Mixed signals, no clear direction
-- Bearish 1/5: Barely negative, minimal downside risk
-- Bearish 2/5: Slightly negative, weak bearish signals
-- Bearish 3/5: Moderately negative, caution advised
-- Bearish 4/5: Strong negative indicators, high conviction sell
-- Bearish 5/5: Extremely weak, all indicators negative
+**CRITICAL: Use the FULL rating scale (1/5 to 5/5). Don't default to moderate ratings! Be decisive based on the data.**
+
+Rating Guidelines - Choose the STRONGEST rating supported by the data:
+- Bullish 5/5: RSI >70, price well above SMAs, strong volume, clear breakout patterns = STRONG BUY
+- Bullish 4/5: RSI 60-70, price above SMAs, good volume, bullish patterns = BUY  
+- Bullish 3/5: RSI 50-60, mixed signals, some positive indicators = MODERATE BUY
+- Bullish 2/5: RSI 40-50, weak bullish signals, limited upside = WEAK BUY
+- Bullish 1/5: RSI 30-40, barely positive, high risk = VERY WEAK BUY
+- Neutral: RSI 45-55, completely mixed signals, no clear direction
+- Bearish 1/5: RSI 60-70, barely negative, limited downside = VERY WEAK SELL
+- Bearish 2/5: RSI 50-60, weak bearish signals, some risk = WEAK SELL
+- Bearish 3/5: RSI 40-50, moderate bearish signals, caution advised = MODERATE SELL
+- Bearish 4/5: RSI 30-40, strong bearish indicators, below SMAs = SELL
+- Bearish 5/5: RSI <30, price collapsing, high volume selling = STRONG SELL
+
+**IF RSI IS EXTREME (>70 or <30), USE 4/5 OR 5/5 RATINGS!**
 
 1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
 
