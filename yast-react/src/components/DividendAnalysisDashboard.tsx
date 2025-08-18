@@ -4253,8 +4253,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         '& .MuiTooltip-tooltip': {
                                           backgroundColor: 'rgba(0, 0, 0, 0.95)',
                                           fontSize: '0.75rem',
-                                          maxWidth: '400px',
-                                          padding: '12px'
+                                          maxWidth: '1200px',
+                                          padding: '12px',
+                                          whiteSpace: 'pre-wrap'
                                         }
                                       }}
                                     >
