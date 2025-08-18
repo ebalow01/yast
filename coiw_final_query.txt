@@ -1,0 +1,71 @@
+Total bars available: 175
+Using last 130 bars for 5 trading days
+COMPREHENSIVE TECHNICAL ANALYSIS for COIW:
+
+== PRICE DATA ==
+- Current Price: $41.39
+- Daily Change: -4.11%
+- 2-Day Change: -6.41%
+- Session High: $43.61
+- Session Low: $40.44
+- RSI (14-period): 37.7
+- Price vs 20-period SMA: below ($42.31)
+- Price vs 50-period SMA: below ($43.09)
+
+== FIBONACCI RETRACEMENT LEVELS ==
+- 23.6% Retracement: $41.19
+- 38.2% Retracement: $41.65
+- 50.0% Retracement: $42.02
+- 61.8% Retracement: $42.40
+
+== KEY SUPPORT/RESISTANCE LEVELS (most tested) ==
+$43.50 (15 hits) - RESISTANCE
+$43.25 (14 hits) - RESISTANCE
+$43.00 (10 hits) - RESISTANCE
+$41.25 (5 hits) - SUPPORT
+$41.75 (4 hits) - RESISTANCE
+$41.00 (3 hits) - SUPPORT
+
+== RECENT CANDLESTICK PATTERNS (Bars with signals) ==
+2025-08-15 18:15 ET: BEARISH DOJI | Body: 0.00 | Range: 0.00 [+1pts]
+2025-08-18 07:15 ET: BEARISH DOJI | Body: 0.00 | Range: 0.00 [+1pts]
+2025-08-18 09:00 ET: BEARISH DOJI | Body: 0.00 | Range: 0.00 [+1pts]
+2025-08-18 09:15 ET: BEARISH DOJI | Body: 0.00 | Range: 0.00 [+1pts]
+2025-08-18 09:30 ET: BULLISH HAMMER | Body: 0.05 | Range: 0.51 [+2pts]
+Pattern Strength Score: 10/10
+
+== VOLUME ANALYSIS ==
+- Latest Volume: 2,973
+- 20-Bar Average: 2,592
+- Volume Ratio: 1.15x average (NORMAL)
+
+Data points: 130 15-minute bars (5 trading days)
+
+Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
+
+1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
+
+2. **Candlestick Pattern Analysis**: 
+   - Identify specific candlestick patterns (doji, hammer, shooting star, engulfing, etc.)
+   - Note any reversal or continuation patterns in the recent 15-minute bars
+   - Analyze the significance of wicks/shadows and body sizes
+   - Comment on volume confirmation with candlestick patterns
+
+3. **Technical pattern analysis** based on price movement and chart patterns
+
+4. **RSI interpretation** (current reading: 37.7)
+
+5. **Moving average analysis** (price vs SMA 20/50)
+
+6. **Risk assessment**: 
+   - SPECIFIC price level where you should cut losses (exact $ amount)
+   - SPECIFIC price level that signals danger (exact $ amount)
+   - Maximum acceptable loss as specific dollar amount from current price
+
+7. **Trading recommendations**:
+   - EXACT entry price if buying (specific $ amount)
+   - EXACT exit price for profit-taking (specific $ amount) 
+   - EXACT stop-loss price (specific $ amount)
+   - Target price for 1-week, 2-week timeframes
+
+DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $41.39.

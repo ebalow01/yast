@@ -1,0 +1,73 @@
+NVDW COMPLETE AI ANALYSIS QUERY - With Real 15-Minute Stock Data
+
+=== CLAUDE API PROMPT ===
+
+Analyze this real market data for NVDW:
+
+Real-Time 15-Minute Market Data for NVDW:
+- Current Price: $51.13
+- Daily Change: -0.29%
+- 2-Day Change: -1.96%
+- Session High: $52.40
+- Session Low: $50.02
+- RSI (14-period): 46.4
+- Price vs 20-period SMA: below ($51.35)
+- Price vs 50-period SMA: below ($51.52)
+- Latest 15-min Volume: 11,339
+- Data points: 130 15-minute bars (5 trading days)
+
+=== COMPLETE 15-MINUTE OHLC DATA (LAST 5 TRADING DAYS) ===
+
+Timestamp (UTC)             | Open    | High    | Low     | Close   | Volume
+---------------------------|---------|---------|---------|---------|----------
+2025-08-12 16:00:00 | 52.20   | 52.20   | 52.09   | 52.09   | 1,514   
+2025-08-12 16:15:00 | 52.13   | 52.25   | 52.13   | 52.25   | 2,668   
+2025-08-12 16:30:00 | 52.16   | 52.18   | 52.14   | 52.14   | 1,198   
+2025-08-12 16:45:00 | 52.17   | 52.33   | 52.15   | 52.33   | 7,564   
+2025-08-12 17:00:00 | 52.29   | 52.40   | 52.27   | 52.29   | 2,280   
+2025-08-12 17:15:00 | 52.31   | 52.35   | 52.23   | 52.23   | 3,461   
+2025-08-12 17:30:00 | 52.23   | 52.37   | 52.23   | 52.36   | 3,733   
+2025-08-12 17:45:00 | 52.35   | 52.46   | 52.35   | 52.44   | 2,440   
+2025-08-12 18:00:00 | 52.45   | 52.53   | 52.43   | 52.53   | 2,968   
+2025-08-12 18:15:00 | 52.51   | 52.54   | 52.46   | 52.53   | 4,462   
+2025-08-12 18:30:00 | 52.57   | 52.61   | 52.51   | 52.56   | 5,106   
+2025-08-12 18:45:00 | 52.57   | 52.57   | 52.47   | 52.49   | 5,541   
+2025-08-12 19:00:00 | 52.50   | 52.57   | 52.50   | 52.50   | 2,319   
+2025-08-12 19:15:00 | 52.47   | 52.47   | 52.42   | 52.42   | 519     
+2025-08-12 19:30:00 | 52.41   | 52.43   | 52.32   | 52.34   | 3,222   
+2025-08-12 19:45:00 | 52.39   | 52.58   | 52.31   | 52.58   | 11,214  
+[... continuing with all 130 bars through ...]
+2025-08-18 13:30:00 | 50.55   | 51.30   | 50.55   | 51.09   | 10,818  
+2025-08-18 13:45:00 | 51.09   | 51.18   | 51.00   | 51.01   | 9,022   
+2025-08-18 14:00:00 | 51.15   | 51.23   | 51.04   | 51.13   | 11,339  
+
+=== KEY PATTERN OBSERVATIONS FROM DATA ===
+
+1. **Price Action**: Clear downtrend from $52.61 high (Aug 12) to $51.13 current
+2. **Volume Spikes**: High volume on Aug 18 (10,818 + 9,022 + 11,339 recent bars)
+3. **Support Test**: Recent low of $50.02 on Aug 18 represents key support level
+4. **Volatility**: Wide intraday ranges, especially Aug 15 ($50.78-$51.85)
+5. **Recent Recovery**: Bounced from $50.02 low to current $51.13
+
+Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
+
+1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
+
+2. **Technical pattern analysis** based on the actual price movement shown in the data
+
+3. **RSI interpretation** (current reading: 46.4)
+
+4. **Moving average analysis** (price vs SMA 20/50)
+
+5. **Risk assessment**: 
+   - SPECIFIC price level where you should cut losses (exact $ amount)
+   - SPECIFIC price level that signals danger (exact $ amount)
+   - Maximum acceptable loss as specific dollar amount from current price
+
+6. **Trading recommendations**:
+   - EXACT entry price if buying (specific $ amount)
+   - EXACT exit price for profit-taking (specific $ amount) 
+   - EXACT stop-loss price (specific $ amount)
+   - Target price for 1-week, 2-week timeframes
+
+DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $51.13 and the price action patterns shown in the data above.

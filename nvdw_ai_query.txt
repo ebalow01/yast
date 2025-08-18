@@ -1,0 +1,68 @@
+NVDW AI Analysis Query - Generated from 15-minute Polygon Data
+
+=== REAL-TIME 15-MINUTE MARKET DATA FOR NVDW ===
+
+Data Summary for NVDW:
+- Current Price: $51.13
+- Daily Change: -1.02% (from $51.66)
+- 2-Day Change: -1.86% (from $52.10)
+- Session High: $51.30
+- Session Low: $51.04
+- RSI (14-period): 45.2
+- Price vs 20-period SMA: below ($51.25)
+- Price vs 50-period SMA: below ($51.48)
+- Latest 15-min Volume: 11,339
+- Data points: 184 15-minute bars (7 trading days)
+
+=== CLAUDE API PROMPT ===
+
+Analyze this real market data for NVDW:
+
+Real-Time 15-Minute Market Data for NVDW:
+- Current Price: $51.13
+- Daily Change: -1.02%
+- 2-Day Change: -1.86%
+- Session High: $51.30
+- Session Low: $51.04
+- RSI (14-period): 45.2
+- Price vs 20-period SMA: below ($51.25)
+- Price vs 50-period SMA: below ($51.48)
+- Latest 15-min Volume: 11,339
+- Data points: 184 15-minute bars (7 trading days)
+
+Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
+
+1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
+
+2. **Technical pattern analysis** based on price movement
+
+3. **RSI interpretation** (current reading: 45.2)
+
+4. **Moving average analysis** (price vs SMA 20/50)
+
+5. **Risk assessment**: 
+   - SPECIFIC price level where you should cut losses (exact $ amount)
+   - SPECIFIC price level that signals danger (exact $ amount)
+   - Maximum acceptable loss as specific dollar amount from current price
+
+6. **Trading recommendations**:
+   - EXACT entry price if buying (specific $ amount)
+   - EXACT exit price for profit-taking (specific $ amount) 
+   - EXACT stop-loss price (specific $ amount)
+   - Target price for 1-week, 2-week timeframes
+
+DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $51.13.
+
+=== EXPECTED RESPONSE FORMAT ===
+
+The response should include specific price targets like:
+- "Target price range: $52.50-$53.25 within 2 weeks"
+- "Stop-loss: $49.80"
+- "Entry point: $50.90 or lower"
+- "Profit-taking: $52.75"
+- "Danger zone: Below $49.50"
+
+NOT vague terms like:
+- "Wait for RSI to reach oversold"
+- "Buy on SMA crossover"
+- "Support/resistance levels"

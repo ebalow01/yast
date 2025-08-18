@@ -18,7 +18,14 @@
       "Bash(rm:*)",
       "Bash(node:*)",
       "Bash(netlify dev:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(pip install:*)",
+      "Bash(npm init:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(mv:*)",
+      "Bash(npx netlify dev:*)",
+      "Bash(git rm:*)",
+      "Bash(git filter-branch:*)"
     ],
     "defaultMode": "acceptEdits"
   }

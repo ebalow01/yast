@@ -457,14 +457,14 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
   // Filter out bearish ETFs if AI sentiment data is available
   if (aiOutlooks) {
     const initialCount = allETFs.length;
-    const bearishTickers: string[] = [];
+    const excludedTickers: string[] = [];
     
     allETFs = allETFs.filter(etf => {
       const sentiment = aiOutlooks[etf.ticker]?.sentiment;
       if (sentiment) {
-        const isBearish = sentiment.toLowerCase().includes('bearish');
-        if (isBearish) {
-          bearishTickers.push(etf.ticker);
+        const isNegative = sentiment.toLowerCase().includes('bearish');
+        if (isNegative) {
+          excludedTickers.push(etf.ticker);
           return false; // Exclude bearish ETFs
         }
       }
@@ -472,7 +472,7 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     });
     
     const finalCount = allETFs.length;
-    console.log(`🐻 Filtered out ${bearishTickers.length} bearish ETFs: ${bearishTickers.join(', ')}`);
+    console.log(`🐻 Filtered out ${excludedTickers.length} bearish ETFs: ${excludedTickers.join(', ')}`);
     console.log(`📈 Portfolio now uses ${finalCount} ETFs (was ${initialCount})`);
   }
   
@@ -627,24 +627,24 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     if (asset.dividendCapture > 0.30 && asset.risk < 0.80) {
       console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture, ${(asset.risk*100).toFixed(1)}% risk) ---`);
       
-      // Special rule: If there are BETTER ETFs on same ex-div day, exclude regardless of return threshold
-      const betterSameExDivAssets = assets.filter(other => 
+      // Special rule: If there are superior ETFs on same ex-div day, exclude regardless of return threshold
+      const superiorSameExDivAssets = assets.filter(other => 
         other.ticker !== asset.ticker && 
         other.exDivDay === asset.exDivDay &&
         other.ticker !== 'CASH' && 
         other.ticker !== 'SPY' &&
-        other.return > asset.return // Only count BETTER alternatives
+        other.return > asset.return // Only count superior alternatives
       );
       
       console.log(`${asset.ticker} return: ${(asset.return*100).toFixed(1)}%`);
-      console.log(`Better ETFs on same ex-div day ${asset.exDivDay}:`, betterSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`));
+      console.log(`Superior ETFs on same ex-div day ${asset.exDivDay}:`, superiorSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`));
       
-      if (betterSameExDivAssets.length > 0) {
-        console.log(`❌ EXCLUDING Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return) - better ETFs exist on same ex-div day ${asset.exDivDay}:`, 
-          betterSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`).join(', '));
+      if (superiorSameExDivAssets.length > 0) {
+        console.log(`❌ EXCLUDING Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return) - superior ETFs exist on same ex-div day ${asset.exDivDay}:`, 
+          superiorSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`).join(', '));
         return false;
       } else {
-        console.log(`✅ Including ${asset.ticker} - no better ETFs on ${asset.exDivDay}`);
+        console.log(`✅ Including ${asset.ticker} - no superior ETFs on ${asset.exDivDay}`);
         // SET Rule 2 flag here since no better alternatives exist
         asset.isRule2 = true;
         console.log(`🔒 SETTING Rule 2 flag for ${asset.ticker} - guaranteed 10% allocation`);
