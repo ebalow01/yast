@@ -1485,6 +1485,46 @@ export default function DividendAnalysisDashboard() {
       } catch (error) {
         console.error('Error loading portfolio from cookies:', error);
       }
+    } else if (data.length > 0) {
+      // Initialize with sample portfolio if no saved portfolio exists
+      const sampleHoldings: PortfolioHolding[] = [
+        {
+          ticker: 'YMAX',
+          shares: 100,
+          averagePrice: 25.50,
+          dateAdded: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 1 week ago
+        },
+        {
+          ticker: 'QDTE',
+          shares: 50,
+          averagePrice: 18.75,
+          dateAdded: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() // 2 weeks ago
+        },
+        {
+          ticker: 'ULTY',
+          shares: 75,
+          averagePrice: 12.30,
+          dateAdded: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString() // 3 weeks ago
+        }
+      ];
+
+      const samplePortfolio: UserPortfolio = {
+        id: 'sample',
+        name: 'My Portfolio',
+        holdings: sampleHoldings,
+        totalValue: 0,
+        totalGainLoss: 0,
+        totalGainLossPercent: 0,
+        lastUpdated: new Date().toISOString()
+      };
+
+      updatePortfolioValues(samplePortfolio);
+      
+      // Auto-refresh AI analysis for sample portfolio holdings after a short delay
+      setTimeout(() => {
+        const tickers = sampleHoldings.map(h => h.ticker);
+        refreshAiAnalysis(tickers);
+      }, 2000);
     }
   }, [data]); // Re-run when data loads to get current prices
 
@@ -4674,15 +4714,20 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                       <Typography 
                                         variant="caption" 
                                         sx={{ 
-                                          color: aiOutlooks[holding.ticker].sentiment?.includes('Bullish') ? '#4CAF50' :
-                                                 aiOutlooks[holding.ticker].sentiment?.includes('Bearish') ? '#F44336' :
-                                                 aiOutlooks[holding.ticker].sentiment === 'Neutral' ? '#FFC107' : '#00D4FF',
+                                          color: (() => {
+                                            const sentiment = aiOutlooks[holding.ticker].sentiment;
+                                            if (!sentiment) return '#FFB74D'; // Orange for "needs refresh"
+                                            if (sentiment.includes('Bullish')) return '#4CAF50';
+                                            if (sentiment.includes('Bearish')) return '#F44336';
+                                            if (sentiment === 'Neutral') return '#FFC107';
+                                            return '#00D4FF';
+                                          })(),
                                           fontWeight: 600,
                                           fontSize: '0.7rem',
                                           display: 'block'
                                         }}
                                       >
-                                        {aiOutlooks[holding.ticker].sentiment || 'Neutral'}
+                                        {aiOutlooks[holding.ticker].sentiment || 'Need Refresh'}
                                       </Typography>
                                       <Typography 
                                         variant="caption" 
@@ -4697,7 +4742,18 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                         }}
                                       >
                                         {(() => {
-                                          const outlook = aiOutlooks[holding.ticker].shortOutlook || 'Click to analyze';
+                                          const outlook = aiOutlooks[holding.ticker].shortOutlook;
+                                          const sentiment = aiOutlooks[holding.ticker].sentiment;
+                                          
+                                          // If no sentiment, it's old data
+                                          if (!sentiment) {
+                                            return 'Click Refresh AI for new format';
+                                          }
+                                          
+                                          if (!outlook) {
+                                            return 'Click to analyze';
+                                          }
+                                          
                                           // If outlook is too long (likely old full analysis), truncate aggressively
                                           if (outlook.length > 100) {
                                             return outlook.substring(0, 35) + '...';
