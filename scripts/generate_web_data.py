@@ -101,6 +101,7 @@ def create_fallback_data(web_data_dir):
             'finalValue': 115000,
             'dcWinRate': 0.75,
             'riskVolatility': 0.25,
+            'riskLevel': 'LOW',
             'medianDividend': 0.25,
             'forwardYield': 25.0,
             'category': 'excluded'
@@ -300,6 +301,10 @@ def process_analysis_data(web_data_dir):
                     forward_yield = calculate_forward_yield(ticker, median_dividend)
                     print(f"   Added {ticker}: Forward yield = {forward_yield}")
                     
+                    # Risk level will be set by dashboard_risk_integration.py later
+                    # Use a temporary placeholder that will be overwritten
+                    risk_level = 'PENDING'
+                    
                     analysis_data.append({
                         'ticker': ticker,
                         'tradingDays': days,
@@ -311,6 +316,7 @@ def process_analysis_data(web_data_dir):
                         'finalValue': final_value,
                         'dcWinRate': dc_win_rate,
                         'riskVolatility': risk_volatility,
+                        'riskLevel': risk_level,
                         'medianDividend': median_dividend,
                         'forwardYield': forward_yield,
                         'category': category
