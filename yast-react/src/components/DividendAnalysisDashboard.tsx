@@ -3647,7 +3647,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                           }
                         }}
                         onClick={() => analyzeWithPolygon(item.ticker)}
-                        disabled={aiAnalysisLoading === item.ticker}
+                        disabled={aiAnalysisLoading === item.ticker || item.ticker === 'CASH'}
                       >
                         🤖
                       </Button>
@@ -3944,7 +3944,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                         <Button
                           variant="outlined"
                           startIcon={<Refresh />}
-                          onClick={() => refreshAiAnalysis(mptAllocation.map(item => item.ticker))}
+                          onClick={() => refreshAiAnalysis(mptAllocation.map(item => item.ticker).filter(ticker => ticker !== 'CASH'))}
                           sx={{
                             ml: 2,
                             borderColor: '#00D4FF',
@@ -4097,7 +4097,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                   <Button
                     variant="outlined"
                     startIcon={<Refresh />}
-                    onClick={() => refreshAiAnalysis(excludedTickers)}
+                    onClick={() => refreshAiAnalysis(excludedTickers.filter(ticker => ticker !== 'CASH'))}
                     sx={{
                       borderColor: '#6C63FF',
                       color: '#6C63FF',
@@ -4496,7 +4496,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                           }
                                         }}
                                         onClick={() => analyzeWithPolygon(holding.ticker)}
-                                        disabled={aiAnalysisLoading === holding.ticker}
+                                        disabled={aiAnalysisLoading === holding.ticker || holding.ticker === 'CASH'}
                                       >
                                         {waitingForScreenshot === holding.ticker ? '📸' : '🤖'}
                                       </Button>
