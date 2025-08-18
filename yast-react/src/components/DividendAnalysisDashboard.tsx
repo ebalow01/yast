@@ -1852,6 +1852,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
   // Real Polygon API analysis function
   const analyzeWithPolygon = async (ticker: string) => {
     try {
+      console.log(`🐛 DEBUG analyzeWithPolygon called with ticker: "${ticker}" (type: ${typeof ticker})`);
       setAiAnalysisLoading(ticker);
       
       // Fetch real data from Polygon API via serverless function
@@ -2151,13 +2152,32 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
 
   // Function to refresh AI analysis for multiple tickers
   const refreshAiAnalysis = async (tickers: string[]) => {
+    console.log('🐛 DEBUG refreshAiAnalysis called with tickers:', tickers);
+    
+    // Validate and filter tickers
+    const validTickers = tickers.filter(ticker => {
+      const isValid = typeof ticker === 'string' && ticker.length > 0 && ticker !== 'CASH' && /^[A-Z]{2,5}$/.test(ticker);
+      if (!isValid) {
+        console.warn(`🚨 Invalid ticker filtered out: "${ticker}" (type: ${typeof ticker})`);
+      }
+      return isValid;
+    });
+    
+    console.log('🐛 DEBUG valid tickers after filtering:', validTickers);
+    
+    if (validTickers.length === 0) {
+      setSnackbarMessage('❌ No valid tickers to analyze');
+      setShowSnackbar(true);
+      return;
+    }
+    
     const refreshButton = document.activeElement as HTMLElement;
     if (refreshButton) refreshButton.blur(); // Remove focus to prevent stuck hover
     
     // Set "Refreshing..." status for all tickers being processed
     setAiOutlooks(currentOutlooks => {
       const refreshingOutlooks = { ...currentOutlooks };
-      tickers.forEach(ticker => {
+      validTickers.forEach(ticker => {
         refreshingOutlooks[ticker] = {
           sentiment: 'Refreshing...',
           shortOutlook: 'Analysis in progress',
@@ -2168,14 +2188,14 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       return refreshingOutlooks;
     });
     
-    setSnackbarMessage(`🔄 Refreshing AI analysis for ${tickers.length} ETFs...`);
+    setSnackbarMessage(`🔄 Refreshing AI analysis for ${validTickers.length} ETFs...`);
     setShowSnackbar(true);
     
     let successCount = 0;
     let errorCount = 0;
     
     // Process tickers sequentially to avoid rate limits
-    for (const ticker of tickers) {
+    for (const ticker of validTickers) {
       try {
         await analyzeWithPolygon(ticker);
         successCount++;
@@ -4151,7 +4171,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                   <Button
                     variant="outlined"
                     startIcon={<Refresh />}
-                    onClick={() => refreshAiAnalysis(excludedTickers.filter(ticker => ticker !== 'CASH'))}
+                    onClick={() => refreshAiAnalysis(excludedTickers.map(item => item.ticker).filter(ticker => ticker !== 'CASH'))}
                     sx={{
                       borderColor: '#6C63FF',
                       color: '#6C63FF',
