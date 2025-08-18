@@ -4251,11 +4251,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       placement="top"
                                       sx={{
                                         '& .MuiTooltip-tooltip': {
-                                          backgroundColor: 'rgba(0, 0, 0, 0.95)',
-                                          fontSize: '0.75rem',
-                                          maxWidth: '1200px',
-                                          padding: '12px',
-                                          whiteSpace: 'pre-wrap'
+                                          backgroundColor: 'rgba(0, 0, 0, 0.95) !important',
+                                          fontSize: '0.75rem !important',
+                                          maxWidth: '1200px !important',
+                                          minWidth: '600px !important',
+                                          width: 'auto !important',
+                                          padding: '12px !important',
+                                          whiteSpace: 'pre-wrap !important'
                                         }
                                       }}
                                     >
