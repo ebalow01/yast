@@ -4236,56 +4236,41 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 {/* AI Outlook */}
                                 <TableCell align="center">
                                   {aiOutlooks[holding.ticker] ? (
-                                    <Tooltip
-                                      title={
-                                        <Box>
-                                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                                            Full AI Analysis ({aiOutlooks[holding.ticker].timestamp})
-                                          </Typography>
-                                          <Typography variant="body2">
-                                            {aiOutlooks[holding.ticker].fullAnalysis}
-                                          </Typography>
-                                        </Box>
-                                      }
-                                      arrow
-                                      placement="top"
-                                      sx={{
-                                        '& .MuiTooltip-tooltip': {
-                                          backgroundColor: 'rgba(0, 0, 0, 0.95) !important',
-                                          fontSize: '0.75rem !important',
-                                          maxWidth: '1200px !important',
-                                          minWidth: '600px !important',
-                                          width: 'auto !important',
-                                          padding: '12px !important',
-                                          whiteSpace: 'pre-wrap !important'
+                                    <Box 
+                                      sx={{ 
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                          opacity: 0.8
                                         }
                                       }}
+                                      onClick={() => {
+                                        setAiAnalysisResult(aiOutlooks[holding.ticker].fullAnalysis);
+                                        setShowAiModal(true);
+                                      }}
                                     >
-                                      <Box sx={{ cursor: 'pointer' }}>
-                                        <Typography 
-                                          variant="caption" 
-                                          sx={{ 
-                                            color: '#00D4FF',
-                                            fontWeight: 600,
-                                            fontSize: '0.75rem',
-                                            display: 'block'
-                                          }}
-                                        >
-                                          {aiOutlooks[holding.ticker].shortOutlook.length > 60 
-                                            ? aiOutlooks[holding.ticker].shortOutlook.substring(0, 60) + '...'
-                                            : aiOutlooks[holding.ticker].shortOutlook}
-                                        </Typography>
-                                        <Typography 
-                                          variant="caption" 
-                                          sx={{ 
-                                            color: 'rgba(255, 255, 255, 0.5)',
-                                            fontSize: '0.65rem'
-                                          }}
-                                        >
-                                          {new Date(aiOutlooks[holding.ticker].timestamp).toLocaleDateString()}
-                                        </Typography>
-                                      </Box>
-                                    </Tooltip>
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: '#00D4FF',
+                                          fontWeight: 600,
+                                          fontSize: '0.75rem',
+                                          display: 'block'
+                                        }}
+                                      >
+                                        {aiOutlooks[holding.ticker].shortOutlook.length > 60 
+                                          ? aiOutlooks[holding.ticker].shortOutlook.substring(0, 60) + '...'
+                                          : aiOutlooks[holding.ticker].shortOutlook}
+                                      </Typography>
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: 'rgba(255, 255, 255, 0.5)',
+                                          fontSize: '0.65rem'
+                                        }}
+                                      >
+                                        {new Date(aiOutlooks[holding.ticker].timestamp).toLocaleDateString()} • Click for details
+                                      </Typography>
+                                    </Box>
                                   ) : (
                                     <Typography 
                                       variant="caption" 
