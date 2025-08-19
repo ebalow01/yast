@@ -1990,13 +1990,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         let pattern = "";
         let points = 0;
         
-        if (bodySize < 0.03) {
+        // Pattern detection logic (same as diagnostic script)
+        if (bodySize <= totalRange * 0.1) {  // Small body (doji-like)
           pattern += "DOJI ";
-          points += 1;
+          points += 2;
         }
-        if (lowerWick > bodySize * 2) {
+        
+        if (lowerWick >= bodySize * 2 && upperWick <= bodySize * 0.5) {  // Long lower wick, small upper
           pattern += "HAMMER ";
-          if (bar.c > bar.o) points += 2; // Only bullish hammers get points
+          points += 3;
         }
         
         // Only include bars that score points
