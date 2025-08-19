@@ -1909,26 +1909,40 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         const timestamp = bar.t;
         if (!timestamp) return false;
         
-        // Convert to Eastern Time
-        const dtEst = new Date(timestamp);
-        const estOptions: Intl.DateTimeFormatOptions = {
-          timeZone: 'America/New_York',
-          weekday: 'short' as const,
-          hour: 'numeric' as const,
-          minute: 'numeric' as const,
-          hour12: false
-        };
-        
-        const estString = dtEst.toLocaleString('en-US', estOptions);
-        const [weekday, time] = estString.split(', ');
-        const [hour, minute] = time.split(':').map(Number);
-        
-        // Check if during regular trading hours (9:30 AM - 4:00 PM EST)
-        // Also check if it's a weekday (exclude weekends)
-        const isWeekday = !['Sat', 'Sun'].includes(weekday);
-        const isRegularHours = (hour === 9 && minute >= 30) || (hour >= 10 && hour < 16);
-        
-        return isWeekday && isRegularHours;
+        try {
+          // Convert to Eastern Time using more robust approach
+          const dtUtc = new Date(timestamp);
+          
+          // Get individual components in EST timezone
+          const estHour = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            hour: 'numeric',
+            hour12: false
+          }).format(dtUtc);
+          
+          const estMinute = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            minute: 'numeric'
+          }).format(dtUtc);
+          
+          const estWeekday = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            weekday: 'short'
+          }).format(dtUtc);
+          
+          const hour = parseInt(estHour, 10);
+          const minute = parseInt(estMinute, 10);
+          
+          // Check if during regular trading hours (9:30 AM - 4:00 PM EST)
+          // Also check if it's a weekday (exclude weekends)
+          const isWeekday = !['Sat', 'Sun'].includes(estWeekday);
+          const isRegularHours = (hour === 9 && minute >= 30) || (hour >= 10 && hour < 16);
+          
+          return isWeekday && isRegularHours;
+        } catch (error) {
+          console.warn('Error filtering trading hours for bar:', bar.t, error);
+          return true; // Include bar if filtering fails
+        }
       });
 
       // Log filtering results for debugging
