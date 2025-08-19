@@ -2082,14 +2082,8 @@ Pattern Strength Score: ${patternStrength.toFixed(1)}/10
 
 Data points: ${results.length} 15-minute bars (${Math.floor(results.length/26)} trading days)`;
 
-      // Use our existing claude-analysis Netlify function
-      const response = await fetch('/.netlify/functions/claude-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          prompt: `Analyze this real market data for ${ticker}:
+      // Build the full prompt that will be sent to AI
+      const fullPrompt = `Analyze this real market data for ${ticker}:
 
 ${dataSummary}
 
@@ -2155,7 +2149,30 @@ FINAL CONSISTENCY CHECK:
 Before submitting, verify:
 - Does my sentiment rating match my price targets?
 - Does my reasoning support both the rating AND the targets?
-- Have I explained any apparent contradictions (like oversold bounces in downtrends)?`
+- Have I explained any apparent contradictions (like oversold bounces in downtrends)?`;
+      
+      // Log the complete prompt and data being sent to AI
+      console.log('🤖 ========== AI ANALYSIS PROMPT START ==========');
+      console.log('📊 Ticker:', ticker);
+      console.log('💰 Current Price:', currentPrice.toFixed(2));
+      console.log('📈 RSI:', rsi.toFixed(1));
+      console.log('🕯️ Pattern Count:', patternCount);
+      console.log('💪 Pattern Strength:', patternStrength.toFixed(1));
+      console.log('📉 Daily Change:', dailyChange.toFixed(1) + '%');
+      console.log('📊 SMA20:', sma20.toFixed(2));
+      console.log('📊 SMA50:', sma50.toFixed(2));
+      console.log('\n📋 FULL PROMPT BEING SENT (', fullPrompt.length, 'characters):\n');
+      console.log(fullPrompt);
+      console.log('🤖 ========== AI ANALYSIS PROMPT END ==========\n');
+      
+      // Use our existing claude-analysis Netlify function
+      const response = await fetch('/.netlify/functions/claude-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: fullPrompt
         })
       });
 
