@@ -1973,13 +1973,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Log filtering results for debugging
       console.log(`🕯️ Found ${tradingHoursBars.length} bars during regular trading hours (out of ${results.length} total)`);
 
-      // Use last 20 trading hours bars for pattern analysis
+      // Use last 20 trading hours bars, but focus on most recent 10 for pattern analysis
       const patternBars = tradingHoursBars.slice(-20);
+      // Focus on the most recent bars for pattern analysis (last 10 bars instead of all 20)
+      const recentPatternBars = patternBars.slice(-10);
       let totalPatternPoints = 0;
       let patternCount = 0;
       const candlestickAnalysis: string[] = [];
 
-      patternBars.forEach((bar: any) => {
+      recentPatternBars.forEach((bar: any) => {
         const bodySize = Math.abs(bar.c - bar.o);
         const totalRange = bar.h - bar.l;
         const upperWick = bar.h - Math.max(bar.o, bar.c);
@@ -2091,25 +2093,34 @@ ${dataSummary}
 
 Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
 
-**IMPORTANT: Start your response with a sentiment rating using this exact format:**
+CRITICAL: Your sentiment rating MUST align with your price targets. If you predict higher prices, you cannot be bearish. If you predict lower prices, you cannot be bullish.
+
+SENTIMENT RATING - Use this exact format:
 SENTIMENT: [Bullish 5/5 | Bullish 4/5 | Bullish 3/5 | Bullish 2/5 | Bullish 1/5 | Neutral | Bearish 1/5 | Bearish 2/5 | Bearish 3/5 | Bearish 4/5 | Bearish 5/5]
 
-**CRITICAL: Use the FULL rating scale (1/5 to 5/5). Don't default to moderate ratings! Be decisive based on the data.**
+SENTIMENT LOGIC CHECK:
+Before assigning your rating, complete this logic check:
 
-Rating Guidelines - Choose the STRONGEST rating supported by the data:
-- Bullish 5/5: RSI >70, price well above SMAs, strong volume, clear breakout patterns = STRONG BUY
-- Bullish 4/5: RSI 60-70, price above SMAs, good volume, bullish patterns = BUY  
-- Bullish 3/5: RSI 50-60, mixed signals, some positive indicators = MODERATE BUY
-- Bullish 2/5: RSI 40-50, weak bullish signals, limited upside = WEAK BUY
-- Bullish 1/5: RSI 30-40, barely positive, high risk = VERY WEAK BUY
-- Neutral: RSI 45-55, completely mixed signals, no clear direction
-- Bearish 1/5: RSI 60-70, barely negative, limited downside = VERY WEAK SELL
-- Bearish 2/5: RSI 50-60, weak bearish signals, some risk = WEAK SELL
-- Bearish 3/5: RSI 40-50, moderate bearish signals, caution advised = MODERATE SELL
-- Bearish 4/5: RSI 30-40, strong bearish indicators, below SMAs = SELL
-- Bearish 5/5: RSI <30, price collapsing, high volume selling = STRONG SELL
+If 1-week AND 2-week targets are ABOVE current price → Must be Bullish (1/5 to 5/5)
+If 1-week AND 2-week targets are BELOW current price → Must be Bearish (1/5 to 5/5)
+If targets are mixed (one up, one down) → Must be Neutral or weak rating (1/5)
+Rate strength based on: RSI extremes, distance from SMAs, pattern strength, volume
 
-**IF RSI IS EXTREME (>70 or <30), USE 4/5 OR 5/5 RATINGS!**
+Enhanced Rating Guidelines:
+
+Bullish 5/5: RSI >70 OR <20 with strong reversal patterns + targets >5% above current
+Bullish 4/5: RSI 60-70 OR 20-30 with reversal signals + targets 3-5% above current
+Bullish 3/5: RSI 50-60 OR 30-40 with some positive signals + targets 1-3% above current
+Bullish 2/5: RSI 40-50 with weak bullish signals + targets barely above current
+Bullish 1/5: Mixed signals but slight upside bias + targets <1% above current
+Neutral: Truly mixed signals with targets around current price
+Bearish 1/5: Mixed signals but slight downside bias + targets <1% below current
+Bearish 2/5: RSI 50-60 with weak bearish signals + targets barely below current
+Bearish 3/5: RSI 40-50 OR 60-70 with negative signals + targets 1-3% below current
+Bearish 4/5: RSI 30-40 OR 70-80 with strong bearish signals + targets 3-5% below current
+Bearish 5/5: RSI <30 OR >80 with breakdown patterns + targets >5% below current
+
+IMPORTANT: Extreme RSI readings (<20 or >80) can be bullish if showing reversal patterns, or bearish if showing continuation. Context matters more than the number alone.
 
 1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
 
@@ -2136,7 +2147,13 @@ Rating Guidelines - Choose the STRONGEST rating supported by the data:
    - EXACT stop-loss price (specific $ amount)
    - Target price for 1-week, 2-week timeframes
 
-DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $${currentPrice.toFixed(2)}.`
+DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $${currentPrice.toFixed(2)}.
+
+FINAL CONSISTENCY CHECK:
+Before submitting, verify:
+- Does my sentiment rating match my price targets?
+- Does my reasoning support both the rating AND the targets?
+- Have I explained any apparent contradictions (like oversold bounces in downtrends)?`
         })
       });
 
