@@ -1195,8 +1195,6 @@ export default function DividendAnalysisDashboard() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingHolding, setEditingHolding] = useState<PortfolioHolding | null>(null);
   const [newTicker, setNewTicker] = useState('');
-  const [newShares, setNewShares] = useState('');
-  const [newPrice, setNewPrice] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState<string | null>(null);
@@ -1512,21 +1510,13 @@ export default function DividendAnalysisDashboard() {
   };
 
   const addHolding = () => {
-    if (!newTicker || !newShares || !newPrice) {
-      setSnackbarMessage('Please fill in all fields');
+    if (!newTicker) {
+      setSnackbarMessage('Please enter a ticker symbol');
       setShowSnackbar(true);
       return;
     }
 
     const ticker = newTicker.toUpperCase();
-    const shares = parseFloat(newShares);
-    const price = parseFloat(newPrice);
-
-    if (isNaN(shares) || isNaN(price) || shares <= 0 || price <= 0) {
-      setSnackbarMessage('Please enter valid numbers for shares and price');
-      setShowSnackbar(true);
-      return;
-    }
 
     // Check if ticker exists in our data
     const tickerExists = data.some(d => d.ticker === ticker);
@@ -1535,10 +1525,18 @@ export default function DividendAnalysisDashboard() {
       setShowSnackbar(true);
     }
 
+    // Check if ticker is already in portfolio
+    const existingHolding = portfolio.holdings.find(h => h.ticker === ticker);
+    if (existingHolding) {
+      setSnackbarMessage(`${ticker} is already in your portfolio`);
+      setShowSnackbar(true);
+      return;
+    }
+
     const newHolding: PortfolioHolding = {
       ticker,
-      shares,
-      averagePrice: price,
+      shares: 0, // Default value since we're not tracking shares anymore
+      averagePrice: 0, // Default value since we're not tracking price anymore
       dateAdded: new Date().toISOString()
     };
 
@@ -1550,9 +1548,7 @@ export default function DividendAnalysisDashboard() {
     updatePortfolioValues(updatedPortfolio);
     setShowAddDialog(false);
     setNewTicker('');
-    setNewShares('');
-    setNewPrice('');
-    setSnackbarMessage(`Added ${shares} shares of ${ticker} at $${price.toFixed(2)}`);
+    setSnackbarMessage(`Added ${ticker} to portfolio`);
     setShowSnackbar(true);
   };
 
@@ -2782,26 +2778,6 @@ Before submitting, verify:
             valueA = -(expectedDivA?.forwardYield || 0); // Negative for descending
             valueB = -(expectedDivB?.forwardYield || 0);
           }
-          break;
-        case 'shares':
-          valueA = a.shares;
-          valueB = b.shares;
-          break;
-        case 'avgPrice':
-          valueA = a.averagePrice;
-          valueB = b.averagePrice;
-          break;
-        case 'totalValue':
-          valueA = a.totalValue || 0;
-          valueB = b.totalValue || 0;
-          break;
-        case 'gainLoss':
-          valueA = a.gainLoss || 0;
-          valueB = b.gainLoss || 0;
-          break;
-        case 'gainLossPercent':
-          valueA = a.gainLossPercent || 0;
-          valueB = b.gainLossPercent || 0;
           break;
         case 'riskLevel':
           // Sort by risk priority: SAFE(1) -> LOW(2) -> MEDIUM(3) -> HIGH(4)
@@ -4660,46 +4636,6 @@ Before submitting, verify:
                                 Ex-Div Day
                               </TableSortLabel>
                             </TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
-                              <TableSortLabel
-                                active={sortField === 'shares'}
-                                direction={sortField === 'shares' ? sortDirection : 'asc'}
-                                onClick={() => handleSort('shares')}
-                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
-                              >
-                                Shares
-                              </TableSortLabel>
-                            </TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
-                              <TableSortLabel
-                                active={sortField === 'avgPrice'}
-                                direction={sortField === 'avgPrice' ? sortDirection : 'asc'}
-                                onClick={() => handleSort('avgPrice')}
-                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
-                              >
-                                Avg Price
-                              </TableSortLabel>
-                            </TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
-                              <TableSortLabel
-                                active={sortField === 'totalValue'}
-                                direction={sortField === 'totalValue' ? sortDirection : 'asc'}
-                                onClick={() => handleSort('totalValue')}
-                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
-                              >
-                                Total Value
-                              </TableSortLabel>
-                            </TableCell>
-                            <TableCell sx={{ color: 'white', fontWeight: 600 }} align="right">
-                              <TableSortLabel
-                                active={sortField === 'gainLoss'}
-                                direction={sortField === 'gainLoss' ? sortDirection : 'asc'}
-                                onClick={() => handleSort('gainLoss')}
-                                sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
-                              >
-                                Gain
-                              </TableSortLabel>
-                            </TableCell>
                             <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">
                               <TableSortLabel
                                 active={sortField === 'riskLevel'}
@@ -4833,16 +4769,6 @@ Before submitting, verify:
                                   </Box>
                                 </TableCell>
 
-                                <TableCell sx={{ color: 'white' }} align="right">{holding.shares.toLocaleString()}</TableCell>
-                                <TableCell sx={{ color: 'white' }} align="right">${holding.averagePrice.toFixed(2)}</TableCell>
-                                <TableCell sx={{ color: 'white' }} align="right">
-                                  ${(holding.totalValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </TableCell>
-                                <TableCell sx={{ 
-                                  color: (holding.gainLoss || 0) >= 0 ? '#34C759' : '#FF3B30' 
-                                }} align="right">
-                                  {(holding.gainLoss || 0) >= 0 ? '+' : ''}${(holding.gainLoss || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({(holding.gainLossPercent || 0) >= 0 ? '+' : ''}{(holding.gainLossPercent || 0).toFixed(2)}%)
-                                </TableCell>
 
                                 {/* Risk Level with Tooltip */}
                                 <TableCell align="center">
@@ -5215,47 +5141,6 @@ Before submitting, verify:
                 onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
                 fullWidth
                 placeholder="e.g. YMAX, ULTY, QDTE"
-                sx={{
-                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
-                  '& .MuiOutlinedInput-root': {
-                    color: 'white',
-                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.5)' },
-                    '&.Mui-focused fieldset': { borderColor: '#00D4FF' }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Number of Shares"
-                value={newShares}
-                onChange={(e) => setNewShares(e.target.value)}
-                fullWidth
-                type="number"
-                inputProps={{ min: 0, step: 1 }}
-                sx={{
-                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
-                  '& .MuiOutlinedInput-root': {
-                    color: 'white',
-                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
-                    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.5)' },
-                    '&.Mui-focused fieldset': { borderColor: '#00D4FF' }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                label="Average Price"
-                value={newPrice}
-                onChange={(e) => setNewPrice(e.target.value)}
-                fullWidth
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>$</InputAdornment>
-                }}
                 sx={{
                   '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
                   '& .MuiOutlinedInput-root': {
