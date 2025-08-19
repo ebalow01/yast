@@ -1491,21 +1491,7 @@ export default function DividendAnalysisDashboard() {
         setData(convertedData);
         setMetadata(metadataValue);
         
-        // Calculate MPT allocation for ALL ETFs, not just top performers
-        if (convertedData.length > 0) {
-          const { allocation, metrics } = calculateMPTAllocation(convertedData);
-          // Enrich allocation with original ETF data (exDivDay, strategy)
-          const enrichedAllocation = allocation.map(asset => {
-            const originalETF = convertedData.find(etf => etf.ticker === asset.ticker);
-            return {
-              ...asset,
-              exDivDay: originalETF?.exDivDay,
-              strategy: originalETF?.bestStrategy
-            };
-          });
-          setMptAllocation(enrichedAllocation);
-          setPortfolioMetrics(metrics);
-        }
+        // Portfolio calculation moved to separate useEffect to include AI filtering
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
@@ -1515,6 +1501,25 @@ export default function DividendAnalysisDashboard() {
 
     loadData();
   }, []);
+
+  // Auto-refresh portfolio with AI filtering once data and AI outlooks are loaded
+  useEffect(() => {
+    if (data.length > 0 && Object.keys(aiOutlooks).length > 0 && !loading) {
+      console.log('🚀 Auto-refreshing portfolio with AI sentiment filtering after page load...');
+      const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
+      const enrichedAllocation = allocation.map(asset => {
+        const originalETF = data.find(etf => etf.ticker === asset.ticker);
+        return {
+          ...asset,
+          exDivDay: originalETF?.exDivDay,
+          strategy: originalETF?.bestStrategy
+        };
+      });
+      setMptAllocation(enrichedAllocation);
+      setPortfolioMetrics(metrics);
+      console.log('✅ Portfolio auto-refreshed with AI sentiment filtering!');
+    }
+  }, [data, aiOutlooks, loading]);
 
   // Portfolio Management - Load from cookies on mount
   useEffect(() => {
