@@ -1839,25 +1839,48 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const dailyChange = oneDayAgo ? ((currentPrice - oneDayAgo.c) / oneDayAgo.c) * 100 : 0;
       const twoDayChange = twoDaysAgo ? ((currentPrice - twoDaysAgo.c) / twoDaysAgo.c) * 100 : 0;
 
-      // Calculate technical indicators with real data
+      // Calculate traditional RSI using Wilder's smoothing (exponentially weighted moving average)
       let rsi = 0;
-      if (results.length >= 14) {
-        const prices = results.slice(-15).map((r: any) => r.c);
-        const gains = [];
-        const losses = [];
+      if (results.length >= 15) { // Need 15 bars: 1 + 14 periods
+        const prices = results.slice(-Math.min(results.length, 50)).map((r: any) => r.c); // Use up to 50 bars for better smoothing
+        const changes = [];
         
+        // Calculate price changes
         for (let i = 1; i < prices.length; i++) {
-          const change = prices[i] - prices[i - 1];
-          gains.push(change > 0 ? change : 0);
-          losses.push(change < 0 ? -change : 0);
+          changes.push(prices[i] - prices[i - 1]);
         }
         
-        const avgGain = gains.reduce((a, b) => a + b, 0) / gains.length;
-        const avgLoss = losses.reduce((a, b) => a + b, 0) / losses.length;
+        // Initial simple averages for first 14 periods
+        let gains = 0;
+        let losses = 0;
         
+        for (let i = 0; i < 14; i++) {
+          if (changes[i] > 0) {
+            gains += changes[i];
+          } else {
+            losses += Math.abs(changes[i]);
+          }
+        }
+        
+        let avgGain = gains / 14;
+        let avgLoss = losses / 14;
+        
+        // Apply Wilder's smoothing for subsequent periods
+        for (let i = 14; i < changes.length; i++) {
+          const gain = changes[i] > 0 ? changes[i] : 0;
+          const loss = changes[i] < 0 ? Math.abs(changes[i]) : 0;
+          
+          // Wilder's smoothing: new_avg = ((old_avg * 13) + current_value) / 14
+          avgGain = ((avgGain * 13) + gain) / 14;
+          avgLoss = ((avgLoss * 13) + loss) / 14;
+        }
+        
+        // Calculate RSI
         if (avgLoss > 0) {
           const rs = avgGain / avgLoss;
           rsi = 100 - (100 / (1 + rs));
+        } else {
+          rsi = 100; // All gains, no losses
         }
       }
 
