@@ -1973,11 +1973,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const patternBars = tradingHoursBars.slice(-20);
       // Analyze all 20 pattern bars for comprehensive analysis
       const recentPatternBars = patternBars;
+      console.log(`🔍 DEBUG: Analyzing ${recentPatternBars.length} pattern bars for candlestick patterns`);
       let totalPatternPoints = 0;
       let patternCount = 0;
       const candlestickAnalysis: string[] = [];
 
-      recentPatternBars.forEach((bar: any) => {
+      recentPatternBars.forEach((bar: any, index: number) => {
         const bodySize = Math.abs(bar.c - bar.o);
         const totalRange = bar.h - bar.l;
         const upperWick = bar.h - Math.max(bar.o, bar.c);
@@ -1995,6 +1996,24 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         if (lowerWick >= bodySize * 2 && upperWick <= bodySize * 0.5) {  // Long lower wick, small upper
           pattern += "HAMMER ";
           points += 3;
+        }
+        
+        // Debug logging (first 10 bars only)
+        if (index < 10) {
+          const utcDate = new Date(bar.t);
+          const etString = utcDate.toLocaleString("en-US", {
+            timeZone: "America/New_York",
+            year: 'numeric',
+            month: '2-digit', 
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+          const dojiRatio = totalRange > 0 ? bodySize / totalRange : 0;
+          const hammerLowerCheck = lowerWick >= bodySize * 2;
+          const hammerUpperCheck = upperWick <= bodySize * 0.5;
+          console.log(`  Bar ${index + 1} (${etString}): Body:${bodySize.toFixed(2)} Range:${totalRange.toFixed(2)} DojiRatio:${dojiRatio.toFixed(3)} LowerWick:${lowerWick.toFixed(2)}>=${(bodySize * 2).toFixed(2)}?${hammerLowerCheck} UpperWick:${upperWick.toFixed(2)}<=${(bodySize * 0.5).toFixed(2)}?${hammerUpperCheck} Points:${points}`);
         }
         
         // Only include bars that score points
