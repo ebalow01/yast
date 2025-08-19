@@ -1432,7 +1432,7 @@ export default function DividendAnalysisDashboard() {
                          item.bestReturn >= 0.20 ? 'mid-performers' : 
                          item.bestReturn >= 0.0 ? 'low-performers' : 'excluded',
                 // New risk assessment fields
-                riskLevel: item.riskLevel || 'pending', // Default to pending if missing
+                riskLevel: (item.riskLevel && typeof item.riskLevel === 'string' && item.riskLevel.toUpperCase() !== 'PENDING') ? item.riskLevel : 'pending', // Convert PENDING to pending
                 riskColor: item.riskColor,
                 riskPriority: item.riskPriority,
                 rationale: item.rationale,

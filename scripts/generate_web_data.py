@@ -439,8 +439,15 @@ def generate_web_data():
             from dashboard_risk_integration import main as integrate_risk_data
             integrate_risk_data()
             print("SUCCESS: Risk assessment data integrated")
+        except ImportError as e:
+            print(f"WARNING: Risk assessment integration failed - Import Error: {e}")
+            print("This likely means daily_risk_monitor.py or its dependencies are missing")
+            # Don't fail the entire process for risk data issues
         except Exception as e:
+            import traceback
             print(f"WARNING: Risk assessment integration failed: {e}")
+            print("Full traceback:")
+            traceback.print_exc()
             # Don't fail the entire process for risk data issues
         finally:
             os.chdir(original_dir)
