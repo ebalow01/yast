@@ -485,6 +485,20 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
   
   console.log('📊 Final ETF count for optimization:', allETFs.length);
   
+  // If no ETFs remain after filtering, return empty allocation
+  if (allETFs.length === 0) {
+    console.warn('⚠️ No ETFs available for allocation after filtering');
+    return { 
+      allocation: [], 
+      metrics: {
+        expectedReturn: 0,
+        portfolioRisk: 0,
+        sharpeRatio: 0,
+        totalAllocation: 0
+      }
+    };
+  }
+  
   // Log the ETFs we're working with
   console.log('Available ETFs:', allETFs.map(etf => `${etf.ticker}(${(etf.bestReturn*100).toFixed(1)}%)`).join(', '));
   
@@ -1506,18 +1520,26 @@ export default function DividendAnalysisDashboard() {
   useEffect(() => {
     if (data.length > 0 && Object.keys(aiOutlooks).length > 0 && !loading) {
       console.log('🚀 Auto-refreshing portfolio with AI sentiment filtering after page load...');
-      const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
-      const enrichedAllocation = allocation.map(asset => {
-        const originalETF = data.find(etf => etf.ticker === asset.ticker);
-        return {
-          ...asset,
-          exDivDay: originalETF?.exDivDay,
-          strategy: originalETF?.bestStrategy
-        };
-      });
-      setMptAllocation(enrichedAllocation);
-      setPortfolioMetrics(metrics);
-      console.log('✅ Portfolio auto-refreshed with AI sentiment filtering!');
+      try {
+        const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
+        if (allocation && allocation.length > 0) {
+          const enrichedAllocation = allocation.map(asset => {
+            const originalETF = data.find(etf => etf.ticker === asset.ticker);
+            return {
+              ...asset,
+              exDivDay: originalETF?.exDivDay,
+              strategy: originalETF?.bestStrategy
+            };
+          });
+          setMptAllocation(enrichedAllocation);
+          setPortfolioMetrics(metrics);
+          console.log('✅ Portfolio auto-refreshed with AI sentiment filtering!');
+        } else {
+          console.warn('⚠️ No allocation generated - all ETFs may be filtered out');
+        }
+      } catch (error) {
+        console.error('Error during portfolio auto-refresh:', error);
+      }
     }
     // Remove data and aiOutlooks from dependencies to avoid circular updates
   }, [loading]);
