@@ -2556,42 +2556,7 @@ Data points: ${results.length} 15-minute bars (${Math.floor(results.length/26)} 
 
 ${dataSummary}
 
-HIERARCHICAL DECISION FRAMEWORK:
-Before analysis, establish the PRIMARY TREND using this exact order:
-
-1. **TREND HIERARCHY (Weight: 40%)**
-   - 50-SMA direction and price position
-   - Volume-weighted momentum (declining/rising)
-   - Price vs VWAP trend (3-session slope)
-   
-2. **MOMENTUM CONFIRMATION (Weight: 30%)**
-   - RSI divergence with price (not just absolute level)
-   - MACD histogram direction (expanding/contracting)
-   - Volume trend at key levels
-   
-3. **PATTERN VALIDATION (Weight: 20%)**
-   - Only consider patterns with volume confirmation
-   - Pattern strength must be >6/10 to override trend
-   - Candlestick patterns need 2+ period confirmation
-   
-4. **RISK/REWARD RATIO (Weight: 10%)**
-   - Distance to next major support/resistance
-   - Risk-adjusted target probabilities
-
-CONSISTENCY RULE: If indicators conflict between levels, the HIGHER weighted category takes precedence. Example: Strong downtrend (40%) overrides oversold RSI (30%) unless RSI shows clear divergence AND volume confirms reversal.
-
-TARGET SETTING RULE: Targets must align with the established trend hierarchy. Contrarian targets require ALL three top categories to show reversal signals.
-
-CONTRADICTION RESOLUTION:
-If your analysis contains conflicting signals:
-1. State the contradiction explicitly
-2. Explain which signal takes precedence and why
-3. Provide scenarios: "If X happens, then Y; if Z happens, then W"
-4. Assign confidence levels to each scenario
-
-Example: "RSI suggests bounce (30% probability) but trend structure suggests continuation (70% probability). Will favor bearish targets unless price reclaims $5.76 WITH volume confirmation."
-
-Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
+Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS in 1 week and 2 weeks.
 
 CRITICAL: Your sentiment rating MUST align with your price targets. If you predict higher prices, you cannot be bearish. If you predict lower prices, you cannot be bullish.
 
