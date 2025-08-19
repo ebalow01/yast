@@ -1891,6 +1891,103 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const sessionHigh = Math.max(...recentBars.map((r: any) => r.h));
       const sessionLow = Math.min(...recentBars.map((r: any) => r.l));
 
+      // Previous significant highs/lows (beyond current session)
+      const extendedBars = results.length >= 52 ? results.slice(0, -26) : [];
+      const previousHigh = extendedBars.length > 0 ? 
+        Math.max(...extendedBars.slice(-50).map((r: any) => r.h)) : sessionHigh;
+      const previousLow = extendedBars.length > 0 ? 
+        Math.min(...extendedBars.slice(-50).map((r: any) => r.l)) : sessionLow;
+
+      // Volume-Weighted Average Price (VWAP)
+      let vwap = 0;
+      let vwapDeviation = 0;
+      if (results.length >= 26) {
+        const vwapBars = results.slice(-26); // Current session
+        const totalVolume = vwapBars.reduce((sum: number, r: any) => sum + r.v, 0);
+        if (totalVolume > 0) {
+          const vwapSum = vwapBars.reduce((sum: number, r: any) => 
+            sum + ((r.h + r.l + r.c) / 3 * r.v), 0);
+          vwap = vwapSum / totalVolume;
+          vwapDeviation = ((currentPrice - vwap) / vwap) * 100;
+        }
+      }
+
+      // Bollinger Bands (20-period)
+      let bbUpper = 0;
+      let bbLower = 0;
+      let bbPosition = "N/A";
+      
+      if (results.length >= 20) {
+        const bbPrices = results.slice(-20).map((r: any) => r.c);
+        const bbSma = bbPrices.reduce((sum: number, p: number) => sum + p, 0) / bbPrices.length;
+        const variance = bbPrices.reduce((sum: number, p: number) => sum + Math.pow(p - bbSma, 2), 0) / bbPrices.length;
+        const bbStd = Math.sqrt(variance);
+        
+        bbUpper = bbSma + (2 * bbStd);
+        bbLower = bbSma - (2 * bbStd);
+        
+        // Determine position relative to bands
+        if (currentPrice >= bbUpper) {
+          bbPosition = "AT/ABOVE UPPER (Overbought)";
+        } else if (currentPrice <= bbLower) {
+          bbPosition = "AT/BELOW LOWER (Oversold)";
+        } else {
+          const bbPct = ((currentPrice - bbLower) / (bbUpper - bbLower)) * 100;
+          bbPosition = `MIDDLE (${Math.round(bbPct)}% of band)`;
+        }
+      }
+
+      // MACD (12, 26, 9)
+      let macdLine = 0;
+      let macdSignal = 0;
+      let macdHistogram = 0;
+      let macdStatus = "N/A";
+      
+      if (results.length >= 35) {
+        const prices = results.slice(-50).map((r: any) => r.c); // Use up to 50 bars
+        
+        // Calculate EMA function
+        const calculateEma = (data: number[], period: number): number => {
+          if (data.length < period) return data[data.length - 1] || 0;
+          
+          const multiplier = 2 / (period + 1);
+          let ema = data[period - 1]; // Start with SMA
+          
+          for (let i = period; i < data.length; i++) {
+            ema = (data[i] * multiplier) + (ema * (1 - multiplier));
+          }
+          return ema;
+        };
+        
+        const ema12 = calculateEma(prices, 12);
+        const ema26 = calculateEma(prices, 26);
+        macdLine = ema12 - ema26;
+        
+        // Calculate MACD signal (9-period EMA of MACD line)
+        if (results.length >= 44) {
+          const macdValues = [];
+          for (let i = 26; i < prices.length; i++) {
+            const tempEma12 = calculateEma(prices.slice(0, i + 1), 12);
+            const tempEma26 = calculateEma(prices.slice(0, i + 1), 26);
+            macdValues.push(tempEma12 - tempEma26);
+          }
+          
+          if (macdValues.length >= 9) {
+            macdSignal = calculateEma(macdValues, 9);
+            macdHistogram = macdLine - macdSignal;
+            
+            // Determine MACD status
+            if (macdLine > macdSignal && macdHistogram > 0) {
+              macdStatus = "BULLISH (MACD > Signal)";
+            } else if (macdLine < macdSignal && macdHistogram < 0) {
+              macdStatus = "BEARISH (MACD < Signal)";
+            } else {
+              macdStatus = "NEUTRAL/CONVERGING";
+            }
+          }
+        }
+      }
+
       // Enhanced technical analysis preprocessing (like Claude does)
       
       // Fibonacci retracement levels
@@ -2076,6 +2173,17 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 - RSI (14-period): ${rsi.toFixed(1)}
 - Price vs 20-period SMA: ${currentPrice > sma20 ? 'above' : 'below'} ($${sma20.toFixed(2)})
 - Price vs 50-period SMA: ${currentPrice > sma50 ? 'above' : 'below'} ($${sma50.toFixed(2)})
+
+== EXTENDED LEVELS ==
+- Previous High: $${previousHigh.toFixed(2)}
+- Previous Low: $${previousLow.toFixed(2)}
+
+== ADVANCED TECHNICAL INDICATORS ==
+- VWAP: $${vwap.toFixed(2)} (Price vs VWAP: ${vwapDeviation > 0 ? '+' : ''}${vwapDeviation.toFixed(1)}%)
+- Bollinger Bands: Upper $${bbUpper.toFixed(2)} | Lower $${bbLower.toFixed(2)}
+- BB Position: ${bbPosition}
+- MACD: Line ${macdLine.toFixed(4)} | Signal ${macdSignal.toFixed(4)} | Histogram ${macdHistogram.toFixed(4)}
+- MACD Status: ${macdStatus}
 
 == FIBONACCI RETRACEMENT LEVELS ==
 - 23.6% Retracement: $${fib236.toFixed(2)}
