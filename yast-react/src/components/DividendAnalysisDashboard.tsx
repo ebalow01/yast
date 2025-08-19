@@ -3135,17 +3135,17 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       const outperformingDC = data.filter(item => item.divCaptureReturn > item.buyHoldReturn).length;
       const lowRiskHighReturn = data.filter(item => item.bestReturn > 0.3 && item.riskVolatility < 0.3).length;
       
-      const bestPerformer = data.reduce((current, item) => 
+      const bestPerformer = data.length > 0 ? data.reduce((current, item) => 
         item.bestReturn > current.bestReturn ? item : current
-      );
+      ) : null;
       
-      const lowestRisk = data.reduce((current, item) => 
+      const lowestRisk = data.length > 0 ? data.reduce((current, item) => 
         item.riskVolatility < current.riskVolatility ? item : current
-      );
+      ) : null;
       
-      const highestYield = data.reduce((current, item) => 
+      const highestYield = data.length > 0 ? data.reduce((current, item) => 
         (item.forwardYield || 0) > (current.forwardYield || 0) ? item : current
-      );
+      ) : null;
       
       return {
         avgBuyHold,
