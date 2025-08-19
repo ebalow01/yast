@@ -2023,16 +2023,16 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         }
       });
 
-      // Calculate pattern strength score (0-10 scale)
-      // Base it on both total points and frequency of patterns
+      // Calculate pattern strength score (0-10 scale) with proper formula
       let patternStrength = 0;
       if (patternCount > 0) {
-        // Average points per pattern (max 3 points per pattern)
-        const avgPointsPerPattern = totalPatternPoints / patternCount;
-        // Frequency score (how many patterns out of 20 bars)
-        const frequencyScore = (patternCount / 20) * 10;
-        // Combine both metrics and cap at 10
-        patternStrength = Math.min((avgPointsPerPattern * 3) + (frequencyScore * 0.5), 10);
+        // Numerator: total pattern points scored
+        const numerator = totalPatternPoints;
+        // Denominator: 5 points * number of patterns detected (maximum possible score)
+        const denominator = 5 * patternCount;
+        
+        // Calculate strength as ratio, then scale to 0-10
+        patternStrength = (numerator / denominator) * 10;
         patternStrength = Math.round(patternStrength * 10) / 10; // Round to 1 decimal
       }
 
