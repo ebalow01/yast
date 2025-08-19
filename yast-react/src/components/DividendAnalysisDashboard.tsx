@@ -2563,54 +2563,9 @@ CRITICAL: Your sentiment rating MUST align with your price targets. If you predi
 SENTIMENT RATING - Use this exact format:
 SENTIMENT: [Bullish 5/5 | Bullish 4/5 | Bullish 3/5 | Bullish 2/5 | Bullish 1/5 | Neutral | Bearish 1/5 | Bearish 2/5 | Bearish 3/5 | Bearish 4/5 | Bearish 5/5]
 
-SENTIMENT LOGIC CHECK:
-Before assigning your rating, complete this logic check:
+Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS in 1 week and 2 weeks.
 
-If 1-week AND 2-week targets are ABOVE current price → Must be Bullish (1/5 to 5/5)
-If 1-week AND 2-week targets are BELOW current price → Must be Bearish (1/5 to 5/5)
-If targets are mixed (one up, one down) → Must be Neutral or weak rating (1/5)
-Rate strength based on: RSI extremes, distance from SMAs, pattern strength, volume
-
-Enhanced Rating Guidelines:
-
-Bullish 5/5: RSI >70 OR <20 with strong reversal patterns + targets >5% above current
-Bullish 4/5: RSI 60-70 OR 20-30 with reversal signals + targets 3-5% above current
-Bullish 3/5: RSI 50-60 OR 30-40 with some positive signals + targets 1-3% above current
-Bullish 2/5: RSI 40-50 with weak bullish signals + targets barely above current
-Bullish 1/5: Mixed signals but slight upside bias + targets <1% above current
-Neutral: Truly mixed signals with targets around current price
-Bearish 1/5: Mixed signals but slight downside bias + targets <1% below current
-Bearish 2/5: RSI 50-60 with weak bearish signals + targets barely below current
-Bearish 3/5: RSI 40-50 OR 60-70 with negative signals + targets 1-3% below current
-Bearish 4/5: RSI 30-40 OR 70-80 with strong bearish signals + targets 3-5% below current
-Bearish 5/5: RSI <30 OR >80 with breakdown patterns + targets >5% below current
-
-IMPORTANT: Extreme RSI readings (<20 or >80) can be bullish if showing reversal patterns, or bearish if showing continuation. Context matters more than the number alone.
-
-1. **Short-term outlook** (1-2 weeks): Expected price range with specific dollar amounts
-
-2. **Candlestick Pattern Analysis**: 
-   - Identify specific candlestick patterns (doji, hammer, shooting star, engulfing, etc.)
-   - Note any reversal or continuation patterns in the recent 15-minute bars
-   - Analyze the significance of wicks/shadows and body sizes
-   - Comment on volume confirmation with candlestick patterns
-
-3. **Technical pattern analysis** based on price movement and chart patterns
-
-4. **RSI interpretation** (current reading: ${rsi.toFixed(1)})
-
-5. **Moving average analysis** (price vs SMA 20/50)
-
-6. **Risk assessment**: 
-   - SPECIFIC price level where you should cut losses (exact $ amount)
-   - SPECIFIC price level that signals danger (exact $ amount)
-   - Maximum acceptable loss as specific dollar amount from current price
-
-7. **Trading recommendations**:
-   - EXACT entry price if buying (specific $ amount)
-   - EXACT exit price for profit-taking (specific $ amount) 
-   - EXACT stop-loss price (specific $ amount)
-   - Target price for 1-week, 2-week timeframes
+CRITICAL: Your sentiment rating MUST align with your price targets. If both targets are above current price, you must give a bullish rating. If below, bearish rating. If mixed, neutral rating.
 
 DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $${currentPrice.toFixed(2)}.
 
