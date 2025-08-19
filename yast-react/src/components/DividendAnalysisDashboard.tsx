@@ -2155,14 +2155,28 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Take only the most recent 5 pattern bars that scored points
       const recentPatterns = candlestickAnalysis.slice(-5);
 
-      // Volume analysis  
-      const avgVolume = results.slice(-20).reduce((sum: number, bar: any) => sum + bar.v, 0) / 20;
-      const latestVolume = latest.v;
+      // Volume analysis (using trading hours bars only)
+      let latestVolume: number;
+      let avgVolume: number;
+      
+      if (tradingHoursBars.length > 0) {
+        // Use trading hours filtered bars for volume analysis
+        latestVolume = tradingHoursBars[tradingHoursBars.length - 1].v; // Most recent trading hours bar
+        const volumeBars = tradingHoursBars.slice(-20); // Last 20 trading hours bars
+        avgVolume = volumeBars.reduce((sum: number, bar: any) => sum + bar.v, 0) / volumeBars.length;
+        console.log(`📊 Volume analysis using ${volumeBars.length} trading hours bars`);
+      } else {
+        // Fallback to all bars if no trading hours data
+        latestVolume = latest.v;
+        avgVolume = results.slice(-20).reduce((sum: number, bar: any) => sum + bar.v, 0) / 20;
+        console.log(`📊 Volume analysis using all bars (no trading hours filtering)`);
+      }
+      
       const volumeRatio = latestVolume / avgVolume;
       const volumeStatus = volumeRatio > 1.5 ? 'HIGH' : volumeRatio < 0.5 ? 'LOW' : 'NORMAL';
       
       // Debug volume calculations
-      console.log(`📊 VOLUME DEBUG: Latest: ${latestVolume.toLocaleString()}, 20-bar Avg: ${Math.round(avgVolume).toLocaleString()}, Ratio: ${volumeRatio.toFixed(2)}x, Status: ${volumeStatus}`);
+      console.log(`📊 VOLUME DEBUG: Latest: ${latestVolume.toLocaleString()}, Avg: ${Math.round(avgVolume).toLocaleString()}, Ratio: ${volumeRatio.toFixed(2)}x, Status: ${volumeStatus}`);
 
       // Create enhanced data summary with comprehensive preprocessing
       const dataSummary = `COMPREHENSIVE TECHNICAL ANALYSIS for ${ticker}:
