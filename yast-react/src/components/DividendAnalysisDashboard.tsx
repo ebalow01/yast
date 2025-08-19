@@ -2161,15 +2161,20 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       
       if (tradingHoursBars.length > 0) {
         // Use trading hours filtered bars for volume analysis
-        latestVolume = tradingHoursBars[tradingHoursBars.length - 1].v; // Most recent trading hours bar
+        // Use median of last 3 bars instead of just latest volume
+        const last3Volumes = tradingHoursBars.slice(-3).map((bar: any) => bar.v);
+        latestVolume = [...last3Volumes].sort((a, b) => a - b)[Math.floor(last3Volumes.length / 2)]; // Median
         const volumeBars = tradingHoursBars.slice(-20); // Last 20 trading hours bars
         avgVolume = volumeBars.reduce((sum: number, bar: any) => sum + bar.v, 0) / volumeBars.length;
         console.log(`📊 Volume analysis using ${volumeBars.length} trading hours bars`);
+        console.log(`📊 Volume (3-bar median): median of last 3 bars [${last3Volumes.join(', ')}] = ${latestVolume.toLocaleString()}`);
       } else {
         // Fallback to all bars if no trading hours data
-        latestVolume = latest.v;
+        const last3Volumes = results.slice(-3).map((bar: any) => bar.v);
+        latestVolume = [...last3Volumes].sort((a, b) => a - b)[Math.floor(last3Volumes.length / 2)]; // Median
         avgVolume = results.slice(-20).reduce((sum: number, bar: any) => sum + bar.v, 0) / 20;
         console.log(`📊 Volume analysis using all bars (no trading hours filtering)`);
+        console.log(`📊 Volume (3-bar median): median of last 3 bars [${last3Volumes.join(', ')}] = ${latestVolume.toLocaleString()}`);
       }
       
       const volumeRatio = latestVolume / avgVolume;
@@ -2216,7 +2221,7 @@ ${recentPatterns.length > 0 ? recentPatterns.join('\n') : 'No significant patter
 Pattern Strength Score: ${patternStrength.toFixed(1)}/10
 
 == VOLUME ANALYSIS ==
-- Latest Volume: ${latestVolume.toLocaleString()}
+- Volume (3-bar median): ${latestVolume.toLocaleString()}
 - 20-Bar Average: ${Math.round(avgVolume).toLocaleString()}
 - Volume Ratio: ${volumeRatio.toFixed(2)}x average (${volumeStatus})
 
