@@ -2165,16 +2165,21 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         const last3Volumes = tradingHoursBars.slice(-3).map((bar: any) => bar.v);
         latestVolume = [...last3Volumes].sort((a, b) => a - b)[Math.floor(last3Volumes.length / 2)]; // Median
         const volumeBars = tradingHoursBars.slice(-20); // Last 20 trading hours bars
-        avgVolume = volumeBars.reduce((sum: number, bar: any) => sum + bar.v, 0) / volumeBars.length;
+        // Use median instead of average for 20-bar baseline to reduce outlier effect
+        const volumeList = volumeBars.map((bar: any) => bar.v);
+        avgVolume = [...volumeList].sort((a, b) => a - b)[Math.floor(volumeList.length / 2)]; // Median
         console.log(`📊 Volume analysis using ${volumeBars.length} trading hours bars`);
         console.log(`📊 Volume (3-bar median): median of last 3 bars [${last3Volumes.join(', ')}] = ${latestVolume.toLocaleString()}`);
+        console.log(`📊 20-bar median: ${avgVolume.toLocaleString()}`);
       } else {
         // Fallback to all bars if no trading hours data
         const last3Volumes = results.slice(-3).map((bar: any) => bar.v);
         latestVolume = [...last3Volumes].sort((a, b) => a - b)[Math.floor(last3Volumes.length / 2)]; // Median
-        avgVolume = results.slice(-20).reduce((sum: number, bar: any) => sum + bar.v, 0) / 20;
+        const volumeList = results.slice(-20).map((bar: any) => bar.v);
+        avgVolume = [...volumeList].sort((a, b) => a - b)[Math.floor(volumeList.length / 2)]; // Median
         console.log(`📊 Volume analysis using all bars (no trading hours filtering)`);
         console.log(`📊 Volume (3-bar median): median of last 3 bars [${last3Volumes.join(', ')}] = ${latestVolume.toLocaleString()}`);
+        console.log(`📊 20-bar median: ${avgVolume.toLocaleString()}`);
       }
       
       const volumeRatio = latestVolume / avgVolume;
@@ -2222,8 +2227,8 @@ Pattern Strength Score: ${patternStrength.toFixed(1)}/10
 
 == VOLUME ANALYSIS ==
 - Volume (3-bar median): ${latestVolume.toLocaleString()}
-- 20-Bar Average: ${Math.round(avgVolume).toLocaleString()}
-- Volume Ratio: ${volumeRatio.toFixed(2)}x average (${volumeStatus})
+- 20-Bar Median: ${Math.round(avgVolume).toLocaleString()}
+- Volume Ratio: ${volumeRatio.toFixed(2)}x median (${volumeStatus})
 
 Data points: ${results.length} 15-minute bars (${Math.floor(results.length/26)} trading days)`;
 
