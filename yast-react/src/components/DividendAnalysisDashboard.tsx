@@ -84,7 +84,7 @@ export interface DividendData {
   currentPrice?: number;
   category: 'top-performers' | 'mid-performers' | 'low-performers' | 'excluded' | 'benchmark';
   // New risk assessment fields
-  riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE';
+  riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE' | 'pending';
   riskColor?: string;
   riskPriority?: number;
   rationale?: string;
@@ -1432,7 +1432,7 @@ export default function DividendAnalysisDashboard() {
                          item.bestReturn >= 0.20 ? 'mid-performers' : 
                          item.bestReturn >= 0.0 ? 'low-performers' : 'excluded',
                 // New risk assessment fields
-                riskLevel: item.riskLevel || 'MEDIUM', // Default to MEDIUM if missing
+                riskLevel: item.riskLevel || 'pending', // Default to pending if missing
                 riskColor: item.riskColor,
                 riskPriority: item.riskPriority,
                 rationale: item.rationale,
@@ -2360,9 +2360,9 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
     setShowSnackbar(true);
   };
 
-  // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE)
-  const getRiskLevelChip = (riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE') => {
-    if (!riskLevel) {
+  // New function for risk level chips (HIGH/MEDIUM/LOW/SAFE/pending)
+  const getRiskLevelChip = (riskLevel?: 'HIGH' | 'MEDIUM' | 'LOW' | 'SAFE' | 'pending' | string) => {
+    if (!riskLevel || riskLevel === 'pending') {
       return {
         color: 'rgba(255, 255, 255, 0.1)',
         textColor: 'rgba(255, 255, 255, 0.6)'
@@ -2538,15 +2538,16 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
   };
 
   const generateRiskTooltip = (item: DividendData) => {
-    if (!item.riskLevel) {
-      return `Volatility Risk: ${formatPercentage(item.riskVolatility)}`;
+    if (!item.riskLevel || item.riskLevel === 'pending') {
+      return `Risk Analysis: Pending\nVolatility Risk: ${formatPercentage(item.riskVolatility)}`;
     }
 
     const riskExplanations = {
       'HIGH': 'Multiple concerning technical signals indicate elevated risk',
       'MEDIUM': 'Some caution warranted due to mixed technical signals', 
       'LOW': 'Minor technical concerns but generally stable',
-      'SAFE': 'Strong technical position with minimal risk indicators'
+      'SAFE': 'Strong technical position with minimal risk indicators',
+      'pending': 'Risk analysis data not yet available'
     };
 
     const indicators = [];
@@ -3745,7 +3746,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       }}
                     >
                       <Chip
-                        label={item.riskLevel === 'pending' ? 'MEDIUM' : item.riskLevel}
+                        label={item.riskLevel || 'pending'}
                         size="small"
                         onClick={() => {
                           const analysisText = `${item.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(item)}`;
@@ -4884,7 +4885,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                       }}
                                     >
                                       <Chip
-                                        label={tickerData?.riskLevel === 'pending' ? 'MEDIUM' : tickerData?.riskLevel || 'MEDIUM'}
+                                        label={tickerData?.riskLevel || 'pending'}
                                         size="small"
                                         onClick={() => {
                                           const analysisText = `${holding.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(tickerData)}`;
