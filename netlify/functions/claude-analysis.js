@@ -41,6 +41,9 @@ exports.handler = async (event, context) => {
     console.log('Environment variables available:', Object.keys(process.env));
     console.log('Claude API key exists:', !!claudeApiKey);
     console.log('Claude API key length:', claudeApiKey ? claudeApiKey.length : 0);
+    console.log('🤖 Using Claude model: claude-sonnet-4-20250514 (Sonnet 4)');
+    console.log('📝 Max tokens:', 2000);
+    console.log('📊 Prompt length:', prompt.length, 'characters');
     
     if (!claudeApiKey) {
       return {
@@ -59,8 +62,8 @@ exports.handler = async (event, context) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1000,
+        model: 'claude-sonnet-4-20250514',  // Claude Sonnet 4 for best analysis
+        max_tokens: 2000,  // Increased for more detailed analysis
         messages: [
           {
             role: 'user',
