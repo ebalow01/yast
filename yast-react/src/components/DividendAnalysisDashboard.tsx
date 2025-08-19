@@ -1519,7 +1519,8 @@ export default function DividendAnalysisDashboard() {
       setPortfolioMetrics(metrics);
       console.log('✅ Portfolio auto-refreshed with AI sentiment filtering!');
     }
-  }, [data, aiOutlooks, loading]);
+    // Remove data and aiOutlooks from dependencies to avoid circular updates
+  }, [loading]);
 
   // Portfolio Management - Load from cookies on mount
   useEffect(() => {
