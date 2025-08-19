@@ -2521,18 +2521,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
 == ADVANCED TECHNICAL INDICATORS ==
 - VWAP: $${vwap.toFixed(2)} (Price vs VWAP: ${vwapDeviation > 0 ? '+' : ''}${vwapDeviation.toFixed(1)}%)
-- VWAP Slope: ${vwapSlope}
 - Volume Above VWAP: ${volumeAboveVwapPct.toFixed(1)}% | Institutional Sentiment: ${institutionalSentiment}
 - Bollinger Bands: Upper $${bbUpper.toFixed(2)} | Lower $${bbLower.toFixed(2)}
-- BB Position: ${bbPosition}
 - MACD: Line ${macdLine.toFixed(4)} | Signal ${macdSignal.toFixed(4)} | Histogram ${macdHistogram.toFixed(4)}
 - MACD Status: ${macdStatus}
-- OBV: ${obv.toLocaleString()}
-- OBV Trend: ${obvTrend}
-- Stochastic: %K ${stochK.toFixed(1)} | %D ${stochD.toFixed(1)} | Fast %K ${stochFastK.toFixed(1)}
-- Stochastic Status: ${stochStatus} (${stochType})
-- ATR (14): ${atr.toFixed(3)}
-- ATR Trend: ${atrTrend}${volatilityExpansion ? ' 🚨 VOLATILITY EXPANSION!' : ''}
+- ATR (14): ${atr.toFixed(3)}${volatilityExpansion ? ' 🚨 VOLATILITY EXPANSION!' : ''}
 
 == FIBONACCI RETRACEMENT LEVELS ==
 - 23.6% Retracement: $${fib236.toFixed(2)}
