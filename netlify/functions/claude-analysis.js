@@ -60,7 +60,7 @@ exports.handler = async (event, context) => {
     
     // Create abort controller for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for complex analysis
     
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -128,13 +128,13 @@ exports.handler = async (event, context) => {
     
     // Handle specific timeout errors
     if (error.name === 'AbortError') {
-      console.error('❌ Request timed out after 45 seconds');
+      console.error('❌ Request timed out after 60 seconds');
       return {
         statusCode: 408, // Request Timeout
         headers,
         body: JSON.stringify({ 
           error: 'Claude API request timed out',
-          details: 'Claude Sonnet 4 took too long to respond. Please try again.'
+          details: 'Claude Sonnet 4 analysis took too long to complete. Please try again.'
         })
       };
     }
