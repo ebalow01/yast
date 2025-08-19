@@ -4101,6 +4101,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                   }
                 }}
               />
+              {/* Full Analysis tab hidden - no longer needed
               <Tab
                 label={`Full Analysis (${data.length})`}
                 icon={<TableView />}
@@ -4111,7 +4112,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                     fontSize: 20
                   }
                 }}
-              />
+              /> */}
               <Tab
                 label={`My Portfolio (${portfolio.holdings.length})`}
                 icon={<BusinessCenter />}
@@ -4216,6 +4217,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                           >
                             Refresh AI
                           </Button>
+                          {/* Refresh Portfolio button hidden - auto-refreshes on load now
                           <Button
                             variant="outlined"
                             startIcon={<AccountBalance />}
@@ -4246,7 +4248,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                             }}
                           >
                             Refresh Portfolio
-                          </Button>
+                          </Button> */}
                         </Box>
                       </Box>
                     </Box>
@@ -4384,6 +4386,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       Comprehensive analysis of all remaining ETFs evaluated but not selected for the optimal allocation
                     </Typography>
                   </Box>
+                  {/* Refresh AI button hidden - too many ETFs to refresh at once
                   <Button
                     variant="outlined"
                     startIcon={<Refresh />}
@@ -4399,12 +4402,13 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                     }}
                   >
                     Refresh AI
-                  </Button>
+                  </Button> */}
                 </Box>
               </motion.div>
               {renderLegacyTable(excludedTickers)}
             </TabPanel>
 
+            {/* Full Analysis tab panel hidden - no longer needed
             <TabPanel value={selectedTab} index={2}>
               {console.log('🎯 RENDERING FULL ANALYSIS TAB - selectedTab:', selectedTab, 'should show:', selectedTab === 2)}
               <motion.div
@@ -4441,9 +4445,9 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                 </Box>
               </motion.div>
               {renderFullAnalysisTable(data)}
-            </TabPanel>
+            </TabPanel> */}
 
-            <TabPanel value={selectedTab} index={3}>
+            <TabPanel value={selectedTab} index={2}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
