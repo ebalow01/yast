@@ -1,4 +1,6 @@
 exports.handler = async (event, context) => {
+  // Set longer timeout for Claude Sonnet 4
+  context.callbackWaitsForEmptyEventLoop = false;
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -53,7 +55,13 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Make request to Claude API
+    // Make request to Claude API with timeout handling
+    console.log('🚀 Making Claude API request...');
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout
+    
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -61,6 +69,7 @@ exports.handler = async (event, context) => {
         'x-api-key': claudeApiKey,
         'anthropic-version': '2023-06-01'
       },
+      signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',  // Claude Sonnet 4 for best analysis
         max_tokens: 2000,  // Increased for more detailed analysis
@@ -86,8 +95,13 @@ exports.handler = async (event, context) => {
       })
     });
 
+    // Clear timeout once request completes
+    clearTimeout(timeoutId);
+    console.log('✅ Claude API responded with status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('❌ Claude API error:', response.status, errorText);
       return {
         statusCode: response.status,
         headers,
@@ -99,6 +113,7 @@ exports.handler = async (event, context) => {
     }
 
     const result = await response.json();
+    console.log('✅ Claude analysis completed successfully');
     
     return {
       statusCode: 200,
@@ -110,6 +125,20 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Claude Analysis error:', error);
+    
+    // Handle specific timeout errors
+    if (error.name === 'AbortError') {
+      console.error('❌ Request timed out after 45 seconds');
+      return {
+        statusCode: 408, // Request Timeout
+        headers,
+        body: JSON.stringify({ 
+          error: 'Claude API request timed out',
+          details: 'Claude Sonnet 4 took too long to respond. Please try again.'
+        })
+      };
+    }
+    
     return {
       statusCode: 500,
       headers,
