@@ -433,12 +433,37 @@ def generate_web_data():
     if success:
         # Automatically integrate risk assessment data
         print("Integrating risk assessment data...")
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Project root: {project_root}")
         try:
             # Import and run the risk integration script
             os.chdir(project_root)
+            print(f"Changed to directory: {os.getcwd()}")
+            
+            # Check if files exist
+            perf_file = 'yast-react/public/data/performance_data.json'
+            if os.path.exists(perf_file):
+                print(f"Performance data file exists: {perf_file}")
+                with open(perf_file, 'r') as f:
+                    data = json.load(f)
+                    print(f"Performance data has {len(data)} entries")
+                    if data:
+                        print(f"First entry risk level: {data[0].get('riskLevel', 'NOT SET')}")
+            else:
+                print(f"WARNING: Performance data file not found: {perf_file}")
+            
             from dashboard_risk_integration import main as integrate_risk_data
-            integrate_risk_data()
+            print("Successfully imported dashboard_risk_integration")
+            result = integrate_risk_data()
+            print(f"Integration result: {result is not None}")
             print("SUCCESS: Risk assessment data integrated")
+            
+            # Check if risk levels were updated
+            if os.path.exists(perf_file):
+                with open(perf_file, 'r') as f:
+                    data = json.load(f)
+                    if data:
+                        print(f"After integration, first entry risk level: {data[0].get('riskLevel', 'NOT SET')}")
         except ImportError as e:
             print(f"WARNING: Risk assessment integration failed - Import Error: {e}")
             print("This likely means daily_risk_monitor.py or its dependencies are missing")
