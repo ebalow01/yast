@@ -1959,7 +1959,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           // Check if during regular trading hours (9:30 AM - 4:00 PM EST)
           // Also check if it's a weekday (exclude weekends)
           const isWeekday = !['Sat', 'Sun'].includes(estWeekday);
-          const isRegularHours = (hour === 9 && minute >= 30) || (hour >= 10 && hour < 16);
+          const isRegularHours = (hour === 9 && minute >= 30) || 
+                                 (hour >= 10 && hour < 16) || 
+                                 (hour === 16 && minute === 0); // Include 4:00 PM bar
           
           return isWeekday && isRegularHours;
         } catch (error) {
