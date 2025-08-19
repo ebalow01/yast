@@ -1362,6 +1362,11 @@ export default function DividendAnalysisDashboard() {
             console.log('🏗️ Build ID:', metadataValue.build_id || 'N/A');
             console.log('📈 Performance data entries:', performanceData.length);
             
+            // Debug risk level data
+            const riskLevels = performanceData.map((item: any) => item.riskLevel).filter((rl: any) => rl);
+            console.log('🔍 Risk levels found:', [...new Set(riskLevels)]);
+            console.log('🔍 Items missing risk levels:', performanceData.filter((item: any) => !item.riskLevel).length);
+            
             // Try to load real-time data
             let realtimeDataValue: any = null;
             if (realtimeResponse && realtimeResponse.ok) {
@@ -1427,7 +1432,7 @@ export default function DividendAnalysisDashboard() {
                          item.bestReturn >= 0.20 ? 'mid-performers' : 
                          item.bestReturn >= 0.0 ? 'low-performers' : 'excluded',
                 // New risk assessment fields
-                riskLevel: item.riskLevel,
+                riskLevel: item.riskLevel || 'MEDIUM', // Default to MEDIUM if missing
                 riskColor: item.riskColor,
                 riskPriority: item.riskPriority,
                 rationale: item.rationale,
@@ -3740,7 +3745,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       }}
                     >
                       <Chip
-                        label={item.riskLevel}
+                        label={item.riskLevel === 'pending' ? 'MEDIUM' : item.riskLevel}
                         size="small"
                         onClick={() => {
                           const analysisText = `${item.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(item)}`;
@@ -4879,7 +4884,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                       }}
                                     >
                                       <Chip
-                                        label={tickerData?.riskLevel || 'N/A'}
+                                        label={tickerData?.riskLevel === 'pending' ? 'MEDIUM' : tickerData?.riskLevel || 'MEDIUM'}
                                         size="small"
                                         onClick={() => {
                                           const analysisText = `${holding.ticker} Risk Analysis\n${'='.repeat(20)}\n${generateRiskTooltip(tickerData)}`;
