@@ -3315,7 +3315,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       Top Performer
                     </Typography>
                     <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
-                      {metrics.bestPerformer.ticker} - {formatPercentage(metrics.bestPerformer.bestReturn)}
+                      {metrics.bestPerformer ? `${metrics.bestPerformer.ticker} - ${formatPercentage(metrics.bestPerformer.bestReturn)}` : 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
@@ -3334,7 +3334,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       Lowest Risk
                     </Typography>
                     <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
-                      {metrics.lowestRisk.ticker} - {formatPercentage(metrics.lowestRisk.riskVolatility)} volatility
+                      {metrics.lowestRisk ? `${metrics.lowestRisk.ticker} - ${formatPercentage(metrics.lowestRisk.riskVolatility)} volatility` : 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
@@ -3354,7 +3354,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                       Highest Yield
                     </Typography>
                     <Typography variant="body1" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
-                      {metrics.highestYield.ticker} - {metrics.highestYield.forwardYield?.toFixed(1)}%
+                      {metrics.highestYield ? `${metrics.highestYield.ticker} - ${metrics.highestYield.forwardYield?.toFixed(1)}%` : 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
