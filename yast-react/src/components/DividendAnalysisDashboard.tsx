@@ -1988,6 +1988,166 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         }
       }
 
+      // On-Balance Volume (OBV)
+      let obv = 0;
+      let obvTrend = "N/A";
+      if (results.length >= 10) {
+        const obvValues: number[] = [];
+        let currentObv = 0;
+        
+        for (let i = 1; i < results.length; i++) {
+          const prevClose = results[i-1].c;
+          const currClose = results[i].c;
+          const currVolume = results[i].v;
+          
+          if (currClose > prevClose) {
+            currentObv += currVolume;
+          } else if (currClose < prevClose) {
+            currentObv -= currVolume;
+          }
+          // If close == prevClose, OBV stays same
+          
+          obvValues.push(currentObv);
+        }
+        
+        obv = obvValues[obvValues.length - 1]; // Latest OBV
+        
+        // Determine OBV trend (compare last 5 vs previous 5)
+        if (obvValues.length >= 10) {
+          const recentObv = obvValues.slice(-5).reduce((sum, val) => sum + val, 0) / 5;
+          const prevObv = obvValues.slice(-10, -5).reduce((sum, val) => sum + val, 0) / 5;
+          if (recentObv > prevObv * 1.05) {
+            obvTrend = "BULLISH (Rising)";
+          } else if (recentObv < prevObv * 0.95) {
+            obvTrend = "BEARISH (Falling)";
+          } else {
+            obvTrend = "NEUTRAL (Sideways)";
+          }
+        }
+      }
+
+      // Stochastic Oscillator (14,3,3) - Full vs Fast
+      let stochK = 0;
+      let stochD = 0;
+      let stochFastK = 0;
+      let stochStatus = "N/A";
+      let stochType = "N/A";
+      
+      if (results.length >= 14) {
+        // Calculate %K (Fast Stochastic)
+        const period14Bars = results.slice(-14);
+        const lowestLow = Math.min(...period14Bars.map(r => r.l));
+        const highestHigh = Math.max(...period14Bars.map(r => r.h));
+        const currentClose = results[results.length - 1].c;
+        
+        if (highestHigh !== lowestLow) {
+          stochFastK = ((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100;
+        }
+        
+        // For Full Stochastic, we need 3-period SMA of Fast %K
+        if (results.length >= 16) {
+          const fastKValues: number[] = [];
+          for (let i = 14; i <= results.length; i++) {
+            const periodBars = results.slice(i-14, i);
+            const low = Math.min(...periodBars.map(r => r.l));
+            const high = Math.max(...periodBars.map(r => r.h));
+            const close = periodBars[periodBars.length - 1].c;
+            if (high !== low) {
+              const fastK = ((close - low) / (high - low)) * 100;
+              fastKValues.push(fastK);
+            }
+          }
+          
+          if (fastKValues.length >= 3) {
+            // Full %K = 3-period SMA of Fast %K
+            stochK = fastKValues.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
+            
+            // %D = 3-period SMA of Full %K
+            if (fastKValues.length >= 6) {
+              const kValuesForD: number[] = [];
+              for (let j = 0; j <= fastKValues.length - 3; j++) {
+                kValuesForD.push(fastKValues.slice(j, j + 3).reduce((sum, val) => sum + val, 0) / 3);
+              }
+              
+              if (kValuesForD.length >= 3) {
+                stochD = kValuesForD.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
+              }
+            }
+          }
+        }
+        
+        // Determine stochastic status
+        if (stochK > 0 && stochD > 0) {
+          if (stochK >= 80) {
+            stochStatus = "OVERBOUGHT";
+            stochType = "Full Stochastic";
+          } else if (stochK <= 20) {
+            stochStatus = "OVERSOLD";
+            stochType = "Full Stochastic";
+          } else if (stochK > stochD) {
+            stochStatus = "BULLISH CROSSOVER";
+            stochType = "Full Stochastic";
+          } else if (stochK < stochD) {
+            stochStatus = "BEARISH CROSSOVER";
+            stochType = "Full Stochastic";
+          } else {
+            stochStatus = "NEUTRAL";
+            stochType = "Full Stochastic";
+          }
+        } else if (stochFastK > 0) {
+          stochType = "Fast Stochastic";
+          if (stochFastK >= 80) {
+            stochStatus = "OVERBOUGHT (Fast)";
+          } else if (stochFastK <= 20) {
+            stochStatus = "OVERSOLD (Fast)";
+          } else {
+            stochStatus = "NEUTRAL (Fast)";
+          }
+        }
+      }
+
+      // Average True Range (ATR) with Volatility Expansion
+      let atr = 0;
+      let atrTrend = "N/A";
+      let volatilityExpansion = false;
+      
+      if (results.length >= 14) {
+        const trueRanges: number[] = [];
+        
+        for (let i = 1; i < results.length; i++) {
+          const high = results[i].h;
+          const low = results[i].l;
+          const prevClose = results[i-1].c;
+          
+          const tr1 = high - low;
+          const tr2 = Math.abs(high - prevClose);
+          const tr3 = Math.abs(low - prevClose);
+          
+          const trueRange = Math.max(tr1, tr2, tr3);
+          trueRanges.push(trueRange);
+        }
+        
+        // ATR = 14-period average of True Range
+        if (trueRanges.length >= 14) {
+          atr = trueRanges.slice(-14).reduce((sum, val) => sum + val, 0) / 14;
+          
+          // Check for volatility expansion (recent ATR vs previous ATR)
+          if (trueRanges.length >= 28) {
+            const recentAtr = trueRanges.slice(-14).reduce((sum, val) => sum + val, 0) / 14;
+            const prevAtr = trueRanges.slice(-28, -14).reduce((sum, val) => sum + val, 0) / 14;
+            
+            if (recentAtr > prevAtr * 1.5) {
+              atrTrend = "EXPANDING (High Volatility)";
+              volatilityExpansion = true;
+            } else if (recentAtr < prevAtr * 0.7) {
+              atrTrend = "CONTRACTING (Low Volatility)";
+            } else {
+              atrTrend = "STABLE";
+            }
+          }
+        }
+      }
+
       // Enhanced technical analysis preprocessing (like Claude does)
       
       // Fibonacci retracement levels
@@ -2211,6 +2371,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 - BB Position: ${bbPosition}
 - MACD: Line ${macdLine.toFixed(4)} | Signal ${macdSignal.toFixed(4)} | Histogram ${macdHistogram.toFixed(4)}
 - MACD Status: ${macdStatus}
+- OBV: ${obv.toLocaleString()}
+- OBV Trend: ${obvTrend}
+- Stochastic: %K ${stochK.toFixed(1)} | %D ${stochD.toFixed(1)} | Fast %K ${stochFastK.toFixed(1)}
+- Stochastic Status: ${stochStatus} (${stochType})
+- ATR (14): ${atr.toFixed(3)}
+- ATR Trend: ${atrTrend}${volatilityExpansion ? ' 🚨 VOLATILITY EXPANSION!' : ''}
 
 == FIBONACCI RETRACEMENT LEVELS ==
 - 23.6% Retracement: $${fib236.toFixed(2)}
