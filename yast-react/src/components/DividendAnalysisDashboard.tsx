@@ -1898,9 +1898,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const previousLow = extendedBars.length > 0 ? 
         Math.min(...extendedBars.slice(-50).map((r: any) => r.l)) : sessionLow;
 
-      // Volume-Weighted Average Price (VWAP)
+      // Volume-Weighted Average Price (VWAP) with Enhanced Analytics
       let vwap = 0;
       let vwapDeviation = 0;
+      let vwapSlope = "N/A";
+      let volumeAboveVwapPct = 0;
+      let institutionalSentiment = "N/A";
+      
       if (results.length >= 26) {
         const vwapBars = results.slice(-26); // Current session
         const totalVolume = vwapBars.reduce((sum: number, r: any) => sum + r.v, 0);
@@ -1909,6 +1913,53 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             sum + ((r.h + r.l + r.c) / 3 * r.v), 0);
           vwap = vwapSum / totalVolume;
           vwapDeviation = ((currentPrice - vwap) / vwap) * 100;
+          
+          // VWAP Slope Analysis (last 5 periods)
+          if (vwapBars.length >= 5) {
+            const vwapValues: number[] = [];
+            for (let i = vwapBars.length - 4; i <= vwapBars.length; i++) {
+              const sessionBars = vwapBars.slice(0, i);
+              const sessionVolume = sessionBars.reduce((sum: number, r: any) => sum + r.v, 0);
+              if (sessionVolume > 0) {
+                const sessionVwapSum = sessionBars.reduce((sum: number, r: any) => 
+                  sum + ((r.h + r.l + r.c) / 3 * r.v), 0);
+                vwapValues.push(sessionVwapSum / sessionVolume);
+              }
+            }
+            
+            if (vwapValues.length >= 5) {
+              const recentVwap = vwapValues.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
+              const prevVwap = vwapValues.slice(0, 2).reduce((sum, val) => sum + val, 0) / 2;
+              const vwapSlopePct = ((recentVwap - prevVwap) / prevVwap) * 100;
+              
+              if (vwapSlopePct > 0.2) {
+                vwapSlope = `RISING (+${vwapSlopePct.toFixed(1)}%)`;
+              } else if (vwapSlopePct < -0.2) {
+                vwapSlope = `FALLING (${vwapSlopePct.toFixed(1)}%)`;
+              } else {
+                vwapSlope = `FLAT (${vwapSlopePct >= 0 ? '+' : ''}${vwapSlopePct.toFixed(1)}%)`;
+              }
+            }
+          }
+          
+          // Volume above/below VWAP analysis
+          let volumeAboveVwap = 0;
+          let volumeBelowVwap = 0;
+          for (const bar of vwapBars) {
+            const typicalPrice = (bar.h + bar.l + bar.c) / 3;
+            if (typicalPrice > vwap) {
+              volumeAboveVwap += bar.v;
+            } else {
+              volumeBelowVwap += bar.v;
+            }
+          }
+          
+          const totalSessionVolume = volumeAboveVwap + volumeBelowVwap;
+          if (totalSessionVolume > 0) {
+            volumeAboveVwapPct = (volumeAboveVwap / totalSessionVolume) * 100;
+            institutionalSentiment = volumeAboveVwapPct > 55 ? "BULLISH" : 
+                                   volumeAboveVwapPct < 45 ? "BEARISH" : "NEUTRAL";
+          }
         }
       }
 
@@ -2345,6 +2396,109 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const volumeRatio = latestVolume / avgVolume;
       const volumeStatus = volumeRatio > 1.5 ? 'HIGH' : volumeRatio < 0.5 ? 'LOW' : 'NORMAL';
       
+      // Enhanced Volume Analytics
+      let volumeTrend = "N/A";
+      let volumeAcceleration = "N/A"; 
+      let volumeAtKeyLevels = "N/A";
+      let volumeDivergence = "N/A";
+      
+      // Volume trend analysis (using trading hours bars if available)
+      const volumeBarsForAnalysis = tradingHoursBars.length > 0 ? tradingHoursBars : results.slice(-50);
+      
+      if (volumeBarsForAnalysis.length >= 15) {
+        // 3-day volume momentum (last 15 bars vs previous 15 bars)
+        const recentVolumes = volumeBarsForAnalysis.slice(-15).map((bar: any) => bar.v);
+        const prevVolumes = volumeBarsForAnalysis.length >= 30 ? 
+          volumeBarsForAnalysis.slice(-30, -15).map((bar: any) => bar.v) : recentVolumes;
+        
+        const recentVolAvg = recentVolumes.reduce((sum, vol) => sum + vol, 0) / recentVolumes.length;
+        const prevVolAvg = prevVolumes.reduce((sum, vol) => sum + vol, 0) / prevVolumes.length;
+        
+        const volMomentum = prevVolAvg > 0 ? ((recentVolAvg - prevVolAvg) / prevVolAvg) * 100 : 0;
+        
+        if (volMomentum > 15) {
+          volumeTrend = `ACCELERATING (+${volMomentum.toFixed(1)}%)`;
+        } else if (volMomentum < -15) {
+          volumeTrend = `DECELERATING (${volMomentum.toFixed(1)}%)`;
+        } else {
+          volumeTrend = `STABLE (${volMomentum >= 0 ? '+' : ''}${volMomentum.toFixed(1)}%)`;
+        }
+        
+        // Volume acceleration/deceleration over last 3 sessions (9 bars per session)
+        if (volumeBarsForAnalysis.length >= 27) {
+          const session1Vol = volumeBarsForAnalysis.slice(-9).reduce((sum: number, bar: any) => sum + bar.v, 0) / 9;
+          const session2Vol = volumeBarsForAnalysis.slice(-18, -9).reduce((sum: number, bar: any) => sum + bar.v, 0) / 9;
+          const session3Vol = volumeBarsForAnalysis.slice(-27, -18).reduce((sum: number, bar: any) => sum + bar.v, 0) / 9;
+          
+          if (session3Vol > 0 && session2Vol > 0) {
+            const change1To2 = ((session2Vol - session3Vol) / session3Vol) * 100;
+            const change2To1 = ((session1Vol - session2Vol) / session2Vol) * 100;
+            const acceleration = change2To1 - change1To2;
+            
+            if (acceleration > 20) {
+              volumeAcceleration = `ACCELERATING (+${acceleration.toFixed(1)}%)`;
+            } else if (acceleration < -20) {
+              volumeAcceleration = `DECELERATING (${acceleration.toFixed(1)}%)`;
+            } else {
+              volumeAcceleration = `STEADY (${acceleration >= 0 ? '+' : ''}${acceleration.toFixed(1)}%)`;
+            }
+          }
+        }
+        
+        // Volume at key price levels (last 10 bars)
+        if (volumeBarsForAnalysis.length >= 10) {
+          const recentBars = volumeBarsForAnalysis.slice(-10);
+          const sessionHigh = Math.max(...recentBars.map((bar: any) => bar.h));
+          const sessionLow = Math.min(...recentBars.map((bar: any) => bar.l));
+          const upperThird = sessionLow + ((sessionHigh - sessionLow) * 0.67);
+          const lowerThird = sessionLow + ((sessionHigh - sessionLow) * 0.33);
+          
+          let volumeAtHighs = 0;
+          let volumeAtLows = 0;
+          
+          for (const bar of recentBars) {
+            if (bar.h >= upperThird) {
+              volumeAtHighs += bar.v;
+            } else if (bar.l <= lowerThird) {
+              volumeAtLows += bar.v;
+            }
+          }
+          
+          if (volumeAtHighs > 0 || volumeAtLows > 0) {
+            const totalKeyVolume = volumeAtHighs + volumeAtLows;
+            const highsPct = (volumeAtHighs / totalKeyVolume) * 100;
+            volumeAtKeyLevels = highsPct > 60 ? "BREAKOUT VOLUME" : 
+                              highsPct < 40 ? "BREAKDOWN VOLUME" : "BALANCED VOLUME";
+          }
+        }
+        
+        // Volume-Price Divergence Analysis
+        if (volumeBarsForAnalysis.length >= 20) {
+          const recentBars = volumeBarsForAnalysis.slice(-10);
+          const prevBars = volumeBarsForAnalysis.slice(-20, -10);
+          
+          // Price trend
+          const recentPriceAvg = recentBars.reduce((sum: number, bar: any) => sum + bar.c, 0) / recentBars.length;
+          const prevPriceAvg = prevBars.reduce((sum: number, bar: any) => sum + bar.c, 0) / prevBars.length;
+          const priceDirection = recentPriceAvg > prevPriceAvg ? "UP" : "DOWN";
+          
+          // Volume trend
+          const recentVolAvg = recentBars.reduce((sum: number, bar: any) => sum + bar.v, 0) / recentBars.length;
+          const prevVolAvg = prevBars.reduce((sum: number, bar: any) => sum + bar.v, 0) / prevBars.length;
+          const volumeDirection = recentVolAvg > prevVolAvg ? "UP" : "DOWN";
+          
+          if (priceDirection !== volumeDirection) {
+            if (priceDirection === "UP" && volumeDirection === "DOWN") {
+              volumeDivergence = "BEARISH DIVERGENCE (Price ↑, Volume ↓)";
+            } else {
+              volumeDivergence = "BULLISH DIVERGENCE (Price ↓, Volume ↑)";
+            }
+          } else {
+            volumeDivergence = `CONFIRMATION (Price & Volume both ${priceDirection})`;
+          }
+        }
+      }
+      
       // Debug volume calculations
       console.log(`📊 VOLUME DEBUG: Latest: ${latestVolume.toLocaleString()}, Avg: ${Math.round(avgVolume).toLocaleString()}, Ratio: ${volumeRatio.toFixed(2)}x, Status: ${volumeStatus}`);
 
@@ -2367,6 +2521,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
 == ADVANCED TECHNICAL INDICATORS ==
 - VWAP: $${vwap.toFixed(2)} (Price vs VWAP: ${vwapDeviation > 0 ? '+' : ''}${vwapDeviation.toFixed(1)}%)
+- VWAP Slope: ${vwapSlope}
+- Volume Above VWAP: ${volumeAboveVwapPct.toFixed(1)}% | Institutional Sentiment: ${institutionalSentiment}
 - Bollinger Bands: Upper $${bbUpper.toFixed(2)} | Lower $${bbLower.toFixed(2)}
 - BB Position: ${bbPosition}
 - MACD: Line ${macdLine.toFixed(4)} | Signal ${macdSignal.toFixed(4)} | Histogram ${macdHistogram.toFixed(4)}
@@ -2395,6 +2551,10 @@ Pattern Strength Score: ${patternStrength.toFixed(1)}/10
 - Volume (3-bar median): ${latestVolume.toLocaleString()}
 - 20-Bar Median: ${Math.round(avgVolume).toLocaleString()}
 - Volume Ratio: ${volumeRatio.toFixed(2)}x median (${volumeStatus})
+- Volume Trend: ${volumeTrend}
+- Volume Acceleration: ${volumeAcceleration}
+- Key Level Volume: ${volumeAtKeyLevels}
+- Volume-Price Divergence: ${volumeDivergence}
 
 Data points: ${results.length} 15-minute bars (${Math.floor(results.length/26)} trading days)`;
 
@@ -2402,6 +2562,41 @@ Data points: ${results.length} 15-minute bars (${Math.floor(results.length/26)} 
       const fullPrompt = `Analyze this real market data for ${ticker}:
 
 ${dataSummary}
+
+HIERARCHICAL DECISION FRAMEWORK:
+Before analysis, establish the PRIMARY TREND using this exact order:
+
+1. **TREND HIERARCHY (Weight: 40%)**
+   - 50-SMA direction and price position
+   - Volume-weighted momentum (declining/rising)
+   - Price vs VWAP trend (3-session slope)
+   
+2. **MOMENTUM CONFIRMATION (Weight: 30%)**
+   - RSI divergence with price (not just absolute level)
+   - MACD histogram direction (expanding/contracting)
+   - Volume trend at key levels
+   
+3. **PATTERN VALIDATION (Weight: 20%)**
+   - Only consider patterns with volume confirmation
+   - Pattern strength must be >6/10 to override trend
+   - Candlestick patterns need 2+ period confirmation
+   
+4. **RISK/REWARD RATIO (Weight: 10%)**
+   - Distance to next major support/resistance
+   - Risk-adjusted target probabilities
+
+CONSISTENCY RULE: If indicators conflict between levels, the HIGHER weighted category takes precedence. Example: Strong downtrend (40%) overrides oversold RSI (30%) unless RSI shows clear divergence AND volume confirms reversal.
+
+TARGET SETTING RULE: Targets must align with the established trend hierarchy. Contrarian targets require ALL three top categories to show reversal signals.
+
+CONTRADICTION RESOLUTION:
+If your analysis contains conflicting signals:
+1. State the contradiction explicitly
+2. Explain which signal takes precedence and why
+3. Provide scenarios: "If X happens, then Y; if Z happens, then W"
+4. Assign confidence levels to each scenario
+
+Example: "RSI suggests bounce (30% probability) but trend structure suggests continuation (70% probability). Will favor bearish targets unless price reclaims $5.76 WITH volume confirmation."
 
 Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS:
 
