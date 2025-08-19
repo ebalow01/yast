@@ -1971,8 +1971,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
       // Use last 20 trading hours bars, but focus on most recent 10 for pattern analysis
       const patternBars = tradingHoursBars.slice(-20);
-      // Focus on the most recent bars for pattern analysis (last 10 bars instead of all 20)
-      const recentPatternBars = patternBars.slice(-10);
+      // Analyze all 20 pattern bars for comprehensive analysis
+      const recentPatternBars = patternBars;
       let totalPatternPoints = 0;
       let patternCount = 0;
       const candlestickAnalysis: string[] = [];
