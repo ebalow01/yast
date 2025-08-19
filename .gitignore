@@ -80,3 +80,7 @@ multi_ticker_analysis_*.txt
 
 # Local Netlify folder
 .netlify
+
+# Diagnostic scripts with API keys (security)
+diagnostic_script.py
+run_diagnostics.bat
