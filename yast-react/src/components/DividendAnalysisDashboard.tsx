@@ -2160,6 +2160,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const latestVolume = latest.v;
       const volumeRatio = latestVolume / avgVolume;
       const volumeStatus = volumeRatio > 1.5 ? 'HIGH' : volumeRatio < 0.5 ? 'LOW' : 'NORMAL';
+      
+      // Debug volume calculations
+      console.log(`📊 VOLUME DEBUG: Latest: ${latestVolume.toLocaleString()}, 20-bar Avg: ${Math.round(avgVolume).toLocaleString()}, Ratio: ${volumeRatio.toFixed(2)}x, Status: ${volumeStatus}`);
 
       // Create enhanced data summary with comprehensive preprocessing
       const dataSummary = `COMPREHENSIVE TECHNICAL ANALYSIS for ${ticker}:
