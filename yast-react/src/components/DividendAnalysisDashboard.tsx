@@ -450,11 +450,9 @@ interface PortfolioMetrics {
 }
 
 function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<string, { sentiment: string; shortOutlook: string; fullAnalysis: string; timestamp: string }>): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
-  console.log('🚀 Starting MPT allocation with', allData.length, 'total ETFs');
   
   // Use ALL data (not just top performers) so filtering logic can work properly
   let allETFs = allData.filter(etf => etf.ticker !== 'SPY' && etf.category !== 'benchmark');
-  console.log('📊 Found', allETFs.length, 'ETFs for analysis (excluding SPY)');
   
   // Filter out bearish ETFs if AI sentiment data is available and enabled
   if (aiOutlooks && Object.keys(aiOutlooks).length > 0) {
@@ -475,15 +473,12 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
       });
       
       const finalCount = allETFs.length;
-      console.log(`🐻 Filtered out ${excludedTickers.length} bearish ETFs: ${excludedTickers.join(', ')}`);
-      console.log(`📈 Portfolio now uses ${finalCount} ETFs (was ${initialCount})`);
     } catch (error) {
       console.warn('Error filtering bearish ETFs:', error);
       // Continue without filtering if there's an error
     }
   }
   
-  console.log('📊 Final ETF count for optimization:', allETFs.length);
   
   // If no ETFs remain after filtering, return empty allocation
   if (allETFs.length === 0) {
@@ -500,7 +495,6 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
   }
   
   // Log the ETFs we're working with
-  console.log('Available ETFs:', allETFs.map(etf => `${etf.ticker}(${(etf.bestReturn*100).toFixed(1)}%)`).join(', '));
   
   // Add cash and SPY to the mix
   const assets: Asset[] = [
@@ -542,7 +536,6 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     }
   ];
 
-  console.log('🎯 Total assets for optimization:', assets.length);
 
   // Use more relaxed risk constraint for better diversification
   const maxPortfolioRisk = 0.15; // Increased to 15% risk constraint for better allocation
@@ -596,7 +589,6 @@ const calculateDiversificationPenalty = (allocation: AllocationItem[]): number =
     if (clusterWeight > 0.30) {
       const excessWeight = clusterWeight - 0.30;
       penalty += excessWeight * 0.05; // 5% risk penalty per 1% excess
-      console.log(`⚠️  Cluster ${clusterName}: ${(clusterWeight*100).toFixed(1)}% allocation (penalty: ${(excessWeight*5).toFixed(1)}%)`);
     }
   }
   
@@ -605,17 +597,11 @@ const calculateDiversificationPenalty = (allocation: AllocationItem[]): number =
 
 function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): AllocationItem[] {
   // Version identifier for deployment verification
-  console.log('🚀 YAST Portfolio Optimizer - Version 2025-07-25-CORRELATION-ENHANCED');
-  console.log('=== ENHANCED MPT WITH CORRELATION ANALYSIS ===');
-  console.log('Implementing: Sharpe Ratio Weight Differentiation, Efficient Frontier Analysis, Mean Variance Optimization');
-  console.log('All assets with return/risk/Sharpe values:');
   assets.forEach(asset => {
     if (asset.ticker !== 'CASH') {
-      console.log(`${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${asset.sharpe.toFixed(2)} Sharpe, ${(asset.dividendCapture*100).toFixed(1)}% div capture, exDiv: ${asset.exDivDay}`);
     }
   });
   
-  console.log('\n=== FILTERING STAGE 1: HIGH RISK + WEAK PERFORMER FILTER ===');
   
   // Filter out high-risk tickers (>40% risk) if lower-risk alternatives exist on the same ex-div date
   // BUT preserve ETFs that qualify for Rule 2 (>30% div capture, 10% holding regardless of risk)
@@ -626,13 +612,11 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     
     // ALWAYS INCLUDE Rule 1 and Rule 2 ETFs - they are protected from filtering
     if (asset.isRule1 || asset.isRule2) {
-      console.log(`✅ PROTECTED: Including ${asset.ticker} - Rule ${asset.isRule1 ? '1' : '2'} ETF cannot be filtered out`);
       return true;
     }
     
     // RULE 1 CHECK FIRST: ETFs with >40% return AND <40% risk are ALWAYS included
     if (asset.return > 0.40 && asset.risk < 0.40) {
-      console.log(`✅ RULE 1: Including ${asset.ticker} (${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk) - meets >40% return AND <40% risk criteria`);
       return true;
     }
     
@@ -646,7 +630,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     
     // RULE 2 CHECK: Rule 2 ETFs (>30% div capture AND <80% risk) - these qualify with risk cap BUT can be excluded if better alternatives exist
     if (asset.dividendCapture > 0.30 && asset.risk < 0.80) {
-      console.log(`\n--- Evaluating Rule 2 ETF: ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture, ${(asset.risk*100).toFixed(1)}% risk) ---`);
       
       // Special rule: If there are superior ETFs on same ex-div day, exclude regardless of return threshold
       const superiorSameExDivAssets = assets.filter(other => 
@@ -657,21 +640,14 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         other.return > asset.return // Only count superior alternatives
       );
       
-      console.log(`${asset.ticker} return: ${(asset.return*100).toFixed(1)}%`);
-      console.log(`Superior ETFs on same ex-div day ${asset.exDivDay}:`, superiorSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`));
       
       if (superiorSameExDivAssets.length > 0) {
-        console.log(`❌ EXCLUDING Rule 2 ETF ${asset.ticker} (${(asset.return*100).toFixed(1)}% return) - superior ETFs exist on same ex-div day ${asset.exDivDay}:`, 
-          superiorSameExDivAssets.map(alt => `${alt.ticker} (${(alt.return*100).toFixed(1)}%)`).join(', '));
         return false;
       } else {
-        console.log(`✅ Including ${asset.ticker} - no superior ETFs on ${asset.exDivDay}`);
         // SET Rule 2 flag here since no better alternatives exist
         asset.isRule2 = true;
-        console.log(`🔒 SETTING Rule 2 flag for ${asset.ticker} - guaranteed 10% allocation`);
       }
       
-      console.log(`✅ Including Rule 2 ETF ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% div capture, ${(asset.risk*100).toFixed(1)}% risk) - qualifies with <80% risk cap`);
       return true;
     }
     
@@ -687,8 +663,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         );
         
         if (muchBetterAlternatives.length > 0) {
-          console.log(`Excluding weak performer ${asset.ticker} (${(asset.dividendCapture*100).toFixed(1)}% DC, ${(asset.return*100).toFixed(1)}% return) - much better alternatives exist:`, 
-            muchBetterAlternatives.map(alt => `${alt.ticker} (${(alt.dividendCapture*100).toFixed(1)}% DC, ${(alt.return*100).toFixed(1)}% return)`).join(', '));
           return false;
         }
       }
@@ -700,22 +674,16 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     const hasLowerRiskAlternative = sameExDivAssets.some(other => other.risk < asset.risk);
     
     if (hasLowerRiskAlternative) {
-      console.log(`Excluding high-risk ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk) - lower-risk alternative exists on ex-div ${asset.exDivDay}`);
       return false;
     }
     
     return true;
   });
   
-  console.log('\n=== FILTERING RESULTS ===');
-  console.log('Filtered assets that passed all filters:');
   const etfsPassedFilter = filteredAssets.filter(a => a.ticker !== 'CASH' && a.ticker !== 'SPY');
   etfsPassedFilter.forEach(asset => {
-    console.log(`✅ ${asset.ticker}: ${(asset.return*100).toFixed(1)}% return, ${(asset.risk*100).toFixed(1)}% risk, ${(asset.dividendCapture*100).toFixed(1)}% div capture, ${asset.exDivDay}`);
   });
-  console.log('=== END FILTERING DEBUG ===\n');
   
-  console.log(`Filtered ${assets.length - filteredAssets.length} high-risk assets with lower-risk alternatives`);
   
   // Use filtered assets for the rest of the optimization
   const workingAssets = filteredAssets;
@@ -729,19 +697,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   const divCaptureETFs = workingAssets.filter(asset => 
     asset.isRule2 || (asset.ticker !== 'CASH' && asset.ticker !== 'SPY' && asset.dividendCapture > 0.30 && asset.risk < 0.80 && !qualifyingETFs.some(qual => qual.ticker === asset.ticker))
   );
-  
-  console.log('Qualifying ETFs (>40% return AND <40% risk, min 10%):', qualifyingETFs.map(etf => 
-    `${etf.ticker}: ${(etf.return*100).toFixed(1)}% return, ${(etf.risk*100).toFixed(1)}% risk${etf.isRule1 ? ' [RULE1]' : ''}`
-  ));
-  
-  console.log('Div Capture ETFs (>30% div capture AND <80% risk, 10% holding):', divCaptureETFs.map(etf => 
-    `${etf.ticker}: ${(etf.dividendCapture*100).toFixed(1)}% div capture, ${(etf.risk*100).toFixed(1)}% risk${etf.isRule2 ? ' [RULE2]' : ''}`
-  ));
-  
-  // Debug: Show ALL WORKING assets and their values
-  console.log('ALL WORKING ASSETS:', workingAssets.map(asset => 
-    `${asset.ticker}: return=${(asset.return*100).toFixed(1)}%, risk=${(asset.risk*100).toFixed(1)}%, divCapture=${(asset.dividendCapture*100).toFixed(1)}%`
-  ));
   
   // Sort all working assets by expected return (descending) for remaining allocation
   const sortedAssets = [...workingAssets].sort((a, b) => b.return - a.return);
@@ -768,7 +723,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       const hasLowerRiskAlternative = sameExDivAssets.some(other => other.risk < asset.risk);
       
       if (hasLowerRiskAlternative) {
-        console.log(`⚠️ SKIPPING qualifying ETF ${asset.ticker} (${(asset.risk*100).toFixed(1)}% risk) - lower-risk alternative exists on ex-div ${asset.exDivDay}`);
         continue; // Skip this asset even though it qualifies
       }
     }
@@ -805,7 +759,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         strategy: asset.strategy
       });
       totalWeight += weight;
-      console.log(`Added qualifying ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, rank: ${i+1})`);
     }
   }
   
@@ -840,7 +793,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         strategy: asset.strategy
       });
       totalWeight += weight;
-      console.log(`Added div capture ETF ${asset.ticker} with ${(weight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, div rank: ${i+1})${asset.isRule2 ? ' [RULE2]' : ''}`);
     } else {
       // Even if we're over capacity, Rule 2 ETFs get minimum allocation by reducing others
       if (asset.isRule2 && weight >= 0.15) {
@@ -865,7 +817,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         });
         
         totalWeight = allocation.reduce((sum, a) => sum + a.weight, 0);
-        console.log(`🔒 FORCED Rule 2 ETF ${asset.ticker} with ${(minWeight*100).toFixed(1)}% allocation [RULE2 GUARANTEED] - reduced others proportionally`);
       }
     }
   }
@@ -874,10 +825,8 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   let portfolioVariance = allocation.reduce((sum, a) => sum + Math.pow(a.weight * a.risk, 2), 0);
   let portfolioRisk = Math.sqrt(portfolioVariance);
   
-  console.log(`After mandatory allocations: ${(portfolioRisk*100).toFixed(1)}% risk, ${(totalWeight*100).toFixed(1)}% allocated`);
   
   // Step 3: Enhanced allocation using efficient frontier analysis and Sharpe optimization
-  console.log('\n=== ENHANCED MPT ALLOCATION PHASE ===');
   
   // Calculate target portfolio return based on best available assets
   const topAssets = workingAssets
@@ -889,8 +838,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
     topAssets.reduce((sum, asset) => sum + asset.return, 0) / topAssets.length * 0.8 : // 80% of average top return
     0.30; // Fallback to 30% target
   
-  console.log(`🎯 Target portfolio return: ${(targetReturn*100).toFixed(1)}%`);
-  console.log(`📈 Top assets by Sharpe ratio:`, topAssets.map(a => `${a.ticker}(${a.sharpe.toFixed(2)})`).join(', '));
   
   // Try to increase allocations of existing holdings using Sharpe-weighted optimization
   for (const holding of allocation) {
@@ -920,13 +867,11 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       if (optimalIncrease > 0) {
         holding.weight += optimalIncrease;
         totalWeight += optimalIncrease;
-        console.log(`📊 Optimized ${holding.ticker} by ${(optimalIncrease*100).toFixed(1)}% to ${(holding.weight*100).toFixed(1)}% (Sharpe: ${maxSharpe.toFixed(2)})`);
       }
     }
   }
   
   // Step 4: Enhanced asset selection using mean variance optimization with proper weight differentiation
-  console.log('\n=== MEAN VARIANCE OPTIMIZATION PHASE ===');
   const remainingAssets = sortedAssets.filter(asset => 
     !allocation.some(a => a.ticker === asset.ticker) &&
     asset.ticker !== 'CASH' &&
@@ -936,7 +881,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   // Sort by risk-adjusted return (Sharpe ratio) for better selection
   const sharpeOptimizedAssets = remainingAssets.sort((a, b) => b.sharpe - a.sharpe);
   
-  console.log(`🔍 Evaluating ${sharpeOptimizedAssets.length} remaining assets by Sharpe ratio`);
   
   for (let i = 0; i < sharpeOptimizedAssets.length; i++) {
     const asset = sharpeOptimizedAssets[i];
@@ -954,7 +898,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       const hasBetterSharpeAlternative = sameExDivAssets.some(other => other.sharpe > asset.sharpe);
       
       if (hasBetterSharpeAlternative) {
-        console.log(`⚠️ SKIPPING ${asset.ticker} (Sharpe: ${asset.sharpe.toFixed(2)}) - better Sharpe alternative exists on ex-div ${asset.exDivDay}`);
         continue;
       }
     }
@@ -987,7 +930,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
         sharpe: asset.sharpe
       });
       totalWeight += optimalWeight;
-      console.log(`📈 Added ${asset.ticker} with ${(optimalWeight*100).toFixed(1)}% allocation (Sharpe: ${asset.sharpe.toFixed(2)}, rank: ${i+1}, multiplier: ${sharpeMultiplier.toFixed(2)})`);
     }
   }
   
@@ -1001,7 +943,6 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
       risk: 0.0,
       sharpe: Infinity
     });
-    console.log(`Added ${(remainingWeight*100).toFixed(1)}% cash to complete allocation`);
   }
   
   // Final portfolio optimization and metrics
@@ -1010,24 +951,13 @@ function optimizePortfolioWithRiskConstraint(assets: Asset[], maxRisk: number): 
   const finalRisk = finalMetrics.risk;
   const finalSharpe = finalMetrics.sharpeRatio;
   
-  console.log('\n=== FINAL PORTFOLIO OPTIMIZATION RESULTS ===');
-  console.log(`📊 Portfolio Composition (${allocation.length} assets):`);
   allocation.forEach(asset => {
-    console.log(`   ${asset.ticker}: ${(asset.weight*100).toFixed(1)}% (Return: ${(asset.return*100).toFixed(1)}%, Risk: ${(asset.risk*100).toFixed(1)}%, Sharpe: ${asset.sharpe?.toFixed(2) || 'N/A'})`);
   });
-  console.log(`🎯 Expected Return: ${(finalReturn*100).toFixed(1)}%`);
-  console.log(`⚠️  Portfolio Risk: ${(finalRisk*100).toFixed(1)}%`);
-  console.log(`📈 Sharpe Ratio: ${finalSharpe.toFixed(2)}`);
-  console.log(`✅ Risk Constraint: ${finalRisk <= maxRisk ? 'MET' : 'EXCEEDED'} (limit: ${(maxRisk*100).toFixed(1)}%)`);
-  console.log(`💰 Total Allocation: ${(allocation.reduce((sum, a) => sum + a.weight, 0)*100).toFixed(1)}%`);
   
   // Additional portfolio efficiency metrics
   const returnToRiskRatio = finalRisk > 0 ? finalReturn / finalRisk : 0;
   const diversificationRatio = allocation.length / Math.max(1, allocation.filter(a => a.weight > 0.10).length);
   
-  console.log(`📊 Return/Risk Ratio: ${returnToRiskRatio.toFixed(2)}`);
-  console.log(`🔄 Diversification Score: ${diversificationRatio.toFixed(2)}`);
-  console.log('=== END ENHANCED MPT OPTIMIZATION ===\n');
   
   return allocation;
 }
@@ -1125,17 +1055,6 @@ function calculatePortfolioMetrics(allocation: AllocationItem[]): PortfolioMetri
   const calmarRatio = portfolioReturn / Math.max(0.01, maxDrawdown);
   const volatilityRegime = detectVolatilityRegime(portfolioRisk);
 
-  console.log(`📊 Enhanced Portfolio Risk Analysis:`);
-  console.log(`   Expected Return: ${(portfolioReturn * 100).toFixed(1)}%`);
-  console.log(`   Portfolio Risk: ${(portfolioRisk * 100).toFixed(1)}%`);
-  console.log(`   VaR (95%): ${(var95 * 100).toFixed(2)}% daily`);
-  console.log(`   VaR (99%): ${(var99 * 100).toFixed(2)}% daily`);
-  console.log(`   Expected Shortfall: ${(conditionalVaR * 100).toFixed(2)}%`);
-  console.log(`   Max Drawdown: ${(maxDrawdown * 100).toFixed(1)}%`);
-  console.log(`   Sharpe Ratio: ${sharpeRatio.toFixed(3)}`);
-  console.log(`   Sortino Ratio: ${sortinoRatio.toFixed(3)}`);
-  console.log(`   Calmar Ratio: ${calmarRatio.toFixed(3)}`);
-  console.log(`   Volatility Regime: ${volatilityRegime}`);
 
   return {
     expectedReturn: portfolioReturn,
@@ -1163,7 +1082,6 @@ function TabPanel(props: TabPanelProps) {
   
   // Debug logging
   if (index === 3) {
-    console.log('🔍 TabPanel index 3 - value:', value, 'index:', index, 'hidden:', value !== index);
   }
 
   return (
@@ -1207,12 +1125,6 @@ const convertAssetToData = (asset: DividendAsset): DividendData => {
   const mockPrice = generateRealisticPrice(asset.ticker, asset.forwardYield, asset.medianDividend);
   
   // Debug logging for price generation
-  console.log('💰 PRICE GENERATION:', {
-    ticker: asset.ticker,
-    forwardYield: asset.forwardYield,
-    medianDividend: asset.medianDividend,
-    generatedPrice: mockPrice.toFixed(2)
-  });
 
   return {
     ticker: asset.ticker,
@@ -1265,7 +1177,6 @@ const generateRealisticPrice = (ticker: string, forwardYield: number, medianDivi
 };
 
 export default function DividendAnalysisDashboard() {
-  console.log('🚀 DASHBOARD LOADED v2.2 - Enhanced version with 5 tabs including Portfolio Management');
   const [selectedTab, setSelectedTab] = useState(0);
   const [data, setData] = useState<DividendData[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
@@ -1370,38 +1281,23 @@ export default function DividendAnalysisDashboard() {
             const performanceData = await performanceResponse.json();
             metadataValue = await metadataResponse.json();
             
-            console.log('📊 Loading data from updated JSON files');
-            console.log('📅 Metadata loaded:', metadataValue);
-            console.log('🔄 Cache buster used:', cacheBuster);
-            console.log('🏗️ Build ID:', metadataValue.build_id || 'N/A');
-            console.log('📈 Performance data entries:', performanceData.length);
             
             // Debug risk level data
             const riskLevels = performanceData.map((item: any) => item.riskLevel).filter((rl: any) => rl);
-            console.log('🔍 Risk levels found:', [...new Set(riskLevels)]);
-            console.log('🔍 Items missing risk levels:', performanceData.filter((item: any) => !item.riskLevel).length);
             
             // Try to load real-time data
             let realtimeDataValue: any = null;
             if (realtimeResponse && realtimeResponse.ok) {
               try {
                 const realtimeJson = await realtimeResponse.json();
-                console.log('🔄 Raw realtime response:', realtimeJson);
                 if (realtimeJson && realtimeJson.data && typeof realtimeJson.data === 'object') {
                   realtimeDataValue = realtimeJson.data || {};
                   setRealtimeData(realtimeDataValue);
-                  console.log('💹 Real-time data loaded:', Object.keys(realtimeDataValue).length, 'tickers');
-                  console.log('💹 QDTE real-time data:', realtimeDataValue.QDTE);
-                  console.log('💹 ULTY real-time data:', realtimeDataValue.ULTY);
-                  console.log('💹 AAPW real-time data:', realtimeDataValue.AAPW);
                 } else {
-                  console.log('❌ Real-time response not in expected format:', realtimeJson);
                 }
               } catch (e) {
-                console.log('❌ Real-time data JSON parse error:', e);
               }
             } else {
-              console.log('❌ Real-time data not available:', realtimeResponse?.status);
             }
             
             // Convert JSON data to the format expected by the dashboard
@@ -1414,17 +1310,6 @@ export default function DividendAnalysisDashboard() {
               const actualYield = rtData?.actualYield || item.forwardYield;
               
               // Debug logging for specific tickers
-              if (item.ticker === 'QDTE' || item.ticker === 'ULTY' || item.ticker === 'AAPW') {
-                console.log(`🔍 ${item.ticker} data:`, {
-                  rtData: rtData,
-                  currentPrice: currentPrice,
-                  actualYield: actualYield,
-                  originalPrice: generateRealisticPrice(item.ticker, item.forwardYield, item.medianDividend),
-                  originalYield: item.forwardYield,
-                  realtimeDataAvailable: !!realtimeDataValue,
-                  realtimeKeys: realtimeDataValue ? Object.keys(realtimeDataValue).slice(0, 5) : []
-                });
-              }
               
               return {
                 ticker: item.ticker,
@@ -1457,16 +1342,9 @@ export default function DividendAnalysisDashboard() {
               };
             });
           } else {
-            console.warn('❌ JSON file fetch failed:', {
-              performanceOk: performanceResponse.ok,
-              performanceStatus: performanceResponse.status,
-              metadataOk: metadataResponse.ok,
-              metadataStatus: metadataResponse.status
-            });
             throw new Error('JSON files not found, falling back to static data');
           }
         } catch (jsonError) {
-          console.log('📁 JSON files not available, using static imported data');
           console.error('JSON fetch error:', jsonError);
           // Fallback to static imported data
           // Try to fetch real-time data even with static data
@@ -1482,10 +1360,8 @@ export default function DividendAnalysisDashboard() {
               const rtJson = await rtResponse.json();
               realtimeDataValue = rtJson.data || {};
               setRealtimeData(realtimeDataValue);
-              console.log('💹 Real-time data loaded (fallback):', Object.keys(realtimeDataValue).length, 'tickers');
             }
           } catch (e) {
-            console.log('Could not fetch real-time data (fallback):', e);
           }
           
           convertedData = dividendData.map(asset => {
@@ -1519,7 +1395,6 @@ export default function DividendAnalysisDashboard() {
   // Auto-refresh portfolio with AI filtering once data and AI outlooks are loaded
   useEffect(() => {
     if (data.length > 0 && Object.keys(aiOutlooks).length > 0 && !loading) {
-      console.log('🚀 Auto-refreshing portfolio with AI sentiment filtering after page load...');
       try {
         const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
         if (allocation && allocation.length > 0) {
@@ -1533,7 +1408,6 @@ export default function DividendAnalysisDashboard() {
           });
           setMptAllocation(enrichedAllocation);
           setPortfolioMetrics(metrics);
-          console.log('✅ Portfolio auto-refreshed with AI sentiment filtering!');
         } else {
           console.warn('⚠️ No allocation generated - all ETFs may be filtered out');
         }
@@ -1922,14 +1796,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
   // Real Polygon API analysis function
   const analyzeWithPolygon = async (ticker: string) => {
     try {
-      console.log(`🐛 DEBUG analyzeWithPolygon called with ticker: "${ticker}" (type: ${typeof ticker})`);
       setAiAnalysisLoading(ticker);
       
       // Fetch real data from Polygon API via serverless function
       // This ensures API keys stay secure on the server side
-      console.log(`🔍 Sending request to Polygon API for ticker: "${ticker}"`);
       const requestBody = { ticker };
-      console.log(`📤 Request body:`, requestBody);
       
       const polygonResponse = await fetch('/.netlify/functions/polygon-data', {
         method: 'POST',
@@ -1939,9 +1810,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         body: JSON.stringify(requestBody)
       });
       
-      console.log(`📡 Polygon response status: ${polygonResponse.status}`);
       const responseText = await polygonResponse.text();
-      console.log(`📥 Raw response:`, responseText);
       
       if (!polygonResponse.ok) {
         let errorData;
@@ -2034,8 +1903,39 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           return `$${level.toFixed(2)} (${hits} hits) - ${type}`;
         });
 
-      // Candlestick pattern analysis - only show patterns worth points
-      const patternBars = results.slice(-20); // Check more bars to find patterns worth points
+      // Candlestick pattern analysis - only during regular trading hours (9:30 AM - 4:00 PM EST)
+      // Filter bars to only include regular trading hours
+      const tradingHoursBars = results.filter((bar: any) => {
+        const timestamp = bar.t;
+        if (!timestamp) return false;
+        
+        // Convert to Eastern Time
+        const dtEst = new Date(timestamp);
+        const estOptions: Intl.DateTimeFormatOptions = {
+          timeZone: 'America/New_York',
+          weekday: 'short' as const,
+          hour: 'numeric' as const,
+          minute: 'numeric' as const,
+          hour12: false
+        };
+        
+        const estString = dtEst.toLocaleString('en-US', estOptions);
+        const [weekday, time] = estString.split(', ');
+        const [hour, minute] = time.split(':').map(Number);
+        
+        // Check if during regular trading hours (9:30 AM - 4:00 PM EST)
+        // Also check if it's a weekday (exclude weekends)
+        const isWeekday = !['Sat', 'Sun'].includes(weekday);
+        const isRegularHours = (hour === 9 && minute >= 30) || (hour >= 10 && hour < 16);
+        
+        return isWeekday && isRegularHours;
+      });
+
+      // Log filtering results for debugging
+      console.log(`🕯️ Found ${tradingHoursBars.length} bars during regular trading hours (out of ${results.length} total)`);
+
+      // Use last 20 trading hours bars for pattern analysis
+      const patternBars = tradingHoursBars.slice(-20);
       let totalPatternPoints = 0;
       let patternCount = 0;
       const candlestickAnalysis: string[] = [];
@@ -2312,7 +2212,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
 
   // Function to refresh AI analysis for multiple tickers
   const refreshAiAnalysis = async (tickers: string[]) => {
-    console.log('🐛 DEBUG refreshAiAnalysis called with tickers:', tickers);
     
     // Validate and filter tickers
     const validTickers = tickers.filter(ticker => {
@@ -2323,7 +2222,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
       return isValid;
     });
     
-    console.log('🐛 DEBUG valid tickers after filtering:', validTickers);
     
     if (validTickers.length === 0) {
       setSnackbarMessage('❌ No valid tickers to analyze');
@@ -2427,7 +2325,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
   };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    console.log('🔄 TAB CHANGE - from:', selectedTab, 'to:', newValue);
     setSelectedTab(newValue);
   };
 
@@ -3400,8 +3297,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
 
   // Table layout for Full Analysis broken into performance tiers
   const renderFullAnalysisTable = (data: DividendData[]) => {
-    console.log('🎯 RENDERING FULL ANALYSIS TABLE - data length:', data.length);
-    console.log('🎯 First item data sample:', data[0]);
     
     if (!data || data.length === 0) {
       return <Typography color="white">No data available</Typography>;
@@ -4124,13 +4019,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                   }
                 }}
               />
-              {console.log('🎯 TABS RENDERED - All tabs:', {
-                tabCount: 4,
-                selectedTab,
-                dataLength: data.length,
-                portfolioHoldings: portfolio.holdings.length,
-                tabs: ['Optimal Portfolio', 'Suboptimal ETFs', 'Full Analysis', 'My Portfolio']
-              })}
             </Tabs>
 
             <TabPanel value={selectedTab} index={0}>
@@ -4200,9 +4088,7 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                             variant="outlined"
                             startIcon={<Refresh />}
                             onClick={() => {
-                              console.log('🐛 DEBUG mptAllocation before extraction:', mptAllocation);
                               const tickers = mptAllocation.map(item => item.ticker).filter(ticker => ticker !== 'CASH');
-                              console.log('🐛 DEBUG extracted tickers:', tickers);
                               refreshAiAnalysis(tickers);
                             }}
                             sx={{
@@ -4222,7 +4108,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                             variant="outlined"
                             startIcon={<AccountBalance />}
                             onClick={() => {
-                              console.log('🔄 Manually refreshing portfolio with AI sentiment filtering...');
                               const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
                               const enrichedAllocation = allocation.map(asset => {
                                 const originalETF = data.find(etf => etf.ticker === asset.ticker);
@@ -4410,7 +4295,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
 
             {/* Full Analysis tab panel hidden - no longer needed
             <TabPanel value={selectedTab} index={2}>
-              {console.log('🎯 RENDERING FULL ANALYSIS TAB - selectedTab:', selectedTab, 'should show:', selectedTab === 2)}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -4971,7 +4855,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                 <TableCell align="center">
                                   {(() => {
                                     const aiData = aiOutlooks[holding.ticker];
-                                    console.log(`🐛 DEBUG Portfolio AI Data for ${holding.ticker}:`, aiData);
                                     
                                     if (!aiData) {
                                       return (
@@ -5037,7 +4920,6 @@ DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual do
                                       }
                                     }
                                     
-                                    console.log(`🐛 DEBUG Displaying sentiment for ${holding.ticker}: "${displaySentiment}"`);
 
                                     return (
                                       <Box 
