@@ -2095,7 +2095,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
               {/* Main Content */}
               <Box sx={{ flexGrow: 1 }}>
-                {/* Quick Analysis Section */}
+                {/* Enhanced AI Analysis - Moved to top */}
                 <Card sx={{ 
                   mb: 3, 
                   background: 'rgba(255, 255, 255, 0.03)',
@@ -2158,27 +2158,134 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   </CardContent>
                 </Card>
 
-                {/* Data Status */}
-                <Card sx={{ 
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
-                }}>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                      Dashboard Status
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Data loaded: {data.length} dividend assets
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Enhanced analysis function: ✅ Operational
-                    </Typography>
-                    <Typography variant="body2">
-                      Multi-methodology framework: ✅ Active
-                    </Typography>
-                  </CardContent>
-                </Card>
+                {/* Main Dashboard Tabs */}
+                <Paper 
+                  elevation={3}
+                  sx={{ 
+                    width: '100%', 
+                    mb: 4,
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: 4,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <Tabs
+                    value={selectedTab}
+                    onChange={(event, newValue) => setSelectedTab(newValue)}
+                    indicatorColor="primary"
+                    textColor="primary"
+                    variant="fullWidth"
+                    sx={{ 
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                      background: 'rgba(255, 255, 255, 0.01)',
+                      '& .MuiTabs-indicator': {
+                        background: 'linear-gradient(90deg, #00D4FF, #6C63FF)',
+                        height: 3,
+                        borderRadius: '3px 3px 0 0'
+                      }
+                    }}
+                  >
+                    <Tab
+                      label={`Optimal Portfolio`}
+                      icon={<Stars />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
+                    <Tab
+                      label="Excluded Tickers"
+                      icon={<Security />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
+                    <Tab
+                      label={`My Portfolio (${portfolio.holdings.length})`}
+                      icon={<BusinessCenter />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
+                  </Tabs>
+
+                  {/* Tab Panels */}
+                  {selectedTab === 0 && (
+                    <Box sx={{ p: 3 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Optimal Portfolio Allocation
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2, color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Showing {data.length} dividend assets with enhanced analysis capabilities
+                      </Typography>
+                      
+                      {/* Simple data display for now */}
+                      <TableContainer component={Paper} sx={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Ticker</TableCell>
+                              <TableCell>Strategy</TableCell>
+                              <TableCell>Return</TableCell>
+                              <TableCell>Win Rate</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {data.slice(0, 10).map((item, index) => (
+                              <TableRow key={index}>
+                                <TableCell>{item.ticker}</TableCell>
+                                <TableCell>{item.bestStrategy}</TableCell>
+                                <TableCell>{item.bestReturn?.toFixed(1)}%</TableCell>
+                                <TableCell>{item.dcWinRate?.toFixed(1)}%</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Box>
+                  )}
+
+                  {selectedTab === 1 && (
+                    <Box sx={{ p: 3 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Excluded Tickers
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Assets excluded from optimal portfolio due to poor performance metrics
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {selectedTab === 2 && (
+                    <Box sx={{ p: 3 }}>
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        My Portfolio
+                      </Typography>
+                      {portfolio.holdings.length === 0 ? (
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          No positions added yet. Use the Enhanced AI Analysis above to research stocks.
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          {portfolio.holdings.length} positions
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </Paper>
               </Box>
             </Box>
           </Container>
