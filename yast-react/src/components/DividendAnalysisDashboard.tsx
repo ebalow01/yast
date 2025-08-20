@@ -1498,7 +1498,7 @@ export default function DividendAnalysisDashboard() {
       // Auto-refresh AI analysis for sample portfolio holdings after a short delay
       setTimeout(() => {
         const tickers = sampleHoldings.map(h => h.ticker);
-        refreshAiAnalysis(tickers);
+        refreshAiAnalysisForTickers(tickers);
       }, 2000);
     }
   }, [data]); // Re-run when data loads to get current prices
