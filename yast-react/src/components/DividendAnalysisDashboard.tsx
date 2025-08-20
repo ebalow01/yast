@@ -1817,6 +1817,26 @@ export default function DividendAnalysisDashboard() {
     return sortTableData(portfolio.holdings, sortField, sortDirection);
   }, [portfolio.holdings, sortField, sortDirection, polygonData, aiOutlooks]);
 
+  // Helper function to format dividend day
+  const formatDivDay = (exDivDay: string) => {
+    if (!exDivDay) return '';
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    // Find the day index
+    const dayIndex = dayNames.findIndex(day => exDivDay.toLowerCase().includes(day.toLowerCase()));
+    if (dayIndex !== -1) {
+      return days[dayIndex];
+    }
+    
+    // Fallback - try to extract first 3 characters if it's already abbreviated
+    if (exDivDay.length >= 3) {
+      return exDivDay.substring(0, 3);
+    }
+    
+    return exDivDay;
+  };
+
   // AI Analysis function - Step 1: Open chart
   const analyzeWithClaude = async (ticker: string) => {
     try {
@@ -1872,7 +1892,7 @@ Ticker: ${ticker}
 Current Price: $${stockData.currentPrice?.toFixed(2) || 'N/A'}
 Risk Level: ${stockData.riskLevel || 'Unknown'}
 Volatility: ${stockData.riskVolatility ? (stockData.riskVolatility * 100).toFixed(1) + '%' : 'N/A'}
-Median Dividend: $${stockData.medianDividend?.toFixed(3) || 'N/A'}
+Expected Dividend: $${stockData.medianDividend?.toFixed(3) || 'N/A'}
 Forward Yield: ${stockData.forwardYield ? stockData.forwardYield.toFixed(2) + '%' : 'N/A'}
 Best Strategy Return: ${stockData.bestReturn ? (stockData.bestReturn * 100).toFixed(2) + '%' : 'N/A'}
 Win Rate: ${stockData.dcWinRate ? (stockData.dcWinRate * 100).toFixed(1) + '%' : 'N/A'}
@@ -2566,7 +2586,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('medianDiv')}
                                 >
-                                  Median Div
+                                  Expected Div
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell>
@@ -2621,7 +2641,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               <TableRow key={index}>
                                 <TableCell>{item.ticker}</TableCell>
                                 <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
-                                <TableCell>${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}</TableCell>
+                                <TableCell>
+                                  {item.exDivDay && (
+                                    <Box component="span" sx={{ 
+                                      fontSize: '0.75rem', 
+                                      color: 'rgba(255, 255, 255, 0.7)',
+                                      mr: 1,
+                                      fontWeight: 600
+                                    }}>
+                                      {formatDivDay(item.exDivDay)}
+                                    </Box>
+                                  )}
+                                  ${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}
+                                </TableCell>
                                 <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
                                 <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
                                 <TableCell>
@@ -2750,7 +2782,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('medianDiv')}
                                     >
-                                      Median Div
+                                      Expected Div
                                     </TableSortLabel>
                                   </TableCell>
                                   <TableCell>
@@ -2805,7 +2837,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   <TableRow key={index}>
                                     <TableCell>{item.ticker}</TableCell>
                                     <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
-                                    <TableCell>${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}</TableCell>
+                                    <TableCell>
+                                      {item.exDivDay && (
+                                        <Box component="span" sx={{ 
+                                          fontSize: '0.75rem', 
+                                          color: 'rgba(255, 255, 255, 0.7)',
+                                          mr: 1,
+                                          fontWeight: 600
+                                        }}>
+                                          {formatDivDay(item.exDivDay)}
+                                        </Box>
+                                      )}
+                                      ${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}
+                                    </TableCell>
                                     <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
                                     <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
                                     <TableCell>
@@ -2997,7 +3041,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('medianDiv')}
                                   >
-                                    Median Div
+                                    Expected Div
                                   </TableSortLabel>
                                 </TableCell>
                                 <TableCell>
@@ -3059,7 +3103,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     </Box>
                                   </TableCell>
                                   <TableCell>${polygonData[holding.ticker]?.price?.toFixed(2) || '-'}</TableCell>
-                                  <TableCell>${polygonData[holding.ticker]?.medianDividend?.toFixed(2) || '-'}</TableCell>
+                                  <TableCell>
+                                    {data.find(d => d.ticker === holding.ticker)?.exDivDay && (
+                                      <Box component="span" sx={{ 
+                                        fontSize: '0.75rem', 
+                                        color: 'rgba(255, 255, 255, 0.7)',
+                                        mr: 1,
+                                        fontWeight: 600
+                                      }}>
+                                        {formatDivDay(data.find(d => d.ticker === holding.ticker)?.exDivDay || '')}
+                                      </Box>
+                                    )}
+                                    ${polygonData[holding.ticker]?.medianDividend?.toFixed(2) || '-'}
+                                  </TableCell>
                                   <TableCell>{polygonData[holding.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
                                   <TableCell>{polygonData[holding.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
                                   <TableCell>
