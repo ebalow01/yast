@@ -1726,6 +1726,51 @@ export default function DividendAnalysisDashboard() {
     return { rating: 'Analysis Available', color: '#00D4FF' };
   };
 
+  // Modern Portfolio Theory allocation calculation
+  const calculateMPTAllocations = (assets) => {
+    // Ensure Cash gets minimum 5% allocation as specified
+    const minCashAllocation = 5;
+    
+    // Calculate risk-adjusted scores for all assets
+    const assetsWithScores = assets.map(asset => {
+      if (asset.ticker === 'CASH') {
+        return { ...asset, riskAdjustedScore: 0.5 }; // Moderate score for cash
+      }
+      
+      const sharpe = asset.sharpeRatio || 0;
+      const totalReturn = asset.calculatedTotalReturn || 0;
+      const volatility = asset.volatility || 20;
+      
+      // MPT score: Prioritize Sharpe ratio but consider total return
+      // Higher Sharpe = better risk-adjusted return
+      const riskAdjustedScore = (sharpe * 0.6) + (totalReturn / volatility * 0.4);
+      return { ...asset, riskAdjustedScore };
+    });
+    
+    // Calculate total score (excluding cash for proportional allocation)
+    const nonCashAssets = assetsWithScores.filter(a => a.ticker !== 'CASH');
+    const totalScore = nonCashAssets.reduce((sum, asset) => sum + Math.max(0, asset.riskAdjustedScore), 0);
+    
+    // Allocate remaining 95% proportionally among non-cash assets
+    const remainingAllocation = 100 - minCashAllocation;
+    
+    return assetsWithScores.map(asset => {
+      if (asset.ticker === 'CASH') {
+        return { ...asset, mptAllocation: minCashAllocation };
+      }
+      
+      if (totalScore === 0) {
+        // Equal weight if no valid scores
+        return { ...asset, mptAllocation: remainingAllocation / nonCashAssets.length };
+      }
+      
+      const proportionalWeight = Math.max(0, asset.riskAdjustedScore) / totalScore;
+      const allocation = proportionalWeight * remainingAllocation;
+      
+      return { ...asset, mptAllocation: allocation };
+    });
+  };
+
   // Calculate optimal portfolio based on total return and AI sentiments
   const optimalPortfolioData = useMemo(() => {
     // First, filter out bearish tickers from all data
@@ -1770,9 +1815,12 @@ export default function DividendAnalysisDashboard() {
     
     finalOptimal.push(cashEntry);
     
-    console.log('Optimal portfolio (top 5 by total return + Cash, non-bearish):', 
-               finalOptimal.map(t => `${t.ticker}: Return ${t.calculatedTotalReturn.toFixed(2)}%, Sharpe ${t.sharpeRatio?.toFixed(2) || 'N/A'}`));
-    return finalOptimal;
+    // Calculate MPT-based allocation percentages
+    const portfolioWithAllocations = calculateMPTAllocations(finalOptimal);
+    
+    console.log('Optimal portfolio with MPT allocations:', 
+               portfolioWithAllocations.map(t => `${t.ticker}: Return ${t.calculatedTotalReturn.toFixed(2)}%, Allocation ${t.mptAllocation.toFixed(1)}%`));
+    return portfolioWithAllocations;
   }, [data, aiOutlooks, polygonData, portfolioUpdateTrigger]);
 
   // Calculate excluded tickers based on optimal portfolio
@@ -1837,6 +1885,10 @@ export default function DividendAnalysisDashboard() {
         case 'sharpe':
           aValue = polygonData[a.ticker]?.sharpeRatio || 0;
           bValue = polygonData[b.ticker]?.sharpeRatio || 0;
+          break;
+        case 'mptAllocation':
+          aValue = a.mptAllocation || 0;
+          bValue = b.mptAllocation || 0;
           break;
         case 'aiSentiment':
           const aSentiment = aiOutlooks[a.ticker] ? extractSentimentRating(aiOutlooks[a.ticker].fullAnalysis).rating : 'zzz';
@@ -2695,6 +2747,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Sharpe Ratio
                                 </TableSortLabel>
                               </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'mptAllocation'}
+                                  direction={sortField === 'mptAllocation' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('mptAllocation')}
+                                >
+                                  MPT Allocation
+                                </TableSortLabel>
+                              </TableCell>
                               <TableCell align="center">
                                 <TableSortLabel
                                   active={sortField === 'aiSentiment'}
@@ -2752,6 +2813,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </TableCell>
                                 <TableCell>
                                   {item.ticker === 'CASH' ? '2.00' : `${polygonData[item.ticker]?.sharpeRatio?.toFixed(2) || '-'}`}
+                                </TableCell>
+                                <TableCell>
+                                  {item.mptAllocation ? `${item.mptAllocation.toFixed(1)}%` : '-'}
                                 </TableCell>
                                 <TableCell align="center">
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
