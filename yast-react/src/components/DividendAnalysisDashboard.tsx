@@ -2409,15 +2409,36 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           variant="outlined"
                           startIcon={isRefreshingAll ? <CircularProgress size={16} /> : <Refresh />}
                           onClick={() => {
-                            const filteredTickers = data.slice(0, 10).filter(item => {
-                              // Filter out bearish tickers from optimal portfolio
+                            // Calculate optimal portfolio tickers for AI refresh
+                            const topTickers = data.slice(0, 10);
+                            const remainingTickers = data.slice(10);
+                            
+                            // Remove bearish from top 10
+                            const nonBearishTop = topTickers.filter(item => {
                               if (aiOutlooks[item.ticker]?.fullAnalysis) {
                                 const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
                                 return !sentiment.rating.toLowerCase().includes('bearish');
                               }
                               return true; // Include tickers without AI analysis
-                            }).map(item => item.ticker);
-                            refreshAiAnalysisForTickers(filteredTickers);
+                            });
+                            
+                            // Find top 5 by return from remaining tickers that are bullish
+                            const top5ReturnsTickers = [...data].sort((a, b) => (b.bestReturn || 0) - (a.bestReturn || 0)).slice(0, 5);
+                            const bullishFromRemaining = remainingTickers.filter(item => {
+                              // Must be in top 5 returns and bullish
+                              const isInTop5Returns = top5ReturnsTickers.some(topItem => topItem.ticker === item.ticker);
+                              if (!isInTop5Returns) return false;
+                              
+                              if (aiOutlooks[item.ticker]?.fullAnalysis) {
+                                const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                return sentiment.rating.toLowerCase().includes('bullish');
+                              }
+                              return false; // Only include if we have AI analysis showing bullish
+                            });
+                            
+                            // Combine and get tickers
+                            const optimalTickers = [...nonBearishTop, ...bullishFromRemaining].slice(0, 12).map(item => item.ticker);
+                            refreshAiAnalysisForTickers(optimalTickers);
                           }}
                           disabled={isRefreshingAll}
                           sx={{ 
@@ -2449,14 +2470,38 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {data.slice(0, 10).filter(item => {
-                              // Filter out bearish tickers from optimal portfolio
-                              if (aiOutlooks[item.ticker]?.fullAnalysis) {
-                                const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-                                return !sentiment.rating.toLowerCase().includes('bearish');
-                              }
-                              return true; // Include tickers without AI analysis
-                            }).map((item, index) => (
+                            {(() => {
+                              // Calculate optimal portfolio: top performers + bullish excluded tickers in top 5 returns
+                              const topTickers = data.slice(0, 10);
+                              const remainingTickers = data.slice(10);
+                              
+                              // Remove bearish from top 10
+                              const nonBearishTop = topTickers.filter(item => {
+                                if (aiOutlooks[item.ticker]?.fullAnalysis) {
+                                  const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                  return !sentiment.rating.toLowerCase().includes('bearish');
+                                }
+                                return true; // Include tickers without AI analysis
+                              });
+                              
+                              // Find top 5 by return from remaining tickers that are bullish
+                              const top5ReturnsTickers = [...data].sort((a, b) => (b.bestReturn || 0) - (a.bestReturn || 0)).slice(0, 5);
+                              const bullishFromRemaining = remainingTickers.filter(item => {
+                                // Must be in top 5 returns and bullish
+                                const isInTop5Returns = top5ReturnsTickers.some(topItem => topItem.ticker === item.ticker);
+                                if (!isInTop5Returns) return false;
+                                
+                                if (aiOutlooks[item.ticker]?.fullAnalysis) {
+                                  const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                  return sentiment.rating.toLowerCase().includes('bullish');
+                                }
+                                return false; // Only include if we have AI analysis showing bullish
+                              });
+                              
+                              // Combine and limit to reasonable portfolio size
+                              const optimalPortfolio = [...nonBearishTop, ...bullishFromRemaining].slice(0, 12);
+                              return optimalPortfolio;
+                            })().map((item, index) => (
                               <TableRow key={index}>
                                 <TableCell>{item.ticker}</TableCell>
                                 <TableCell>{item.bestStrategy}</TableCell>
@@ -2515,16 +2560,35 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   )}
 
                   {selectedTab === 1 && (() => {
-                    // Calculate excluded tickers (bearish tickers from top 10 + all tickers beyond top 10)
+                    // Calculate excluded tickers (anything not in optimal portfolio)
                     const topTickers = data.slice(0, 10);
-                    const optimalPortfolioTickers = topTickers.filter(item => {
-                      // Filter out bearish tickers from optimal portfolio
+                    const remainingTickers = data.slice(10);
+                    
+                    // Remove bearish from top 10
+                    const nonBearishTop = topTickers.filter(item => {
                       if (aiOutlooks[item.ticker]?.fullAnalysis) {
                         const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
                         return !sentiment.rating.toLowerCase().includes('bearish');
                       }
                       return true; // Include tickers without AI analysis
-                    }).map(item => item.ticker);
+                    });
+                    
+                    // Find top 5 by return from remaining tickers that are bullish
+                    const top5ReturnsTickers = [...data].sort((a, b) => (b.bestReturn || 0) - (a.bestReturn || 0)).slice(0, 5);
+                    const bullishFromRemaining = remainingTickers.filter(item => {
+                      // Must be in top 5 returns and bullish
+                      const isInTop5Returns = top5ReturnsTickers.some(topItem => topItem.ticker === item.ticker);
+                      if (!isInTop5Returns) return false;
+                      
+                      if (aiOutlooks[item.ticker]?.fullAnalysis) {
+                        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                        return sentiment.rating.toLowerCase().includes('bullish');
+                      }
+                      return false; // Only include if we have AI analysis showing bullish
+                    });
+                    
+                    // Combine optimal portfolio tickers
+                    const optimalPortfolioTickers = [...nonBearishTop, ...bullishFromRemaining].slice(0, 12).map(item => item.ticker);
                     
                     const excludedData = data.filter(item => !optimalPortfolioTickers.includes(item.ticker));
                     
