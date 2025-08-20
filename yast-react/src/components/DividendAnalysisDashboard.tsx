@@ -1914,20 +1914,148 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       };
       
       // Save the analysis result
-      // Filter bars to only include regular trading hours
-      const tradingHoursBars = results.filter((bar: any) => {
-        const timestamp = bar.t;
-        if (!timestamp) return false;
-        
-        try {
-          // Convert to Eastern Time using more robust approach
-          const dtUtc = new Date(timestamp);
-          
-          // Get individual components in EST timezone
-          const estHour = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/New_York',
-            hour: 'numeric',
-            hour12: false
+      const newOutlook = {
+        sentiment: analysisData.sentiment || 'Neutral',
+        shortOutlook: analysisData.shortOutlook || 'Analysis pending',
+        fullAnalysis: analysisData.fullAnalysis,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      setAiOutlooks(currentOutlooks => {
+        const updatedOutlooks = {
+          ...currentOutlooks,
+          [ticker]: newOutlook
+        };
+        localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+        return updatedOutlooks;
+      });
+      
+      setAiAnalysisResult(fullAnalysis);
+      setShowAiModal(true);
+      setSnackbarMessage(`AI analysis complete for ${ticker}`);
+      setShowSnackbar(true);
+      setWaitingForScreenshot(null);
+
+    } catch (error) {
+      console.error('Polygon Analysis error:', error);
+      setSnackbarMessage(`Polygon Analysis failed: ${error.message}`);
+      setShowSnackbar(true);
+      setWaitingForScreenshot(null);
+    } finally {
+      setAiAnalysisLoading(null);
+    }
+  };
+
+  const handleQuickAnalysis = async (ticker: string) => {
+    if (!ticker.trim()) {
+      setQuickAnalysisResult('Please enter a ticker symbol.');
+      return;
+    }
+
+    setQuickAnalysisLoading(true);
+    setQuickAnalysisResult('');
+    const upperTicker = ticker.toUpperCase().trim();
+
+    try {
+      // Call analyzeWithPolygon and wait for the complete analysis
+      const analysisResult = await analyzeWithPolygon(upperTicker);
+      
+      if (analysisResult && analysisResult.fullAnalysis) {
+        setQuickAnalysisResult(analysisResult.fullAnalysis);
+      } else {
+        setQuickAnalysisResult('Analysis completed but no detailed results available.');
+      }
+    } catch (error) {
+      console.error('Quick analysis error:', error);
+      setQuickAnalysisResult(`Analysis failed: ${error.message}`);
+    } finally {
+      setQuickAnalysisLoading(false);
+    }
+  };
+
+  // Copy to clipboard function
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setSnackbarMessage('✅ Analysis copied to clipboard!');
+      setShowSnackbar(true);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      setSnackbarMessage('❌ Failed to copy to clipboard');
+      setShowSnackbar(true);
+    }
+  };
+
+  const renderTrendIcon = (sentiment: string) => {
+    if (sentiment.toLowerCase().includes('bullish')) {
+      return <TrendingUp sx={{ color: '#34C759', fontSize: 18 }} />;
+    } else if (sentiment.toLowerCase().includes('bearish')) {
+      return <TrendingDown sx={{ color: '#FF3B30', fontSize: 18 }} />;
+    }
+    return <TrendingFlat sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 18 }} />;
+  };
+
+  if (loading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+          <CircularProgress />
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Loading dividend data...
+          </Typography>
+        </Container>
+      </ThemeProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+          <Typography variant="h6" color="error">
+            Error: {error}
+          </Typography>
+        </Container>
+      </ThemeProvider>
+    );
+  }
+
+  if (currentData.length === 0) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+          <Typography variant="h6">
+            No data available
+          </Typography>
+        </Container>
+      </ThemeProvider>
+    );
+  }
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ minHeight: '100vh' }}>
+        <motion.div
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+        >
+          <AppBar position="static" elevation={0} sx={{ 
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <Toolbar sx={{ minHeight: 80, px: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
           }).format(dtUtc);
           
           const estMinute = new Intl.DateTimeFormat('en-US', {
