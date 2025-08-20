@@ -2523,7 +2523,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     <Button
                                       variant="outlined"
                                       size="small"
-                                      onClick={() => analyzeWithPolygon(item.ticker)}
+                                      onClick={() => analyzeWithPolygon(item.ticker, false)}
                                       disabled={aiAnalysisLoading === item.ticker || isRefreshingAll}
                                       startIcon={(aiAnalysisLoading === item.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
                                       sx={{
@@ -2655,7 +2655,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         <Button
                                           variant="outlined"
                                           size="small"
-                                          onClick={() => analyzeWithPolygon(item.ticker)}
+                                          onClick={() => analyzeWithPolygon(item.ticker, false)}
                                           disabled={aiAnalysisLoading === item.ticker || isRefreshingAll}
                                           startIcon={(aiAnalysisLoading === item.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
                                           sx={{
@@ -2804,7 +2804,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       <Button
                                         variant="outlined"
                                         size="small"
-                                        onClick={() => analyzeWithPolygon(holding.ticker)}
+                                        onClick={() => analyzeWithPolygon(holding.ticker, false)}
                                         disabled={aiAnalysisLoading === holding.ticker || isRefreshingAll}
                                         startIcon={(aiAnalysisLoading === holding.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
                                         sx={{
