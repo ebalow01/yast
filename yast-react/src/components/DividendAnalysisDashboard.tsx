@@ -2392,15 +2392,22 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             Optimal Portfolio Allocation
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            Showing {data.length} dividend assets with enhanced analysis capabilities
+                            Top performing dividend assets (bearish tickers excluded)
                           </Typography>
                         </Box>
                         <Button
                           variant="outlined"
                           startIcon={isRefreshingAll ? <CircularProgress size={16} /> : <Refresh />}
                           onClick={() => {
-                            const topTickers = data.slice(0, 10).map(item => item.ticker);
-                            refreshAiAnalysisForTickers(topTickers);
+                            const filteredTickers = data.slice(0, 10).filter(item => {
+                              // Filter out bearish tickers from optimal portfolio
+                              if (aiOutlooks[item.ticker]?.fullAnalysis) {
+                                const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                return !sentiment.rating.toLowerCase().includes('bearish');
+                              }
+                              return true; // Include tickers without AI analysis
+                            }).map(item => item.ticker);
+                            refreshAiAnalysisForTickers(filteredTickers);
                           }}
                           disabled={isRefreshingAll}
                           sx={{ 
@@ -2432,7 +2439,14 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {data.slice(0, 10).map((item, index) => (
+                            {data.slice(0, 10).filter(item => {
+                              // Filter out bearish tickers from optimal portfolio
+                              if (aiOutlooks[item.ticker]?.fullAnalysis) {
+                                const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                return !sentiment.rating.toLowerCase().includes('bearish');
+                              }
+                              return true; // Include tickers without AI analysis
+                            }).map((item, index) => (
                               <TableRow key={index}>
                                 <TableCell>{item.ticker}</TableCell>
                                 <TableCell>{item.bestStrategy}</TableCell>
@@ -2491,9 +2505,18 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   )}
 
                   {selectedTab === 1 && (() => {
-                    // Calculate excluded tickers (all tickers not in top 10)
-                    const topTickers = data.slice(0, 10).map(item => item.ticker);
-                    const excludedData = data.filter(item => !topTickers.includes(item.ticker));
+                    // Calculate excluded tickers (bearish tickers from top 10 + all tickers beyond top 10)
+                    const topTickers = data.slice(0, 10);
+                    const optimalPortfolioTickers = topTickers.filter(item => {
+                      // Filter out bearish tickers from optimal portfolio
+                      if (aiOutlooks[item.ticker]?.fullAnalysis) {
+                        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                        return !sentiment.rating.toLowerCase().includes('bearish');
+                      }
+                      return true; // Include tickers without AI analysis
+                    }).map(item => item.ticker);
+                    
+                    const excludedData = data.filter(item => !optimalPortfolioTickers.includes(item.ticker));
                     
                     return (
                       <Box sx={{ p: 3 }}>
@@ -2502,7 +2525,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             Excluded Tickers
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            {excludedData.length} assets excluded from optimal portfolio due to performance metrics
+                            {excludedData.length} assets excluded from optimal portfolio (bearish sentiment or lower performance)
                           </Typography>
                         </Box>
                         
