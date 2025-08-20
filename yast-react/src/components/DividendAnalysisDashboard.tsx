@@ -2022,7 +2022,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     );
   }
 
-  if (currentData.length === 0) {
+  if (data.length === 0) {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
