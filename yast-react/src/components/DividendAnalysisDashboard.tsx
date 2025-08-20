@@ -1737,22 +1737,65 @@ export default function DividendAnalysisDashboard() {
       return true; // Include tickers without AI analysis
     });
     
-    // Calculate total return for each ticker and sort by it
-    const tickersWithTotalReturn = nonBearishTickers.map(item => {
+    // Modern Portfolio Theory optimization using Sharpe ratio and risk diversification
+    const tickersWithMPTScore = nonBearishTickers.map(item => {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
       const totalReturn = forwardYield + navPerformance;
+      const volatility = polygonData[item.ticker]?.volatility14Day || 20; // Default 20% if missing
+      const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
+      
+      // MPT Score: Weighted combination of Sharpe ratio and return/volatility ratio
+      // Higher weight on Sharpe ratio (0.7) with some consideration for absolute return (0.3)
+      const returnVolatilityRatio = volatility > 0 ? totalReturn / volatility : 0;
+      const mptScore = (sharpeRatio * 0.7) + (returnVolatilityRatio * 0.3);
       
       return {
         ...item,
-        calculatedTotalReturn: totalReturn
+        calculatedTotalReturn: totalReturn,
+        volatility: volatility,
+        sharpeRatio: sharpeRatio,
+        mptScore: mptScore
       };
-    }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
+    });
     
-    // Take top 5 by total return
-    const finalOptimal = tickersWithTotalReturn.slice(0, 5);
-    console.log('Optimal portfolio (top 5 by total return, non-bearish):', 
-               finalOptimal.map(t => `${t.ticker}: ${t.calculatedTotalReturn.toFixed(2)}%`));
+    // Sort by MPT score (highest risk-adjusted return first)
+    const sortedByMPT = tickersWithMPTScore.sort((a, b) => b.mptScore - a.mptScore);
+    
+    // Select top 5 for diversified portfolio, ensuring we don't over-concentrate in high-risk assets
+    const finalOptimal = [];
+    let totalVolatility = 0;
+    
+    for (const ticker of sortedByMPT) {
+      if (finalOptimal.length >= 5) break;
+      
+      // Add volatility constraint: avoid too many high-volatility assets
+      const avgVolatility = finalOptimal.length > 0 ? totalVolatility / finalOptimal.length : 0;
+      const wouldExceedRisk = finalOptimal.length > 2 && ticker.volatility > avgVolatility * 1.5;
+      
+      if (!wouldExceedRisk || finalOptimal.length < 3) {
+        finalOptimal.push(ticker);
+        totalVolatility += ticker.volatility;
+      }
+    }
+    
+    // Add Cash as 6th item with 4% forward yield (minimum 5%)
+    const cashEntry = {
+      ticker: 'CASH',
+      calculatedTotalReturn: 4,
+      volatility: 0.1, // Very low volatility for cash
+      sharpeRatio: 2.0, // (4% - 2% risk free) / 0.1% volatility = high Sharpe
+      mptScore: 1.4,
+      exDivDay: '',
+      bestReturn: 0.04,
+      bestStrategy: 'Hold',
+      riskVolatility: 0.001
+    };
+    
+    finalOptimal.push(cashEntry);
+    
+    console.log('MPT-optimized portfolio (top 5 + Cash):', 
+               finalOptimal.map(t => `${t.ticker}: Return ${t.calculatedTotalReturn.toFixed(2)}%, Sharpe ${t.sharpeRatio?.toFixed(2) || 'N/A'}, MPT Score ${t.mptScore?.toFixed(2) || 'N/A'}`));
     return finalOptimal;
   }, [data, aiOutlooks, polygonData, portfolioUpdateTrigger]);
 
@@ -1814,6 +1857,10 @@ export default function DividendAnalysisDashboard() {
         case 'volatility':
           aValue = polygonData[a.ticker]?.volatility14Day || 0;
           bValue = polygonData[b.ticker]?.volatility14Day || 0;
+          break;
+        case 'sharpe':
+          aValue = polygonData[a.ticker]?.sharpeRatio || 0;
+          bValue = polygonData[b.ticker]?.sharpeRatio || 0;
           break;
         case 'aiSentiment':
           const aSentiment = aiOutlooks[a.ticker] ? extractSentimentRating(aiOutlooks[a.ticker].fullAnalysis).rating : 'zzz';
@@ -2663,6 +2710,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   14D Volatility
                                 </TableSortLabel>
                               </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'sharpe'}
+                                  direction={sortField === 'sharpe' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('sharpe')}
+                                >
+                                  Sharpe Ratio
+                                </TableSortLabel>
+                              </TableCell>
                               <TableCell align="center">
                                 <TableSortLabel
                                   active={sortField === 'aiSentiment'}
@@ -2678,24 +2734,35 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             {sortedOptimalData.map((item, index) => (
                               <TableRow key={index}>
                                 <TableCell>{item.ticker}</TableCell>
-                                <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
                                 <TableCell>
-                                  {item.exDivDay && (
-                                    <Box component="span" sx={{ 
-                                      fontSize: '0.75rem', 
-                                      color: 'rgba(255, 255, 255, 0.7)',
-                                      mr: 1,
-                                      fontWeight: 600
-                                    }}>
-                                      {formatDivDay(item.exDivDay)}
-                                    </Box>
-                                  )}
-                                  ${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}
+                                  {item.ticker === 'CASH' ? '$1.00' : `$${polygonData[item.ticker]?.price?.toFixed(2) || '-'}`}
                                 </TableCell>
-                                <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
-                                <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
                                 <TableCell>
-                                  {(() => {
+                                  {item.ticker === 'CASH' ? 
+                                    'N/A' : 
+                                    <>
+                                      {item.exDivDay && (
+                                        <Box component="span" sx={{ 
+                                          fontSize: '0.75rem', 
+                                          color: 'rgba(255, 255, 255, 0.7)',
+                                          mr: 1,
+                                          fontWeight: 600
+                                        }}>
+                                          {formatDivDay(item.exDivDay)}
+                                        </Box>
+                                      )}
+                                      ${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}
+                                    </>
+                                  }
+                                </TableCell>
+                                <TableCell>
+                                  {item.ticker === 'CASH' ? '4.00%' : `${polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%`}
+                                </TableCell>
+                                <TableCell>
+                                  {item.ticker === 'CASH' ? '0.0%' : `${polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%`}
+                                </TableCell>
+                                <TableCell>
+                                  {item.ticker === 'CASH' ? '4.0%' : (() => {
                                     const fwdYield = polygonData[item.ticker]?.forwardYield;
                                     const navPerf = polygonData[item.ticker]?.navPerformance;
                                     if (fwdYield != null && navPerf != null) {
@@ -2704,26 +2771,45 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     return '-';
                                   })()}
                                 </TableCell>
-                                <TableCell>{polygonData[item.ticker]?.volatility14Day?.toFixed(1) || '-'}%</TableCell>
+                                <TableCell>
+                                  {item.ticker === 'CASH' ? '0.1%' : `${polygonData[item.ticker]?.volatility14Day?.toFixed(1) || '-'}%`}
+                                </TableCell>
+                                <TableCell>
+                                  {item.ticker === 'CASH' ? '2.00' : `${polygonData[item.ticker]?.sharpeRatio?.toFixed(2) || '-'}`}
+                                </TableCell>
                                 <TableCell align="center">
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
-                                    <Button
-                                      variant="outlined"
-                                      size="small"
-                                      onClick={() => analyzeWithPolygon(item.ticker, false)}
-                                      disabled={aiAnalysisLoading === item.ticker || isRefreshingAll}
-                                      startIcon={(aiAnalysisLoading === item.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
-                                      sx={{
-                                        color: '#00D4FF',
-                                        borderColor: '#00D4FF',
-                                        '&:hover': {
-                                          borderColor: '#00A8CC',
-                                          backgroundColor: 'rgba(0, 212, 255, 0.1)'
-                                        }
-                                      }}
-                                    >
-                                      {(aiAnalysisLoading === item.ticker || isRefreshingAll) ? 'Refreshing...' : 'AI'}
-                                    </Button>
+                                    {item.ticker === 'CASH' ? (
+                                      <Box sx={{ 
+                                        padding: '8px 12px', 
+                                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                        border: '1px solid #4CAF50',
+                                        borderRadius: '4px',
+                                        color: '#4CAF50',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 'bold'
+                                      }}>
+                                        STABLE
+                                      </Box>
+                                    ) : (
+                                      <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={() => analyzeWithPolygon(item.ticker, false)}
+                                        disabled={aiAnalysisLoading === item.ticker || isRefreshingAll}
+                                        startIcon={(aiAnalysisLoading === item.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
+                                        sx={{
+                                          color: '#00D4FF',
+                                          borderColor: '#00D4FF',
+                                          '&:hover': {
+                                            borderColor: '#00A8CC',
+                                            backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                                          }
+                                        }}
+                                      >
+                                        {(aiAnalysisLoading === item.ticker || isRefreshingAll) ? 'Refreshing...' : 'AI'}
+                                      </Button>
+                                    )}
                                     {aiOutlooks[item.ticker] && (() => {
                                       const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
                                       return (
@@ -2859,6 +2945,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       14D Volatility
                                     </TableSortLabel>
                                   </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'sharpe'}
+                                      direction={sortField === 'sharpe' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('sharpe')}
+                                    >
+                                      Sharpe Ratio
+                                    </TableSortLabel>
+                                  </TableCell>
                                   <TableCell align="center">
                                     <TableSortLabel
                                       active={sortField === 'aiSentiment'}
@@ -2901,6 +2996,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       })()}
                                     </TableCell>
                                     <TableCell>{polygonData[item.ticker]?.volatility14Day?.toFixed(1) || '-'}%</TableCell>
+                                    <TableCell>{polygonData[item.ticker]?.sharpeRatio?.toFixed(2) || '-'}</TableCell>
                                     <TableCell align="center">
                                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                                         <Button
@@ -3118,6 +3214,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     14D Volatility
                                   </TableSortLabel>
                                 </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'sharpe'}
+                                    direction={sortField === 'sharpe' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('sharpe')}
+                                  >
+                                    Sharpe Ratio
+                                  </TableSortLabel>
+                                </TableCell>
                                 <TableCell align="center">
                                   <TableSortLabel
                                     active={sortField === 'aiSentiment'}
@@ -3167,6 +3272,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     })()}
                                   </TableCell>
                                   <TableCell>{polygonData[holding.ticker]?.volatility14Day?.toFixed(1) || '-'}%</TableCell>
+                                  <TableCell>{polygonData[holding.ticker]?.sharpeRatio?.toFixed(2) || '-'}</TableCell>
                                   <TableCell align="center">
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                                       <Button

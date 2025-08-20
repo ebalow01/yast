@@ -120,6 +120,14 @@ async function fetchTickerData(ticker, apiKey) {
       }
     }
     
+    // Calculate Sharpe Ratio (assuming 2% risk-free rate annually)
+    let sharpeRatio = null;
+    if (forwardYield != null && navPerformance != null && volatility14Day != null && volatility14Day > 0) {
+      const totalReturn = forwardYield + navPerformance; // Total expected return
+      const riskFreeRate = 2; // 2% risk-free rate
+      sharpeRatio = (totalReturn - riskFreeRate) / volatility14Day;
+    }
+    
     return {
       ticker,
       price: currentPrice,
@@ -127,6 +135,7 @@ async function fetchTickerData(ticker, apiKey) {
       forwardYield: forwardYield,
       navPerformance: navPerformance,
       volatility14Day: volatility14Day,
+      sharpeRatio: sharpeRatio,
       lastDividends: lastDividends,
       dividendCount: lastDividends.length
     };
