@@ -2497,40 +2497,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     
                     return (
                       <Box sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                          <Box>
-                            <Typography variant="h6">
-                              Excluded Tickers
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                              {excludedData.length} assets excluded from optimal portfolio due to performance metrics
-                            </Typography>
-                          </Box>
-                          {excludedData.length > 0 && (
-                            <Button
-                              variant="outlined"
-                              startIcon={isRefreshingAll ? <CircularProgress size={16} /> : <Refresh />}
-                              onClick={() => {
-                                const excludedTickers = excludedData.map(item => item.ticker);
-                                refreshAiAnalysisForTickers(excludedTickers);
-                              }}
-                              disabled={isRefreshingAll}
-                              sx={{ 
-                                color: '#00D4FF',
-                                borderColor: '#00D4FF',
-                                '&:hover': {
-                                  borderColor: '#0056CC',
-                                  backgroundColor: 'rgba(0, 212, 255, 0.1)'
-                                },
-                                '&:disabled': {
-                                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                                  color: 'rgba(255, 255, 255, 0.3)'
-                                }
-                              }}
-                            >
-                              {isRefreshingAll ? 'Refreshing...' : 'AI Refresh'}
-                            </Button>
-                          )}
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="h6">
+                            Excluded Tickers
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            {excludedData.length} assets excluded from optimal portfolio due to performance metrics
+                          </Typography>
                         </Box>
                         
                         {excludedData.length === 0 ? (
