@@ -1752,10 +1752,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         return updatedOutlooks;
       });
       
-      setAiAnalysisResult(analysis);
-      if (showModal) setShowAiModal(true);
-      setSnackbarMessage(`AI analysis complete for ${ticker}`);
-      setShowSnackbar(true);
+      if (showModal) {
+        setAiAnalysisResult(analysis);
+        setShowAiModal(true);
+        setSnackbarMessage(`AI analysis complete for ${ticker}`);
+        setShowSnackbar(true);
+      }
       setWaitingForScreenshot(null);
 
       } else {
@@ -1962,10 +1964,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         return updatedOutlooks;
       });
       
-      setAiAnalysisResult(fullAnalysis);
-      if (showModal) setShowAiModal(true);
-      setSnackbarMessage(`AI analysis complete for ${ticker}`);
-      setShowSnackbar(true);
+      if (showModal) {
+        setAiAnalysisResult(fullAnalysis);
+        setShowAiModal(true);
+        setSnackbarMessage(`AI analysis complete for ${ticker}`);
+        setShowSnackbar(true);
+      }
       setWaitingForScreenshot(null);
 
     } catch (error) {
