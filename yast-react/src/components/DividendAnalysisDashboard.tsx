@@ -1968,6 +1968,42 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
   };
 
+  // Refresh AI analyses for specific list of tickers
+  const refreshAiAnalysisForTickers = async (tickers: string[]) => {
+    if (tickers.length === 0) {
+      setSnackbarMessage('No tickers to refresh');
+      setShowSnackbar(true);
+      return;
+    }
+
+    setIsRefreshingAll(true);
+    setSnackbarMessage(`Refreshing AI analysis for ${tickers.length} tickers...`);
+    setShowSnackbar(true);
+
+    try {
+      // Process all tickers sequentially to avoid overwhelming the APIs
+      for (const ticker of tickers) {
+        try {
+          await analyzeWithPolygon(ticker);
+          // Small delay between requests to be respectful to APIs
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error(`Failed to refresh ${ticker}:`, error);
+          // Continue with other tickers even if one fails
+        }
+      }
+      
+      setSnackbarMessage(`Successfully refreshed AI analysis for all tickers`);
+      setShowSnackbar(true);
+    } catch (error) {
+      console.error('Bulk refresh error:', error);
+      setSnackbarMessage(`Refresh completed with some errors`);
+      setShowSnackbar(true);
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  };
+
   // Bulk refresh all AI analyses for portfolio holdings
   const refreshAllAiAnalyses = async () => {
     if (portfolio.holdings.length === 0) {
@@ -2350,14 +2386,40 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   {/* Tab Panels */}
                   {selectedTab === 0 && (
                     <Box sx={{ p: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 2 }}>
-                        Optimal Portfolio Allocation
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2, color: 'rgba(255, 255, 255, 0.7)' }}>
-                        Showing {data.length} dividend assets with enhanced analysis capabilities
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Box>
+                          <Typography variant="h6">
+                            Optimal Portfolio Allocation
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            Showing {data.length} dividend assets with enhanced analysis capabilities
+                          </Typography>
+                        </Box>
+                        <Button
+                          variant="outlined"
+                          startIcon={isRefreshingAll ? <CircularProgress size={16} /> : <Refresh />}
+                          onClick={() => {
+                            const topTickers = data.slice(0, 10).map(item => item.ticker);
+                            refreshAiAnalysisForTickers(topTickers);
+                          }}
+                          disabled={isRefreshingAll}
+                          sx={{ 
+                            color: '#00D4FF',
+                            borderColor: '#00D4FF',
+                            '&:hover': {
+                              borderColor: '#0056CC',
+                              backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                            },
+                            '&:disabled': {
+                              borderColor: 'rgba(255, 255, 255, 0.3)',
+                              color: 'rgba(255, 255, 255, 0.3)'
+                            }
+                          }}
+                        >
+                          {isRefreshingAll ? 'Refreshing...' : 'AI Refresh'}
+                        </Button>
+                      </Box>
                       
-                      {/* Simple data display for now */}
                       <TableContainer component={Paper} sx={{ background: 'rgba(255, 255, 255, 0.05)' }}>
                         <Table>
                           <TableHead>
@@ -2366,6 +2428,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               <TableCell>Strategy</TableCell>
                               <TableCell>Return</TableCell>
                               <TableCell>Win Rate</TableCell>
+                              <TableCell align="center">AI Evaluation</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -2375,6 +2438,50 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 <TableCell>{item.bestStrategy}</TableCell>
                                 <TableCell>{item.bestReturn?.toFixed(1)}%</TableCell>
                                 <TableCell>{item.dcWinRate?.toFixed(1)}%</TableCell>
+                                <TableCell align="center">
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                                    <Button
+                                      variant="outlined"
+                                      size="small"
+                                      onClick={() => analyzeWithPolygon(item.ticker)}
+                                      disabled={aiAnalysisLoading === item.ticker || isRefreshingAll}
+                                      startIcon={(aiAnalysisLoading === item.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
+                                      sx={{
+                                        color: '#00D4FF',
+                                        borderColor: '#00D4FF',
+                                        '&:hover': {
+                                          borderColor: '#00A8CC',
+                                          backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                                        }
+                                      }}
+                                    >
+                                      {(aiAnalysisLoading === item.ticker || isRefreshingAll) ? 'Refreshing...' : 'AI'}
+                                    </Button>
+                                    {aiOutlooks[item.ticker] && (() => {
+                                      const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                      return (
+                                        <Chip
+                                          label={sentiment.rating}
+                                          size="small"
+                                          onClick={() => {
+                                            setAiAnalysisResult(aiOutlooks[item.ticker].fullAnalysis);
+                                            setShowAiModal(true);
+                                          }}
+                                          sx={{
+                                            backgroundColor: `${sentiment.color}20`, // 20% opacity
+                                            color: sentiment.color,
+                                            border: `1px solid ${sentiment.color}`,
+                                            cursor: 'pointer',
+                                            fontWeight: 600,
+                                            '&:hover': {
+                                              backgroundColor: `${sentiment.color}30` // 30% opacity on hover
+                                            }
+                                          }}
+                                        />
+                                      );
+                                    })()}
+                                  </Box>
+                                </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
