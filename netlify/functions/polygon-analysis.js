@@ -717,16 +717,35 @@ TIMEFRAME BREAKDOWN:
 }
 
 exports.handler = async (event, context) => {
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   const { ticker } = JSON.parse(event.body || '{}');
   
   if (!ticker) {
     return {
       statusCode: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ error: 'Ticker is required' })
     };
   }
 
   try {
+    console.log(`Starting analysis for ${ticker}`);
+    
     // Import required modules - use native https instead of node-fetch
     const https = require('https');
     const url = require('url');
@@ -735,8 +754,16 @@ exports.handler = async (event, context) => {
     const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
     
     if (!POLYGON_API_KEY || !CLAUDE_API_KEY) {
+      console.error('API keys missing:', { 
+        polygon: !!POLYGON_API_KEY, 
+        claude: !!CLAUDE_API_KEY 
+      });
       return {
         statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ error: 'API keys not configured' })
       };
     }
@@ -781,19 +808,25 @@ exports.handler = async (event, context) => {
 
     // Fetch data from Polygon API (15-minute data for enhanced analysis)
     const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Reduced to 5 days
     
     const polygonUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/15/minute/${startDate}/${endDate}?adjusted=true&sort=asc&apikey=${POLYGON_API_KEY}`;
+    console.log(`Fetching Polygon data: ${polygonUrl.replace(POLYGON_API_KEY, '[API_KEY]')}`);
+    
     const polygonResponse = await makeHttpsRequest(polygonUrl);
+    console.log(`Polygon response status: ${polygonResponse.status}`);
     
     if (!polygonResponse.ok) {
-      throw new Error(`Polygon API error: ${polygonResponse.status}`);
+      console.error(`Polygon API error ${polygonResponse.status}:`, polygonResponse.data);
+      throw new Error(`Polygon API error: ${polygonResponse.status} - ${polygonResponse.data}`);
     }
     
     const polygonData = JSON.parse(polygonResponse.data);
+    console.log(`Polygon data status: ${polygonData.status}, count: ${polygonData.resultsCount || 0}`);
     
     if (!polygonData.results || polygonData.results.length === 0) {
-      throw new Error('No data available from Polygon API');
+      console.error('No Polygon data available:', polygonData);
+      throw new Error(`No data available from Polygon API: ${polygonData.status || 'unknown status'}`);
     }
 
     // Process the data with enhanced technical analysis
@@ -812,6 +845,7 @@ exports.handler = async (event, context) => {
       }]
     });
 
+    console.log('Sending request to Claude API...');
     const claudeResponse = await makeHttpsRequest('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -823,8 +857,10 @@ exports.handler = async (event, context) => {
       body: claudeRequestBody
     });
 
+    console.log(`Claude response status: ${claudeResponse.status}`);
     if (!claudeResponse.ok) {
-      throw new Error(`Claude API error: ${claudeResponse.status}`);
+      console.error(`Claude API error ${claudeResponse.status}:`, claudeResponse.data);
+      throw new Error(`Claude API error: ${claudeResponse.status} - ${claudeResponse.data}`);
     }
 
     const claudeResult = JSON.parse(claudeResponse.data);
