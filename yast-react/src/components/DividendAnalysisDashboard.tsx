@@ -1187,6 +1187,7 @@ export default function DividendAnalysisDashboard() {
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState<string | null>(null);
   const [aiAnalysisResult, setAiAnalysisResult] = useState<string | null>(null);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [isRefreshingAll, setIsRefreshingAll] = useState(false);
   
   // Cookie banner state
   const [showCookieBanner, setShowCookieBanner] = useState(() => {
@@ -1967,6 +1968,42 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
   };
 
+  // Bulk refresh all AI analyses for portfolio holdings
+  const refreshAllAiAnalyses = async () => {
+    if (portfolio.holdings.length === 0) {
+      setSnackbarMessage('No tickers in portfolio to refresh');
+      setShowSnackbar(true);
+      return;
+    }
+
+    setIsRefreshingAll(true);
+    setSnackbarMessage(`Refreshing AI analysis for ${portfolio.holdings.length} tickers...`);
+    setShowSnackbar(true);
+
+    try {
+      // Process all tickers sequentially to avoid overwhelming the APIs
+      for (const holding of portfolio.holdings) {
+        try {
+          await analyzeWithPolygon(holding.ticker);
+          // Small delay between requests to be respectful to APIs
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error(`Failed to refresh ${holding.ticker}:`, error);
+          // Continue with other tickers even if one fails
+        }
+      }
+      
+      setSnackbarMessage(`Successfully refreshed AI analysis for all tickers`);
+      setShowSnackbar(true);
+    } catch (error) {
+      console.error('Bulk refresh error:', error);
+      setSnackbarMessage(`Refresh completed with some errors`);
+      setShowSnackbar(true);
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  };
+
   const handleQuickAnalysis = async (ticker: string) => {
     if (!ticker.trim()) {
       setQuickAnalysisResult('Please enter a ticker symbol.');
@@ -2363,19 +2400,41 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         <Typography variant="h6">
                           My Portfolio ({portfolio.holdings.length} positions)
                         </Typography>
-                        <Button
-                          variant="contained"
-                          startIcon={<Add />}
-                          onClick={() => setShowAddDialog(true)}
-                          sx={{ 
-                            background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
-                            '&:hover': {
-                              background: 'linear-gradient(135deg, #0056CC 0%, #5A52D0 100%)',
-                            }
-                          }}
-                        >
-                          Add Position
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Button
+                            variant="outlined"
+                            startIcon={isRefreshingAll ? <CircularProgress size={16} /> : <Refresh />}
+                            onClick={refreshAllAiAnalyses}
+                            disabled={isRefreshingAll || portfolio.holdings.length === 0}
+                            sx={{ 
+                              color: '#00D4FF',
+                              borderColor: '#00D4FF',
+                              '&:hover': {
+                                borderColor: '#0056CC',
+                                backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                              },
+                              '&:disabled': {
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                color: 'rgba(255, 255, 255, 0.3)'
+                              }
+                            }}
+                          >
+                            {isRefreshingAll ? 'Refreshing...' : 'AI Refresh'}
+                          </Button>
+                          <Button
+                            variant="contained"
+                            startIcon={<Add />}
+                            onClick={() => setShowAddDialog(true)}
+                            sx={{ 
+                              background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+                              '&:hover': {
+                                background: 'linear-gradient(135deg, #0056CC 0%, #5A52D0 100%)',
+                              }
+                            }}
+                          >
+                            Add Position
+                          </Button>
+                        </Box>
                       </Box>
 
                       {portfolio.holdings.length === 0 ? (
@@ -2436,8 +2495,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         variant="outlined"
                                         size="small"
                                         onClick={() => analyzeWithPolygon(holding.ticker)}
-                                        disabled={aiAnalysisLoading === holding.ticker}
-                                        startIcon={aiAnalysisLoading === holding.ticker ? <CircularProgress size={16} /> : <SmartToy />}
+                                        disabled={aiAnalysisLoading === holding.ticker || isRefreshingAll}
+                                        startIcon={(aiAnalysisLoading === holding.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
                                         sx={{
                                           color: '#00D4FF',
                                           borderColor: '#00D4FF',
@@ -2447,7 +2506,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                           }
                                         }}
                                       >
-                                        {aiAnalysisLoading === holding.ticker ? 'Analyzing...' : 'AI'}
+                                        {(aiAnalysisLoading === holding.ticker || isRefreshingAll) ? 'Refreshing...' : 'AI'}
                                       </Button>
                                       {aiOutlooks[holding.ticker] && (() => {
                                         const sentiment = extractSentimentRating(aiOutlooks[holding.ticker].fullAnalysis);
