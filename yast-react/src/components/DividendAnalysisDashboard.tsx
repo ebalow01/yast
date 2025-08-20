@@ -1189,6 +1189,7 @@ export default function DividendAnalysisDashboard() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
   const [isBulkRefreshing, setIsBulkRefreshing] = useState(false);
+  const [portfolioUpdateTrigger, setPortfolioUpdateTrigger] = useState(0);
   
   // Cookie banner state
   const [showCookieBanner, setShowCookieBanner] = useState(() => {
@@ -1753,6 +1754,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         return updatedOutlooks;
       });
       
+      // Trigger portfolio recalculation
+      setPortfolioUpdateTrigger(prev => prev + 1);
+      
       if (showModal && !isBulkRefreshing) {
         setAiAnalysisResult(analysis);
         setShowAiModal(true);
@@ -1964,6 +1968,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
         return updatedOutlooks;
       });
+      
+      // Trigger portfolio recalculation
+      setPortfolioUpdateTrigger(prev => prev + 1);
       
       if (showModal && !isBulkRefreshing) {
         setAiAnalysisResult(fullAnalysis);
