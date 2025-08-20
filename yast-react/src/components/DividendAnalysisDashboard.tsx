@@ -3230,6 +3230,35 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                 </Paper>
               </Box>
             </Box>
+
+            {/* Financial Disclaimer - Static Footer */}
+            <Box sx={{
+              mt: 4,
+              p: 3,
+              background: 'rgba(255, 149, 0, 0.05)',
+              borderTop: '1px solid rgba(255, 149, 0, 0.2)',
+              textAlign: 'center'
+            }}>
+              <Typography variant="caption" sx={{
+                fontSize: '0.75rem',
+                color: 'rgba(255, 149, 0, 0.9)',
+                fontWeight: 600,
+                display: 'block',
+                mb: 1
+              }}>
+                ⚠️ IMPORTANT DISCLAIMER
+              </Typography>
+              <Typography variant="caption" sx={{
+                fontSize: '0.7rem',
+                color: 'rgba(255, 255, 255, 0.7)',
+                lineHeight: 1.4,
+                display: 'block'
+              }}>
+                This information is not financial advice and is for entertainment purposes only. 
+                Past performance does not guarantee future results. 
+                Always consult a qualified financial advisor before making investment decisions.
+              </Typography>
+            </Box>
           </Container>
         </motion.div>
       </Box>
@@ -3476,40 +3505,6 @@ Add Position
           }
         }}
       />
-
-      {/* Financial Disclaimer */}
-      <Box sx={{ 
-        position: 'fixed', 
-        bottom: showCookieBanner ? 120 : 20, 
-        right: 20, 
-        background: 'rgba(255, 149, 0, 0.1)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 149, 0, 0.3)',
-        borderRadius: 2,
-        p: 2,
-        maxWidth: 300,
-        zIndex: 1000,
-        transition: 'bottom 0.3s ease'
-      }}>
-        <Typography variant="caption" sx={{ 
-          fontSize: '0.7rem', 
-          color: 'rgba(255, 149, 0, 0.9)',
-          fontWeight: 600,
-          display: 'block',
-          mb: 0.5
-        }}>
-          ⚠️ DISCLAIMER
-        </Typography>
-        <Typography variant="caption" sx={{ 
-          fontSize: '0.65rem', 
-          color: 'rgba(255, 255, 255, 0.8)',
-          lineHeight: 1.3
-        }}>
-          Not financial advice. For entertainment purposes only. 
-          Past performance does not guarantee future results. 
-          Always consult a financial advisor before investing.
-        </Typography>
-      </Box>
 
       {/* Cookie Banner */}
       {showCookieBanner && (
