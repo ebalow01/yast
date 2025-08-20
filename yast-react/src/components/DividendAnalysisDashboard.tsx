@@ -1737,47 +1737,24 @@ export default function DividendAnalysisDashboard() {
       return true; // Include tickers without AI analysis
     });
     
-    // Modern Portfolio Theory optimization using Sharpe ratio and risk diversification
-    const tickersWithMPTScore = nonBearishTickers.map(item => {
+    // Calculate total return for each ticker and sort by it (back to original approach)
+    const tickersWithTotalReturn = nonBearishTickers.map(item => {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
       const totalReturn = forwardYield + navPerformance;
       const volatility = polygonData[item.ticker]?.volatility14Day || 20; // Default 20% if missing
       const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
       
-      // MPT Score: Weighted combination of Sharpe ratio and return/volatility ratio
-      // Higher weight on Sharpe ratio (0.7) with some consideration for absolute return (0.3)
-      const returnVolatilityRatio = volatility > 0 ? totalReturn / volatility : 0;
-      const mptScore = (sharpeRatio * 0.7) + (returnVolatilityRatio * 0.3);
-      
       return {
         ...item,
         calculatedTotalReturn: totalReturn,
         volatility: volatility,
-        sharpeRatio: sharpeRatio,
-        mptScore: mptScore
+        sharpeRatio: sharpeRatio
       };
-    });
+    }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
     
-    // Sort by MPT score (highest risk-adjusted return first)
-    const sortedByMPT = tickersWithMPTScore.sort((a, b) => b.mptScore - a.mptScore);
-    
-    // Select top 5 for diversified portfolio, ensuring we don't over-concentrate in high-risk assets
-    const finalOptimal = [];
-    let totalVolatility = 0;
-    
-    for (const ticker of sortedByMPT) {
-      if (finalOptimal.length >= 5) break;
-      
-      // Add volatility constraint: avoid too many high-volatility assets
-      const avgVolatility = finalOptimal.length > 0 ? totalVolatility / finalOptimal.length : 0;
-      const wouldExceedRisk = finalOptimal.length > 2 && ticker.volatility > avgVolatility * 1.5;
-      
-      if (!wouldExceedRisk || finalOptimal.length < 3) {
-        finalOptimal.push(ticker);
-        totalVolatility += ticker.volatility;
-      }
-    }
+    // Take top 5 by total return (back to simple approach that works)
+    const finalOptimal = tickersWithTotalReturn.slice(0, 5);
     
     // Add Cash as 6th item with 4% forward yield (minimum 5%)
     const cashEntry = {
@@ -1785,7 +1762,6 @@ export default function DividendAnalysisDashboard() {
       calculatedTotalReturn: 4,
       volatility: 0.1, // Very low volatility for cash
       sharpeRatio: 2.0, // (4% - 2% risk free) / 0.1% volatility = high Sharpe
-      mptScore: 1.4,
       exDivDay: '',
       bestReturn: 0.04,
       bestStrategy: 'Hold',
@@ -1794,8 +1770,8 @@ export default function DividendAnalysisDashboard() {
     
     finalOptimal.push(cashEntry);
     
-    console.log('MPT-optimized portfolio (top 5 + Cash):', 
-               finalOptimal.map(t => `${t.ticker}: Return ${t.calculatedTotalReturn.toFixed(2)}%, Sharpe ${t.sharpeRatio?.toFixed(2) || 'N/A'}, MPT Score ${t.mptScore?.toFixed(2) || 'N/A'}`));
+    console.log('Optimal portfolio (top 5 by total return + Cash, non-bearish):', 
+               finalOptimal.map(t => `${t.ticker}: Return ${t.calculatedTotalReturn.toFixed(2)}%, Sharpe ${t.sharpeRatio?.toFixed(2) || 'N/A'}`));
     return finalOptimal;
   }, [data, aiOutlooks, polygonData, portfolioUpdateTrigger]);
 
