@@ -2490,16 +2490,138 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     </Box>
                   )}
 
-                  {selectedTab === 1 && (
-                    <Box sx={{ p: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 2 }}>
-                        Excluded Tickers
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                        Assets excluded from optimal portfolio due to poor performance metrics
-                      </Typography>
-                    </Box>
-                  )}
+                  {selectedTab === 1 && (() => {
+                    // Calculate excluded tickers (all tickers not in top 10)
+                    const topTickers = data.slice(0, 10).map(item => item.ticker);
+                    const excludedData = data.filter(item => !topTickers.includes(item.ticker));
+                    
+                    return (
+                      <Box sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                          <Box>
+                            <Typography variant="h6">
+                              Excluded Tickers
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                              {excludedData.length} assets excluded from optimal portfolio due to performance metrics
+                            </Typography>
+                          </Box>
+                          {excludedData.length > 0 && (
+                            <Button
+                              variant="outlined"
+                              startIcon={isRefreshingAll ? <CircularProgress size={16} /> : <Refresh />}
+                              onClick={() => {
+                                const excludedTickers = excludedData.map(item => item.ticker);
+                                refreshAiAnalysisForTickers(excludedTickers);
+                              }}
+                              disabled={isRefreshingAll}
+                              sx={{ 
+                                color: '#00D4FF',
+                                borderColor: '#00D4FF',
+                                '&:hover': {
+                                  borderColor: '#0056CC',
+                                  backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                                },
+                                '&:disabled': {
+                                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                                  color: 'rgba(255, 255, 255, 0.3)'
+                                }
+                              }}
+                            >
+                              {isRefreshingAll ? 'Refreshing...' : 'AI Refresh'}
+                            </Button>
+                          )}
+                        </Box>
+                        
+                        {excludedData.length === 0 ? (
+                          <Card sx={{ 
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            textAlign: 'center',
+                            py: 4
+                          }}>
+                            <CardContent>
+                              <Security sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
+                              <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                                No Excluded Tickers
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                All available tickers are included in the optimal portfolio
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <TableContainer component={Paper} sx={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+                            <Table>
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>Ticker</TableCell>
+                                  <TableCell>Strategy</TableCell>
+                                  <TableCell>Return</TableCell>
+                                  <TableCell>Win Rate</TableCell>
+                                  <TableCell align="center">AI Evaluation</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {excludedData.map((item, index) => (
+                                  <TableRow key={index}>
+                                    <TableCell>{item.ticker}</TableCell>
+                                    <TableCell>{item.bestStrategy}</TableCell>
+                                    <TableCell>{item.bestReturn?.toFixed(1)}%</TableCell>
+                                    <TableCell>{item.dcWinRate?.toFixed(1)}%</TableCell>
+                                    <TableCell align="center">
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                                        <Button
+                                          variant="outlined"
+                                          size="small"
+                                          onClick={() => analyzeWithPolygon(item.ticker)}
+                                          disabled={aiAnalysisLoading === item.ticker || isRefreshingAll}
+                                          startIcon={(aiAnalysisLoading === item.ticker || isRefreshingAll) ? <CircularProgress size={16} /> : <SmartToy />}
+                                          sx={{
+                                            color: '#00D4FF',
+                                            borderColor: '#00D4FF',
+                                            '&:hover': {
+                                              borderColor: '#00A8CC',
+                                              backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                                            }
+                                          }}
+                                        >
+                                          {(aiAnalysisLoading === item.ticker || isRefreshingAll) ? 'Refreshing...' : 'AI'}
+                                        </Button>
+                                        {aiOutlooks[item.ticker] && (() => {
+                                          const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                          return (
+                                            <Chip
+                                              label={sentiment.rating}
+                                              size="small"
+                                              onClick={() => {
+                                                setAiAnalysisResult(aiOutlooks[item.ticker].fullAnalysis);
+                                                setShowAiModal(true);
+                                              }}
+                                              sx={{
+                                                backgroundColor: `${sentiment.color}20`, // 20% opacity
+                                                color: sentiment.color,
+                                                border: `1px solid ${sentiment.color}`,
+                                                cursor: 'pointer',
+                                                fontWeight: 600,
+                                                '&:hover': {
+                                                  backgroundColor: `${sentiment.color}30` // 30% opacity on hover
+                                                }
+                                              }}
+                                            />
+                                          );
+                                        })()}
+                                      </Box>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        )}
+                      </Box>
+                    );
+                  })()}
 
                   {selectedTab === 2 && (
                     <Box sx={{ p: 3 }}>
