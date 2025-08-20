@@ -1188,6 +1188,7 @@ export default function DividendAnalysisDashboard() {
   const [aiAnalysisResult, setAiAnalysisResult] = useState<string | null>(null);
   const [showAiModal, setShowAiModal] = useState(false);
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
+  const [isBulkRefreshing, setIsBulkRefreshing] = useState(false);
   
   // Cookie banner state
   const [showCookieBanner, setShowCookieBanner] = useState(() => {
@@ -1752,7 +1753,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         return updatedOutlooks;
       });
       
-      if (showModal) {
+      if (showModal && !isBulkRefreshing) {
         setAiAnalysisResult(analysis);
         setShowAiModal(true);
         setSnackbarMessage(`AI analysis complete for ${ticker}`);
@@ -1964,7 +1965,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         return updatedOutlooks;
       });
       
-      if (showModal) {
+      if (showModal && !isBulkRefreshing) {
         setAiAnalysisResult(fullAnalysis);
         setShowAiModal(true);
         setSnackbarMessage(`AI analysis complete for ${ticker}`);
@@ -1991,6 +1992,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
 
     setIsRefreshingAll(true);
+    setIsBulkRefreshing(true);
     setSnackbarMessage(`Refreshing AI analysis for ${tickers.length} tickers...`);
     setShowSnackbar(true);
 
@@ -2015,6 +2017,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       setShowSnackbar(true);
     } finally {
       setIsRefreshingAll(false);
+      setIsBulkRefreshing(false);
       setShowAiModal(false); // Close AI modal when refresh completes
     }
   };
@@ -2028,6 +2031,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
 
     setIsRefreshingAll(true);
+    setIsBulkRefreshing(true);
     setSnackbarMessage(`Refreshing AI analysis for ${portfolio.holdings.length} tickers...`);
     setShowSnackbar(true);
 
@@ -2052,6 +2056,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       setShowSnackbar(true);
     } finally {
       setIsRefreshingAll(false);
+      setIsBulkRefreshing(false);
       setShowAiModal(false); // Close AI modal when refresh completes
     }
   };
