@@ -22,10 +22,37 @@ async function fetchTickerData(ticker, apiKey) {
   try {
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     
-    // Fetch latest stock price
-    const priceUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${apiKey}`;
-    const priceData = await httpsGet(priceUrl);
-    await delay(100); // Rate limiting
+    // Fetch latest stock price - try current/latest first, then fall back to previous day
+    let priceData = null;
+    let currentPrice = null;
+    
+    // First try to get the most recent price from the last 3 trading days
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    const recentPriceUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${threeDaysAgo}/${today}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
+    
+    try {
+      priceData = await httpsGet(recentPriceUrl);
+      await delay(100); // Rate limiting
+      
+      // If we got recent data, use the most recent closing price
+      if (priceData.results && priceData.results.length > 0) {
+        currentPrice = priceData.results[0].c; // Most recent closing price
+      }
+    } catch (error) {
+      console.log(`Recent price fetch failed for ${ticker}, falling back to prev day`);
+    }
+    
+    // Fallback to previous day if recent data not available
+    if (!currentPrice) {
+      const prevDayUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${apiKey}`;
+      priceData = await httpsGet(prevDayUrl);
+      await delay(100); // Rate limiting
+      
+      if (priceData.results && priceData.results.length > 0) {
+        currentPrice = priceData.results[0].c;
+      }
+    }
     
     // Fetch stock price from 30 days ago for NAV calculation
     const monthAgoDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -35,7 +62,6 @@ async function fetchTickerData(ticker, apiKey) {
     
     // Fetch 14-day historical data for volatility calculation
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const today = new Date().toISOString().split('T')[0];
     const volatilityUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${fourteenDaysAgo}/${today}?adjusted=true&sort=asc&apiKey=${apiKey}`;
     const volatilityData = await httpsGet(volatilityUrl);
     await delay(100); // Rate limiting
@@ -67,12 +93,6 @@ async function fetchTickerData(ticker, apiKey) {
           medianDividend = lastDividends[1]; // Middle value for 3 dividends
         }
       }
-    }
-    
-    // Get the current price
-    let currentPrice = null;
-    if (priceData.results && priceData.results.length > 0) {
-      currentPrice = priceData.results[0].c; // Closing price
     }
     
     // Get the month ago price
