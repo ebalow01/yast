@@ -60,7 +60,8 @@ import {
   MonetizationOn,
   Refresh,
   Search,
-  ContentCopy
+  ContentCopy,
+  SmartToy
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -97,12 +98,6 @@ export interface DividendData {
 // Portfolio Management Types
 export interface PortfolioHolding {
   ticker: string;
-  shares: number;
-  averagePrice: number;
-  currentPrice?: number;
-  totalValue?: number;
-  gainLoss?: number;
-  gainLossPercent?: number;
   dateAdded: string;
 }
 
@@ -110,9 +105,6 @@ export interface UserPortfolio {
   id: string;
   name: string;
   holdings: PortfolioHolding[];
-  totalValue: number;
-  totalGainLoss: number;
-  totalGainLossPercent: number;
   lastUpdated: string;
 }
 
@@ -1187,9 +1179,6 @@ export default function DividendAnalysisDashboard() {
     id: 'default',
     name: 'My Portfolio',
     holdings: [],
-    totalValue: 0,
-    totalGainLoss: 0,
-    totalGainLossPercent: 0,
     lastUpdated: new Date().toISOString()
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -1996,39 +1985,38 @@ Focus on actionable insights from the visual chart patterns and price action.`;
   };
 
   // Portfolio Management Functions
-  const addToPortfolio = (ticker: string, shares: number, averagePrice: number, dateAdded: string = new Date().toISOString().split('T')[0]) => {
+  const addToPortfolio = (ticker: string) => {
+    // Check if ticker already exists
+    const exists = portfolio.holdings.find(h => h.ticker.toUpperCase() === ticker.toUpperCase());
+    if (exists) {
+      setSnackbarMessage(`${ticker} is already in your watch list`);
+      setShowSnackbar(true);
+      return;
+    }
+
     const newHolding: PortfolioHolding = {
       ticker: ticker.toUpperCase(),
-      shares,
-      averagePrice,
-      dateAdded
+      dateAdded: new Date().toISOString().split('T')[0]
     };
     
     setPortfolio(prev => ({
       ...prev,
       holdings: [...prev.holdings, newHolding],
-      totalValue: prev.totalValue + (shares * averagePrice),
       lastUpdated: new Date().toLocaleString()
     }));
     
-    setSnackbarMessage(`Added ${ticker} to portfolio`);
+    setSnackbarMessage(`Added ${ticker} to watch list`);
     setShowSnackbar(true);
   };
 
   const removeFromPortfolio = (ticker: string) => {
-    setPortfolio(prev => {
-      const holdingToRemove = prev.holdings.find(h => h.ticker === ticker);
-      const removeValue = holdingToRemove ? holdingToRemove.shares * holdingToRemove.averagePrice : 0;
-      
-      return {
-        ...prev,
-        holdings: prev.holdings.filter(h => h.ticker !== ticker),
-        totalValue: prev.totalValue - removeValue,
-        lastUpdated: new Date().toLocaleString()
-      };
-    });
+    setPortfolio(prev => ({
+      ...prev,
+      holdings: prev.holdings.filter(h => h.ticker !== ticker),
+      lastUpdated: new Date().toLocaleString()
+    }));
     
-    setSnackbarMessage(`Removed ${ticker} from portfolio`);
+    setSnackbarMessage(`Removed ${ticker} from watch list`);
     setShowSnackbar(true);
   };
 
@@ -2396,11 +2384,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             <TableHead>
                               <TableRow>
                                 <TableCell>Ticker</TableCell>
-                                <TableCell align="right">Shares</TableCell>
-                                <TableCell align="right">Avg Price</TableCell>
-                                <TableCell align="right">Current Price</TableCell>
-                                <TableCell align="right">Total Value</TableCell>
-                                <TableCell align="right">Gain/Loss</TableCell>
+                                <TableCell align="center">AI Evaluation</TableCell>
                                 <TableCell align="center">Actions</TableCell>
                               </TableRow>
                             </TableHead>
@@ -2415,28 +2399,46 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       </Typography>
                                     </Box>
                                   </TableCell>
-                                  <TableCell align="right">{holding.shares}</TableCell>
-                                  <TableCell align="right">${holding.averagePrice.toFixed(2)}</TableCell>
-                                  <TableCell align="right">
-                                    {holding.currentPrice ? `$${holding.currentPrice.toFixed(2)}` : 'N/A'}
-                                  </TableCell>
-                                  <TableCell align="right">
-                                    {holding.totalValue ? `$${holding.totalValue.toFixed(2)}` : 'N/A'}
-                                  </TableCell>
-                                  <TableCell align="right">
-                                    {holding.gainLoss !== undefined ? (
-                                      <Chip
-                                        label={`${holding.gainLoss >= 0 ? '+' : ''}$${holding.gainLoss.toFixed(2)} (${holding.gainLossPercent?.toFixed(1)}%)`}
+                                  <TableCell align="center">
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
+                                      <Button
+                                        variant="outlined"
                                         size="small"
+                                        onClick={() => analyzeWithPolygon(holding.ticker)}
+                                        disabled={aiAnalysisLoading === holding.ticker}
+                                        startIcon={aiAnalysisLoading === holding.ticker ? <CircularProgress size={16} /> : <SmartToy />}
                                         sx={{
-                                          backgroundColor: holding.gainLoss >= 0 ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255, 59, 48, 0.2)',
-                                          color: holding.gainLoss >= 0 ? '#34C759' : '#FF3B30',
-                                          border: `1px solid ${holding.gainLoss >= 0 ? '#34C759' : '#FF3B30'}`
+                                          color: '#00D4FF',
+                                          borderColor: '#00D4FF',
+                                          '&:hover': {
+                                            borderColor: '#00A8CC',
+                                            backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                                          }
                                         }}
-                                      />
-                                    ) : (
-                                      'N/A'
-                                    )}
+                                      >
+                                        {aiAnalysisLoading === holding.ticker ? 'Analyzing...' : 'AI'}
+                                      </Button>
+                                      {aiOutlooks[holding.ticker] && (
+                                        <Chip
+                                          label={aiOutlooks[holding.ticker].shortOutlook || 'Click for details'}
+                                          size="small"
+                                          onClick={() => {
+                                            setAiAnalysisResult(aiOutlooks[holding.ticker].fullAnalysis);
+                                            setShowAiModal(true);
+                                          }}
+                                          sx={{
+                                            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                                            color: '#00D4FF',
+                                            border: '1px solid #00D4FF',
+                                            cursor: 'pointer',
+                                            maxWidth: '200px',
+                                            '&:hover': {
+                                              backgroundColor: 'rgba(0, 212, 255, 0.2)'
+                                            }
+                                          }}
+                                        />
+                                      )}
+                                    </Box>
                                   </TableCell>
                                   <TableCell align="center">
                                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
@@ -2467,56 +2469,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         </TableContainer>
                       )}
 
-                      {/* Portfolio Summary */}
-                      {portfolio.holdings.length > 0 && (
-                        <Card sx={{ 
-                          mt: 3,
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)'
-                        }}>
-                          <CardContent>
-                            <Typography variant="h6" sx={{ mb: 2 }}>
-                              Portfolio Summary
-                            </Typography>
-                            <Grid container spacing={3}>
-                              <Grid xs={12} sm={4}>
-                                <Typography variant="body2" color="textSecondary">
-                                  Total Value
-                                </Typography>
-                                <Typography variant="h6">
-                                  ${portfolio.totalValue.toFixed(2)}
-                                </Typography>
-                              </Grid>
-                              <Grid xs={12} sm={4}>
-                                <Typography variant="body2" color="textSecondary">
-                                  Total Gain/Loss
-                                </Typography>
-                                <Typography 
-                                  variant="h6" 
-                                  sx={{ 
-                                    color: portfolio.totalGainLoss >= 0 ? '#34C759' : '#FF3B30'
-                                  }}
-                                >
-                                  {portfolio.totalGainLoss >= 0 ? '+' : ''}${portfolio.totalGainLoss.toFixed(2)}
-                                </Typography>
-                              </Grid>
-                              <Grid xs={12} sm={4}>
-                                <Typography variant="body2" color="textSecondary">
-                                  Total Return
-                                </Typography>
-                                <Typography 
-                                  variant="h6"
-                                  sx={{ 
-                                    color: portfolio.totalGainLossPercent >= 0 ? '#34C759' : '#FF3B30'
-                                  }}
-                                >
-                                  {portfolio.totalGainLossPercent >= 0 ? '+' : ''}{portfolio.totalGainLossPercent.toFixed(1)}%
-                                </Typography>
-                              </Grid>
-                            </Grid>
-                          </CardContent>
-                        </Card>
-                      )}
                     </Box>
                   )}
                 </Paper>
@@ -2545,7 +2497,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         }}
       >
         <DialogTitle>
-          {editingHolding ? 'Edit Position' : 'Add New Position'}
+          {editingHolding ? 'Edit Ticker' : 'Add Ticker to Watch List'}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
@@ -2556,32 +2508,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               fullWidth
               disabled={!!editingHolding} // Disable ticker editing when editing existing position
               placeholder="e.g., AAPL, MSFT, SPY"
-            />
-            <TextField
-              label="Number of Shares"
-              type="number"
-              fullWidth
-              placeholder="e.g., 100"
-              id="shares-input"
-            />
-            <TextField
-              label="Average Price per Share"
-              type="number"
-              fullWidth
-              placeholder="e.g., 150.50"
-              id="price-input"
-              InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
-              }}
-            />
-            <TextField
-              label="Date Added (Optional)"
-              type="date"
-              fullWidth
-              InputLabelProps={{
-                shrink: true,
-              }}
-              id="date-input"
+              helperText="Add a ticker to your watch list for AI analysis"
             />
           </Box>
         </DialogContent>
@@ -2598,31 +2525,21 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           </Button>
           <Button 
             onClick={() => {
-              const sharesInput = document.getElementById('shares-input') as HTMLInputElement;
-              const priceInput = document.getElementById('price-input') as HTMLInputElement;
-              const dateInput = document.getElementById('date-input') as HTMLInputElement;
-              
-              if (newTicker && sharesInput?.value && priceInput?.value) {
-                const shares = parseFloat(sharesInput.value);
-                const price = parseFloat(priceInput.value);
-                const date = dateInput?.value || new Date().toISOString().split('T')[0];
-                
+              if (newTicker.trim()) {
                 if (editingHolding) {
-                  // Update existing position
-                  editPortfolioHolding(editingHolding.ticker, shares, price, date);
+                  // Update existing ticker (shouldn't happen since we disable editing)
+                  setSnackbarMessage('Ticker updated');
                 } else {
-                  // Add new position
-                  addToPortfolio(newTicker, shares, price, date);
+                  // Add new ticker to watch list
+                  addToPortfolio(newTicker.trim());
                 }
                 
                 setShowAddDialog(false);
                 setEditingHolding(null);
                 setNewTicker('');
-                
-                // Clear form inputs
-                sharesInput.value = '';
-                priceInput.value = '';
-                if (dateInput) dateInput.value = '';
+              } else {
+                setSnackbarMessage('Please enter a ticker symbol');
+                setShowSnackbar(true);
               }
             }}
             variant="contained"
