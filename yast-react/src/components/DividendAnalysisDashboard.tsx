@@ -55,7 +55,6 @@ import {
   BusinessCenter,
   Add,
   Delete,
-  Edit,
   Save,
   MonetizationOn,
   Refresh,
@@ -1182,7 +1181,6 @@ export default function DividendAnalysisDashboard() {
     lastUpdated: new Date().toISOString()
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingHolding, setEditingHolding] = useState<PortfolioHolding | null>(null);
   const [newTicker, setNewTicker] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -2419,7 +2417,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               <TableRow>
                                 <TableCell>Ticker</TableCell>
                                 <TableCell align="center">AI Evaluation</TableCell>
-                                <TableCell align="center">Actions</TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -2475,25 +2472,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                           />
                                         );
                                       })()}
-                                    </Box>
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                      <IconButton 
-                                        size="small" 
-                                        onClick={() => {
-                                          setEditingHolding(holding);
-                                          setNewTicker(holding.ticker);
-                                          setShowAddDialog(true);
-                                        }}
-                                        sx={{ color: '#00D4FF' }}
-                                      >
-                                        <Edit />
-                                      </IconButton>
                                       <IconButton 
                                         size="small" 
                                         onClick={() => removeFromPortfolio(holding.ticker)}
-                                        sx={{ color: '#FF3B30' }}
+                                        sx={{ color: '#FF3B30', ml: 1 }}
                                       >
                                         <Delete />
                                       </IconButton>
@@ -2515,12 +2497,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         </motion.div>
       </Box>
 
-      {/* Add/Edit Position Dialog */}
+      {/* Add Position Dialog */}
       <Dialog 
         open={showAddDialog} 
         onClose={() => {
           setShowAddDialog(false);
-          setEditingHolding(null);
           setNewTicker('');
         }}
         maxWidth="sm"
@@ -2534,7 +2515,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         }}
       >
         <DialogTitle>
-          {editingHolding ? 'Edit Ticker' : 'Add Ticker to Watch List'}
+          Add Ticker to Watch List
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
@@ -2543,7 +2524,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               value={newTicker}
               onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
               fullWidth
-              disabled={!!editingHolding} // Disable ticker editing when editing existing position
+              disabled={false}
               placeholder="e.g., AAPL, MSFT, SPY"
               helperText="Add a ticker to your watch list for AI analysis"
             />
@@ -2553,7 +2534,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           <Button 
             onClick={() => {
               setShowAddDialog(false);
-              setEditingHolding(null);
               setNewTicker('');
             }}
             sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
@@ -2563,16 +2543,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           <Button 
             onClick={() => {
               if (newTicker.trim()) {
-                if (editingHolding) {
-                  // Update existing ticker (shouldn't happen since we disable editing)
-                  setSnackbarMessage('Ticker updated');
-                } else {
-                  // Add new ticker to watch list
-                  addToPortfolio(newTicker.trim());
-                }
+                // Add new ticker to watch list
+                addToPortfolio(newTicker.trim());
                 
                 setShowAddDialog(false);
-                setEditingHolding(null);
                 setNewTicker('');
               } else {
                 setSnackbarMessage('Please enter a ticker symbol');
@@ -2588,7 +2562,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             }}
             disabled={!newTicker}
           >
-            {editingHolding ? 'Update Position' : 'Add Position'}
+Add Position
           </Button>
         </DialogActions>
       </Dialog>
