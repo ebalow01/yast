@@ -1209,6 +1209,13 @@ export default function DividendAnalysisDashboard() {
   const [showCookieBanner, setShowCookieBanner] = useState(() => {
     return !localStorage.getItem('cookieAccepted');
   });
+
+  // AI Authentication state
+  const [isAiAuthenticated, setIsAiAuthenticated] = useState(() => {
+    return localStorage.getItem('aiAuthenticated') === 'true';
+  });
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [authPassword, setAuthPassword] = useState('');
   
   // Candlestick chart tooltip state
   const [candlestickTooltip, setCandlestickTooltip] = useState<{
@@ -1595,6 +1602,33 @@ export default function DividendAnalysisDashboard() {
   const handleAcceptCookies = () => {
     localStorage.setItem('cookieAccepted', 'true');
     setShowCookieBanner(false);
+  };
+
+  // AI Authentication handlers
+  const handleAuthSubmit = () => {
+    // Simple password check - you should change this password
+    if (authPassword === 'yast2024') {
+      localStorage.setItem('aiAuthenticated', 'true');
+      setIsAiAuthenticated(true);
+      setShowAuthDialog(false);
+      setAuthPassword('');
+    } else {
+      setSnackbarMessage('❌ Invalid password. AI features require authorization.');
+      setShowSnackbar(true);
+      setAuthPassword('');
+    }
+  };
+
+  const promptForAuth = () => {
+    setShowAuthDialog(true);
+  };
+
+  const checkAiAuth = () => {
+    if (!isAiAuthenticated) {
+      promptForAuth();
+      return false;
+    }
+    return true;
   };
 
   // Candlestick tooltip handlers
@@ -2013,6 +2047,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
   // Real Polygon API analysis function
   const analyzeWithPolygon = async (ticker: string, showModal: boolean = true) => {
+    if (!checkAiAuth()) return;
+    
     try {
       setAiAnalysisLoading(ticker);
       
@@ -2175,6 +2211,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
   // Refresh AI analyses for specific list of tickers
   const refreshAiAnalysisForTickers = async (tickers: string[]) => {
+    if (!checkAiAuth()) return;
+    
     if (tickers.length === 0) {
       setSnackbarMessage('No tickers to refresh');
       setShowSnackbar(true);
@@ -3327,6 +3365,100 @@ Add Position
             }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* AI Authentication Dialog */}
+      <Dialog 
+        open={showAuthDialog} 
+        onClose={() => setShowAuthDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'rgba(0, 0, 0, 0.9)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 149, 0, 0.3)',
+            borderRadius: 3
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid rgba(255, 149, 0, 0.2)',
+          color: 'rgba(255, 149, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          🔒 AI Authentication Required
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body2" sx={{ mb: 3, color: 'rgba(255, 255, 255, 0.8)' }}>
+            AI analysis features require authentication to manage API costs. Please enter the password to continue.
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Password"
+            type="password"
+            variant="outlined"
+            value={authPassword}
+            onChange={(e) => setAuthPassword(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleAuthSubmit();
+              }
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'rgba(255, 149, 0, 0.3)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(255, 149, 0, 0.5)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'rgba(255, 149, 0, 0.7)',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(255, 149, 0, 0.7)',
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ borderTop: '1px solid rgba(255, 149, 0, 0.2)', p: 2, gap: 1 }}>
+          <Button 
+            onClick={() => {
+              setShowAuthDialog(false);
+              setAuthPassword('');
+            }}
+            variant="outlined"
+            sx={{ 
+              color: 'rgba(255, 255, 255, 0.7)',
+              borderColor: 'rgba(255, 255, 255, 0.3)',
+              '&:hover': {
+                borderColor: 'rgba(255, 255, 255, 0.5)',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAuthSubmit}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #FF9500 0%, #FFB74D 100%)',
+              color: '#000000',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #E6840E 0%, #FFA726 100%)',
+              }
+            }}
+          >
+            Authenticate
           </Button>
         </DialogActions>
       </Dialog>
