@@ -1787,13 +1787,21 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     if (sentimentMatch) {
       const rating = sentimentMatch[1].trim();
       
-      // Determine color based on rating
+      // Normalize and determine color based on rating
       if (rating.toLowerCase().includes('bullish')) {
-        return { rating, color: '#34C759' }; // Green for bullish
+        // Clean up bullish rating - remove extra characters, normalize case
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        const normalizedRating = cleanRating.replace(/bullish/gi, 'Bullish');
+        return { rating: normalizedRating, color: '#34C759' }; // Green for bullish
       } else if (rating.toLowerCase().includes('bearish')) {
-        return { rating, color: '#FF3B30' }; // Red for bearish
+        // Clean up bearish rating - remove extra characters, normalize case
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        const normalizedRating = cleanRating.replace(/bearish/gi, 'Bearish');
+        return { rating: normalizedRating, color: '#FF3B30' }; // Red for bearish
       } else {
-        return { rating, color: '#00D4FF' }; // Blue for neutral/other
+        // Clean up neutral rating - remove extra characters
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        return { rating: cleanRating, color: '#00D4FF' }; // Blue for neutral/other
       }
     }
     
@@ -1802,9 +1810,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     const simpleBearish = fullAnalysis.match(/(\d+\/5\s+bearish)/i);
     
     if (simpleBullish) {
-      return { rating: simpleBullish[1], color: '#34C759' };
+      const normalizedRating = simpleBullish[1].replace(/bullish/gi, 'Bullish');
+      return { rating: normalizedRating, color: '#34C759' };
     } else if (simpleBearish) {
-      return { rating: simpleBearish[1], color: '#FF3B30' };
+      const normalizedRating = simpleBearish[1].replace(/bearish/gi, 'Bearish');
+      return { rating: normalizedRating, color: '#FF3B30' };
     }
     
     // Final fallback
