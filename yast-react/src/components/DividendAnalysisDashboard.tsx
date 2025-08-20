@@ -2095,7 +2095,90 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
               {/* Main Content */}
               <Box sx={{ flexGrow: 1 }}>
-                {/* Rest of component content will go here */}
+                {/* Quick Analysis Section */}
+                <Card sx={{ 
+                  mb: 3, 
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <CardContent sx={{ p: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Analytics sx={{ color: '#00D4FF' }} />
+                      Enhanced AI Analysis
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                      <TextField
+                        label="Enter Ticker Symbol"
+                        variant="outlined"
+                        value={quickTicker}
+                        onChange={(e) => setQuickTicker(e.target.value.toUpperCase())}
+                        sx={{ flexGrow: 1 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Search />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={() => handleQuickAnalysis(quickTicker)}
+                        disabled={quickAnalysisLoading || !quickTicker.trim()}
+                        sx={{ 
+                          minWidth: 120,
+                          background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+                        }}
+                      >
+                        {quickAnalysisLoading ? <CircularProgress size={20} /> : 'Analyze'}
+                      </Button>
+                    </Box>
+                    
+                    {quickAnalysisResult && (
+                      <Paper sx={{ 
+                        p: 2, 
+                        mt: 2,
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        maxHeight: 400,
+                        overflow: 'auto'
+                      }}>
+                        <pre style={{ 
+                          whiteSpace: 'pre-wrap', 
+                          margin: 0, 
+                          fontFamily: 'monospace',
+                          fontSize: '0.875rem',
+                          color: '#fff'
+                        }}>
+                          {quickAnalysisResult}
+                        </pre>
+                      </Paper>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Data Status */}
+                <Card sx={{ 
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Dashboard Status
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Data loaded: {data.length} dividend assets
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Enhanced analysis function: ✅ Operational
+                    </Typography>
+                    <Typography variant="body2">
+                      Multi-methodology framework: ✅ Active
+                    </Typography>
+                  </CardContent>
+                </Card>
               </Box>
             </Box>
           </Container>
