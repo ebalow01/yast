@@ -1778,6 +1778,40 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
   };
 
+  // Extract sentiment rating from AI analysis
+  const extractSentimentRating = (fullAnalysis: string) => {
+    if (!fullAnalysis) return { rating: 'N/A', color: '#00D4FF' };
+    
+    // Look for the final sentiment rating pattern
+    const sentimentMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*([^`\n]*)/i);
+    
+    if (sentimentMatch) {
+      const rating = sentimentMatch[1].trim();
+      
+      // Determine color based on rating
+      if (rating.toLowerCase().includes('bullish')) {
+        return { rating, color: '#34C759' }; // Green for bullish
+      } else if (rating.toLowerCase().includes('bearish')) {
+        return { rating, color: '#FF3B30' }; // Red for bearish
+      } else {
+        return { rating, color: '#00D4FF' }; // Blue for neutral/other
+      }
+    }
+    
+    // Fallback: look for simple bullish/bearish patterns
+    const simpleBullish = fullAnalysis.match(/(\d+\/5\s+bullish)/i);
+    const simpleBearish = fullAnalysis.match(/(\d+\/5\s+bearish)/i);
+    
+    if (simpleBullish) {
+      return { rating: simpleBullish[1], color: '#34C759' };
+    } else if (simpleBearish) {
+      return { rating: simpleBearish[1], color: '#FF3B30' };
+    }
+    
+    // Final fallback
+    return { rating: 'Analysis Available', color: '#00D4FF' };
+  };
+
   // Real Polygon API analysis function
   const analyzeWithPolygon = async (ticker: string) => {
     try {
@@ -2418,26 +2452,29 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       >
                                         {aiAnalysisLoading === holding.ticker ? 'Analyzing...' : 'AI'}
                                       </Button>
-                                      {aiOutlooks[holding.ticker] && (
-                                        <Chip
-                                          label={aiOutlooks[holding.ticker].shortOutlook || 'Click for details'}
-                                          size="small"
-                                          onClick={() => {
-                                            setAiAnalysisResult(aiOutlooks[holding.ticker].fullAnalysis);
-                                            setShowAiModal(true);
-                                          }}
-                                          sx={{
-                                            backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                                            color: '#00D4FF',
-                                            border: '1px solid #00D4FF',
-                                            cursor: 'pointer',
-                                            maxWidth: '200px',
-                                            '&:hover': {
-                                              backgroundColor: 'rgba(0, 212, 255, 0.2)'
-                                            }
-                                          }}
-                                        />
-                                      )}
+                                      {aiOutlooks[holding.ticker] && (() => {
+                                        const sentiment = extractSentimentRating(aiOutlooks[holding.ticker].fullAnalysis);
+                                        return (
+                                          <Chip
+                                            label={sentiment.rating}
+                                            size="small"
+                                            onClick={() => {
+                                              setAiAnalysisResult(aiOutlooks[holding.ticker].fullAnalysis);
+                                              setShowAiModal(true);
+                                            }}
+                                            sx={{
+                                              backgroundColor: `${sentiment.color}20`, // 20% opacity
+                                              color: sentiment.color,
+                                              border: `1px solid ${sentiment.color}`,
+                                              cursor: 'pointer',
+                                              fontWeight: 600,
+                                              '&:hover': {
+                                                backgroundColor: `${sentiment.color}30` // 30% opacity on hover
+                                              }
+                                            }}
+                                          />
+                                        );
+                                      })()}
                                     </Box>
                                   </TableCell>
                                   <TableCell align="center">
