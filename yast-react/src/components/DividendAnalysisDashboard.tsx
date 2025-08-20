@@ -1243,6 +1243,49 @@ export default function DividendAnalysisDashboard() {
   const [realtimeData, setRealtimeData] = useState<any>(null);
   const [useRealtimeData, setUseRealtimeData] = useState(true);
 
+  const extractSentimentRating = (fullAnalysis: string) => {
+    if (!fullAnalysis) return { rating: 'N/A', color: '#00D4FF' };
+    
+    // Look for the final sentiment rating pattern
+    const sentimentMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*([^`\n]*)/i);
+    
+    if (sentimentMatch) {
+      const rating = sentimentMatch[1].trim();
+      
+      // Normalize and determine color based on rating
+      if (rating.toLowerCase().includes('bullish')) {
+        // Clean up bullish rating - remove extra characters, normalize case
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        const normalizedRating = cleanRating.replace(/bullish/gi, 'Bullish');
+        return { rating: normalizedRating, color: '#34C759' }; // Green for bullish
+      } else if (rating.toLowerCase().includes('bearish')) {
+        // Clean up bearish rating - remove extra characters, normalize case
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        const normalizedRating = cleanRating.replace(/bearish/gi, 'Bearish');
+        return { rating: normalizedRating, color: '#FF3B30' }; // Red for bearish
+      } else {
+        // Clean up neutral rating - remove extra characters
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        return { rating: cleanRating, color: '#00D4FF' }; // Blue for neutral/other
+      }
+    }
+    
+    // Fallback: look for simple bullish/bearish patterns
+    const simpleBullish = fullAnalysis.match(/(\d+\/5\s+bullish)/i);
+    const simpleBearish = fullAnalysis.match(/(\d+\/5\s+bearish)/i);
+    
+    if (simpleBullish) {
+      const normalizedRating = simpleBullish[1].replace(/bullish/gi, 'Bullish');
+      return { rating: normalizedRating, color: '#34C759' };
+    } else if (simpleBearish) {
+      const normalizedRating = simpleBearish[1].replace(/bearish/gi, 'Bearish');
+      return { rating: normalizedRating, color: '#FF3B30' };
+    }
+    
+    // Final fallback
+    return { rating: 'Analysis Available', color: '#00D4FF' };
+  };
+
   // Calculate optimal portfolio based on data and AI sentiments
   const optimalPortfolioData = useMemo(() => {
     const topTickers = data.slice(0, 10);
@@ -1820,50 +1863,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     } finally {
       setAiAnalysisLoading(null);
     }
-  };
-
-  // Extract sentiment rating from AI analysis
-  const extractSentimentRating = (fullAnalysis: string) => {
-    if (!fullAnalysis) return { rating: 'N/A', color: '#00D4FF' };
-    
-    // Look for the final sentiment rating pattern
-    const sentimentMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*([^`\n]*)/i);
-    
-    if (sentimentMatch) {
-      const rating = sentimentMatch[1].trim();
-      
-      // Normalize and determine color based on rating
-      if (rating.toLowerCase().includes('bullish')) {
-        // Clean up bullish rating - remove extra characters, normalize case
-        const cleanRating = rating.replace(/[*]+/g, '').trim();
-        const normalizedRating = cleanRating.replace(/bullish/gi, 'Bullish');
-        return { rating: normalizedRating, color: '#34C759' }; // Green for bullish
-      } else if (rating.toLowerCase().includes('bearish')) {
-        // Clean up bearish rating - remove extra characters, normalize case
-        const cleanRating = rating.replace(/[*]+/g, '').trim();
-        const normalizedRating = cleanRating.replace(/bearish/gi, 'Bearish');
-        return { rating: normalizedRating, color: '#FF3B30' }; // Red for bearish
-      } else {
-        // Clean up neutral rating - remove extra characters
-        const cleanRating = rating.replace(/[*]+/g, '').trim();
-        return { rating: cleanRating, color: '#00D4FF' }; // Blue for neutral/other
-      }
-    }
-    
-    // Fallback: look for simple bullish/bearish patterns
-    const simpleBullish = fullAnalysis.match(/(\d+\/5\s+bullish)/i);
-    const simpleBearish = fullAnalysis.match(/(\d+\/5\s+bearish)/i);
-    
-    if (simpleBullish) {
-      const normalizedRating = simpleBullish[1].replace(/bullish/gi, 'Bullish');
-      return { rating: normalizedRating, color: '#34C759' };
-    } else if (simpleBearish) {
-      const normalizedRating = simpleBearish[1].replace(/bearish/gi, 'Bearish');
-      return { rating: normalizedRating, color: '#FF3B30' };
-    }
-    
-    // Final fallback
-    return { rating: 'Analysis Available', color: '#00D4FF' };
   };
 
   // Real Polygon API analysis function
