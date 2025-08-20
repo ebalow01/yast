@@ -1665,8 +1665,8 @@ Risk Level: ${stockData.riskLevel || 'Unknown'}
 Volatility: ${stockData.riskVolatility ? (stockData.riskVolatility * 100).toFixed(1) + '%' : 'N/A'}
 Median Dividend: $${stockData.medianDividend?.toFixed(3) || 'N/A'}
 Forward Yield: ${stockData.forwardYield ? stockData.forwardYield.toFixed(2) + '%' : 'N/A'}
-Best Strategy Return: ${stockData.bestReturn?.toFixed(2) || 'N/A'}%
-Win Rate: ${stockData.dcWinRate?.toFixed(1) || 'N/A'}%
+Best Strategy Return: ${stockData.bestReturn ? (stockData.bestReturn * 100).toFixed(2) + '%' : 'N/A'}
+Win Rate: ${stockData.dcWinRate ? (stockData.dcWinRate * 100).toFixed(1) + '%' : 'N/A'}
 Current Rationale: ${stockData.rationale || 'None'}
 
 CHART ANALYSIS REQUEST:
@@ -2450,8 +2450,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               <TableRow key={index}>
                                 <TableCell>{item.ticker}</TableCell>
                                 <TableCell>{item.bestStrategy}</TableCell>
-                                <TableCell>{item.bestReturn?.toFixed(1)}%</TableCell>
-                                <TableCell>{item.dcWinRate?.toFixed(1)}%</TableCell>
+                                <TableCell>{(item.bestReturn * 100)?.toFixed(1)}%</TableCell>
+                                <TableCell>{(item.dcWinRate * 100)?.toFixed(1)}%</TableCell>
                                 <TableCell align="center">
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                                     <Button
@@ -2563,8 +2563,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   <TableRow key={index}>
                                     <TableCell>{item.ticker}</TableCell>
                                     <TableCell>{item.bestStrategy}</TableCell>
-                                    <TableCell>{item.bestReturn?.toFixed(1)}%</TableCell>
-                                    <TableCell>{item.dcWinRate?.toFixed(1)}%</TableCell>
+                                    <TableCell>{(item.bestReturn * 100)?.toFixed(1)}%</TableCell>
+                                    <TableCell>{(item.dcWinRate * 100)?.toFixed(1)}%</TableCell>
                                     <TableCell align="center">
                                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                                         <Button
