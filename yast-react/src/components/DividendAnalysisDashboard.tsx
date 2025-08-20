@@ -1753,7 +1753,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       });
       
       setAiAnalysisResult(analysis);
-      setShowAiModal(true);
+      if (showModal) setShowAiModal(true);
       setSnackbarMessage(`AI analysis complete for ${ticker}`);
       setShowSnackbar(true);
       setWaitingForScreenshot(null);
@@ -1822,7 +1822,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
   };
 
   // Real Polygon API analysis function
-  const analyzeWithPolygon = async (ticker: string) => {
+  const analyzeWithPolygon = async (ticker: string, showModal: boolean = true) => {
     try {
       setAiAnalysisLoading(ticker);
       
@@ -1963,7 +1963,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       });
       
       setAiAnalysisResult(fullAnalysis);
-      setShowAiModal(true);
+      if (showModal) setShowAiModal(true);
       setSnackbarMessage(`AI analysis complete for ${ticker}`);
       setShowSnackbar(true);
       setWaitingForScreenshot(null);
@@ -1994,7 +1994,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Process all tickers sequentially to avoid overwhelming the APIs
       for (const ticker of tickers) {
         try {
-          await analyzeWithPolygon(ticker);
+          await analyzeWithPolygon(ticker, false);
           // Small delay between requests to be respectful to APIs
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
@@ -2031,7 +2031,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Process all tickers sequentially to avoid overwhelming the APIs
       for (const holding of portfolio.holdings) {
         try {
-          await analyzeWithPolygon(holding.ticker);
+          await analyzeWithPolygon(holding.ticker, false);
           // Small delay between requests to be respectful to APIs
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
