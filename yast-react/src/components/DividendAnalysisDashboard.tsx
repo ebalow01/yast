@@ -2556,6 +2556,71 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         </DialogActions>
       </Dialog>
 
+      {/* AI Analysis Modal */}
+      <Dialog 
+        open={showAiModal} 
+        onClose={() => setShowAiModal(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            maxHeight: '80vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <SmartToy sx={{ color: '#00D4FF' }} />
+          AI Market Analysis
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          {aiAnalysisResult ? (
+            <Box sx={{ 
+              fontFamily: 'monospace', 
+              fontSize: '0.9rem',
+              lineHeight: 1.6,
+              whiteSpace: 'pre-wrap',
+              color: 'rgba(255, 255, 255, 0.9)',
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              padding: 2,
+              borderRadius: 1,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              maxHeight: '60vh',
+              overflow: 'auto'
+            }}>
+              {aiAnalysisResult}
+            </Box>
+          ) : (
+            <Typography variant="body2" color="textSecondary">
+              No analysis available
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
+          <Button 
+            onClick={() => setShowAiModal(false)}
+            variant="outlined"
+            sx={{ 
+              color: '#00D4FF',
+              borderColor: '#00D4FF',
+              '&:hover': {
+                borderColor: '#00A8CC',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)'
+              }
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Snackbar for notifications */}
       <Snackbar
         open={showSnackbar}
