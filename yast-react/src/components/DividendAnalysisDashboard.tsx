@@ -2455,91 +2455,24 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       console.log(`📊 VOLUME DEBUG: Latest: ${latestVolume.toLocaleString()}, Avg: ${Math.round(avgVolume).toLocaleString()}, Ratio: ${volumeRatio.toFixed(2)}x, Status: ${volumeStatus}`);
 
       // Enhanced function already provides the dataSummary, no need to rebuild it
-      // const dataSummary = dataSummary;  // Already provided by enhanced function
+      // dataSummary is already provided by enhanced function
 
-== PRICE DATA ==
-- Current Price: $${currentPrice.toFixed(2)}
-- Daily Change: ${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(2)}%
-- 2-Day Change: ${twoDayChange > 0 ? '+' : ''}${twoDayChange.toFixed(2)}%
-- Session High: $${sessionHigh.toFixed(2)}
-- Session Low: $${sessionLow.toFixed(2)}
-- RSI (14-period): ${rsi.toFixed(1)}
-- Price vs 20-period SMA: ${currentPrice > sma20 ? 'above' : 'below'} ($${sma20.toFixed(2)})
-- Price vs 50-period SMA: ${currentPrice > sma50 ? 'above' : 'below'} ($${sma50.toFixed(2)})
-
-== EXTENDED LEVELS ==
-- Previous High: $${previousHigh.toFixed(2)}
-- Previous Low: $${previousLow.toFixed(2)}
-
-== ADVANCED TECHNICAL INDICATORS ==
-- VWAP: $${vwap.toFixed(2)} (Price vs VWAP: ${vwapDeviation > 0 ? '+' : ''}${vwapDeviation.toFixed(1)}%)
-- Volume Above VWAP: ${volumeAboveVwapPct.toFixed(1)}% | Institutional Sentiment: ${institutionalSentiment}
-- Bollinger Bands: Upper $${bbUpper.toFixed(2)} | Lower $${bbLower.toFixed(2)}
-- MACD: Line ${macdLine.toFixed(4)} | Signal ${macdSignal.toFixed(4)} | Histogram ${macdHistogram.toFixed(4)}
-- MACD Status: ${macdStatus}
-- ATR (14): ${atr.toFixed(3)}${volatilityExpansion ? ' 🚨 VOLATILITY EXPANSION!' : ''}
-
-== FIBONACCI RETRACEMENT LEVELS ==
-- 23.6% Retracement: $${fib236.toFixed(2)}
-- 38.2% Retracement: $${fib382.toFixed(2)}
-- 50.0% Retracement: $${fib50.toFixed(2)}
-- 61.8% Retracement: $${fib618.toFixed(2)}
-
-== KEY SUPPORT/RESISTANCE LEVELS (most tested) ==
-${significantLevels.join('\n')}
-
-== RECENT CANDLESTICK PATTERNS (Bars with signals) ==
-${recentPatterns.length > 0 ? recentPatterns.join('\n') : 'No significant patterns in recent bars'}
-Pattern Strength Score: ${patternStrength.toFixed(1)}/10
-
-== VOLUME ANALYSIS ==
-- Volume (3-bar median): ${latestVolume.toLocaleString()}
-- 20-Bar Median: ${Math.round(avgVolume).toLocaleString()}
-- Volume Ratio: ${volumeRatio.toFixed(2)}x median (${volumeStatus})
-- Volume Trend: ${volumeTrend}
-- Volume Acceleration: ${volumeAcceleration}
-- Key Level Volume: ${volumeAtKeyLevels}
-- Volume-Price Divergence: ${volumeDivergence}
-
-Data points: ${results.length} 15-minute bars (${Math.floor(results.length/26)} trading days)`;
-
-      // Build the full prompt that will be sent to AI
-      const fullPrompt = `Analyze this real market data for ${ticker}:
-
-${dataSummary}
-
-Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS in 1 week and 2 weeks.
-
-CRITICAL: Your sentiment rating MUST align with your price targets. If you predict higher prices, you cannot be bearish. If you predict lower prices, you cannot be bullish.
-
-SENTIMENT RATING - Use this exact format:
-SENTIMENT: [Bullish 5/5 | Bullish 4/5 | Bullish 3/5 | Bullish 2/5 | Bullish 1/5 | Neutral | Bearish 1/5 | Bearish 2/5 | Bearish 3/5 | Bearish 4/5 | Bearish 5/5]
-
-Please provide a comprehensive technical analysis with SPECIFIC PRICE TARGETS in 1 week and 2 weeks.
-
-CRITICAL: Your sentiment rating MUST align with your price targets. If both targets are above current price, you must give a bullish rating. If below, bearish rating. If mixed, neutral rating.
-
-DO NOT use vague terms like "wait for RSI" or "SMA crossings". Give me actual dollar amounts and specific price levels based on the current price of $${currentPrice.toFixed(2)}.
-
-FINAL CONSISTENCY CHECK:
-Before submitting, verify:
-- Does my sentiment rating match my price targets?
-- Does my reasoning support both the rating AND the targets?
-- Have I explained any apparent contradictions (like oversold bounces in downtrends)?`;
+      // Enhanced function already did the analysis and provided fullAnalysis
+      // No need to rebuild prompt or call Claude again
       
-      // Log the complete prompt and data being sent to AI
-      console.log('🤖 ========== AI ANALYSIS PROMPT START ==========');
+      // Log the enhanced analysis details
+      console.log('🚀 ========== ENHANCED ANALYSIS COMPLETED ==========');
       console.log('📊 Ticker:', ticker);
       console.log('💰 Current Price:', currentPrice.toFixed(2));
       console.log('📈 RSI:', rsi.toFixed(1));
-      console.log('🕯️ Pattern Count:', patternCount);
-      console.log('💪 Pattern Strength:', patternStrength.toFixed(1));
       console.log('📉 Daily Change:', dailyChange.toFixed(1) + '%');
       console.log('📊 SMA20:', sma20.toFixed(2));
       console.log('📊 SMA50:', sma50.toFixed(2));
-      console.log('\n📋 FULL PROMPT BEING SENT (', fullPrompt.length, 'characters):\n');
-      console.log(fullPrompt);
-      console.log('🤖 ========== AI ANALYSIS PROMPT END ==========\n');
+      console.log('🎯 Support:', techData.primary_support.toFixed(2), `(${techData.support_tests} tests)`);
+      console.log('🎯 Resistance:', techData.primary_resistance.toFixed(2), `(${techData.resistance_tests} tests)`);
+      console.log('💹 VaR (95%):', techData.var_95.toFixed(2));
+      console.log('📊 Sharpe Ratio:', techData.sharpe_ratio.toFixed(2));
+      console.log('🚀 ========== ENHANCED ANALYSIS END ==========\n');
       
       // Our enhanced polygon-analysis function already did the Claude analysis
       // Extract sentiment from the fullAnalysis (already processed)
