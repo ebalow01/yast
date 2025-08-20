@@ -2011,6 +2011,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       setShowSnackbar(true);
     } finally {
       setIsRefreshingAll(false);
+      setShowAiModal(false); // Close AI modal when refresh completes
     }
   };
 
@@ -2047,6 +2048,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       setShowSnackbar(true);
     } finally {
       setIsRefreshingAll(false);
+      setShowAiModal(false); // Close AI modal when refresh completes
     }
   };
 
