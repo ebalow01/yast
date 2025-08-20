@@ -1798,7 +1798,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // This ensures API keys stay secure on the server side
       const requestBody = { ticker };
       
-      const polygonResponse = await fetch('/.netlify/functions/polygon-data', {
+      const polygonResponse = await fetch('/.netlify/functions/polygon-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1818,78 +1818,30 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         throw new Error(errorData.error || `Polygon API error: ${polygonResponse.status}`);
       }
       
-      const polygonData = JSON.parse(responseText);
-      if (!polygonData.results || polygonData.results.length === 0) {
-        throw new Error('No data available from Polygon API');
+      const enhancedAnalysisData = JSON.parse(responseText);
+      if (!enhancedAnalysisData.techData || !enhancedAnalysisData.fullAnalysis) {
+        throw new Error('No enhanced analysis data available');
       }
 
-      // Process the real 15-minute market data
-      const results = polygonData.results;
-      const latest = results[results.length - 1];
+      // Use the enhanced technical analysis data from our new function
+      const techData = enhancedAnalysisData.techData;
+      const fullAnalysis = enhancedAnalysisData.fullAnalysis;
+      const shortOutlook = enhancedAnalysisData.shortOutlook;
+      const dataSummary = enhancedAnalysisData.dataSummary;
       
-      // For 15-minute data, calculate recent performance
-      const currentPrice = latest.c;
-      const oneDayAgo = results[results.length - 26] || results[0]; // ~26 15-min bars = 1 trading day
-      const twoDaysAgo = results[results.length - 52] || results[0]; // ~52 15-min bars = 2 trading days
-      
-      const dailyChange = oneDayAgo ? ((currentPrice - oneDayAgo.c) / oneDayAgo.c) * 100 : 0;
-      const twoDayChange = twoDaysAgo ? ((currentPrice - twoDaysAgo.c) / twoDaysAgo.c) * 100 : 0;
+      // Extract key values for backwards compatibility
+      const currentPrice = techData.current_price;
+      const dailyChange = techData.daily_change;
+      const twoDayChange = techData.two_day_change;
 
-      // Calculate traditional RSI using Wilder's smoothing (exponentially weighted moving average)
-      let rsi = 0;
-      if (results.length >= 15) { // Need 15 bars: 1 + 14 periods
-        const prices = results.slice(-Math.min(results.length, 50)).map((r: any) => r.c); // Use up to 50 bars for better smoothing
-        const changes = [];
-        
-        // Calculate price changes
-        for (let i = 1; i < prices.length; i++) {
-          changes.push(prices[i] - prices[i - 1]);
-        }
-        
-        // Initial simple averages for first 14 periods
-        let gains = 0;
-        let losses = 0;
-        
-        for (let i = 0; i < 14; i++) {
-          if (changes[i] > 0) {
-            gains += changes[i];
-          } else {
-            losses += Math.abs(changes[i]);
-          }
-        }
-        
-        let avgGain = gains / 14;
-        let avgLoss = losses / 14;
-        
-        // Apply Wilder's smoothing for subsequent periods
-        for (let i = 14; i < changes.length; i++) {
-          const gain = changes[i] > 0 ? changes[i] : 0;
-          const loss = changes[i] < 0 ? Math.abs(changes[i]) : 0;
-          
-          // Wilder's smoothing: new_avg = ((old_avg * 13) + current_value) / 14
-          avgGain = ((avgGain * 13) + gain) / 14;
-          avgLoss = ((avgLoss * 13) + loss) / 14;
-        }
-        
-        // Calculate RSI
-        if (avgLoss > 0) {
-          const rs = avgGain / avgLoss;
-          rsi = 100 - (100 / (1 + rs));
-        } else {
-          rsi = 100; // All gains, no losses
-        }
-      }
+      // Extract additional values for backwards compatibility
+      const rsi = techData.rsi;
 
-      // Calculate SMAs with 15-minute data (shorter periods for intraday)
-      const sma20 = results.length >= 20 ? 
-        results.slice(-20).reduce((sum: number, r: any) => sum + r.c, 0) / 20 : currentPrice; // ~5 hour SMA
-      const sma50 = results.length >= 50 ? 
-        results.slice(-50).reduce((sum: number, r: any) => sum + r.c, 0) / 50 : currentPrice; // ~12.5 hour SMA
-
-      // Get latest trading session high/low
-      const recentBars = results.slice(-26); // Last trading day
-      const sessionHigh = Math.max(...recentBars.map((r: any) => r.h));
-      const sessionLow = Math.min(...recentBars.map((r: any) => r.l));
+      // Extract additional technical data for backwards compatibility
+      const sma20 = techData.sma20;
+      const sma50 = techData.sma50;
+      const sessionHigh = techData.session_high;
+      const sessionLow = techData.session_low;
 
       // Previous significant highs/lows (beyond current session)
       const extendedBars = results.length >= 52 ? results.slice(0, -26) : [];
@@ -2502,8 +2454,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Debug volume calculations
       console.log(`📊 VOLUME DEBUG: Latest: ${latestVolume.toLocaleString()}, Avg: ${Math.round(avgVolume).toLocaleString()}, Ratio: ${volumeRatio.toFixed(2)}x, Status: ${volumeStatus}`);
 
-      // Create enhanced data summary with comprehensive preprocessing
-      const dataSummary = `COMPREHENSIVE TECHNICAL ANALYSIS for ${ticker}:
+      // Enhanced function already provides the dataSummary, no need to rebuild it
+      // const dataSummary = dataSummary;  // Already provided by enhanced function
 
 == PRICE DATA ==
 - Current Price: $${currentPrice.toFixed(2)}
@@ -2589,42 +2541,23 @@ Before submitting, verify:
       console.log(fullPrompt);
       console.log('🤖 ========== AI ANALYSIS PROMPT END ==========\n');
       
-      // Use our existing claude-analysis Netlify function
-      const response = await fetch('/.netlify/functions/claude-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          prompt: fullPrompt
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Claude analysis failed: ${response.status}`);
-      }
-
-      const result = await response.json();
-      const fullAnalysis = result.analysis;
-      
-      // Extract sentiment classification from the response (now includes rating like "Bullish 4/5")
-      const sentimentMatch = fullAnalysis.match(/SENTIMENT:\s*\[?([^\]]+)\]?/i);
+      // Our enhanced polygon-analysis function already did the Claude analysis
+      // Extract sentiment from the fullAnalysis (already processed)
+      const sentimentMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*([^`\n]*)/i);
       let sentiment = 'Neutral';
       if (sentimentMatch) {
         sentiment = sentimentMatch[1].trim();
-      }
-      
-      // Extract short outlook from the real analysis
-      const outlookMatch = fullAnalysis.match(/1\.\s*\*\*Short-term outlook[^:]*:\*\*\s*([^.]*\.?[^1-9]*)/i);
-      let shortOutlook = `${ticker} analysis: RSI ${rsi.toFixed(1)}, price $${currentPrice.toFixed(2)} (${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(1)}% daily)`;
-      
-      if (outlookMatch) {
-        shortOutlook = outlookMatch[1].replace(/\n.*$/s, '').trim();
-        shortOutlook = shortOutlook.replace(/^\s*-?\s*/, '').replace(/\*\*/g, '');
-        if (shortOutlook.length > 100) {
-          shortOutlook = shortOutlook.substring(0, 97) + '...';
+      } else {
+        // Fallback sentiment detection
+        if (fullAnalysis.toLowerCase().includes('bullish')) {
+          sentiment = 'Bullish';
+        } else if (fullAnalysis.toLowerCase().includes('bearish')) {
+          sentiment = 'Bearish';
         }
       }
+      
+      // shortOutlook is already extracted by our enhanced function
+      // No need to re-process it
 
       const analysisData = {
         ticker,
