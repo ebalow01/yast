@@ -1843,346 +1843,77 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       const sessionHigh = techData.session_high;
       const sessionLow = techData.session_low;
 
-      // Previous significant highs/lows (beyond current session)
-      const extendedBars = results.length >= 52 ? results.slice(0, -26) : [];
-      const previousHigh = extendedBars.length > 0 ? 
-        Math.max(...extendedBars.slice(-50).map((r: any) => r.h)) : sessionHigh;
-      const previousLow = extendedBars.length > 0 ? 
-        Math.min(...extendedBars.slice(-50).map((r: any) => r.l)) : sessionLow;
-
-      // Volume-Weighted Average Price (VWAP) with Enhanced Analytics
-      let vwap = 0;
-      let vwapDeviation = 0;
-      let vwapSlope = "N/A";
-      let volumeAboveVwapPct = 0;
-      let institutionalSentiment = "N/A";
+      // Use enhanced technical data from server-side processing
+      const vwap = techData.vwap || 0;
+      const vwapDeviation = techData.vwap_deviation || 0;
+      const vwapSlope = techData.vwap_slope || "N/A";
+      const volumeAboveVwapPct = techData.volume_above_vwap_pct || 0;
+      const institutionalSentiment = techData.institutional_sentiment || "N/A";
       
-      if (results.length >= 26) {
-        const vwapBars = results.slice(-26); // Current session
-        const totalVolume = vwapBars.reduce((sum: number, r: any) => sum + r.v, 0);
-        if (totalVolume > 0) {
-          const vwapSum = vwapBars.reduce((sum: number, r: any) => 
-            sum + ((r.h + r.l + r.c) / 3 * r.v), 0);
-          vwap = vwapSum / totalVolume;
-          vwapDeviation = ((currentPrice - vwap) / vwap) * 100;
-          
-          // VWAP Slope Analysis (last 5 periods)
-          if (vwapBars.length >= 5) {
-            const vwapValues: number[] = [];
-            for (let i = vwapBars.length - 4; i <= vwapBars.length; i++) {
-              const sessionBars = vwapBars.slice(0, i);
-              const sessionVolume = sessionBars.reduce((sum: number, r: any) => sum + r.v, 0);
-              if (sessionVolume > 0) {
-                const sessionVwapSum = sessionBars.reduce((sum: number, r: any) => 
-                  sum + ((r.h + r.l + r.c) / 3 * r.v), 0);
-                vwapValues.push(sessionVwapSum / sessionVolume);
-              }
-            }
-            
-            if (vwapValues.length >= 5) {
-              const recentVwap = vwapValues.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
-              const prevVwap = vwapValues.slice(0, 2).reduce((sum, val) => sum + val, 0) / 2;
-              const vwapSlopePct = ((recentVwap - prevVwap) / prevVwap) * 100;
-              
-              if (vwapSlopePct > 0.2) {
-                vwapSlope = `RISING (+${vwapSlopePct.toFixed(1)}%)`;
-              } else if (vwapSlopePct < -0.2) {
-                vwapSlope = `FALLING (${vwapSlopePct.toFixed(1)}%)`;
-              } else {
-                vwapSlope = `FLAT (${vwapSlopePct >= 0 ? '+' : ''}${vwapSlopePct.toFixed(1)}%)`;
-              }
-            }
-          }
-          
-          // Volume above/below VWAP analysis
-          let volumeAboveVwap = 0;
-          let volumeBelowVwap = 0;
-          for (const bar of vwapBars) {
-            const typicalPrice = (bar.h + bar.l + bar.c) / 3;
-            if (typicalPrice > vwap) {
-              volumeAboveVwap += bar.v;
-            } else {
-              volumeBelowVwap += bar.v;
-            }
-          }
-          
-          const totalSessionVolume = volumeAboveVwap + volumeBelowVwap;
-          if (totalSessionVolume > 0) {
-            volumeAboveVwapPct = (volumeAboveVwap / totalSessionVolume) * 100;
-            institutionalSentiment = volumeAboveVwapPct > 55 ? "BULLISH" : 
-                                   volumeAboveVwapPct < 45 ? "BEARISH" : "NEUTRAL";
-          }
+      const bbUpper = techData.bb_upper || 0;
+      const bbLower = techData.bb_lower || 0;
+      const bbPosition = techData.bb_position || "N/A";
+      
+      const macdLine = techData.macd_line || 0;
+      const macdSignal = techData.macd_signal || 0;
+      const macdHistogram = techData.macd_histogram || 0;
+      const macdStatus = techData.macd_status || "N/A";
+      
+      const obv = techData.obv || 0;
+      const obvTrend = techData.obv_trend || "N/A";
+      
+      const stochK = techData.stoch_k || 0;
+      const stochD = techData.stoch_d || 0;
+      const stochFastK = techData.stoch_fast_k || 0;
+      const stochStatus = techData.stoch_status || "N/A";
+      const stochType = techData.stoch_type || "N/A";
+
+      // Use enhanced technical data from server-side processing
+      const atr = techData.atr || 0;
+      const atrTrend = techData.atr_trend || "N/A";
+      const volatilityExpansion = techData.volatility_expansion || false;
+      
+      const fib236 = techData.fib_236 || 0;
+      const fib382 = techData.fib_382 || 0;
+      const fib50 = techData.fib_50 || 0;
+      const fib618 = techData.fib_618 || 0;
+
+      const significantLevels = techData.significant_levels || [];
+      const recentPatterns = techData.recent_patterns || [];
+      const patternStrength = techData.pattern_strength || 0;
+      
+      const latestVolume = techData.latest_volume || 0;
+      const avgVolume = techData.avg_volume || 0;
+      const volumeRatio = techData.volume_ratio || 1;
+      const volumeStatus = techData.volume_status || "Normal";
+
+      // Extract sentiment from analysis
+      let sentiment = 'Neutral';
+      const sentimentMatch = fullAnalysis.match(/^(Bullish|Bearish|Neutral)/i);
+      if (sentimentMatch) {
+        sentiment = sentimentMatch[1].trim();
+      } else {
+        // Fallback sentiment detection
+        if (fullAnalysis.toLowerCase().includes('bullish')) {
+          sentiment = 'Bullish';
+        } else if (fullAnalysis.toLowerCase().includes('bearish')) {
+          sentiment = 'Bearish';
         }
       }
-
-      // Bollinger Bands (20-period)
-      let bbUpper = 0;
-      let bbLower = 0;
-      let bbPosition = "N/A";
       
-      if (results.length >= 20) {
-        const bbPrices = results.slice(-20).map((r: any) => r.c);
-        const bbSma = bbPrices.reduce((sum: number, p: number) => sum + p, 0) / bbPrices.length;
-        const variance = bbPrices.reduce((sum: number, p: number) => sum + Math.pow(p - bbSma, 2), 0) / bbPrices.length;
-        const bbStd = Math.sqrt(variance);
-        
-        bbUpper = bbSma + (2 * bbStd);
-        bbLower = bbSma - (2 * bbStd);
-        
-        // Determine position relative to bands
-        if (currentPrice >= bbUpper) {
-          bbPosition = "AT/ABOVE UPPER (Overbought)";
-        } else if (currentPrice <= bbLower) {
-          bbPosition = "AT/BELOW LOWER (Oversold)";
-        } else {
-          const bbPct = ((currentPrice - bbLower) / (bbUpper - bbLower)) * 100;
-          bbPosition = `MIDDLE (${Math.round(bbPct)}% of band)`;
-        }
-      }
+      // shortOutlook is already extracted by our enhanced function
+      // No need to re-process it
 
-      // MACD (12, 26, 9)
-      let macdLine = 0;
-      let macdSignal = 0;
-      let macdHistogram = 0;
-      let macdStatus = "N/A";
+      const analysisData = {
+        ticker,
+        timestamp: new Date().toISOString(),
+        sentiment,
+        shortOutlook,
+        fullAnalysis,
+        dataSummary
+      };
       
-      if (results.length >= 35) {
-        const prices = results.slice(-50).map((r: any) => r.c); // Use up to 50 bars
-        
-        // Calculate EMA function
-        const calculateEma = (data: number[], period: number): number => {
-          if (data.length < period) return data[data.length - 1] || 0;
-          
-          const multiplier = 2 / (period + 1);
-          let ema = data[period - 1]; // Start with SMA
-          
-          for (let i = period; i < data.length; i++) {
-            ema = (data[i] * multiplier) + (ema * (1 - multiplier));
-          }
-          return ema;
-        };
-        
-        const ema12 = calculateEma(prices, 12);
-        const ema26 = calculateEma(prices, 26);
-        macdLine = ema12 - ema26;
-        
-        // Calculate MACD signal (9-period EMA of MACD line)
-        if (results.length >= 44) {
-          const macdValues = [];
-          for (let i = 26; i < prices.length; i++) {
-            const tempEma12 = calculateEma(prices.slice(0, i + 1), 12);
-            const tempEma26 = calculateEma(prices.slice(0, i + 1), 26);
-            macdValues.push(tempEma12 - tempEma26);
-          }
-          
-          if (macdValues.length >= 9) {
-            macdSignal = calculateEma(macdValues, 9);
-            macdHistogram = macdLine - macdSignal;
-            
-            // Determine MACD status
-            if (macdLine > macdSignal && macdHistogram > 0) {
-              macdStatus = "BULLISH (MACD > Signal)";
-            } else if (macdLine < macdSignal && macdHistogram < 0) {
-              macdStatus = "BEARISH (MACD < Signal)";
-            } else {
-              macdStatus = "NEUTRAL/CONVERGING";
-            }
-          }
-        }
-      }
-
-      // On-Balance Volume (OBV)
-      let obv = 0;
-      let obvTrend = "N/A";
-      if (results.length >= 10) {
-        const obvValues: number[] = [];
-        let currentObv = 0;
-        
-        for (let i = 1; i < results.length; i++) {
-          const prevClose = results[i-1].c;
-          const currClose = results[i].c;
-          const currVolume = results[i].v;
-          
-          if (currClose > prevClose) {
-            currentObv += currVolume;
-          } else if (currClose < prevClose) {
-            currentObv -= currVolume;
-          }
-          // If close == prevClose, OBV stays same
-          
-          obvValues.push(currentObv);
-        }
-        
-        obv = obvValues[obvValues.length - 1]; // Latest OBV
-        
-        // Determine OBV trend (compare last 5 vs previous 5)
-        if (obvValues.length >= 10) {
-          const recentObv = obvValues.slice(-5).reduce((sum, val) => sum + val, 0) / 5;
-          const prevObv = obvValues.slice(-10, -5).reduce((sum, val) => sum + val, 0) / 5;
-          if (recentObv > prevObv * 1.05) {
-            obvTrend = "BULLISH (Rising)";
-          } else if (recentObv < prevObv * 0.95) {
-            obvTrend = "BEARISH (Falling)";
-          } else {
-            obvTrend = "NEUTRAL (Sideways)";
-          }
-        }
-      }
-
-      // Stochastic Oscillator (14,3,3) - Full vs Fast
-      let stochK = 0;
-      let stochD = 0;
-      let stochFastK = 0;
-      let stochStatus = "N/A";
-      let stochType = "N/A";
-      
-      if (results.length >= 14) {
-        // Calculate %K (Fast Stochastic)
-        const period14Bars = results.slice(-14);
-        const lowestLow = Math.min(...period14Bars.map(r => r.l));
-        const highestHigh = Math.max(...period14Bars.map(r => r.h));
-        const currentClose = results[results.length - 1].c;
-        
-        if (highestHigh !== lowestLow) {
-          stochFastK = ((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100;
-        }
-        
-        // For Full Stochastic, we need 3-period SMA of Fast %K
-        if (results.length >= 16) {
-          const fastKValues: number[] = [];
-          for (let i = 14; i <= results.length; i++) {
-            const periodBars = results.slice(i-14, i);
-            const low = Math.min(...periodBars.map(r => r.l));
-            const high = Math.max(...periodBars.map(r => r.h));
-            const close = periodBars[periodBars.length - 1].c;
-            if (high !== low) {
-              const fastK = ((close - low) / (high - low)) * 100;
-              fastKValues.push(fastK);
-            }
-          }
-          
-          if (fastKValues.length >= 3) {
-            // Full %K = 3-period SMA of Fast %K
-            stochK = fastKValues.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
-            
-            // %D = 3-period SMA of Full %K
-            if (fastKValues.length >= 6) {
-              const kValuesForD: number[] = [];
-              for (let j = 0; j <= fastKValues.length - 3; j++) {
-                kValuesForD.push(fastKValues.slice(j, j + 3).reduce((sum, val) => sum + val, 0) / 3);
-              }
-              
-              if (kValuesForD.length >= 3) {
-                stochD = kValuesForD.slice(-3).reduce((sum, val) => sum + val, 0) / 3;
-              }
-            }
-          }
-        }
-        
-        // Determine stochastic status
-        if (stochK > 0 && stochD > 0) {
-          if (stochK >= 80) {
-            stochStatus = "OVERBOUGHT";
-            stochType = "Full Stochastic";
-          } else if (stochK <= 20) {
-            stochStatus = "OVERSOLD";
-            stochType = "Full Stochastic";
-          } else if (stochK > stochD) {
-            stochStatus = "BULLISH CROSSOVER";
-            stochType = "Full Stochastic";
-          } else if (stochK < stochD) {
-            stochStatus = "BEARISH CROSSOVER";
-            stochType = "Full Stochastic";
-          } else {
-            stochStatus = "NEUTRAL";
-            stochType = "Full Stochastic";
-          }
-        } else if (stochFastK > 0) {
-          stochType = "Fast Stochastic";
-          if (stochFastK >= 80) {
-            stochStatus = "OVERBOUGHT (Fast)";
-          } else if (stochFastK <= 20) {
-            stochStatus = "OVERSOLD (Fast)";
-          } else {
-            stochStatus = "NEUTRAL (Fast)";
-          }
-        }
-      }
-
-      // Average True Range (ATR) with Volatility Expansion
-      let atr = 0;
-      let atrTrend = "N/A";
-      let volatilityExpansion = false;
-      
-      if (results.length >= 14) {
-        const trueRanges: number[] = [];
-        
-        for (let i = 1; i < results.length; i++) {
-          const high = results[i].h;
-          const low = results[i].l;
-          const prevClose = results[i-1].c;
-          
-          const tr1 = high - low;
-          const tr2 = Math.abs(high - prevClose);
-          const tr3 = Math.abs(low - prevClose);
-          
-          const trueRange = Math.max(tr1, tr2, tr3);
-          trueRanges.push(trueRange);
-        }
-        
-        // ATR = 14-period average of True Range
-        if (trueRanges.length >= 14) {
-          atr = trueRanges.slice(-14).reduce((sum, val) => sum + val, 0) / 14;
-          
-          // Check for volatility expansion (recent ATR vs previous ATR)
-          if (trueRanges.length >= 28) {
-            const recentAtr = trueRanges.slice(-14).reduce((sum, val) => sum + val, 0) / 14;
-            const prevAtr = trueRanges.slice(-28, -14).reduce((sum, val) => sum + val, 0) / 14;
-            
-            if (recentAtr > prevAtr * 1.5) {
-              atrTrend = "EXPANDING (High Volatility)";
-              volatilityExpansion = true;
-            } else if (recentAtr < prevAtr * 0.7) {
-              atrTrend = "CONTRACTING (Low Volatility)";
-            } else {
-              atrTrend = "STABLE";
-            }
-          }
-        }
-      }
-
-      // Enhanced technical analysis preprocessing (like Claude does)
-      
-      // Fibonacci retracement levels
-      const range = sessionHigh - sessionLow;
-      const fib236 = sessionLow + (range * 0.236);
-      const fib382 = sessionLow + (range * 0.382);
-      const fib50 = sessionLow + (range * 0.5);
-      const fib618 = sessionLow + (range * 0.618);
-
-      // Identify key support and resistance from recent price action
-      const supportResistanceBars = results.slice(-30);
-      const highs = supportResistanceBars.map((r: any) => r.h);
-      const lows = supportResistanceBars.map((r: any) => r.l);
-
-      // Find most tested levels (price areas hit multiple times)
-      const priceHits: Record<number, number> = {};
-      highs.concat(lows).forEach(price => {
-        const roundedPrice = Math.round(price * 4) / 4; // Round to nearest quarter
-        priceHits[roundedPrice] = (priceHits[roundedPrice] || 0) + 1;
-      });
-
-      const significantLevels = Object.entries(priceHits)
-        .filter(([price, hits]) => hits >= 2)
-        .sort((a, b) => Number(b[1]) - Number(a[1]))
-        .slice(0, 6)
-        .map(([price, hits]) => {
-          const level = parseFloat(price);
-          const type = level > currentPrice ? 'RESISTANCE' : 'SUPPORT';
-          return `$${level.toFixed(2)} (${hits} hits) - ${type}`;
-        });
-
-      // Candlestick pattern analysis - only during regular trading hours (9:30 AM - 4:00 PM EST)
+      // Save the analysis result
       // Filter bars to only include regular trading hours
       const tradingHoursBars = results.filter((bar: any) => {
         const timestamp = bar.t;
