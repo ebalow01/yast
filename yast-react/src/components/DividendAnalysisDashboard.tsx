@@ -60,7 +60,8 @@ import {
   Refresh,
   Search,
   ContentCopy,
-  SmartToy
+  SmartToy,
+  Clear
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -1172,13 +1173,26 @@ export default function DividendAnalysisDashboard() {
   const [data, setData] = useState<DividendData[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [polygonData, setPolygonData] = useState<any>({});
+  const [polygonLoading, setPolygonLoading] = useState(false);
   
-  // Portfolio Management State
-  const [portfolio, setPortfolio] = useState<UserPortfolio>({
-    id: 'default',
-    name: 'My Portfolio',
-    holdings: [],
-    lastUpdated: new Date().toISOString()
+  // Portfolio Management State with localStorage persistence
+  const [portfolio, setPortfolio] = useState<UserPortfolio>(() => {
+    try {
+      const savedPortfolio = localStorage.getItem('userPortfolio');
+      if (savedPortfolio) {
+        return JSON.parse(savedPortfolio);
+      }
+    } catch (error) {
+      console.error('Failed to load portfolio from localStorage:', error);
+    }
+    // Default portfolio if nothing in localStorage
+    return {
+      id: 'default',
+      name: 'My Portfolio',
+      holdings: [],
+      lastUpdated: new Date().toISOString()
+    };
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newTicker, setNewTicker] = useState('');
@@ -1208,14 +1222,9 @@ export default function DividendAnalysisDashboard() {
   });
   
   // Portfolio table sorting state
-  const [sortField, setSortField] = useState<string>('');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<string>('totalReturn');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  // Quick Analysis state
-  const [quickAnalysisOpen, setQuickAnalysisOpen] = useState(false);
-  const [quickTicker, setQuickTicker] = useState('');
-  const [quickAnalysisResult, setQuickAnalysisResult] = useState('');
-  const [quickAnalysisLoading, setQuickAnalysisLoading] = useState(false);
 
   // Accessibility helpers - Pattern-based indicators for colorblind users
   const getPerformanceIcon = (value: number, type: 'return' | 'risk' = 'return') => {
@@ -1242,87 +1251,6 @@ export default function DividendAnalysisDashboard() {
   const [portfolioMetrics, setPortfolioMetrics] = useState<any>(null);
   const [realtimeData, setRealtimeData] = useState<any>(null);
   const [useRealtimeData, setUseRealtimeData] = useState(true);
-
-  const extractSentimentRating = (fullAnalysis: string) => {
-    if (!fullAnalysis) return { rating: 'N/A', color: '#00D4FF' };
-    
-    // Look for the final sentiment rating pattern
-    const sentimentMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*([^`\n]*)/i);
-    
-    if (sentimentMatch) {
-      const rating = sentimentMatch[1].trim();
-      
-      // Normalize and determine color based on rating
-      if (rating.toLowerCase().includes('bullish')) {
-        // Clean up bullish rating - remove extra characters, normalize case
-        const cleanRating = rating.replace(/[*]+/g, '').trim();
-        const normalizedRating = cleanRating.replace(/bullish/gi, 'Bullish');
-        return { rating: normalizedRating, color: '#34C759' }; // Green for bullish
-      } else if (rating.toLowerCase().includes('bearish')) {
-        // Clean up bearish rating - remove extra characters, normalize case
-        const cleanRating = rating.replace(/[*]+/g, '').trim();
-        const normalizedRating = cleanRating.replace(/bearish/gi, 'Bearish');
-        return { rating: normalizedRating, color: '#FF3B30' }; // Red for bearish
-      } else {
-        // Clean up neutral rating - remove extra characters
-        const cleanRating = rating.replace(/[*]+/g, '').trim();
-        return { rating: cleanRating, color: '#00D4FF' }; // Blue for neutral/other
-      }
-    }
-    
-    // Fallback: look for simple bullish/bearish patterns
-    const simpleBullish = fullAnalysis.match(/(\d+\/5\s+bullish)/i);
-    const simpleBearish = fullAnalysis.match(/(\d+\/5\s+bearish)/i);
-    
-    if (simpleBullish) {
-      const normalizedRating = simpleBullish[1].replace(/bullish/gi, 'Bullish');
-      return { rating: normalizedRating, color: '#34C759' };
-    } else if (simpleBearish) {
-      const normalizedRating = simpleBearish[1].replace(/bearish/gi, 'Bearish');
-      return { rating: normalizedRating, color: '#FF3B30' };
-    }
-    
-    // Final fallback
-    return { rating: 'Analysis Available', color: '#00D4FF' };
-  };
-
-  // Calculate optimal portfolio based on data and AI sentiments
-  const optimalPortfolioData = useMemo(() => {
-    const topTickers = data.slice(0, 10);
-    const remainingTickers = data.slice(10);
-    
-    // Remove bearish from top 10
-    const nonBearishTop = topTickers.filter(item => {
-      if (aiOutlooks[item.ticker]?.fullAnalysis) {
-        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-        return !sentiment.rating.toLowerCase().includes('bearish');
-      }
-      return true; // Include tickers without AI analysis
-    });
-    
-    // Find top 5 by return from remaining tickers that are bullish
-    const top5ReturnsTickers = [...data].sort((a, b) => (b.bestReturn || 0) - (a.bestReturn || 0)).slice(0, 5);
-    const bullishFromRemaining = remainingTickers.filter(item => {
-      // Must be in top 5 returns and bullish
-      const isInTop5Returns = top5ReturnsTickers.some(topItem => topItem.ticker === item.ticker);
-      if (!isInTop5Returns) return false;
-      
-      if (aiOutlooks[item.ticker]?.fullAnalysis) {
-        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-        return sentiment.rating.toLowerCase().includes('bullish');
-      }
-      return false; // Only include if we have AI analysis showing bullish
-    });
-    
-    // Combine and limit to reasonable portfolio size
-    return [...nonBearishTop, ...bullishFromRemaining].slice(0, 12);
-  }, [data, aiOutlooks, portfolioUpdateTrigger]);
-
-  // Calculate excluded tickers based on optimal portfolio
-  const excludedTickersData = useMemo(() => {
-    const optimalTickers = optimalPortfolioData.map(item => item.ticker);
-    return data.filter(item => !optimalTickers.includes(item.ticker));
-  }, [data, optimalPortfolioData]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -1461,6 +1389,49 @@ export default function DividendAnalysisDashboard() {
     loadData();
   }, []);
 
+  // Load Polygon data asynchronously after main data loads
+  useEffect(() => {
+    const loadPolygonData = async () => {
+      if (data.length > 0 && !loading) {
+        const tickers = data.map(item => item.ticker);
+        setPolygonLoading(true);
+        try {
+          console.log('Fetching Polygon batch data for', tickers.length, 'tickers (async)');
+          const polygonResponse = await fetch('/.netlify/functions/polygon-batch-data', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ tickers })
+          });
+          
+          if (polygonResponse.ok) {
+            const polygonResults = await polygonResponse.json();
+            console.log('Polygon data fetched:', Object.keys(polygonResults).length, 'tickers');
+            setPolygonData(polygonResults);
+          } else {
+            console.error('Failed to fetch Polygon data:', polygonResponse.statusText);
+          }
+        } catch (error) {
+          console.error('Error fetching Polygon data:', error);
+        } finally {
+          setPolygonLoading(false);
+        }
+      }
+    };
+
+    loadPolygonData();
+  }, [data, loading]);
+
+  // Save portfolio to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('userPortfolio', JSON.stringify(portfolio));
+    } catch (error) {
+      console.error('Failed to save portfolio to localStorage:', error);
+    }
+  }, [portfolio]);
+
   // Auto-refresh portfolio with AI filtering once data and AI outlooks are loaded
   useEffect(() => {
     if (data.length > 0 && Object.keys(aiOutlooks).length > 0 && !loading) {
@@ -1487,18 +1458,9 @@ export default function DividendAnalysisDashboard() {
     // Remove data and aiOutlooks from dependencies to avoid circular updates
   }, [loading]);
 
-  // Portfolio Management - Load from cookies on mount
+  // Portfolio Management - Initialize sample data if portfolio is empty and data is loaded
   useEffect(() => {
-    const savedPortfolio = getCookie('userPortfolio');
-    if (savedPortfolio) {
-      try {
-        const parsedPortfolio = JSON.parse(savedPortfolio);
-        setPortfolio(parsedPortfolio);
-        updatePortfolioValues(parsedPortfolio);
-      } catch (error) {
-        console.error('Error loading portfolio from cookies:', error);
-      }
-    } else if (data.length > 0) {
+    if (portfolio.holdings.length === 0 && data.length > 0) {
       // Initialize with sample portfolio if no saved portfolio exists
       const sampleHoldings: PortfolioHolding[] = [
         {
@@ -1542,9 +1504,6 @@ export default function DividendAnalysisDashboard() {
   }, [data]); // Re-run when data loads to get current prices
 
   // Portfolio Management Functions
-  const savePortfolioToCookie = (updatedPortfolio: UserPortfolio) => {
-    setCookie('userPortfolio', JSON.stringify(updatedPortfolio));
-  };
 
   const updatePortfolioValues = (currentPortfolio: UserPortfolio) => {
     const updatedHoldings = currentPortfolio.holdings.map(holding => {
@@ -1577,7 +1536,6 @@ export default function DividendAnalysisDashboard() {
     };
 
     setPortfolio(updatedPortfolio);
-    savePortfolioToCookie(updatedPortfolio);
   };
 
   const addHolding = () => {
@@ -1690,6 +1648,174 @@ export default function DividendAnalysisDashboard() {
     }
     return {};
   });
+
+  const extractSentimentRating = (fullAnalysis: string) => {
+    if (!fullAnalysis) return { rating: 'N/A', color: '#00D4FF' };
+    
+    // Look for the final sentiment rating pattern
+    const sentimentMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*([^`\n]*)/i);
+    
+    if (sentimentMatch) {
+      const rating = sentimentMatch[1].trim();
+      
+      // Normalize and determine color based on rating
+      if (rating.toLowerCase().includes('bullish')) {
+        // Clean up bullish rating - remove extra characters, normalize case
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        const normalizedRating = cleanRating.replace(/bullish/gi, 'Bullish');
+        return { rating: normalizedRating, color: '#34C759' }; // Green for bullish
+      } else if (rating.toLowerCase().includes('bearish')) {
+        // Clean up bearish rating - remove extra characters, normalize case
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        const normalizedRating = cleanRating.replace(/bearish/gi, 'Bearish');
+        return { rating: normalizedRating, color: '#FF3B30' }; // Red for bearish
+      } else {
+        // Clean up neutral rating - remove extra characters
+        const cleanRating = rating.replace(/[*]+/g, '').trim();
+        return { rating: cleanRating, color: '#00D4FF' }; // Blue for neutral/other
+      }
+    }
+    
+    // Fallback: look for simple bullish/bearish patterns
+    const simpleBullish = fullAnalysis.match(/(\d+\/5\s+bullish)/i);
+    const simpleBearish = fullAnalysis.match(/(\d+\/5\s+bearish)/i);
+    
+    if (simpleBullish) {
+      const normalizedRating = simpleBullish[1].replace(/bullish/gi, 'Bullish');
+      return { rating: normalizedRating, color: '#34C759' };
+    } else if (simpleBearish) {
+      const normalizedRating = simpleBearish[1].replace(/bearish/gi, 'Bearish');
+      return { rating: normalizedRating, color: '#FF3B30' };
+    }
+    
+    // Final fallback
+    return { rating: 'Analysis Available', color: '#00D4FF' };
+  };
+
+  // Calculate optimal portfolio based on total return and AI sentiments
+  const optimalPortfolioData = useMemo(() => {
+    // First, filter out bearish tickers from all data
+    const nonBearishTickers = data.filter(item => {
+      if (aiOutlooks[item.ticker]?.fullAnalysis) {
+        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+        return !sentiment.rating.toLowerCase().includes('bearish');
+      }
+      return true; // Include tickers without AI analysis
+    });
+    
+    // Calculate total return for each ticker and sort by it
+    const tickersWithTotalReturn = nonBearishTickers.map(item => {
+      const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
+      const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
+      const totalReturn = forwardYield + navPerformance;
+      
+      return {
+        ...item,
+        calculatedTotalReturn: totalReturn
+      };
+    }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
+    
+    // Take top 5 by total return
+    const finalOptimal = tickersWithTotalReturn.slice(0, 5);
+    console.log('Optimal portfolio (top 5 by total return, non-bearish):', 
+               finalOptimal.map(t => `${t.ticker}: ${t.calculatedTotalReturn.toFixed(2)}%`));
+    return finalOptimal;
+  }, [data, aiOutlooks, polygonData, portfolioUpdateTrigger]);
+
+  // Calculate excluded tickers based on optimal portfolio
+  const excludedTickersData = useMemo(() => {
+    console.log('Calculating excluded tickers...');
+    console.log('optimalPortfolioData:', optimalPortfolioData);
+    const optimalTickers = optimalPortfolioData.map(item => item.ticker);
+    console.log('Optimal tickers:', optimalTickers);
+    const excluded = data.filter(item => !optimalTickers.includes(item.ticker));
+    console.log('Excluded tickers:', excluded.map(t => t.ticker));
+    return excluded;
+  }, [data, optimalPortfolioData, portfolioUpdateTrigger]);
+
+  // Table sorting function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc'); // Default to desc for most fields
+    }
+  };
+
+  // Generic sorting function for table data
+  const sortTableData = (data: any[], field: string, direction: 'asc' | 'desc') => {
+    return [...data].sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (field) {
+        case 'ticker':
+          aValue = a.ticker;
+          bValue = b.ticker;
+          break;
+        case 'price':
+          aValue = polygonData[a.ticker]?.price || 0;
+          bValue = polygonData[b.ticker]?.price || 0;
+          break;
+        case 'medianDiv':
+          aValue = polygonData[a.ticker]?.medianDividend || 0;
+          bValue = polygonData[b.ticker]?.medianDividend || 0;
+          break;
+        case 'forwardYield':
+          aValue = polygonData[a.ticker]?.forwardYield || 0;
+          bValue = polygonData[b.ticker]?.forwardYield || 0;
+          break;
+        case 'nav':
+          aValue = polygonData[a.ticker]?.navPerformance || 0;
+          bValue = polygonData[b.ticker]?.navPerformance || 0;
+          break;
+        case 'totalReturn':
+          const aFwd = polygonData[a.ticker]?.forwardYield || 0;
+          const aNav = polygonData[a.ticker]?.navPerformance || 0;
+          aValue = aFwd + aNav;
+          const bFwd = polygonData[b.ticker]?.forwardYield || 0;
+          const bNav = polygonData[b.ticker]?.navPerformance || 0;
+          bValue = bFwd + bNav;
+          break;
+        case 'volatility':
+          aValue = polygonData[a.ticker]?.volatility14Day || 0;
+          bValue = polygonData[b.ticker]?.volatility14Day || 0;
+          break;
+        case 'aiSentiment':
+          const aSentiment = aiOutlooks[a.ticker] ? extractSentimentRating(aiOutlooks[a.ticker].fullAnalysis).rating : 'zzz';
+          const bSentiment = aiOutlooks[b.ticker] ? extractSentimentRating(aiOutlooks[b.ticker].fullAnalysis).rating : 'zzz';
+          aValue = aSentiment;
+          bValue = bSentiment;
+          break;
+        default:
+          return 0;
+      }
+      
+      // Handle string vs number comparison
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return direction === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else {
+        return direction === 'asc' 
+          ? aValue - bValue
+          : bValue - aValue;
+      }
+    });
+  };
+
+  // Sorted data for each tab
+  const sortedOptimalData = useMemo(() => {
+    return sortTableData(optimalPortfolioData, sortField, sortDirection);
+  }, [optimalPortfolioData, sortField, sortDirection, polygonData, aiOutlooks]);
+
+  const sortedExcludedData = useMemo(() => {
+    return sortTableData(excludedTickersData, sortField, sortDirection);
+  }, [excludedTickersData, sortField, sortDirection, polygonData, aiOutlooks]);
+
+  const sortedPortfolioData = useMemo(() => {
+    return sortTableData(portfolio.holdings, sortField, sortDirection);
+  }, [portfolio.holdings, sortField, sortDirection, polygonData, aiOutlooks]);
 
   // AI Analysis function - Step 1: Open chart
   const analyzeWithClaude = async (ticker: string) => {
@@ -2105,31 +2231,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
   };
 
-  const handleQuickAnalysis = async (ticker: string) => {
-    if (!ticker.trim()) {
-      setQuickAnalysisResult('Please enter a ticker symbol.');
-      return;
-    }
-
-    setQuickAnalysisLoading(true);
-    setQuickAnalysisResult('');
-    const upperTicker = ticker.toUpperCase().trim();
-
-    try {
-      // Call analyzeWithPolygon and wait for the complete analysis
-      const analysisResult = await analyzeWithPolygon(upperTicker);
-      
-      if (analysisResult && analysisResult.fullAnalysis) {
-        setQuickAnalysisResult(analysisResult.fullAnalysis);
-      } else {
-        setQuickAnalysisResult('Analysis completed but no detailed results available.');
-      }
-    } catch (error) {
-      console.error('Quick analysis error:', error);
-      setQuickAnalysisResult(`Analysis failed: ${error.message}`);
-    } finally {
-      setQuickAnalysisLoading(false);
-    }
+  // Clear all AI analyses function
+  const clearAllAiAnalyses = () => {
+    setAiOutlooks({});
+    localStorage.removeItem('aiOutlooks');
+    setPortfolioUpdateTrigger(prev => prev + 1);
+    setSnackbarMessage('✅ All AI analyses cleared from all tabs');
+    setShowSnackbar(true);
   };
 
   // Copy to clipboard function
@@ -2321,68 +2429,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
               {/* Main Content */}
               <Box sx={{ flexGrow: 1 }}>
-                {/* Enhanced AI Analysis - Moved to top */}
-                <Card sx={{ 
-                  mb: 3, 
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
-                }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Analytics sx={{ color: '#00D4FF' }} />
-                      Enhanced AI Analysis
-                    </Typography>
-                    
-                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                      <TextField
-                        label="Enter Ticker Symbol"
-                        variant="outlined"
-                        value={quickTicker}
-                        onChange={(e) => setQuickTicker(e.target.value.toUpperCase())}
-                        sx={{ flexGrow: 1 }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Search />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <Button
-                        variant="contained"
-                        onClick={() => handleQuickAnalysis(quickTicker)}
-                        disabled={quickAnalysisLoading || !quickTicker.trim()}
-                        sx={{ 
-                          minWidth: 120,
-                          background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
-                        }}
-                      >
-                        {quickAnalysisLoading ? <CircularProgress size={20} /> : 'Analyze'}
-                      </Button>
-                    </Box>
-                    
-                    {quickAnalysisResult && (
-                      <Paper sx={{ 
-                        p: 2, 
-                        mt: 2,
-                        background: 'rgba(0, 0, 0, 0.3)',
-                        maxHeight: 400,
-                        overflow: 'auto'
-                      }}>
-                        <pre style={{ 
-                          whiteSpace: 'pre-wrap', 
-                          margin: 0, 
-                          fontFamily: 'monospace',
-                          fontSize: '0.875rem',
-                          color: '#fff'
-                        }}>
-                          {quickAnalysisResult}
-                        </pre>
-                      </Paper>
-                    )}
-                  </CardContent>
-                </Card>
 
                 {/* Main Dashboard Tabs */}
                 <Paper 
@@ -2453,8 +2499,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     <Box sx={{ p: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Box>
-                          <Typography variant="h6">
+                          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
                             Optimal Portfolio Allocation
+                            {polygonLoading && (
+                              <Chip
+                                label="Loading live data..."
+                                size="small"
+                                sx={{ ml: 2, backgroundColor: 'rgba(0, 212, 255, 0.2)', color: '#00D4FF' }}
+                              />
+                            )}
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                             Top performing dividend assets (bearish tickers excluded)
@@ -2489,20 +2542,99 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         <Table>
                           <TableHead>
                             <TableRow>
-                              <TableCell>Ticker</TableCell>
-                              <TableCell>Strategy</TableCell>
-                              <TableCell>Return</TableCell>
-                              <TableCell>Win Rate</TableCell>
-                              <TableCell align="center">AI Evaluation</TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'ticker'}
+                                  direction={sortField === 'ticker' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('ticker')}
+                                >
+                                  Ticker
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'price'}
+                                  direction={sortField === 'price' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('price')}
+                                >
+                                  Price
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'medianDiv'}
+                                  direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('medianDiv')}
+                                >
+                                  Median Div
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'forwardYield'}
+                                  direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('forwardYield')}
+                                >
+                                  Fwd Yield
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'nav'}
+                                  direction={sortField === 'nav' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('nav')}
+                                >
+                                  NAV
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'totalReturn'}
+                                  direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('totalReturn')}
+                                >
+                                  Total Return
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'volatility'}
+                                  direction={sortField === 'volatility' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('volatility')}
+                                >
+                                  14D Volatility
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell align="center">
+                                <TableSortLabel
+                                  active={sortField === 'aiSentiment'}
+                                  direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('aiSentiment')}
+                                >
+                                  AI Evaluation
+                                </TableSortLabel>
+                              </TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {optimalPortfolioData.map((item, index) => (
+                            {sortedOptimalData.map((item, index) => (
                               <TableRow key={index}>
                                 <TableCell>{item.ticker}</TableCell>
-                                <TableCell>{item.bestStrategy}</TableCell>
-                                <TableCell>{(item.bestReturn * 100)?.toFixed(1)}%</TableCell>
-                                <TableCell>{(item.dcWinRate * 100)?.toFixed(1)}%</TableCell>
+                                <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
+                                <TableCell>${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}</TableCell>
+                                <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
+                                <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
+                                <TableCell>
+                                  {(() => {
+                                    const fwdYield = polygonData[item.ticker]?.forwardYield;
+                                    const navPerf = polygonData[item.ticker]?.navPerformance;
+                                    if (fwdYield != null && navPerf != null) {
+                                      return `${(fwdYield + navPerf).toFixed(1)}%`;
+                                    }
+                                    return '-';
+                                  })()}
+                                </TableCell>
+                                <TableCell>{polygonData[item.ticker]?.volatility14Day?.toFixed(1) || '-'}%</TableCell>
                                 <TableCell align="center">
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                                     <Button
@@ -2556,37 +2688,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   )}
 
                   {selectedTab === 1 && (() => {
-                    // Calculate excluded tickers (anything not in optimal portfolio)
-                    const topTickers = data.slice(0, 10);
-                    const remainingTickers = data.slice(10);
-                    
-                    // Remove bearish from top 10
-                    const nonBearishTop = topTickers.filter(item => {
-                      if (aiOutlooks[item.ticker]?.fullAnalysis) {
-                        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-                        return !sentiment.rating.toLowerCase().includes('bearish');
-                      }
-                      return true; // Include tickers without AI analysis
-                    });
-                    
-                    // Find top 5 by return from remaining tickers that are bullish
-                    const top5ReturnsTickers = [...data].sort((a, b) => (b.bestReturn || 0) - (a.bestReturn || 0)).slice(0, 5);
-                    const bullishFromRemaining = remainingTickers.filter(item => {
-                      // Must be in top 5 returns and bullish
-                      const isInTop5Returns = top5ReturnsTickers.some(topItem => topItem.ticker === item.ticker);
-                      if (!isInTop5Returns) return false;
-                      
-                      if (aiOutlooks[item.ticker]?.fullAnalysis) {
-                        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-                        return sentiment.rating.toLowerCase().includes('bullish');
-                      }
-                      return false; // Only include if we have AI analysis showing bullish
-                    });
-                    
-                    // Combine optimal portfolio tickers
-                    const optimalPortfolioTickers = [...nonBearishTop, ...bullishFromRemaining].slice(0, 12).map(item => item.ticker);
-                    
-                    const excludedData = data.filter(item => !optimalPortfolioTickers.includes(item.ticker));
+                    // Use the shared excluded tickers data
+                    const excludedData = excludedTickersData;
+                    console.log('Showing Excluded Tickers tab');
+                    console.log('excludedData:', excludedData.map(t => t.ticker));
                     
                     return (
                       <Box sx={{ p: 3 }}>
@@ -2621,20 +2726,99 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             <Table>
                               <TableHead>
                                 <TableRow>
-                                  <TableCell>Ticker</TableCell>
-                                  <TableCell>Strategy</TableCell>
-                                  <TableCell>Return</TableCell>
-                                  <TableCell>Win Rate</TableCell>
-                                  <TableCell align="center">AI Evaluation</TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'ticker'}
+                                      direction={sortField === 'ticker' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('ticker')}
+                                    >
+                                      Ticker
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'price'}
+                                      direction={sortField === 'price' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('price')}
+                                    >
+                                      Price
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'medianDiv'}
+                                      direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('medianDiv')}
+                                    >
+                                      Median Div
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'forwardYield'}
+                                      direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('forwardYield')}
+                                    >
+                                      Fwd Yield
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'nav'}
+                                      direction={sortField === 'nav' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('nav')}
+                                    >
+                                      NAV
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'totalReturn'}
+                                      direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('totalReturn')}
+                                    >
+                                      Total Return
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'volatility'}
+                                      direction={sortField === 'volatility' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('volatility')}
+                                    >
+                                      14D Volatility
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    <TableSortLabel
+                                      active={sortField === 'aiSentiment'}
+                                      direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('aiSentiment')}
+                                    >
+                                      AI Evaluation
+                                    </TableSortLabel>
+                                  </TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {excludedData.map((item, index) => (
+                                {sortedExcludedData.map((item, index) => (
                                   <TableRow key={index}>
                                     <TableCell>{item.ticker}</TableCell>
-                                    <TableCell>{item.bestStrategy}</TableCell>
-                                    <TableCell>{(item.bestReturn * 100)?.toFixed(1)}%</TableCell>
-                                    <TableCell>{(item.dcWinRate * 100)?.toFixed(1)}%</TableCell>
+                                    <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
+                                    <TableCell>${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}</TableCell>
+                                    <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
+                                    <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
+                                    <TableCell>
+                                      {(() => {
+                                        const fwdYield = polygonData[item.ticker]?.forwardYield;
+                                        const navPerf = polygonData[item.ticker]?.navPerformance;
+                                        if (fwdYield != null && navPerf != null) {
+                                          return `${(fwdYield + navPerf).toFixed(1)}%`;
+                                        }
+                                        return '-';
+                                      })()}
+                                    </TableCell>
+                                    <TableCell>{polygonData[item.ticker]?.volatility14Day?.toFixed(1) || '-'}%</TableCell>
                                     <TableCell align="center">
                                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                                         <Button
@@ -2717,6 +2901,26 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             {isRefreshingAll ? 'Refreshing...' : 'AI Refresh'}
                           </Button>
                           <Button
+                            variant="outlined"
+                            startIcon={<Clear />}
+                            onClick={clearAllAiAnalyses}
+                            disabled={Object.keys(aiOutlooks).length === 0}
+                            sx={{ 
+                              color: '#FF9500',
+                              borderColor: '#FF9500',
+                              '&:hover': {
+                                borderColor: '#FF7A00',
+                                backgroundColor: 'rgba(255, 149, 0, 0.1)'
+                              },
+                              '&:disabled': {
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                color: 'rgba(255, 255, 255, 0.3)'
+                              }
+                            }}
+                          >
+                            Clear AI
+                          </Button>
+                          <Button
                             variant="contained"
                             startIcon={<Add />}
                             onClick={() => setShowAddDialog(true)}
@@ -2769,12 +2973,82 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           <Table>
                             <TableHead>
                               <TableRow>
-                                <TableCell>Ticker</TableCell>
-                                <TableCell align="center">AI Evaluation</TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'ticker'}
+                                    direction={sortField === 'ticker' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('ticker')}
+                                  >
+                                    Ticker
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'price'}
+                                    direction={sortField === 'price' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('price')}
+                                  >
+                                    Price
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'medianDiv'}
+                                    direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('medianDiv')}
+                                  >
+                                    Median Div
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'forwardYield'}
+                                    direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('forwardYield')}
+                                  >
+                                    Fwd Yield
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'nav'}
+                                    direction={sortField === 'nav' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('nav')}
+                                  >
+                                    NAV
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'totalReturn'}
+                                    direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('totalReturn')}
+                                  >
+                                    Total Return
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'volatility'}
+                                    direction={sortField === 'volatility' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('volatility')}
+                                  >
+                                    14D Volatility
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <TableSortLabel
+                                    active={sortField === 'aiSentiment'}
+                                    direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('aiSentiment')}
+                                  >
+                                    AI Evaluation
+                                  </TableSortLabel>
+                                </TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
-                              {portfolio.holdings.map((holding, index) => (
+                              {sortedPortfolioData.map((holding, index) => (
                                 <TableRow key={index}>
                                   <TableCell>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -2784,6 +3058,21 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       </Typography>
                                     </Box>
                                   </TableCell>
+                                  <TableCell>${polygonData[holding.ticker]?.price?.toFixed(2) || '-'}</TableCell>
+                                  <TableCell>${polygonData[holding.ticker]?.medianDividend?.toFixed(2) || '-'}</TableCell>
+                                  <TableCell>{polygonData[holding.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
+                                  <TableCell>{polygonData[holding.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
+                                  <TableCell>
+                                    {(() => {
+                                      const fwdYield = polygonData[holding.ticker]?.forwardYield;
+                                      const navPerf = polygonData[holding.ticker]?.navPerformance;
+                                      if (fwdYield != null && navPerf != null) {
+                                        return `${(fwdYield + navPerf).toFixed(1)}%`;
+                                      }
+                                      return '-';
+                                    })()}
+                                  </TableCell>
+                                  <TableCell>{polygonData[holding.ticker]?.volatility14Day?.toFixed(1) || '-'}%</TableCell>
                                   <TableCell align="center">
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
                                       <Button

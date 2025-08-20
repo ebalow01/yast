@@ -25,7 +25,8 @@
       "Bash(mv:*)",
       "Bash(npx netlify dev:*)",
       "Bash(git rm:*)",
-      "Bash(git filter-branch:*)"
+      "Bash(git filter-branch:*)",
+      "Bash(npm run:*)"
     ],
     "defaultMode": "acceptEdits"
   }
