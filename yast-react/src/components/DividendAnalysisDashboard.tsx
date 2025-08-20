@@ -1995,6 +1995,74 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     return <TrendingFlat sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 18 }} />;
   };
 
+  // Portfolio Management Functions
+  const addToPortfolio = (ticker: string, shares: number, averagePrice: number, dateAdded: string = new Date().toISOString().split('T')[0]) => {
+    const newHolding: PortfolioHolding = {
+      ticker: ticker.toUpperCase(),
+      shares,
+      averagePrice,
+      dateAdded
+    };
+    
+    setPortfolio(prev => ({
+      ...prev,
+      holdings: [...prev.holdings, newHolding],
+      totalValue: prev.totalValue + (shares * averagePrice),
+      lastUpdated: new Date().toLocaleString()
+    }));
+    
+    setSnackbarMessage(`Added ${ticker} to portfolio`);
+    setShowSnackbar(true);
+  };
+
+  const removeFromPortfolio = (ticker: string) => {
+    setPortfolio(prev => {
+      const holdingToRemove = prev.holdings.find(h => h.ticker === ticker);
+      const removeValue = holdingToRemove ? holdingToRemove.shares * holdingToRemove.averagePrice : 0;
+      
+      return {
+        ...prev,
+        holdings: prev.holdings.filter(h => h.ticker !== ticker),
+        totalValue: prev.totalValue - removeValue,
+        lastUpdated: new Date().toLocaleString()
+      };
+    });
+    
+    setSnackbarMessage(`Removed ${ticker} from portfolio`);
+    setShowSnackbar(true);
+  };
+
+  const editPortfolioHolding = (ticker: string, newShares: number, newPrice: number, dateAdded: string) => {
+    setPortfolio(prev => {
+      const updatedHoldings = prev.holdings.map(holding => {
+        if (holding.ticker === ticker) {
+          return {
+            ...holding,
+            shares: newShares,
+            averagePrice: newPrice,
+            dateAdded
+          };
+        }
+        return holding;
+      });
+      
+      const newTotalValue = updatedHoldings.reduce((total, holding) => 
+        total + (holding.shares * holding.averagePrice), 0
+      );
+      
+      return {
+        ...prev,
+        holdings: updatedHoldings,
+        totalValue: newTotalValue,
+        lastUpdated: new Date().toLocaleString()
+      };
+    });
+    
+    setSnackbarMessage(`Updated ${ticker} position`);
+    setShowSnackbar(true);
+  };
+
+
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
@@ -2271,17 +2339,183 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
                   {selectedTab === 2 && (
                     <Box sx={{ p: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 2 }}>
-                        My Portfolio
-                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Typography variant="h6">
+                          My Portfolio ({portfolio.holdings.length} positions)
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          startIcon={<Add />}
+                          onClick={() => setShowAddDialog(true)}
+                          sx={{ 
+                            background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+                            '&:hover': {
+                              background: 'linear-gradient(135deg, #0056CC 0%, #5A52D0 100%)',
+                            }
+                          }}
+                        >
+                          Add Position
+                        </Button>
+                      </Box>
+
                       {portfolio.holdings.length === 0 ? (
-                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                          No positions added yet. Use the Enhanced AI Analysis above to research stocks.
-                        </Typography>
+                        <Card sx={{ 
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          textAlign: 'center',
+                          py: 4
+                        }}>
+                          <CardContent>
+                            <BusinessCenter sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
+                            <Typography variant="h6" sx={{ mb: 1 }}>
+                              No positions yet
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 2 }}>
+                              Start building your portfolio by adding your first position
+                            </Typography>
+                            <Button
+                              variant="outlined"
+                              startIcon={<Add />}
+                              onClick={() => setShowAddDialog(true)}
+                              sx={{ 
+                                borderColor: '#00D4FF',
+                                color: '#00D4FF',
+                                '&:hover': {
+                                  borderColor: '#0056CC',
+                                  backgroundColor: 'rgba(0, 212, 255, 0.1)'
+                                }
+                              }}
+                            >
+                              Add Your First Position
+                            </Button>
+                          </CardContent>
+                        </Card>
                       ) : (
-                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                          {portfolio.holdings.length} positions
-                        </Typography>
+                        <TableContainer component={Paper} sx={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Ticker</TableCell>
+                                <TableCell align="right">Shares</TableCell>
+                                <TableCell align="right">Avg Price</TableCell>
+                                <TableCell align="right">Current Price</TableCell>
+                                <TableCell align="right">Total Value</TableCell>
+                                <TableCell align="right">Gain/Loss</TableCell>
+                                <TableCell align="center">Actions</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {portfolio.holdings.map((holding, index) => (
+                                <TableRow key={index}>
+                                  <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      <MonetizationOn sx={{ color: '#00D4FF', fontSize: 20 }} />
+                                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                        {holding.ticker}
+                                      </Typography>
+                                    </Box>
+                                  </TableCell>
+                                  <TableCell align="right">{holding.shares}</TableCell>
+                                  <TableCell align="right">${holding.averagePrice.toFixed(2)}</TableCell>
+                                  <TableCell align="right">
+                                    {holding.currentPrice ? `$${holding.currentPrice.toFixed(2)}` : 'N/A'}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {holding.totalValue ? `$${holding.totalValue.toFixed(2)}` : 'N/A'}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {holding.gainLoss !== undefined ? (
+                                      <Chip
+                                        label={`${holding.gainLoss >= 0 ? '+' : ''}$${holding.gainLoss.toFixed(2)} (${holding.gainLossPercent?.toFixed(1)}%)`}
+                                        size="small"
+                                        sx={{
+                                          backgroundColor: holding.gainLoss >= 0 ? 'rgba(52, 199, 89, 0.2)' : 'rgba(255, 59, 48, 0.2)',
+                                          color: holding.gainLoss >= 0 ? '#34C759' : '#FF3B30',
+                                          border: `1px solid ${holding.gainLoss >= 0 ? '#34C759' : '#FF3B30'}`
+                                        }}
+                                      />
+                                    ) : (
+                                      'N/A'
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                      <IconButton 
+                                        size="small" 
+                                        onClick={() => {
+                                          setEditingHolding(holding);
+                                          setNewTicker(holding.ticker);
+                                          setShowAddDialog(true);
+                                        }}
+                                        sx={{ color: '#00D4FF' }}
+                                      >
+                                        <Edit />
+                                      </IconButton>
+                                      <IconButton 
+                                        size="small" 
+                                        onClick={() => removeFromPortfolio(holding.ticker)}
+                                        sx={{ color: '#FF3B30' }}
+                                      >
+                                        <Delete />
+                                      </IconButton>
+                                    </Box>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+
+                      {/* Portfolio Summary */}
+                      {portfolio.holdings.length > 0 && (
+                        <Card sx={{ 
+                          mt: 3,
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                          <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                              Portfolio Summary
+                            </Typography>
+                            <Grid container spacing={3}>
+                              <Grid xs={12} sm={4}>
+                                <Typography variant="body2" color="textSecondary">
+                                  Total Value
+                                </Typography>
+                                <Typography variant="h6">
+                                  ${portfolio.totalValue.toFixed(2)}
+                                </Typography>
+                              </Grid>
+                              <Grid xs={12} sm={4}>
+                                <Typography variant="body2" color="textSecondary">
+                                  Total Gain/Loss
+                                </Typography>
+                                <Typography 
+                                  variant="h6" 
+                                  sx={{ 
+                                    color: portfolio.totalGainLoss >= 0 ? '#34C759' : '#FF3B30'
+                                  }}
+                                >
+                                  {portfolio.totalGainLoss >= 0 ? '+' : ''}${portfolio.totalGainLoss.toFixed(2)}
+                                </Typography>
+                              </Grid>
+                              <Grid xs={12} sm={4}>
+                                <Typography variant="body2" color="textSecondary">
+                                  Total Return
+                                </Typography>
+                                <Typography 
+                                  variant="h6"
+                                  sx={{ 
+                                    color: portfolio.totalGainLossPercent >= 0 ? '#34C759' : '#FF3B30'
+                                  }}
+                                >
+                                  {portfolio.totalGainLossPercent >= 0 ? '+' : ''}{portfolio.totalGainLossPercent.toFixed(1)}%
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
                       )}
                     </Box>
                   )}
@@ -2291,6 +2525,133 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           </Container>
         </motion.div>
       </Box>
+
+      {/* Add/Edit Position Dialog */}
+      <Dialog 
+        open={showAddDialog} 
+        onClose={() => {
+          setShowAddDialog(false);
+          setEditingHolding(null);
+          setNewTicker('');
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }
+        }}
+      >
+        <DialogTitle>
+          {editingHolding ? 'Edit Position' : 'Add New Position'}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <TextField
+              label="Ticker Symbol"
+              value={newTicker}
+              onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
+              fullWidth
+              disabled={!!editingHolding} // Disable ticker editing when editing existing position
+              placeholder="e.g., AAPL, MSFT, SPY"
+            />
+            <TextField
+              label="Number of Shares"
+              type="number"
+              fullWidth
+              placeholder="e.g., 100"
+              id="shares-input"
+            />
+            <TextField
+              label="Average Price per Share"
+              type="number"
+              fullWidth
+              placeholder="e.g., 150.50"
+              id="price-input"
+              InputProps={{
+                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              }}
+            />
+            <TextField
+              label="Date Added (Optional)"
+              type="date"
+              fullWidth
+              InputLabelProps={{
+                shrink: true,
+              }}
+              id="date-input"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 1 }}>
+          <Button 
+            onClick={() => {
+              setShowAddDialog(false);
+              setEditingHolding(null);
+              setNewTicker('');
+            }}
+            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => {
+              const sharesInput = document.getElementById('shares-input') as HTMLInputElement;
+              const priceInput = document.getElementById('price-input') as HTMLInputElement;
+              const dateInput = document.getElementById('date-input') as HTMLInputElement;
+              
+              if (newTicker && sharesInput?.value && priceInput?.value) {
+                const shares = parseFloat(sharesInput.value);
+                const price = parseFloat(priceInput.value);
+                const date = dateInput?.value || new Date().toISOString().split('T')[0];
+                
+                if (editingHolding) {
+                  // Update existing position
+                  editPortfolioHolding(editingHolding.ticker, shares, price, date);
+                } else {
+                  // Add new position
+                  addToPortfolio(newTicker, shares, price, date);
+                }
+                
+                setShowAddDialog(false);
+                setEditingHolding(null);
+                setNewTicker('');
+                
+                // Clear form inputs
+                sharesInput.value = '';
+                priceInput.value = '';
+                if (dateInput) dateInput.value = '';
+              }
+            }}
+            variant="contained"
+            sx={{ 
+              background: 'linear-gradient(135deg, #00D4FF 0%, #6C63FF 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #0056CC 0%, #5A52D0 100%)',
+              }
+            }}
+            disabled={!newTicker}
+          >
+            {editingHolding ? 'Update Position' : 'Add Position'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowSnackbar(false)}
+        message={snackbarMessage}
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            backgroundColor: 'rgba(0, 212, 255, 0.9)',
+            color: '#000000'
+          }
+        }}
+      />
     </ThemeProvider>
   );
 }
