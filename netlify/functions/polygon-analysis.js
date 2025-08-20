@@ -727,8 +727,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Import required modules
-    const fetch = require('node-fetch');
+    // Import required modules - use native https instead of node-fetch
+    const https = require('https');
+    const url = require('url');
     
     const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
     const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
@@ -740,18 +741,56 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Helper function for HTTPS requests
+    const makeHttpsRequest = (requestUrl, options = {}) => {
+      return new Promise((resolve, reject) => {
+        const parsedUrl = url.parse(requestUrl);
+        const reqOptions = {
+          hostname: parsedUrl.hostname,
+          path: parsedUrl.path,
+          method: options.method || 'GET',
+          headers: options.headers || {}
+        };
+        
+        const req = https.request(reqOptions, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            resolve({
+              status: res.statusCode,
+              data: data,
+              ok: res.statusCode >= 200 && res.statusCode < 300
+            });
+          });
+        });
+        
+        req.on('error', reject);
+        
+        if (options.body) {
+          req.write(options.body);
+        }
+        
+        req.setTimeout(60000, () => {
+          req.destroy();
+          reject(new Error('Request timeout'));
+        });
+        
+        req.end();
+      });
+    };
+
     // Fetch data from Polygon API (15-minute data for enhanced analysis)
     const endDate = new Date().toISOString().split('T')[0];
     const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
-    const polygonUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/15/minute/${startDate}/${endDate}`;
-    const polygonResponse = await fetch(`${polygonUrl}?adjusted=true&sort=asc&apikey=${POLYGON_API_KEY}`);
+    const polygonUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/15/minute/${startDate}/${endDate}?adjusted=true&sort=asc&apikey=${POLYGON_API_KEY}`;
+    const polygonResponse = await makeHttpsRequest(polygonUrl);
     
     if (!polygonResponse.ok) {
       throw new Error(`Polygon API error: ${polygonResponse.status}`);
     }
     
-    const polygonData = await polygonResponse.json();
+    const polygonData = JSON.parse(polygonResponse.data);
     
     if (!polygonData.results || polygonData.results.length === 0) {
       throw new Error('No data available from Polygon API');
@@ -764,28 +803,31 @@ exports.handler = async (event, context) => {
     const enhancedPrompt = buildEnhancedAnalysisPrompt(techData);
 
     // Analyze with Claude using enhanced prompt
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    const claudeRequestBody = JSON.stringify({
+      model: 'claude-sonnet-4-20250514',  // Use Claude Sonnet 4 for best analysis
+      max_tokens: 2000,  // Increased for comprehensive analysis
+      messages: [{
+        role: 'user',
+        content: enhancedPrompt
+      }]
+    });
+
+    const claudeResponse = await makeHttpsRequest('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'Content-Length': Buffer.byteLength(claudeRequestBody)
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',  // Use Claude Sonnet 4 for best analysis
-        max_tokens: 2000,  // Increased for comprehensive analysis
-        messages: [{
-          role: 'user',
-          content: enhancedPrompt
-        }]
-      })
+      body: claudeRequestBody
     });
 
     if (!claudeResponse.ok) {
       throw new Error(`Claude API error: ${claudeResponse.status}`);
     }
 
-    const claudeResult = await claudeResponse.json();
+    const claudeResult = JSON.parse(claudeResponse.data);
     const fullAnalysis = claudeResult.content[0].text;
     
     // Extract short outlook from the enhanced analysis
