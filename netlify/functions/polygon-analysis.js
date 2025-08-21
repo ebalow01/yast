@@ -541,6 +541,8 @@ Data points: ${techData.data_points} 15-minute bars`;
 
   const enhancedPrompt = `Analyze this real market data for ${techData.ticker}:
 
+**CRITICAL INSTRUCTION: Your final sentiment rating MUST be mathematically consistent with your scenario probabilities. The scenario with the highest probability determines the overall sentiment direction. Any contradiction between scenarios and sentiment will invalidate the entire analysis.**
+
 ${dataSummary}
 
 ### 5. MULTI-METHODOLOGY APPROACH
@@ -593,16 +595,19 @@ Apply ALL three analytical frameworks and synthesize results:
    - Bollinger Band positioning (${techData.bb_position})
    - Volatility regime identification (${techData.volatility_expansion ? 'high volatility' : 'normal volatility'})
 
-#### B. Scenario Development
-Create THREE distinct scenarios with probabilities:
+#### B. Scenario Development (PRIMARY SENTIMENT DRIVER)
+Create THREE distinct scenarios with probabilities that MUST sum to 100%:
 
-**Scenario 1: Base Case (Assign highest probability)**
+**CRITICAL RULE: The scenario with the HIGHEST probability MUST determine the overall sentiment rating. No exceptions.**
+
+**Scenario 1: Base Case**
 - Description: Most likely outcome based on current data
 - 1-Week Target: $X.XX
 - 2-Week Target: $X.XX  
-- Probability: XX%
+- Probability: XX% (Must be the highest if this drives sentiment)
 - Key Assumptions: List 3-5 critical assumptions
 - Invalidation Trigger: Specific price/volume level
+- Directional Bias: [BULLISH/BEARISH/NEUTRAL]
 
 **Scenario 2: Bullish Alternative**
 - Description: Conditions for upside surprise (oversold bounce)
@@ -611,6 +616,7 @@ Create THREE distinct scenarios with probabilities:
 - Probability: XX%
 - Required Catalysts: What must happen
 - Confirmation Signals: Early warning indicators
+- Directional Bias: BULLISH
 
 **Scenario 3: Bearish Alternative**
 - Description: Downside risk scenario (continued breakdown)
@@ -619,6 +625,14 @@ Create THREE distinct scenarios with probabilities:
 - Probability: XX%
 - Risk Factors: Primary threats
 - Warning Signals: Early deterioration signs
+- Directional Bias: BEARISH
+
+**SCENARIO VALIDATION REQUIREMENTS:**
+- All probabilities must sum to exactly 100%
+- The highest probability scenario determines final sentiment
+- If Base Case is 50%+, its directional bias becomes the sentiment
+- If no single scenario exceeds 40%, sentiment must be NEUTRAL
+- Sentiment intensity (1-5) scales with probability confidence gap
 
 ### 7. RISK ASSESSMENT REQUIREMENTS
 
@@ -664,40 +678,54 @@ Support: $${techData.primary_support.toFixed(2)} (${techData.support_tests} test
 Entry: $X.XX | Stop: $X.XX | Target: $X.XX | Size: [Risk %]
 \`\`\`
 
-### 9. FINAL SENTIMENT RATING
+### 9. FINAL SENTIMENT RATING (MUST ALIGN WITH SCENARIOS)
 
-#### Overall Market Sentiment (REQUIRED)
+#### Sentiment Calculation Rules (MANDATORY)
 
-**BEARISH SENTIMENT (if negative outlook)**
-Scale: 1-5 Bearish
-- 1 = Weak Bearish
-- 2 = Moderate Bearish
-- 3 = Bearish
-- 4 = Strong Bearish
-- 5 = Very Strong Bearish
+**STEP 1: Identify Dominant Scenario**
+- Determine which scenario has the highest probability
+- That scenario's directional bias becomes the primary sentiment
 
-**BULLISH SENTIMENT (if positive outlook)**
-Scale: 1-5 Bullish
-- 1 = Weak Bullish
-- 2 = Moderate Bullish
-- 3 = Bullish
-- 4 = Strong Bullish
-- 5 = Very Strong Bullish
+**STEP 2: Calculate Sentiment Intensity (1-5 Scale)**
+Based on probability confidence gap:
+- Highest scenario 40-45%: Intensity = 1 (Weak)
+- Highest scenario 46-55%: Intensity = 2 (Moderate)  
+- Highest scenario 56-65%: Intensity = 3 (Standard)
+- Highest scenario 66-75%: Intensity = 4 (Strong)
+- Highest scenario 76%+: Intensity = 5 (Very Strong)
+
+**STEP 3: Apply Mathematical Validation**
+- If Bullish scenario probability > (Bearish + Base*0.5): BULLISH sentiment
+- If Bearish scenario probability > (Bullish + Base*0.5): BEARISH sentiment  
+- If no clear dominance (scenarios within 10%): NEUTRAL
+
+**SENTIMENT OUTPUT FORMAT:**
 
 \`\`\`
-FINAL SENTIMENT RATING: [X/5 Bearish] OR [X/5 Bullish]
+SCENARIO PROBABILITIES:
+- Scenario 1 (Base): XX% [BULLISH/BEARISH/NEUTRAL]
+- Scenario 2 (Bullish): XX% [BULLISH] 
+- Scenario 3 (Bearish): XX% [BEARISH]
+TOTAL: 100% ✓
 
-JUSTIFICATION (25 words max):
-[Explain the rating based on:]
-- Technical structure (${techData.rsi < 30 ? 'deeply oversold RSI ' + techData.rsi.toFixed(1) : techData.rsi < 40 ? 'oversold RSI ' + techData.rsi.toFixed(1) : 'RSI ' + techData.rsi.toFixed(1)})
-- Volume patterns
-- ${techData.volatility_expansion ? 'Volatility expansion' : 'Normal volatility'}
+DOMINANT SCENARIO: [Name] at XX%
+MATHEMATICAL VALIDATION: [Show calculation]
+
+FINAL SENTIMENT RATING: [X/5 Bearish/Bullish/Neutral]
+
+CONSISTENCY CHECK: ✓ Sentiment aligns with highest probability scenario
+JUSTIFICATION (25 words max): Driven by [dominant scenario] at XX% probability, supported by [key technical factor]
 
 TIMEFRAME BREAKDOWN:
-- 1-Week Sentiment: [X/5 Bearish/Bullish]
-- 2-Week Sentiment: [X/5 Bearish/Bullish]
-- Variance Explanation: [If ratings differ, consider ${techData.rsi < 40 ? 'oversold bounce vs continued weakness' : 'trend continuation vs reversal'}]
+- 1-Week Sentiment: [X/5 Bearish/Bullish] (XX% confidence)
+- 2-Week Sentiment: [X/5 Bearish/Bullish] (XX% confidence)
 \`\`\`
+
+**ANTI-CONTRADICTION SAFEGUARDS:**
+- If sentiment doesn't match highest probability scenario, analysis FAILS
+- Probabilities must sum to 100% or analysis FAILS
+- No bearish sentiment allowed if bullish scenario has highest probability
+- No bullish sentiment allowed if bearish scenario has highest probability
 
 ## ANALYSIS STANDARDS
 
