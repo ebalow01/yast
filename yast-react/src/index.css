@@ -28,6 +28,13 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* Prevent horizontal scrolling and fix background color on mobile */
+  overflow-x: hidden;
+  /* Prevent zoom on double-tap on iOS */
+  touch-action: manipulation;
+  /* Prevent text selection issues on mobile */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 h1 {

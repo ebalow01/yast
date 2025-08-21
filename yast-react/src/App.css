@@ -3,6 +3,31 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  /* Ensure consistent background on mobile */
+  background-color: #0A0A0A !important;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 900px) {
+  #root {
+    padding: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    /* Allow text selection for form inputs on mobile */
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  
+  /* Fix input zoom on iOS */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
 }
 
 .logo {

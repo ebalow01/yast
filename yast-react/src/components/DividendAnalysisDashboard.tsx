@@ -155,6 +155,15 @@ const theme = createTheme({
     },
     divider: 'rgba(255, 255, 255, 0.12)' // Better visibility
   },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 900,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
   typography: {
     fontFamily: '"Inter", "SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
@@ -292,6 +301,18 @@ const theme = createTheme({
           fontSize: '0.95rem',
           minHeight: 64,
           transition: 'all 0.3s ease',
+          // Mobile touch optimization
+          '@media (max-width: 900px)': {
+            minHeight: 56,
+            fontSize: '0.875rem',
+            minWidth: 'auto',
+            padding: '12px 16px',
+          },
+          '@media (max-width: 600px)': {
+            minHeight: 48,
+            fontSize: '0.8rem',
+            padding: '8px 12px',
+          },
           '&:hover': {
             color: '#00D4FF',
             backgroundColor: 'rgba(0, 212, 255, 0.05)'
@@ -309,6 +330,15 @@ const theme = createTheme({
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           borderRadius: 16,
+          overflowX: 'auto',
+          overflowY: 'visible',
+          // Mobile-specific enhancements
+          '@media (max-width: 900px)': {
+            borderRadius: 12,
+            margin: '0 -8px', // Extend to screen edges on mobile
+            border: 'none',
+            background: 'rgba(255, 255, 255, 0.03)',
+          },
           '&::-webkit-scrollbar': {
             width: 8,
             height: 8
@@ -357,7 +387,35 @@ const theme = createTheme({
         root: {
           borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
           padding: '16px 12px',
-          fontSize: '0.875rem'
+          fontSize: '0.875rem',
+          // Mobile-specific adjustments
+          '@media (max-width: 900px)': {
+            padding: '12px 8px',
+            fontSize: '0.8rem',
+            minWidth: '120px', // Ensure minimum width for readability
+            '&:first-of-type': {
+              paddingLeft: '16px',
+              position: 'sticky',
+              left: 0,
+              backgroundColor: 'rgba(10, 10, 10, 0.95)',
+              zIndex: 1,
+            },
+          },
+          '@media (max-width: 600px)': {
+            padding: '10px 6px',
+            fontSize: '0.75rem',
+            minWidth: '100px',
+          },
+        },
+        head: {
+          '@media (max-width: 900px)': {
+            '&:first-of-type': {
+              position: 'sticky',
+              left: 0,
+              backgroundColor: 'rgba(0, 212, 255, 0.12)',
+              zIndex: 2,
+            },
+          },
         }
       }
     },
@@ -385,7 +443,94 @@ const theme = createTheme({
           fontSize: '0.75rem'
         }
       }
-    }
+    },
+    MuiCssBaseline: {
+      styleOverrides: {
+        html: {
+          // Prevent iOS Safari zoom on input focus
+          WebkitTextSizeAdjust: '100%',
+          // Prevent horizontal scrolling and fix background
+          overflowX: 'hidden',
+          backgroundColor: '#0A0A0A !important',
+        },
+        body: {
+          // Lock background color to prevent changes on scroll
+          backgroundColor: '#0A0A0A !important',
+          backgroundAttachment: 'fixed',
+          overflowX: 'hidden',
+          // Prevent bounce scrolling on iOS that can cause background color changes
+          WebkitOverflowScrolling: 'touch',
+          position: 'relative',
+          minHeight: '100vh',
+          // Additional iOS fixes
+          WebkitUserSelect: 'none',
+          userSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent',
+        },
+        '#root': {
+          backgroundColor: '#0A0A0A !important',
+          minHeight: '100vh',
+          overflowX: 'hidden',
+        },
+        // Ensure all scrollable containers maintain background
+        '*': {
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(0, 212, 255, 0.4) rgba(255, 255, 255, 0.05)',
+        },
+        // Fix for webkit scrollbars
+        '*::-webkit-scrollbar': {
+          width: '8px',
+          height: '8px',
+        },
+        '*::-webkit-scrollbar-track': {
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '4px',
+        },
+        '*::-webkit-scrollbar-thumb': {
+          background: 'rgba(0, 212, 255, 0.4)',
+          borderRadius: '4px',
+          '&:hover': {
+            background: 'rgba(0, 212, 255, 0.6)',
+          },
+        },
+      }
+    },
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          '@media (max-width: 600px)': {
+            paddingLeft: '8px',
+            paddingRight: '8px',
+            paddingTop: '16px',
+            paddingBottom: '16px',
+          },
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          minHeight: '44px', // iOS minimum touch target
+          '@media (max-width: 600px)': {
+            minHeight: '48px', // Larger touch targets on mobile
+            fontSize: '0.875rem',
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          minWidth: '44px',
+          minHeight: '44px',
+          '@media (max-width: 600px)': {
+            minWidth: '48px',
+            minHeight: '48px',
+          },
+        },
+      },
+    },
   }
 });
 
@@ -2547,8 +2692,18 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             </Toolbar>
           </AppBar>
 
-          <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
+          <Container 
+            maxWidth="lg" 
+            sx={{ 
+              py: { xs: 2, sm: 3, md: 4 },
+              px: { xs: 1, sm: 2, md: 3 }
+            }}
+          >
+            <Box sx={{ 
+              display: 'flex', 
+              gap: { xs: 2, sm: 3 }, 
+              flexDirection: { xs: 'column', lg: 'row' } 
+            }}>
               {/* Main Content */}
               <Box sx={{ flexGrow: 1 }}>
 
