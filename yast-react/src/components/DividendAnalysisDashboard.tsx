@@ -1761,7 +1761,12 @@ export default function DividendAnalysisDashboard() {
     const nonBearishTickers = data.filter(item => {
       if (aiOutlooks[item.ticker]?.fullAnalysis) {
         const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-        return !sentiment.rating.toLowerCase().includes('bearish');
+        const isBearish = sentiment.rating.toLowerCase().includes('bearish');
+        
+        // Debug logging for sentiment classification
+        console.log(`Ticker ${item.ticker}: sentiment="${sentiment.rating}", isBearish=${isBearish}`);
+        
+        return !isBearish;
       }
       return true; // Include tickers without AI analysis
     });
