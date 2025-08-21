@@ -619,17 +619,22 @@ Create THREE distinct scenarios with probabilities that MUST sum to 100%:
 
 **CRITICAL RULE: The scenario with the HIGHEST probability MUST determine the overall sentiment rating. No exceptions.**
 
+**DIRECTIONAL BIAS CLASSIFICATION RULES:**
+**NEUTRAL:** True consolidation/range-bound/sideways trading with no clear directional expectation. Price targets within ±2% of current level. Equal upside and downside risk.
+**BEARISH:** Clear downward trend expectation with price targets >2% below current level. Specific technical breakdown scenarios.
+**BULLISH:** Clear upward trend expectation with price targets >2% above current level. Specific technical breakout scenarios.
+
 **Scenario 1: Base Case**
-- Description: Most likely outcome based on current data
+- Description: Most likely outcome based on current data (consolidation OR trend continuation - be specific)
 - 1-Week Target: $X.XX
 - 2-Week Target: $X.XX  
 - Probability: XX% (Must be the highest if this drives sentiment)
 - Key Assumptions: List 3-5 critical assumptions
 - Invalidation Trigger: Specific price/volume level
-- Directional Bias: [BULLISH/BEARISH/NEUTRAL]
+- Directional Bias: [NEUTRAL for sideways/consolidation OR BULLISH/BEARISH for clear trend]
 
 **Scenario 2: Bullish Alternative**
-- Description: Conditions for upside surprise (oversold bounce)
+- Description: Conditions for upside surprise (oversold bounce OR breakout above resistance)
 - 1-Week Target: $X.XX
 - 2-Week Target: $X.XX
 - Probability: XX%
@@ -638,7 +643,7 @@ Create THREE distinct scenarios with probabilities that MUST sum to 100%:
 - Directional Bias: BULLISH
 
 **Scenario 3: Bearish Alternative**
-- Description: Downside risk scenario (continued breakdown)
+- Description: Downside risk scenario (support breakdown OR trend acceleration)
 - 1-Week Target: $X.XX
 - 2-Week Target: $X.XX
 - Probability: XX%
@@ -652,6 +657,21 @@ Create THREE distinct scenarios with probabilities that MUST sum to 100%:
 - If Base Case is 50%+, its directional bias becomes the sentiment
 - If no single scenario exceeds 40%, sentiment must be NEUTRAL
 - Sentiment intensity (1-5) scales with probability confidence gap
+
+**ANTI-CONTRADICTION VALIDATION CHECKLIST:**
+Before finalizing analysis, verify:
+✓ Scenario descriptions match their directional bias labels
+✓ Sideways/consolidation scenarios use NEUTRAL bias (NOT bearish/bullish)
+✓ BEARISH bias only for scenarios expecting >2% price decline
+✓ BULLISH bias only for scenarios expecting >2% price advance
+✓ Base Case directional bias aligns with its price targets and description
+✓ No "mild downward bias" in consolidation scenarios (contradiction!)
+
+**COMMON MISTAKES TO AVOID:**
+❌ "Sideways drift with mild downward bias" → Use NEUTRAL bias for consolidation
+❌ Calling a range-bound scenario BEARISH just because of small downward lean
+❌ Price target within ±2% but directional bias is BEARISH/BULLISH
+❌ Consolidation description but non-NEUTRAL directional bias
 
 ### 7. RISK ASSESSMENT REQUIREMENTS
 
@@ -761,11 +781,15 @@ TIMEFRAME BREAKDOWN:
 - No contradictory directions allowed (e.g., bullish sentiment with bearish dominant scenario)
 
 **EXAMPLES OF CORRECT SENTIMENT LABELS:**
-- Base Case 45% (Neutral), Bullish 35%, Bearish 20% → "NEUTRAL"
-- Base Case 25%, Bullish 65%, Bearish 10% → "STRONG BULLISH" 
-- Base Case 20%, Bullish 35%, Bearish 45% → "BEARISH"
+- Base Case 50% (NEUTRAL: Consolidation $33.30-$33.80), Bullish 30%, Bearish 20% → "NEUTRAL"
+- Base Case 25%, Bullish 65% (breakout above resistance), Bearish 10% → "STRONG BULLISH" 
+- Base Case 20%, Bullish 35%, Bearish 45% (support breakdown) → "BEARISH"
 - Base Case 30%, Bullish 38%, Bearish 32% → "WEAK BULLISH"
 - Base Case 33%, Bullish 33%, Bearish 34% → "NEUTRAL" (no clear dominance)
+
+**CORRECTED EXAMPLE - WHAT WAS WRONG:**
+❌ WRONG: Base Case 50% (Consolidation with mild downward bias) [BEARISH] → "BEARISH" 
+✅ CORRECT: Base Case 50% (Consolidation between $33.30-$33.80) [NEUTRAL] → "NEUTRAL"
 
 ## ANALYSIS STANDARDS
 
