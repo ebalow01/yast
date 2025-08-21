@@ -10,17 +10,10 @@
     "finalValue": 247436.0,
     "dcWinRate": 0.792,
     "riskVolatility": 0.596,
-    "riskLevel": "HIGH",
+    "riskLevel": "PENDING",
     "medianDividend": 0.512,
     "forwardYield": 60.6,
-    "category": "excluded",
-    "riskColor": "#dc3545",
-    "riskPriority": 4,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 49.2,
-    "momentum5d": -18.5,
-    "alertCount": 3,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "YMAX",
@@ -33,17 +26,10 @@
     "finalValue": 223261.0,
     "dcWinRate": 0.9359999999999999,
     "riskVolatility": 0.139,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.17,
     "forwardYield": 69.3,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk | WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Oversold + Stable (RSI: 31.8, Momentum: -0.0%)",
-    "rsi": 31.8,
-    "momentum5d": -3.0,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "QDTE",
@@ -56,17 +42,10 @@
     "finalValue": 220115.0,
     "dcWinRate": 0.889,
     "riskVolatility": 0.11199999999999999,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.246,
     "forwardYield": 36.7,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 50.8,
-    "momentum5d": -2.0,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "LFGY",
@@ -79,17 +58,10 @@
     "finalValue": 196043.0,
     "dcWinRate": 0.897,
     "riskVolatility": 0.255,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.474,
     "forwardYield": 69.6,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk | WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 40.8,
-    "momentum5d": -3.1,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "YMAG",
@@ -102,17 +74,10 @@
     "finalValue": 193664.0,
     "dcWinRate": 0.894,
     "riskVolatility": 0.124,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.158,
     "forwardYield": 54.1,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 50.3,
-    "momentum5d": -2.4,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "TSLW",
@@ -125,17 +90,10 @@
     "finalValue": 192878.0,
     "dcWinRate": 0.696,
     "riskVolatility": 0.583,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.439,
     "forwardYield": 73.0,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 61.4,
-    "momentum5d": -5.4,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "NVDW",
@@ -148,17 +106,10 @@
     "finalValue": 179745.0,
     "dcWinRate": 0.833,
     "riskVolatility": 0.318,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.428,
     "forwardYield": 45.6,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 45.8,
-    "momentum5d": -4.1,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "ULTY",
@@ -171,17 +122,10 @@
     "finalValue": 173203.0,
     "dcWinRate": 0.909,
     "riskVolatility": 0.171,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.096,
     "forwardYield": 87.3,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk | OPPORTUNITY: Oversold + Stable (RSI: 33.8, Momentum: -0.0%)",
-    "rsi": 33.8,
-    "momentum5d": -4.5,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "COIW",
@@ -194,17 +138,10 @@
     "finalValue": 171364.0,
     "dcWinRate": 0.75,
     "riskVolatility": 0.925,
-    "riskLevel": "MEDIUM",
+    "riskLevel": "PENDING",
     "medianDividend": 0.455,
     "forwardYield": 59.1,
-    "category": "excluded",
-    "riskColor": "#ffc107",
-    "riskPriority": 3,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Deeply Oversold (RSI: 27.9, Momentum: -0.1%)",
-    "rsi": 27.9,
-    "momentum5d": -8.3,
-    "alertCount": 2,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "XDTE",
@@ -217,17 +154,10 @@
     "finalValue": 170902.0,
     "dcWinRate": 0.875,
     "riskVolatility": 0.08199999999999999,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.239,
     "forwardYield": 28.3,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 56.0,
-    "momentum5d": -0.9,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "HOOW",
@@ -240,17 +170,10 @@
     "finalValue": 170146.0,
     "dcWinRate": 1.0,
     "riskVolatility": 0.701,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 1.155,
     "forwardYield": 94.3,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 53.4,
-    "momentum5d": -3.8,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "IWMY",
@@ -263,17 +186,10 @@
     "finalValue": 161165.0,
     "dcWinRate": 0.8809999999999999,
     "riskVolatility": 0.11699999999999999,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.27,
     "forwardYield": 60.9,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 59.7,
-    "momentum5d": -1.3,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "YBTC",
@@ -286,17 +202,10 @@
     "finalValue": 159268.0,
     "dcWinRate": 0.7879999999999999,
     "riskVolatility": 0.223,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.346,
     "forwardYield": 38.4,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 50.6,
-    "momentum5d": -2.3,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "QQQY",
@@ -309,17 +218,10 @@
     "finalValue": 159119.0,
     "dcWinRate": 0.889,
     "riskVolatility": 0.08,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.227,
     "forwardYield": 46.6,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 41.0,
-    "momentum5d": -1.8,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "YETH",
@@ -332,17 +234,10 @@
     "finalValue": 153190.0,
     "dcWinRate": 0.7140000000000001,
     "riskVolatility": 0.419,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.352,
     "forwardYield": 63.3,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 63.9,
-    "momentum5d": 1.4,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "CHPY",
@@ -355,17 +250,10 @@
     "finalValue": 148539.0,
     "dcWinRate": 0.882,
     "riskVolatility": 0.145,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.384,
     "forwardYield": 37.8,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 52.0,
-    "momentum5d": -3.1,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "NVYY",
@@ -378,17 +266,10 @@
     "finalValue": 148502.0,
     "dcWinRate": 1.0,
     "riskVolatility": 0.207,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.519,
     "forwardYield": 103.0,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
-    "rsi": 50.3,
-    "momentum5d": -3.2,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "RDTE",
@@ -401,17 +282,10 @@
     "finalValue": 146789.0,
     "dcWinRate": 0.7829999999999999,
     "riskVolatility": 0.146,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.265,
     "forwardYield": 41.6,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 55.0,
-    "momentum5d": -2.2,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "GPTY",
@@ -424,17 +298,10 @@
     "finalValue": 146176.0,
     "dcWinRate": 0.815,
     "riskVolatility": 0.16,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.294,
     "forwardYield": 34.7,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk | WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Oversold + Stable (RSI: 37.0, Momentum: -0.0%)",
-    "rsi": 37.0,
-    "momentum5d": -4.5,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "AAPW",
@@ -447,17 +314,10 @@
     "finalValue": 143740.0,
     "dcWinRate": 0.75,
     "riskVolatility": 0.278,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.235,
     "forwardYield": 32.9,
-    "category": "top-performers",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (5 days)",
-    "rsi": 69.3,
-    "momentum5d": -4.2,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "top-performers"
   },
   {
     "ticker": "XBTY",
@@ -470,17 +330,10 @@
     "finalValue": 139643.0,
     "dcWinRate": 0.9,
     "riskVolatility": 0.235,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.475,
     "forwardYield": 107.8,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
-    "rsi": 40.3,
-    "momentum5d": -3.0,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "TSYY",
@@ -493,17 +346,10 @@
     "finalValue": 138039.0,
     "dcWinRate": 0.9,
     "riskVolatility": 0.35100000000000003,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.255,
     "forwardYield": 160.1,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
-    "rsi": 57.5,
-    "momentum5d": -1.0,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "WDTE",
@@ -516,17 +362,10 @@
     "finalValue": 137184.0,
     "dcWinRate": 0.902,
     "riskVolatility": 0.06,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.217,
     "forwardYield": 33.3,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 47.6,
-    "momentum5d": -0.4,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "NVII",
@@ -539,17 +378,10 @@
     "finalValue": 134781.0,
     "dcWinRate": 0.8,
     "riskVolatility": 0.275,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.214,
     "forwardYield": 35.5,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 50.0,
-    "momentum5d": -3.4,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "COII",
@@ -562,17 +394,10 @@
     "finalValue": 124082.0,
     "dcWinRate": 0.556,
     "riskVolatility": 0.7040000000000001,
-    "riskLevel": "MEDIUM",
+    "riskLevel": "PENDING",
     "medianDividend": 0.326,
     "forwardYield": 73.6,
-    "category": "excluded",
-    "riskColor": "#ffc107",
-    "riskPriority": 3,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Deeply Oversold (RSI: 28.1, Momentum: -0.1%)",
-    "rsi": 28.1,
-    "momentum5d": -7.2,
-    "alertCount": 2,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "RDTY",
@@ -585,17 +410,10 @@
     "finalValue": 123114.0,
     "dcWinRate": 0.7140000000000001,
     "riskVolatility": 0.14300000000000002,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.33,
     "forwardYield": 38.5,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 53.6,
-    "momentum5d": -2.0,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "BLOX",
@@ -608,17 +426,10 @@
     "finalValue": 122995.0,
     "dcWinRate": 0.833,
     "riskVolatility": 0.377,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.153,
     "forwardYield": 36.7,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk | WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 44.8,
-    "momentum5d": -6.2,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "QDTY",
@@ -631,17 +442,10 @@
     "finalValue": 122469.0,
     "dcWinRate": 0.9129999999999999,
     "riskVolatility": 0.105,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.24,
     "forwardYield": 28.2,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 47.8,
-    "momentum5d": -2.1,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "MAGY",
@@ -654,17 +458,10 @@
     "finalValue": 121445.0,
     "dcWinRate": 0.7859999999999999,
     "riskVolatility": 0.102,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.376,
     "forwardYield": 35.2,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk | OPPORTUNITY: Oversold + Stable (RSI: 35.3, Momentum: -0.0%)",
-    "rsi": 35.3,
-    "momentum5d": -2.0,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "SDTY",
@@ -677,17 +474,10 @@
     "finalValue": 121383.0,
     "dcWinRate": 0.88,
     "riskVolatility": 0.083,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.22,
     "forwardYield": 25.4,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 53.2,
-    "momentum5d": -0.6,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "YSPY",
@@ -700,17 +490,10 @@
     "finalValue": 119343.0,
     "dcWinRate": 0.9,
     "riskVolatility": 0.149,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.192,
     "forwardYield": 51.5,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk",
-    "rsi": 41.1,
-    "momentum5d": -1.0,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "TQQY",
@@ -723,17 +506,10 @@
     "finalValue": 117769.0,
     "dcWinRate": 0.8,
     "riskVolatility": 0.158,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.181,
     "forwardYield": 51.7,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~2 days, Low risk | OPPORTUNITY: Oversold + Stable (RSI: 37.3, Momentum: -0.0%)",
-    "rsi": 37.3,
-    "momentum5d": -2.8,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "BCCC",
@@ -746,17 +522,10 @@
     "finalValue": 116709.0,
     "dcWinRate": 0.778,
     "riskVolatility": 0.18899999999999997,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.187,
     "forwardYield": 37.5,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (4 days)",
-    "rsi": 52.6,
-    "momentum5d": -3.9,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "USOY",
@@ -769,17 +538,10 @@
     "finalValue": 116589.0,
     "dcWinRate": 0.875,
     "riskVolatility": 0.215,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.141,
     "forwardYield": 86.7,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 35.4,
-    "momentum5d": 1.8,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "METW",
@@ -792,17 +554,10 @@
     "finalValue": 116411.0,
     "dcWinRate": 1.0,
     "riskVolatility": 0.418,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.457,
     "forwardYield": 47.9,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 43.0,
-    "momentum5d": -5.1,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "MSII",
@@ -815,17 +570,10 @@
     "finalValue": 114561.0,
     "dcWinRate": 0.889,
     "riskVolatility": 0.619,
-    "riskLevel": "HIGH",
+    "riskLevel": "PENDING",
     "medianDividend": 0.252,
     "forwardYield": 63.3,
-    "category": "excluded",
-    "riskColor": "#dc3545",
-    "riskPriority": 4,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity",
-    "rsi": 38.7,
-    "momentum5d": -11.9,
-    "alertCount": 3,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "TSII",
@@ -838,17 +586,10 @@
     "finalValue": 114027.0,
     "dcWinRate": 0.778,
     "riskVolatility": 0.47,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.194,
     "forwardYield": 44.0,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (4 days)",
-    "rsi": 63.9,
-    "momentum5d": -4.0,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "AMZW",
@@ -861,17 +602,10 @@
     "finalValue": 113396.0,
     "dcWinRate": 0.857,
     "riskVolatility": 0.354,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.396,
     "forwardYield": 42.5,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: Down trend (3 days)",
-    "rsi": 41.2,
-    "momentum5d": -0.5,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "NFLW",
@@ -884,17 +618,10 @@
     "finalValue": 107978.0,
     "dcWinRate": 0.857,
     "riskVolatility": 0.33299999999999996,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.482,
     "forwardYield": 55.4,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 63.9,
-    "momentum5d": 0.9,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "GLDY",
@@ -907,17 +634,10 @@
     "finalValue": 106478.0,
     "dcWinRate": 0.875,
     "riskVolatility": 0.086,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.139,
     "forwardYield": 42.2,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "PREPARE: Dividend likely in ~1 days, Low risk",
-    "rsi": 59.6,
-    "momentum5d": -0.3,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "BRKW",
@@ -930,17 +650,10 @@
     "finalValue": 104679.0,
     "dcWinRate": 0.857,
     "riskVolatility": 0.183,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.252,
     "forwardYield": 27.3,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 61.7,
-    "momentum5d": 2.7,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "MMKT",
@@ -953,17 +666,10 @@
     "finalValue": 103882.0,
     "dcWinRate": 1.0,
     "riskVolatility": 0.003,
-    "riskLevel": "SAFE",
+    "riskLevel": "PENDING",
     "medianDividend": 0.079,
     "forwardYield": 4.1,
-    "category": "excluded",
-    "riskColor": "#28a745",
-    "riskPriority": 1,
-    "rationale": "Normal trading conditions",
-    "rsi": 62.3,
-    "momentum5d": 0.0,
-    "alertCount": 0,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "WEEK",
@@ -976,17 +682,10 @@
     "finalValue": 103748.0,
     "dcWinRate": 0.9129999999999999,
     "riskVolatility": 0.003,
-    "riskLevel": "LOW",
+    "riskLevel": "PENDING",
     "medianDividend": 0.079,
     "forwardYield": 4.1,
-    "category": "excluded",
-    "riskColor": "#fd7e14",
-    "riskPriority": 2,
-    "rationale": "SIGNALS: RSI Overbought (95.0)",
-    "rsi": 95.0,
-    "momentum5d": 0.1,
-    "alertCount": 1,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   },
   {
     "ticker": "MST",
@@ -999,16 +698,9 @@
     "finalValue": 89643.0,
     "dcWinRate": 0.5379999999999999,
     "riskVolatility": 0.991,
-    "riskLevel": "HIGH",
+    "riskLevel": "PENDING",
     "medianDividend": 0.266,
     "forwardYield": 122.3,
-    "category": "excluded",
-    "riskColor": "#dc3545",
-    "riskPriority": 4,
-    "rationale": "WATCH: 5% below recent high - potential entry opportunity | OPPORTUNITY: Deeply Oversold (RSI: 32.7, Momentum: -0.2%)",
-    "rsi": 32.7,
-    "momentum5d": -21.7,
-    "alertCount": 3,
-    "riskLastUpdated": "2025-08-21 06:02"
+    "category": "excluded"
   }
 ]
