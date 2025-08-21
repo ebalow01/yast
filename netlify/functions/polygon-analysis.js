@@ -721,36 +721,56 @@ Entry: $X.XX | Stop: $X.XX | Target: $X.XX | Size: [Risk %]
 
 #### Sentiment Calculation Rules (MANDATORY)
 
-**STEP 1: Identify Dominant Scenario**
-- Determine which scenario has the highest probability
-- That scenario's directional bias becomes the primary sentiment
+**STEP 1: Identify All Scenario Directional Biases**
+- Determine each scenario's directional bias (BULLISH/BEARISH/NEUTRAL)
+- Note individual scenario probabilities for aggregation
+- IMPORTANT: Individual scenario dominance does NOT determine sentiment
 
-**STEP 2: Calculate Sentiment Label Based on Probability**
-The sentiment label is determined by the highest probability scenario:
+**STEP 2: Aggregate Directional Probabilities (CRITICAL STEP)**
+Before determining sentiment, you MUST combine probabilities for scenarios with the same directional bias:
+
+**Directional Probability Aggregation Rules:**
+1. **BULLISH TOTAL** = Sum of all BULLISH scenario probabilities
+2. **BEARISH TOTAL** = Sum of all BEARISH scenario probabilities  
+3. **NEUTRAL TOTAL** = Sum of all NEUTRAL scenario probabilities
+
+**CRITICAL: These totals determine final sentiment, NOT individual scenario probabilities**
+
+**Example Calculation:**
+- Base Case: 50% [BULLISH] + Bullish Scenario: 25% [BULLISH] = 75% Total Bullish
+- Bearish Scenario: 25% [BEARISH] = 25% Total Bearish
+- Final Result: 75% Bullish vs 25% Bearish → "STRONG BULLISH" (75% ≥ 60%)
+
+**STEP 3: Calculate Sentiment Label Based on AGGREGATED Probabilities**
+Apply strength rules to the TOTAL directional probability (not individual scenarios):
 
 **Probability-Based Sentiment Labels:**
-- If highest scenario probability <40%: Use "WEAK [DIRECTION]"
-- If highest scenario probability 40-60%: Use "[DIRECTION]" (no adjective)
-- If highest scenario probability ≥60%: Use "STRONG [DIRECTION]"
-- If no clear dominance (scenarios within 5% or neutral scenario highest): Use "NEUTRAL"
+- If highest TOTAL directional probability <40%: Use "WEAK [DIRECTION]"
+- If highest TOTAL directional probability 40-60%: Use "[DIRECTION]" (no adjective)
+- If highest TOTAL directional probability ≥60%: Use "STRONG [DIRECTION]"
+- If no directional total >40% or neutral highest: Use "NEUTRAL"
 
 **Direction Determination:**
-- BULLISH: If Bullish scenario has highest probability
-- BEARISH: If Bearish scenario has highest probability  
-- NEUTRAL: If Base Case neutral scenario has highest probability OR no scenario >40%
+- BULLISH: If Total Bullish probability is highest
+- BEARISH: If Total Bearish probability is highest  
+- NEUTRAL: If Total Neutral probability is highest OR no direction >40%
 
-**STEP 3: Mathematical Validation Formula**
-Calculate the sentiment using this logic:
-1. Find scenario with max(Base_Prob, Bullish_Prob, Bearish_Prob)
-2. If max scenario is Neutral or max_prob <40%: "NEUTRAL"
-3. If max scenario is Bullish: 
-   - <40% prob: "WEAK BULLISH"
-   - 40-59% prob: "BULLISH" 
-   - ≥60% prob: "STRONG BULLISH"
-4. If max scenario is Bearish:
-   - <40% prob: "WEAK BEARISH"
-   - 40-59% prob: "BEARISH"
-   - ≥60% prob: "STRONG BEARISH"
+**STEP 4: Mathematical Validation Formula**
+Calculate the sentiment using this CORRECTED logic:
+1. Calculate: Total_Bullish = Sum(all BULLISH scenario probabilities)
+2. Calculate: Total_Bearish = Sum(all BEARISH scenario probabilities) 
+3. Calculate: Total_Neutral = Sum(all NEUTRAL scenario probabilities)
+4. Find max(Total_Bullish, Total_Bearish, Total_Neutral)
+5. Apply strength rules to the TOTAL probability:
+   - If max total is Neutral or max_total <40%: "NEUTRAL"
+   - If max total is Bullish: 
+     - <40% total: "WEAK BULLISH"
+     - 40-59% total: "BULLISH" 
+     - ≥60% total: "STRONG BULLISH"
+   - If max total is Bearish:
+     - <40% total: "WEAK BEARISH"
+     - 40-59% total: "BEARISH"
+     - ≥60% total: "STRONG BEARISH"
 
 **SENTIMENT OUTPUT FORMAT:**
 
@@ -761,13 +781,19 @@ SCENARIO PROBABILITIES:
 - Scenario 3 (Bearish): XX% [BEARISH]
 TOTAL: 100% ✓
 
-DOMINANT SCENARIO: [Name] at XX%
-MATHEMATICAL CALCULATION: Max probability is XX% for [Scenario], therefore sentiment = [ADJECTIVE + DIRECTION]
+DIRECTIONAL PROBABILITY AGGREGATION:
+- Total Bullish: XX% (Sum of all BULLISH scenarios)
+- Total Bearish: XX% (Sum of all BEARISH scenarios)  
+- Total Neutral: XX% (Sum of all NEUTRAL scenarios)
+AGGREGATION TOTAL: 100% ✓
+
+DOMINANT DIRECTION: [BULLISH/BEARISH/NEUTRAL] at XX% total probability
+MATHEMATICAL CALCULATION: Total [Direction] probability is XX%, therefore sentiment = [ADJECTIVE + DIRECTION]
 
 FINAL SENTIMENT RATING: [STRONG/WEAK] [BULLISH/BEARISH] or [NEUTRAL]
 
-CONSISTENCY CHECK: ✓ Sentiment aligns with highest probability scenario
-JUSTIFICATION (25 words max): Driven by [dominant scenario] at XX% probability, supported by [key technical factor]
+CONSISTENCY CHECK: ✓ Sentiment aligns with highest TOTAL directional probability
+JUSTIFICATION (25 words max): Driven by [XX%] total [direction] probability, supported by [key technical factor]
 
 TIMEFRAME BREAKDOWN:
 - 1-Week Sentiment: [STRONG/WEAK] [BULLISH/BEARISH] or [NEUTRAL] (XX% confidence)
@@ -775,17 +801,38 @@ TIMEFRAME BREAKDOWN:
 \`\`\`
 
 **ANTI-CONTRADICTION SAFEGUARDS:**
-- If sentiment doesn't match highest probability scenario, analysis FAILS
+- If sentiment doesn't match highest TOTAL directional probability, analysis FAILS
 - Probabilities must sum to 100% or analysis FAILS
-- Sentiment adjective must match probability ranges exactly
-- No contradictory directions allowed (e.g., bullish sentiment with bearish dominant scenario)
+- Sentiment adjective must match TOTAL probability ranges exactly
+- No contradictory directions allowed (e.g., bullish sentiment with bearish total dominance)
+- Must show directional aggregation calculation in output
 
-**EXAMPLES OF CORRECT SENTIMENT LABELS:**
-- Base Case 50% (NEUTRAL: Consolidation $33.30-$33.80), Bullish 30%, Bearish 20% → "NEUTRAL"
-- Base Case 25%, Bullish 65% (breakout above resistance), Bearish 10% → "STRONG BULLISH" 
-- Base Case 20%, Bullish 35%, Bearish 45% (support breakdown) → "BEARISH"
-- Base Case 30%, Bullish 38%, Bearish 32% → "WEAK BULLISH"
-- Base Case 33%, Bullish 33%, Bearish 34% → "NEUTRAL" (no clear dominance)
+**EXAMPLES OF CORRECT SENTIMENT LABELS (WITH AGGREGATION):**
+
+**Example 1: Neutral Consolidation**
+- Base Case 50% [NEUTRAL], Bullish 30% [BULLISH], Bearish 20% [BEARISH]
+- Aggregation: Total Neutral 50%, Total Bullish 30%, Total Bearish 20%
+- Result: "NEUTRAL" (50% neutral is highest)
+
+**Example 2: Strong Bullish (The Original Problem Case)**
+- Base Case 50% [BULLISH], Bullish 25% [BULLISH], Bearish 25% [BEARISH]
+- Aggregation: Total Bullish 75% (50%+25%), Total Bearish 25%, Total Neutral 0%
+- Result: "STRONG BULLISH" (75% ≥ 60%)
+
+**Example 3: Regular Bearish**
+- Base Case 20% [NEUTRAL], Bullish 35% [BULLISH], Bearish 45% [BEARISH]
+- Aggregation: Total Bearish 45%, Total Bullish 35%, Total Neutral 20%
+- Result: "BEARISH" (45% is 40-60% range)
+
+**Example 4: Weak Bullish**
+- Base Case 30% [NEUTRAL], Bullish 38% [BULLISH], Bearish 32% [BEARISH]
+- Aggregation: Total Bullish 38%, Total Bearish 32%, Total Neutral 30%
+- Result: "WEAK BULLISH" (38% < 40%)
+
+**Example 5: Neutral Due to Close Competition**
+- Base Case 33% [NEUTRAL], Bullish 33% [BULLISH], Bearish 34% [BEARISH]
+- Aggregation: Total Bearish 34%, Total Bullish 33%, Total Neutral 33%
+- Result: "NEUTRAL" (no clear dominance, all within 5% of each other)
 
 **CORRECTED EXAMPLE - WHAT WAS WRONG:**
 ❌ WRONG: Base Case 50% (Consolidation with mild downward bias) [BEARISH] → "BEARISH" 
