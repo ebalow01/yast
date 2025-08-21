@@ -2650,7 +2650,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           variant="outlined"
                           startIcon={isRefreshingAll ? <CircularProgress size={16} /> : <Refresh />}
                           onClick={() => {
-                            const optimalTickers = optimalPortfolioData.map(item => item.ticker);
+                            const optimalTickers = optimalPortfolioData
+                              .filter(item => item.ticker !== 'CASH')
+                              .map(item => item.ticker);
                             refreshAiAnalysisForTickers(optimalTickers);
                           }}
                           disabled={isRefreshingAll}
