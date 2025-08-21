@@ -678,7 +678,7 @@ Support: $${techData.primary_support.toFixed(2)} (${techData.support_tests} test
 Entry: $X.XX | Stop: $X.XX | Target: $X.XX | Size: [Risk %]
 \`\`\`
 
-### 9. FINAL SENTIMENT RATING (MUST ALIGN WITH SCENARIOS)
+### 9. FINAL SENTIMENT RATING (PROBABILITY-BASED DESCRIPTIVE SYSTEM)
 
 #### Sentiment Calculation Rules (MANDATORY)
 
@@ -686,18 +686,32 @@ Entry: $X.XX | Stop: $X.XX | Target: $X.XX | Size: [Risk %]
 - Determine which scenario has the highest probability
 - That scenario's directional bias becomes the primary sentiment
 
-**STEP 2: Calculate Sentiment Intensity (1-5 Scale)**
-Based on probability confidence gap:
-- Highest scenario 40-45%: Intensity = 1 (Weak)
-- Highest scenario 46-55%: Intensity = 2 (Moderate)  
-- Highest scenario 56-65%: Intensity = 3 (Standard)
-- Highest scenario 66-75%: Intensity = 4 (Strong)
-- Highest scenario 76%+: Intensity = 5 (Very Strong)
+**STEP 2: Calculate Sentiment Label Based on Probability**
+The sentiment label is determined by the highest probability scenario:
 
-**STEP 3: Apply Mathematical Validation**
-- If Bullish scenario probability > (Bearish + Base*0.5): BULLISH sentiment
-- If Bearish scenario probability > (Bullish + Base*0.5): BEARISH sentiment  
-- If no clear dominance (scenarios within 10%): NEUTRAL
+**Probability-Based Sentiment Labels:**
+- If highest scenario probability <40%: Use "WEAK [DIRECTION]"
+- If highest scenario probability 40-60%: Use "[DIRECTION]" (no adjective)
+- If highest scenario probability ≥60%: Use "STRONG [DIRECTION]"
+- If no clear dominance (scenarios within 5% or neutral scenario highest): Use "NEUTRAL"
+
+**Direction Determination:**
+- BULLISH: If Bullish scenario has highest probability
+- BEARISH: If Bearish scenario has highest probability  
+- NEUTRAL: If Base Case neutral scenario has highest probability OR no scenario >40%
+
+**STEP 3: Mathematical Validation Formula**
+Calculate the sentiment using this logic:
+1. Find scenario with max(Base_Prob, Bullish_Prob, Bearish_Prob)
+2. If max scenario is Neutral or max_prob <40%: "NEUTRAL"
+3. If max scenario is Bullish: 
+   - <40% prob: "WEAK BULLISH"
+   - 40-59% prob: "BULLISH" 
+   - ≥60% prob: "STRONG BULLISH"
+4. If max scenario is Bearish:
+   - <40% prob: "WEAK BEARISH"
+   - 40-59% prob: "BEARISH"
+   - ≥60% prob: "STRONG BEARISH"
 
 **SENTIMENT OUTPUT FORMAT:**
 
@@ -709,23 +723,30 @@ SCENARIO PROBABILITIES:
 TOTAL: 100% ✓
 
 DOMINANT SCENARIO: [Name] at XX%
-MATHEMATICAL VALIDATION: [Show calculation]
+MATHEMATICAL CALCULATION: Max probability is XX% for [Scenario], therefore sentiment = [ADJECTIVE + DIRECTION]
 
-FINAL SENTIMENT RATING: [X/5 Bearish/Bullish/Neutral]
+FINAL SENTIMENT RATING: [STRONG/WEAK] [BULLISH/BEARISH] or [NEUTRAL]
 
 CONSISTENCY CHECK: ✓ Sentiment aligns with highest probability scenario
 JUSTIFICATION (25 words max): Driven by [dominant scenario] at XX% probability, supported by [key technical factor]
 
 TIMEFRAME BREAKDOWN:
-- 1-Week Sentiment: [X/5 Bearish/Bullish] (XX% confidence)
-- 2-Week Sentiment: [X/5 Bearish/Bullish] (XX% confidence)
+- 1-Week Sentiment: [STRONG/WEAK] [BULLISH/BEARISH] or [NEUTRAL] (XX% confidence)
+- 2-Week Sentiment: [STRONG/WEAK] [BULLISH/BEARISH] or [NEUTRAL] (XX% confidence)
 \`\`\`
 
 **ANTI-CONTRADICTION SAFEGUARDS:**
 - If sentiment doesn't match highest probability scenario, analysis FAILS
 - Probabilities must sum to 100% or analysis FAILS
-- No bearish sentiment allowed if bullish scenario has highest probability
-- No bullish sentiment allowed if bearish scenario has highest probability
+- Sentiment adjective must match probability ranges exactly
+- No contradictory directions allowed (e.g., bullish sentiment with bearish dominant scenario)
+
+**EXAMPLES OF CORRECT SENTIMENT LABELS:**
+- Base Case 45% (Neutral), Bullish 35%, Bearish 20% → "NEUTRAL"
+- Base Case 25%, Bullish 65%, Bearish 10% → "STRONG BULLISH" 
+- Base Case 20%, Bullish 35%, Bearish 45% → "BEARISH"
+- Base Case 30%, Bullish 38%, Bearish 32% → "WEAK BULLISH"
+- Base Case 33%, Bullish 33%, Bearish 34% → "NEUTRAL" (no clear dominance)
 
 ## ANALYSIS STANDARDS
 
