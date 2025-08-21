@@ -1,14 +1,100 @@
+// Configuration constants
+const FIBONACCI_LEVELS = [0.236, 0.382, 0.5, 0.618];
+const TECHNICAL_PERIODS = {
+  RSI: 14,
+  SMA_SHORT: 20,
+  SMA_LONG: 50,
+  ATR: 14,
+  MACD_FAST: 12,
+  MACD_SLOW: 26,
+  MACD_SIGNAL: 9
+};
+
+const DEFAULT_RISK_METRICS = {
+  var_95: 0,
+  cvar_95: 0,
+  max_drawdown: 0,
+  sharpe_ratio: 0,
+  win_rate: 0,
+  volatility_percentile: 50
+};
+
+// Utility functions
+const formatPrice = (value) => `$${value.toFixed(2)}`;
+const formatPercent = (value) => `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+const formatChange = (value) => `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+const formatRatio = (value) => `${value.toFixed(2)}x`;
+
+function classifyStrength(tests) {
+  return tests >= 5 ? 'Very Strong' : 
+         tests >= 3 ? 'Strong' : 
+         tests >= 2 ? 'Moderate' : 'Weak';
+}
+
+// Data preparation functions
+function buildDataSummary(techData) {
+  const rangeVal = techData.session_high - techData.session_low;
+  const sma20Deviation = ((techData.current_price - techData.sma20) / techData.sma20 * 100);
+  const sma50Deviation = ((techData.current_price - techData.sma50) / techData.sma50 * 100);
+
+  return `== REAL-TIME MARKET DATA ANALYSIS ==
+Ticker: ${techData.ticker}
+Current Price: ${formatPrice(techData.current_price)}
+Daily Change: ${formatChange(techData.daily_change)}
+2-Day Performance: ${formatChange(techData.two_day_change)}
+
+== TECHNICAL INDICATORS ==
+RSI (${TECHNICAL_PERIODS.RSI}-period): ${techData.rsi.toFixed(1)} ${techData.rsi < 30 ? '(deeply oversold)' : techData.rsi < 40 ? '(oversold)' : techData.rsi < 60 ? '(neutral)' : techData.rsi < 80 ? '(overbought)' : '(extremely overbought)'}
+SMA ${TECHNICAL_PERIODS.SMA_SHORT} (5-hour): ${formatPrice(techData.sma20)}
+SMA ${TECHNICAL_PERIODS.SMA_LONG} (12.5-hour): ${formatPrice(techData.sma50)}
+Price vs SMA20: ${formatChange(sma20Deviation)}
+Price vs SMA50: ${formatChange(sma50Deviation)}
+Primary Trend: ${techData.trend_direction.toUpperCase()} ${techData.trend_direction === 'bearish' ? '(below both SMAs)' : techData.trend_direction === 'bullish' ? '(above both SMAs)' : '(mixed signals)'}
+
+== SESSION DATA ==
+Session High: ${formatPrice(techData.session_high)}
+Session Low: ${formatPrice(techData.session_low)}
+Range: ${formatPrice(rangeVal)} (${(rangeVal / techData.current_price * 100).toFixed(1)}%)
+
+== EXTENDED LEVELS ==
+Previous High: ${formatPrice(techData.previous_high)}
+Previous Low: ${formatPrice(techData.previous_low)}
+
+== ADVANCED TECHNICAL INDICATORS ==
+VWAP: ${formatPrice(techData.vwap)} (Price vs VWAP: ${formatChange(techData.vwap_deviation)})
+Volume Above VWAP: ${techData.volume_above_vwap_pct.toFixed(1)}% | Institutional Sentiment: ${techData.institutional_sentiment}
+Bollinger Bands: Upper ${formatPrice(techData.bb_upper)} | Lower ${formatPrice(techData.bb_lower)} | Position: ${techData.bb_position}
+MACD: Line ${techData.macd_line.toFixed(4)} | Signal ${techData.macd_signal.toFixed(4)} | Histogram ${techData.macd_histogram.toFixed(4)}
+MACD Status: ${techData.macd_status}
+ATR (${TECHNICAL_PERIODS.ATR}): ${techData.atr.toFixed(3)} | Volatility: ${techData.atr_trend}${techData.volatility_expansion ? ' VOLATILITY EXPANSION!' : ''}
+
+== FIBONACCI RETRACEMENTS ==
+${FIBONACCI_LEVELS.map((level, index) => {
+  const price = techData.session_low + (rangeVal * level);
+  const percentage = (level * 100).toFixed(1);
+  return `${percentage}%: ${formatPrice(price)}`;
+}).join('\n')}
+
+== RISK METRICS ==
+- Value at Risk (95%): ${formatPrice(techData.var_95)}
+- Conditional VaR (95%): ${formatPrice(techData.cvar_95)}
+- Maximum Drawdown: ${(techData.max_drawdown*100).toFixed(1)}%
+- Sharpe Ratio: ${techData.sharpe_ratio.toFixed(2)}
+- Win Rate: ${techData.win_rate.toFixed(1)}%
+- Volatility Percentile: ${techData.volatility_percentile.toFixed(0)}%
+
+== VOLUME ANALYSIS ==
+- Volume (Latest): ${techData.latest_volume.toLocaleString()}
+- 20-Bar Average: ${Math.round(techData.avg_volume).toLocaleString()}
+- Volume Ratio: ${formatRatio(techData.volume_ratio)} average (${techData.volume_status})
+
+Data points: ${techData.data_points} 15-minute bars`;
+}
+
 // Enhanced technical analysis functions
 function calculateRiskMetrics(results, currentPrice, atr) {
   if (results.length < 20) {
-    return {
-      var_95: 0,
-      cvar_95: 0,
-      max_drawdown: 0,
-      sharpe_ratio: 0,
-      win_rate: 0,
-      volatility_percentile: 50
-    };
+    return { ...DEFAULT_RISK_METRICS };
   }
 
   // Calculate returns
@@ -19,14 +105,7 @@ function calculateRiskMetrics(results, currentPrice, atr) {
   }
 
   if (returns.length === 0) {
-    return {
-      var_95: 0,
-      cvar_95: 0,
-      max_drawdown: 0,
-      sharpe_ratio: 0,
-      win_rate: 0,
-      volatility_percentile: 50
-    };
+    return { ...DEFAULT_RISK_METRICS };
   }
 
   // Sort returns for percentile calculations
@@ -176,9 +255,7 @@ function identifySupportResistanceLevels(results, currentPrice, atr) {
     const [level, tests] = resistanceLevelsAbove[0];
     primaryResistance = parseFloat(level);
     resistanceTests = tests;
-    resistanceStrength = tests >= 5 ? 'Very Strong' : 
-                       tests >= 3 ? 'Strong' : 
-                       tests >= 2 ? 'Moderate' : 'Weak';
+    resistanceStrength = classifyStrength(tests);
   }
 
   // Find primary support (closest below current price)
@@ -194,9 +271,7 @@ function identifySupportResistanceLevels(results, currentPrice, atr) {
     const [level, tests] = supportLevelsBelow[0];
     primarySupport = parseFloat(level);
     supportTests = tests;
-    supportStrength = tests >= 5 ? 'Very Strong' : 
-                     tests >= 3 ? 'Strong' : 
-                     tests >= 2 ? 'Moderate' : 'Weak';
+    supportStrength = classifyStrength(tests);
   }
 
   return {
@@ -231,7 +306,7 @@ function processEnhancedTechnicalData(polygonData, ticker) {
 
     let gains = 0;
     let losses = 0;
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < TECHNICAL_PERIODS.RSI; i++) {
       if (changes[i] > 0) {
         gains += changes[i];
       } else {
@@ -239,16 +314,16 @@ function processEnhancedTechnicalData(polygonData, ticker) {
       }
     }
 
-    let avgGain = gains / 14;
-    let avgLoss = losses / 14;
+    let avgGain = gains / TECHNICAL_PERIODS.RSI;
+    let avgLoss = losses / TECHNICAL_PERIODS.RSI;
 
     // Apply Wilder's smoothing for subsequent periods
-    for (let i = 14; i < changes.length; i++) {
+    for (let i = TECHNICAL_PERIODS.RSI; i < changes.length; i++) {
       const gain = changes[i] > 0 ? changes[i] : 0;
       const loss = changes[i] < 0 ? Math.abs(changes[i]) : 0;
       
-      avgGain = ((avgGain * 13) + gain) / 14;
-      avgLoss = ((avgLoss * 13) + loss) / 14;
+      avgGain = ((avgGain * (TECHNICAL_PERIODS.RSI - 1)) + gain) / TECHNICAL_PERIODS.RSI;
+      avgLoss = ((avgLoss * (TECHNICAL_PERIODS.RSI - 1)) + loss) / TECHNICAL_PERIODS.RSI;
     }
 
     if (avgLoss > 0) {
@@ -260,10 +335,10 @@ function processEnhancedTechnicalData(polygonData, ticker) {
   }
 
   // Calculate SMAs
-  const sma20 = results.length >= 20 ? 
-    results.slice(-20).reduce((sum, r) => sum + r.c, 0) / 20 : currentPrice;
-  const sma50 = results.length >= 50 ? 
-    results.slice(-50).reduce((sum, r) => sum + r.c, 0) / 50 : currentPrice;
+  const sma20 = results.length >= TECHNICAL_PERIODS.SMA_SHORT ? 
+    results.slice(-TECHNICAL_PERIODS.SMA_SHORT).reduce((sum, r) => sum + r.c, 0) / TECHNICAL_PERIODS.SMA_SHORT : currentPrice;
+  const sma50 = results.length >= TECHNICAL_PERIODS.SMA_LONG ? 
+    results.slice(-TECHNICAL_PERIODS.SMA_LONG).reduce((sum, r) => sum + r.c, 0) / TECHNICAL_PERIODS.SMA_LONG : currentPrice;
 
   // Session high/low
   const recentBars = results.length >= 26 ? results.slice(-26) : results;
@@ -314,8 +389,8 @@ function processEnhancedTechnicalData(polygonData, ticker) {
   let bbLower = 0;
   let bbPosition = "N/A";
 
-  if (results.length >= 20) {
-    const bbPrices = results.slice(-20).map(r => r.c);
+  if (results.length >= TECHNICAL_PERIODS.SMA_SHORT) {
+    const bbPrices = results.slice(-TECHNICAL_PERIODS.SMA_SHORT).map(r => r.c);
     const bbSma = bbPrices.reduce((sum, p) => sum + p, 0) / bbPrices.length;
     const variance = bbPrices.reduce((sum, p) => sum + Math.pow(p - bbSma, 2), 0) / bbPrices.length;
     const bbStd = Math.sqrt(variance);
@@ -355,21 +430,21 @@ function processEnhancedTechnicalData(polygonData, ticker) {
       return ema;
     };
 
-    const ema12 = calculateEma(prices, 12);
-    const ema26 = calculateEma(prices, 26);
+    const ema12 = calculateEma(prices, TECHNICAL_PERIODS.MACD_FAST);
+    const ema26 = calculateEma(prices, TECHNICAL_PERIODS.MACD_SLOW);
     macdLine = ema12 - ema26;
     
     // Simplified signal calculation
     if (results.length >= 44) {
       const macdValues = [];
-      for (let i = 26; i < prices.length; i++) {
-        const tempEma12 = calculateEma(prices.slice(0, i + 1), 12);
-        const tempEma26 = calculateEma(prices.slice(0, i + 1), 26);
+      for (let i = TECHNICAL_PERIODS.MACD_SLOW; i < prices.length; i++) {
+        const tempEma12 = calculateEma(prices.slice(0, i + 1), TECHNICAL_PERIODS.MACD_FAST);
+        const tempEma26 = calculateEma(prices.slice(0, i + 1), TECHNICAL_PERIODS.MACD_SLOW);
         macdValues.push(tempEma12 - tempEma26);
       }
       
-      if (macdValues.length >= 9) {
-        macdSignal = calculateEma(macdValues, 9);
+      if (macdValues.length >= TECHNICAL_PERIODS.MACD_SIGNAL) {
+        macdSignal = calculateEma(macdValues, TECHNICAL_PERIODS.MACD_SIGNAL);
         macdHistogram = macdLine - macdSignal;
         
         if (macdLine > macdSignal && macdHistogram > 0) {
@@ -388,7 +463,7 @@ function processEnhancedTechnicalData(polygonData, ticker) {
   let atrTrend = "N/A";
   let volatilityExpansion = false;
 
-  if (results.length >= 14) {
+  if (results.length >= TECHNICAL_PERIODS.ATR) {
     const trueRanges = [];
     
     for (let i = 1; i < results.length; i++) {
@@ -404,12 +479,12 @@ function processEnhancedTechnicalData(polygonData, ticker) {
       trueRanges.push(trueRange);
     }
     
-    if (trueRanges.length >= 14) {
-      atr = trueRanges.slice(-14).reduce((sum, tr) => sum + tr, 0) / 14;
+    if (trueRanges.length >= TECHNICAL_PERIODS.ATR) {
+      atr = trueRanges.slice(-TECHNICAL_PERIODS.ATR).reduce((sum, tr) => sum + tr, 0) / TECHNICAL_PERIODS.ATR;
       
-      if (trueRanges.length >= 28) {
-        const recentAtr = trueRanges.slice(-14).reduce((sum, tr) => sum + tr, 0) / 14;
-        const prevAtr = trueRanges.slice(-28, -14).reduce((sum, tr) => sum + tr, 0) / 14;
+      if (trueRanges.length >= TECHNICAL_PERIODS.ATR * 2) {
+        const recentAtr = trueRanges.slice(-TECHNICAL_PERIODS.ATR).reduce((sum, tr) => sum + tr, 0) / TECHNICAL_PERIODS.ATR;
+        const prevAtr = trueRanges.slice(-TECHNICAL_PERIODS.ATR * 2, -TECHNICAL_PERIODS.ATR).reduce((sum, tr) => sum + tr, 0) / TECHNICAL_PERIODS.ATR;
         
         if (recentAtr > prevAtr * 1.5) {
           atrTrend = "EXPANDING (High Volatility)";
@@ -476,68 +551,12 @@ function processEnhancedTechnicalData(polygonData, ticker) {
 }
 
 function buildEnhancedAnalysisPrompt(techData) {
-  // Fibonacci levels
-  const rangeVal = techData.session_high - techData.session_low;
-  const fib236 = techData.session_low + (rangeVal * 0.236);
-  const fib382 = techData.session_low + (rangeVal * 0.382);
-  const fib50 = techData.session_low + (rangeVal * 0.5);
-  const fib618 = techData.session_low + (rangeVal * 0.618);
-
-  // Calculate price position relative to SMAs
+  // Use the extracted data summary function
+  const dataSummary = buildDataSummary(techData);
+  
+  // Calculate price position relative to SMAs for use in prompt template
   const sma20Deviation = ((techData.current_price - techData.sma20) / techData.sma20 * 100);
   const sma50Deviation = ((techData.current_price - techData.sma50) / techData.sma50 * 100);
-
-  const dataSummary = `== REAL-TIME MARKET DATA ANALYSIS ==
-Ticker: ${techData.ticker}
-Current Price: $${techData.current_price.toFixed(2)}
-Daily Change: ${techData.daily_change >= 0 ? '+' : ''}${techData.daily_change.toFixed(1)}%
-2-Day Performance: ${techData.two_day_change >= 0 ? '+' : ''}${techData.two_day_change.toFixed(1)}%
-
-== TECHNICAL INDICATORS ==
-RSI (14-period): ${techData.rsi.toFixed(1)} ${techData.rsi < 30 ? '(deeply oversold)' : techData.rsi < 40 ? '(oversold)' : techData.rsi < 60 ? '(neutral)' : techData.rsi < 80 ? '(overbought)' : '(extremely overbought)'}
-SMA 20 (5-hour): $${techData.sma20.toFixed(2)}
-SMA 50 (12.5-hour): $${techData.sma50.toFixed(2)}
-Price vs SMA20: ${sma20Deviation >= 0 ? '+' : ''}${sma20Deviation.toFixed(1)}%
-Price vs SMA50: ${sma50Deviation >= 0 ? '+' : ''}${sma50Deviation.toFixed(1)}%
-Primary Trend: ${techData.trend_direction.toUpperCase()} ${techData.trend_direction === 'bearish' ? '(below both SMAs)' : techData.trend_direction === 'bullish' ? '(above both SMAs)' : '(mixed signals)'}
-
-== SESSION DATA ==
-Session High: $${techData.session_high.toFixed(2)}
-Session Low: $${techData.session_low.toFixed(2)}
-Range: $${rangeVal.toFixed(2)} (${(rangeVal / techData.current_price * 100).toFixed(1)}%)
-
-== EXTENDED LEVELS ==
-Previous High: $${techData.previous_high.toFixed(2)}
-Previous Low: $${techData.previous_low.toFixed(2)}
-
-== ADVANCED TECHNICAL INDICATORS ==
-VWAP: $${techData.vwap.toFixed(2)} (Price vs VWAP: ${techData.vwap_deviation >= 0 ? '+' : ''}${techData.vwap_deviation.toFixed(1)}%)
-Volume Above VWAP: ${techData.volume_above_vwap_pct.toFixed(1)}% | Institutional Sentiment: ${techData.institutional_sentiment}
-Bollinger Bands: Upper $${techData.bb_upper.toFixed(2)} | Lower $${techData.bb_lower.toFixed(2)} | Position: ${techData.bb_position}
-MACD: Line ${techData.macd_line.toFixed(4)} | Signal ${techData.macd_signal.toFixed(4)} | Histogram ${techData.macd_histogram.toFixed(4)}
-MACD Status: ${techData.macd_status}
-ATR (14): ${techData.atr.toFixed(3)} | Volatility: ${techData.atr_trend}${techData.volatility_expansion ? ' VOLATILITY EXPANSION!' : ''}
-
-== FIBONACCI RETRACEMENTS ==
-23.6%: $${fib236.toFixed(2)}
-38.2%: $${fib382.toFixed(2)}
-50.0%: $${fib50.toFixed(2)}
-61.8%: $${fib618.toFixed(2)}
-
-== RISK METRICS ==
-- Value at Risk (95%): $${techData.var_95.toFixed(2)}
-- Conditional VaR (95%): $${techData.cvar_95.toFixed(2)}
-- Maximum Drawdown: ${(techData.max_drawdown*100).toFixed(1)}%
-- Sharpe Ratio: ${techData.sharpe_ratio.toFixed(2)}
-- Win Rate: ${techData.win_rate.toFixed(1)}%
-- Volatility Percentile: ${techData.volatility_percentile.toFixed(0)}%
-
-== VOLUME ANALYSIS ==
-- Volume (Latest): ${techData.latest_volume.toLocaleString()}
-- 20-Bar Average: ${Math.round(techData.avg_volume).toLocaleString()}
-- Volume Ratio: ${techData.volume_ratio.toFixed(2)}x average (${techData.volume_status})
-
-Data points: ${techData.data_points} 15-minute bars`;
 
   const enhancedPrompt = `Analyze this real market data for ${techData.ticker}:
 
@@ -579,16 +598,16 @@ Apply ALL three analytical frameworks and synthesize results:
    - Moving average relationships (price ${sma20Deviation < 0 ? 'below' : 'above'} 20 SMA by ${Math.abs(sma20Deviation).toFixed(1)}%, ${sma50Deviation < 0 ? 'below' : 'above'} 50 SMA by ${Math.abs(sma50Deviation).toFixed(1)}%)
 
 2. **Support/Resistance Framework**
-   - Primary Support: $${techData.primary_support.toFixed(2)} (${techData.support_tests} tests - ${techData.support_strength})
-   - Primary Resistance: $${techData.primary_resistance.toFixed(2)} (${techData.resistance_tests} tests - ${techData.resistance_strength})
-   - Secondary Support: $${techData.bb_lower.toFixed(2)} (Bollinger Lower), $${techData.session_low.toFixed(2)} (Session Low), $${techData.previous_low.toFixed(2)} (Previous Low)
-   - Secondary Resistance: $${techData.bb_upper.toFixed(2)} (Bollinger Upper), $${techData.session_high.toFixed(2)} (Session High), $${techData.previous_high.toFixed(2)} (Previous High)
+   - Primary Support: ${formatPrice(techData.primary_support)} (${techData.support_tests} tests - ${techData.support_strength})
+   - Primary Resistance: ${formatPrice(techData.primary_resistance)} (${techData.resistance_tests} tests - ${techData.resistance_strength})
+   - Secondary Support: ${formatPrice(techData.bb_lower)} (Bollinger Lower), ${formatPrice(techData.session_low)} (Session Low), ${formatPrice(techData.previous_low)} (Previous Low)
+   - Secondary Resistance: ${formatPrice(techData.bb_upper)} (Bollinger Upper), ${formatPrice(techData.session_high)} (Session High), ${formatPrice(techData.previous_high)} (Previous High)
 
 3. **Volume Analysis**
    - Participation rates (${techData.volume_above_vwap_pct.toFixed(1)}% above VWAP - ${techData.institutional_sentiment.toLowerCase()})
    - Institutional positioning (${techData.institutional_sentiment.toLowerCase()} sentiment)
    - Volume-price relationships
-   - Latest volume: ${techData.volume_ratio.toFixed(2)}x average (${techData.volume_status.toLowerCase()})
+   - Latest volume: ${formatRatio(techData.volume_ratio)} average (${techData.volume_status.toLowerCase()})
 
 4. **Volatility Assessment**
    - ATR ${techData.atr.toFixed(3)} (${techData.volatility_expansion ? 'VOLATILITY EXPANSION!' : techData.atr_trend})
@@ -670,7 +689,7 @@ Key Risk: [Main threat to thesis]
 
 **CRITICAL LEVELS** (25 words max)
 \`\`\`
-Support: $${techData.primary_support.toFixed(2)} (${techData.support_tests} tests) | Resistance: $${techData.primary_resistance.toFixed(2)} (${techData.resistance_tests} tests) | Pivot: [Key decision level]
+Support: ${formatPrice(techData.primary_support)} (${techData.support_tests} tests) | Resistance: ${formatPrice(techData.primary_resistance)} (${techData.resistance_tests} tests) | Pivot: [Key decision level]
 \`\`\`
 
 **TRADING STRATEGY** (25 words max)
