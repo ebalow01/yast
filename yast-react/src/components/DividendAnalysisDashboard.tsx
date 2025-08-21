@@ -21,21 +21,12 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Link,
-  Tooltip,
-  Fade,
-  Grow,
-  Slide,
-  alpha,
-  TextField,
   Button,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
-  InputAdornment,
   Alert,
   Snackbar,
   TableSortLabel
@@ -43,22 +34,15 @@ import {
 import {
   TrendingUp,
   TrendingDown,
-  Analytics,
   Dashboard,
   Stars,
-  Timeline,
-  AccountBalance,
-  ShowChart,
   Security,
   TrendingFlat,
-  TableView,
   BusinessCenter,
   Add,
   Delete,
-  Save,
   MonetizationOn,
   Refresh,
-  Search,
   ContentCopy,
   SmartToy,
   Clear
@@ -66,7 +50,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
-// import CandlestickChart from './CandlestickChart';
 
 export interface DividendData {
   ticker: string;

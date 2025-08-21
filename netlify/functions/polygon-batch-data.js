@@ -66,9 +66,7 @@ async function fetchTickerData(ticker, apiKey) {
     const volatilityData = await httpsGet(volatilityUrl);
     await delay(100); // Rate limiting
     
-    // Fetch dividend data (last 2 years to ensure we get at least 3 dividends)
-    const endDate = new Date().toISOString().split('T')[0];
-    const startDate = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    // Fetch dividend data (last 10 dividends to ensure we get at least 3)
     const dividendUrl = `https://api.polygon.io/v3/reference/dividends?ticker=${ticker}&order=desc&limit=10&apiKey=${apiKey}`;
     const dividendData = await httpsGet(dividendUrl);
     await delay(100); // Rate limiting
