@@ -2699,11 +2699,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Add portfolio holdings
       portfolio.holdings.forEach(holding => allTickers.add(holding.ticker));
       
-      // Add excluded tickers from all tabs
-      if (excludedTickers.optimal) excludedTickers.optimal.forEach(ticker => allTickers.add(ticker));
-      if (excludedTickers.yieldFocused) excludedTickers.yieldFocused.forEach(ticker => allTickers.add(ticker));
-      if (excludedTickers.growthDividend) excludedTickers.growthDividend.forEach(ticker => allTickers.add(ticker));
-      if (excludedTickers.balanced) excludedTickers.balanced.forEach(ticker => allTickers.add(ticker));
+      // Add excluded tickers from current data
+      excludedTickersData.forEach(item => allTickers.add(item.ticker));
+      
+      // Add all tickers from main data
+      data.forEach(item => allTickers.add(item.ticker));
       
       // Add any tickers from aiOutlooks that might not be in current portfolio
       Object.keys(aiOutlooks).forEach(ticker => allTickers.add(ticker));
