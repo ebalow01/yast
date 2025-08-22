@@ -140,6 +140,37 @@ export default async (request, context) => {
       }
     }
     
+    if (request.method === 'DELETE') {
+      console.log(`=== DELETE REQUEST for ${ticker} ===`);
+      
+      if (!blobsAvailable) {
+        return new Response(JSON.stringify({ error: 'Blobs not available' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      try {
+        const cacheKey = `ai_cache_${ticker}`;
+        console.log(`Deleting cache key: ${cacheKey}`);
+        
+        await store.delete(cacheKey);
+        console.log(`Successfully deleted server cache for ${ticker}`);
+        
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+      } catch (storeError) {
+        console.error('DELETE store operation failed:', storeError);
+        return new Response(JSON.stringify({ error: 'Store operation failed', details: storeError.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+    
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: { 'Content-Type': 'application/json' }
