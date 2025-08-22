@@ -44,12 +44,10 @@ import {
   Delete,
   MonetizationOn,
   Refresh,
-  ContentCopy,
   SmartToy,
   Clear
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import { motion } from 'framer-motion';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
 
 export interface DividendData {
@@ -106,9 +104,6 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
-const deleteCookie = (name: string) => {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-};
 
 // Accessible 2025 Design System - Semantic Colors + Patterns
 const theme = createTheme({
@@ -1346,16 +1341,6 @@ export default function DividendAnalysisDashboard() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authPassword, setAuthPassword] = useState('');
   
-  // Candlestick chart tooltip state
-  const [candlestickTooltip, setCandlestickTooltip] = useState<{
-    open: boolean;
-    ticker: string;
-    anchorEl: HTMLElement | null;
-  }>({
-    open: false,
-    ticker: '',
-    anchorEl: null
-  });
   
   // Portfolio table sorting state
   const [sortField, setSortField] = useState<string>('totalReturn');
@@ -1384,9 +1369,7 @@ export default function DividendAnalysisDashboard() {
   };
   const [error, setError] = useState<string | null>(null);
   const [mptAllocation, setMptAllocation] = useState<any[]>([]);
-  const [portfolioMetrics, setPortfolioMetrics] = useState<any>(null);
   const [realtimeData, setRealtimeData] = useState<any>(null);
-  const [useRealtimeData, setUseRealtimeData] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
@@ -1784,22 +1767,6 @@ export default function DividendAnalysisDashboard() {
     return true;
   };
 
-  // Candlestick tooltip handlers
-  const handlePriceHover = (event: React.MouseEvent<HTMLElement>, ticker: string) => {
-    setCandlestickTooltip({
-      open: true,
-      ticker: ticker,
-      anchorEl: event.currentTarget
-    });
-  };
-
-  const handlePriceLeave = () => {
-    setCandlestickTooltip({
-      open: false,
-      ticker: '',
-      anchorEl: null
-    });
-  };
 
   // State for managing two-step screenshot process
   const [waitingForScreenshot, setWaitingForScreenshot] = useState<string | null>(null);
