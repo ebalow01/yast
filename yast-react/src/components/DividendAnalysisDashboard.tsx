@@ -1810,17 +1810,34 @@ export default function DividendAnalysisDashboard() {
     
     if (sentimentMatch) {
       const rating = sentimentMatch[1].trim();
+      console.log(`Extracted sentiment rating: "${rating}"`); // Debug log
       
       // Normalize and determine color based on rating
       if (rating.toLowerCase().includes('bullish')) {
-        // Clean up bullish rating - remove extra characters, normalize case
+        // Clean up bullish rating - remove extra characters
         const cleanRating = rating.replace(/[*]+/g, '').trim();
-        const normalizedRating = cleanRating.replace(/bullish/gi, 'Bullish');
+        // Handle STRONG BULLISH, WEAK BULLISH, or just BULLISH
+        let normalizedRating = cleanRating;
+        if (cleanRating.toLowerCase().includes('strong')) {
+          normalizedRating = 'STRONG Bullish';
+        } else if (cleanRating.toLowerCase().includes('weak')) {
+          normalizedRating = 'WEAK Bullish';
+        } else {
+          normalizedRating = 'Bullish';
+        }
         return { rating: normalizedRating, color: '#34C759' }; // Green for bullish
       } else if (rating.toLowerCase().includes('bearish')) {
-        // Clean up bearish rating - remove extra characters, normalize case
+        // Clean up bearish rating - remove extra characters
         const cleanRating = rating.replace(/[*]+/g, '').trim();
-        const normalizedRating = cleanRating.replace(/bearish/gi, 'Bearish');
+        // Handle STRONG BEARISH, WEAK BEARISH, or just BEARISH
+        let normalizedRating = cleanRating;
+        if (cleanRating.toLowerCase().includes('strong')) {
+          normalizedRating = 'STRONG Bearish';
+        } else if (cleanRating.toLowerCase().includes('weak')) {
+          normalizedRating = 'WEAK Bearish';
+        } else {
+          normalizedRating = 'Bearish';
+        }
         return { rating: normalizedRating, color: '#FF3B30' }; // Red for bearish
       } else {
         // Clean up neutral rating - remove extra characters
