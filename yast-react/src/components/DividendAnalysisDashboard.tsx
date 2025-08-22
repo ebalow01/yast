@@ -2261,11 +2261,65 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     try {
       setAiAnalysisLoading(ticker);
       
-      // Check localStorage cache first (unless force refresh)
+      // Cache hierarchy: Server cache → localStorage → API call
       const cacheKey = `ai_cache_${ticker}`;
       const cacheExpiry = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
       
       if (!forceRefresh) {
+        // Step 1: Check server cache first
+        try {
+          console.log(`Checking server cache for ${ticker}`);
+          const serverCacheResponse = await fetch(`/.netlify/functions/ai-cache?ticker=${ticker}`);
+          const serverCacheData = await serverCacheResponse.json();
+          
+          if (serverCacheData && serverCacheData.data) {
+            console.log(`Server cache hit for ${ticker}`);
+            const { data, timestamp } = serverCacheData;
+            const age = Date.now() - timestamp;
+            const { fullAnalysis, shortOutlook, sentiment } = data;
+            
+            // Update state with server cached data
+            const newOutlook = {
+              sentiment: sentiment || 'Neutral',
+              shortOutlook: shortOutlook || 'Analysis cached',
+              fullAnalysis: fullAnalysis || '',
+              timestamp: new Date(timestamp).toISOString()
+            };
+            
+            setAiOutlooks(currentOutlooks => {
+              const updatedOutlooks = {
+                ...currentOutlooks,
+                [ticker]: newOutlook
+              };
+              localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+              return updatedOutlooks;
+            });
+            
+            // Also cache in localStorage for faster subsequent access
+            const localCacheData = {
+              data,
+              timestamp
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(localCacheData));
+            
+            // Trigger portfolio recalculation
+            setPortfolioUpdateTrigger(prev => prev + 1);
+            
+            if (showModal) {
+              setAiAnalysisResult(fullAnalysis);
+              setShowAiModal(true);
+              setSnackbarMessage(`AI analysis loaded from server cache (${Math.round(age / 60000)} min old)`);
+              setShowSnackbar(true);
+            }
+            
+            setAiAnalysisLoading(null);
+            return; // Exit early with server cached data
+          }
+        } catch (error) {
+          console.log('Server cache unavailable, checking localStorage:', error.message);
+        }
+        
+        // Step 2: Check localStorage cache as fallback
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
           try {
@@ -2274,7 +2328,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             
             // Check if cache is still valid (less than 2 hours old)
             if (age < cacheExpiry) {
-              console.log(`Using cached AI analysis for ${ticker} (${Math.round(age / 60000)} minutes old)`);
+              console.log(`Using localStorage cached AI analysis for ${ticker} (${Math.round(age / 60000)} minutes old)`);
               
               // Use cached data
               const { fullAnalysis, shortOutlook, sentiment } = data;
@@ -2302,7 +2356,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               if (showModal) {
                 setAiAnalysisResult(fullAnalysis);
                 setShowAiModal(true);
-                setSnackbarMessage(`AI analysis loaded from cache (${Math.round(age / 60000)} min old)`);
+                setSnackbarMessage(`AI analysis loaded from local cache (${Math.round(age / 60000)} min old)`);
                 setShowSnackbar(true);
               }
               
@@ -2437,16 +2491,35 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         dataSummary
       };
       
-      // Cache the fresh data
+      // Cache the fresh data in both server and localStorage
+      const cacheData = {
+        data: analysisData,
+        timestamp: Date.now()
+      };
+      
+      // Store in server cache first
       try {
-        const cacheData = {
-          data: analysisData,
-          timestamp: Date.now()
-        };
-        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-        console.log(`Cached AI analysis for ${ticker}`);
+        await fetch('/.netlify/functions/ai-cache', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ticker,
+            ...cacheData
+          })
+        });
+        console.log(`Stored AI analysis in server cache for ${ticker}`);
       } catch (error) {
-        console.warn('Failed to cache AI analysis:', error);
+        console.warn('Failed to store in server cache:', error);
+      }
+      
+      // Store in localStorage as backup
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        console.log(`Stored AI analysis in local cache for ${ticker}`);
+      } catch (error) {
+        console.warn('Failed to store in local cache:', error);
       }
       
       // Save the analysis result
