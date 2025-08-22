@@ -18,13 +18,13 @@
 Netlify should automatically detect your `netlify.toml` file, but verify these settings:
 
 **Basic build settings:**
-- **Build command**: `python scripts/build_web.py`
+- **Build command**: `cd yast-react && npm ci && npx vite build`
 - **Publish directory**: `yast-react/dist`
 - **Production branch**: `main`
 
 **Environment variables:**
-- `NODE_VERSION`: `18`
-- `PYTHON_VERSION`: `3.12`
+- `NODE_VERSION`: `20`
+- `PYTHON_VERSION`: `3.12` (for serverless functions)
 
 ### 4. Deploy Your Site
 1. Click "Deploy site"
@@ -54,18 +54,11 @@ Your current configuration includes:
 - **Cache settings**: Optimizes performance
 - **SPA redirects**: Handles React Router navigation
 
-### `scripts/build_web.py` Build Script
-This script:
-1. Installs Python dependencies
-2. Generates fresh analysis data
-3. Builds the React application
-4. Outputs to `yast-react/dist/`
-
 ## 📊 Build Process Flow
 
 ```
 GitHub Push → Netlify Webhook → Build Environment Setup → 
-Python Analysis → React Build → Deploy to CDN → Live Site
+React Build → Deploy to CDN → Live Site
 ```
 
 ## 🎯 Netlify Features You're Using
