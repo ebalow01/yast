@@ -1805,15 +1805,36 @@ export default function DividendAnalysisDashboard() {
   const extractSentimentRating = (fullAnalysis: string) => {
     if (!fullAnalysis) return { rating: 'N/A', color: '#00D4FF' };
     
-    // Look for the final sentiment rating pattern
-    const sentimentMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*([^`\n]*)/i);
+    // Find all occurrences of "FINAL SENTIMENT RATING:" and get the one with actual content
+    const sentimentMatches = [...fullAnalysis.matchAll(/FINAL SENTIMENT RATING:\s*([^`\n]*)/gi)];
     
-    if (sentimentMatch) {
-      const rating = sentimentMatch[1].trim();
-      console.log(`Extracted sentiment rating: "${rating}"`); // Debug log
+    let rating = '';
+    
+    // Try each match to find one with actual sentiment content
+    for (const match of sentimentMatches) {
+      const candidateRating = match[1].trim();
+      console.log(`Found FINAL SENTIMENT RATING candidate: "${candidateRating}"`);
       
-      // Normalize and determine color based on rating
-      if (rating.toLowerCase().includes('bullish')) {
+      // Skip empty, asterisk-only, or non-alphabetic ratings
+      if (candidateRating && candidateRating !== '**' && candidateRating !== '***' && candidateRating.match(/[A-Za-z]/)) {
+        rating = candidateRating;
+        console.log(`Selected sentiment rating: "${rating}"`);
+        break;
+      }
+    }
+    
+    // If no good match found, try alternative patterns
+    if (!rating) {
+      // Try to find sentiment directly stated after any FINAL SENTIMENT RATING
+      const directMatch = fullAnalysis.match(/FINAL SENTIMENT RATING:\s*[^a-zA-Z]*([A-Z\s]*(?:BULLISH|BEARISH|NEUTRAL)[A-Z\s]*)/i);
+      if (directMatch) {
+        rating = directMatch[1].trim();
+        console.log(`Found direct sentiment: "${rating}"`);
+      }
+    }
+    
+    // Normalize and determine color based on rating
+    if (rating && rating.toLowerCase().includes('bullish')) {
         // Clean up bullish rating - remove extra characters
         const cleanRating = rating.replace(/[*]+/g, '').trim();
         // Handle STRONG BULLISH, WEAK BULLISH, or just BULLISH
@@ -1844,7 +1865,6 @@ export default function DividendAnalysisDashboard() {
         const cleanRating = rating.replace(/[*]+/g, '').trim();
         return { rating: cleanRating, color: '#00D4FF' }; // Blue for neutral/other
       }
-    }
     
     // Fallback: look for simple bullish/bearish patterns
     const simpleBullish = fullAnalysis.match(/(\d+\/5\s+bullish)/i);
