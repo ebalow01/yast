@@ -1621,20 +1621,20 @@ export default function DividendAnalysisDashboard() {
     }
   }, [data]); // Re-run when data loads to get current prices
 
-  // Auto-load cached AI analysis for all portfolio tickers (no auth required)
+  // Auto-load cached AI analysis for all tickers (no auth required)
   useEffect(() => {
-    if (portfolio.holdings.length > 0 && data.length > 0) {
-      // Check cache for all portfolio tickers automatically
+    if (data.length > 0) {
+      // Check cache for all available tickers automatically
       const loadCachedAnalyses = async () => {
-        console.log('Auto-loading cached AI analyses for portfolio tickers...');
+        console.log('Auto-loading cached AI analyses for all available tickers...');
         
-        for (const holding of portfolio.holdings) {
+        for (const item of data) {
           // Only check cache if we don't already have analysis for this ticker
-          if (!aiOutlooks[holding.ticker]) {
+          if (!aiOutlooks[item.ticker]) {
             try {
-              await checkAiCache(holding.ticker, false); // Don't show modal
+              await checkAiCache(item.ticker, false); // Don't show modal
             } catch (error) {
-              console.log(`No cached analysis found for ${holding.ticker}`);
+              console.log(`No cached analysis found for ${item.ticker}`);
             }
           }
         }
@@ -1643,7 +1643,7 @@ export default function DividendAnalysisDashboard() {
       // Small delay to ensure other effects have completed
       setTimeout(loadCachedAnalyses, 500);
     }
-  }, [portfolio.holdings, data]); // Re-run when portfolio or data changes
+  }, [data]); // Re-run when data changes
 
   // Portfolio Management Functions
 
