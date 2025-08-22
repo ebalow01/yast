@@ -2257,7 +2257,14 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       try {
         console.log(`Checking server cache for ${ticker}`);
         const serverCacheResponse = await fetch(`/.netlify/functions/ai-cache?ticker=${ticker}`);
+        
+        if (!serverCacheResponse.ok) {
+          console.warn(`Server cache error for ${ticker}: ${serverCacheResponse.status} ${serverCacheResponse.statusText}`);
+          throw new Error(`Server cache error: ${serverCacheResponse.status}`);
+        }
+        
         const serverCacheData = await serverCacheResponse.json();
+        console.log(`Server cache response for ${ticker}:`, serverCacheData);
         
         if (serverCacheData && serverCacheData.data) {
           console.log(`Server cache hit for ${ticker}`);
@@ -2509,15 +2516,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       
       // Store in server cache first
       try {
-        await fetch('/.netlify/functions/ai-cache', {
+        await fetch(`/.netlify/functions/ai-cache?ticker=${ticker}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            ticker,
-            ...cacheData
-          })
+          body: JSON.stringify(cacheData)
         });
         console.log(`Stored AI analysis in server cache for ${ticker}`);
       } catch (error) {
