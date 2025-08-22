@@ -2641,12 +2641,68 @@ Focus on actionable insights from the visual chart patterns and price action.`;
   };
 
   // Clear all AI analyses function
-  const clearAllAiAnalyses = () => {
-    setAiOutlooks({});
-    localStorage.removeItem('aiOutlooks');
-    setPortfolioUpdateTrigger(prev => prev + 1);
-    setSnackbarMessage('✅ All AI analyses cleared from all tabs');
-    setShowSnackbar(true);
+  const clearAllAiAnalyses = async () => {
+    try {
+      // Clear local state and localStorage
+      setAiOutlooks({});
+      localStorage.removeItem('aiOutlooks');
+      
+      // Clear all localStorage AI cache entries
+      const keys = Object.keys(localStorage);
+      const aiCacheKeys = keys.filter(key => key.startsWith('ai_cache_'));
+      aiCacheKeys.forEach(key => {
+        localStorage.removeItem(key);
+        console.log(`Cleared localStorage cache: ${key}`);
+      });
+      
+      // Clear server cache for all tickers that have been analyzed
+      const clearServerCache = async (ticker: string) => {
+        try {
+          await fetch(`/.netlify/functions/ai-cache?ticker=${ticker}`, {
+            method: 'DELETE'
+          });
+          console.log(`Cleared server cache for ${ticker}`);
+        } catch (error) {
+          console.warn(`Failed to clear server cache for ${ticker}:`, error);
+        }
+      };
+      
+      // Get all tickers from current portfolio and excluded tickers
+      const allTickers = new Set<string>();
+      
+      // Add portfolio holdings
+      portfolio.holdings.forEach(holding => allTickers.add(holding.ticker));
+      
+      // Add excluded tickers from all tabs
+      if (excludedTickers.optimal) excludedTickers.optimal.forEach(ticker => allTickers.add(ticker));
+      if (excludedTickers.yieldFocused) excludedTickers.yieldFocused.forEach(ticker => allTickers.add(ticker));
+      if (excludedTickers.growthDividend) excludedTickers.growthDividend.forEach(ticker => allTickers.add(ticker));
+      if (excludedTickers.balanced) excludedTickers.balanced.forEach(ticker => allTickers.add(ticker));
+      
+      // Add any tickers from aiOutlooks that might not be in current portfolio
+      Object.keys(aiOutlooks).forEach(ticker => allTickers.add(ticker));
+      
+      // Extract tickers from localStorage cache keys
+      aiCacheKeys.forEach(key => {
+        const ticker = key.replace('ai_cache_', '');
+        allTickers.add(ticker);
+      });
+      
+      // Clear server cache for all known tickers
+      const clearPromises = Array.from(allTickers).map(clearServerCache);
+      await Promise.allSettled(clearPromises);
+      
+      setPortfolioUpdateTrigger(prev => prev + 1);
+      setSnackbarMessage(`✅ All AI analyses cleared (${allTickers.size} tickers) - cache cleared for all users`);
+      setShowSnackbar(true);
+      
+      console.log(`Cleared AI cache for ${allTickers.size} tickers:`, Array.from(allTickers).sort());
+      
+    } catch (error) {
+      console.error('Error clearing AI analyses:', error);
+      setSnackbarMessage('⚠️ AI analyses cleared locally, but some server cache may remain');
+      setShowSnackbar(true);
+    }
   };
 
   // Copy to clipboard function
