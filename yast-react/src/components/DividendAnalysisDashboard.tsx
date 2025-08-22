@@ -1566,7 +1566,6 @@ export default function DividendAnalysisDashboard() {
             };
           });
           setMptAllocation(enrichedAllocation);
-          setPortfolioMetrics(metrics);
         } else {
           console.warn('⚠️ No allocation generated - all ETFs may be filtered out');
         }
