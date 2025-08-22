@@ -2520,6 +2520,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       };
       
       // Cache the fresh data in both server and localStorage
+      const cacheKey = `ai_cache_${ticker}`;
       const cacheData = {
         data: analysisData,
         timestamp: Date.now()
