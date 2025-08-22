@@ -6,7 +6,12 @@ export default async (request, context) => {
     const url = new URL(request.url);
     const ticker = url.searchParams.get('ticker');
     
+    console.log(`AI Cache function called: ${request.method} ${url.pathname}`);
+    console.log(`URL search params:`, url.searchParams.toString());
+    console.log(`Ticker parameter:`, ticker);
+    
     if (!ticker) {
+      console.log('Missing ticker parameter');
       return new Response(JSON.stringify({ error: 'ticker parameter required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
