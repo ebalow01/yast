@@ -1639,6 +1639,30 @@ export default function DividendAnalysisDashboard() {
     }
   }, [data]); // Re-run when data loads to get current prices
 
+  // Auto-load cached AI analysis for all portfolio tickers (no auth required)
+  useEffect(() => {
+    if (portfolio.holdings.length > 0 && data.length > 0) {
+      // Check cache for all portfolio tickers automatically
+      const loadCachedAnalyses = async () => {
+        console.log('Auto-loading cached AI analyses for portfolio tickers...');
+        
+        for (const holding of portfolio.holdings) {
+          // Only check cache if we don't already have analysis for this ticker
+          if (!aiOutlooks[holding.ticker]) {
+            try {
+              await checkAiCache(holding.ticker, false); // Don't show modal
+            } catch (error) {
+              console.log(`No cached analysis found for ${holding.ticker}`);
+            }
+          }
+        }
+      };
+      
+      // Small delay to ensure other effects have completed
+      setTimeout(loadCachedAnalyses, 500);
+    }
+  }, [portfolio.holdings, data]); // Re-run when portfolio or data changes
+
   // Portfolio Management Functions
 
   const updatePortfolioValues = (currentPortfolio: UserPortfolio) => {
@@ -2254,31 +2278,82 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     }
   };
 
-  // Real Polygon API analysis function
-  const analyzeWithPolygon = async (ticker: string, showModal: boolean = true, forceRefresh: boolean = false) => {
-    if (!checkAiAuth()) return;
+  // Check cache for AI analysis (no auth required)
+  const checkAiCache = async (ticker: string, showModal: boolean = true): Promise<boolean> => {
+    const cacheKey = `ai_cache_${ticker}`;
+    const cacheExpiry = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
     
     try {
       setAiAnalysisLoading(ticker);
       
-      // Cache hierarchy: Server cache → localStorage → API call
-      const cacheKey = `ai_cache_${ticker}`;
-      const cacheExpiry = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-      
-      if (!forceRefresh) {
-        // Step 1: Check server cache first
-        try {
-          console.log(`Checking server cache for ${ticker}`);
-          const serverCacheResponse = await fetch(`/.netlify/functions/ai-cache?ticker=${ticker}`);
-          const serverCacheData = await serverCacheResponse.json();
+      // Step 1: Check server cache first
+      try {
+        console.log(`Checking server cache for ${ticker}`);
+        const serverCacheResponse = await fetch(`/.netlify/functions/ai-cache?ticker=${ticker}`);
+        const serverCacheData = await serverCacheResponse.json();
+        
+        if (serverCacheData && serverCacheData.data) {
+          console.log(`Server cache hit for ${ticker}`);
+          const { data, timestamp } = serverCacheData;
+          const age = Date.now() - timestamp;
+          const { fullAnalysis, shortOutlook, sentiment } = data;
           
-          if (serverCacheData && serverCacheData.data) {
-            console.log(`Server cache hit for ${ticker}`);
-            const { data, timestamp } = serverCacheData;
-            const age = Date.now() - timestamp;
+          // Update state with server cached data
+          const newOutlook = {
+            sentiment: sentiment || 'Neutral',
+            shortOutlook: shortOutlook || 'Analysis cached',
+            fullAnalysis: fullAnalysis || '',
+            timestamp: new Date(timestamp).toISOString()
+          };
+          
+          setAiOutlooks(currentOutlooks => {
+            const updatedOutlooks = {
+              ...currentOutlooks,
+              [ticker]: newOutlook
+            };
+            localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+            return updatedOutlooks;
+          });
+          
+          // Also cache in localStorage for faster subsequent access
+          const localCacheData = {
+            data,
+            timestamp
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(localCacheData));
+          
+          // Trigger portfolio recalculation
+          setPortfolioUpdateTrigger(prev => prev + 1);
+          
+          if (showModal) {
+            setAiAnalysisResult(fullAnalysis);
+            setShowAiModal(true);
+            setSnackbarMessage(`AI analysis loaded from server cache (${Math.round(age / 60000)} min old)`);
+            setShowSnackbar(true);
+          }
+          
+          setAiAnalysisLoading(null);
+          return true; // Cache hit
+        }
+      } catch (error) {
+        console.log('Server cache unavailable, checking localStorage:', error.message);
+      }
+      
+      // Step 2: Check localStorage cache as fallback
+      const cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        try {
+          const { data, timestamp } = JSON.parse(cachedData);
+          const age = Date.now() - timestamp;
+          
+          // Check if cache is still valid (less than 2 hours old)
+          if (age < cacheExpiry) {
+            console.log(`Using localStorage cached AI analysis for ${ticker} (${Math.round(age / 60000)} minutes old)`);
+            
+            // Use cached data
             const { fullAnalysis, shortOutlook, sentiment } = data;
             
-            // Update state with server cached data
+            // Update state with cached data
             const newOutlook = {
               sentiment: sentiment || 'Neutral',
               shortOutlook: shortOutlook || 'Analysis cached',
@@ -2295,82 +2370,50 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               return updatedOutlooks;
             });
             
-            // Also cache in localStorage for faster subsequent access
-            const localCacheData = {
-              data,
-              timestamp
-            };
-            localStorage.setItem(cacheKey, JSON.stringify(localCacheData));
-            
             // Trigger portfolio recalculation
             setPortfolioUpdateTrigger(prev => prev + 1);
             
             if (showModal) {
               setAiAnalysisResult(fullAnalysis);
               setShowAiModal(true);
-              setSnackbarMessage(`AI analysis loaded from server cache (${Math.round(age / 60000)} min old)`);
+              setSnackbarMessage(`AI analysis loaded from local cache (${Math.round(age / 60000)} min old)`);
               setShowSnackbar(true);
             }
             
             setAiAnalysisLoading(null);
-            return; // Exit early with server cached data
+            return true; // Cache hit
+          } else {
+            console.log(`Cache expired for ${ticker} (${Math.round(age / 60000)} minutes old)`);
           }
         } catch (error) {
-          console.log('Server cache unavailable, checking localStorage:', error.message);
-        }
-        
-        // Step 2: Check localStorage cache as fallback
-        const cachedData = localStorage.getItem(cacheKey);
-        if (cachedData) {
-          try {
-            const { data, timestamp } = JSON.parse(cachedData);
-            const age = Date.now() - timestamp;
-            
-            // Check if cache is still valid (less than 2 hours old)
-            if (age < cacheExpiry) {
-              console.log(`Using localStorage cached AI analysis for ${ticker} (${Math.round(age / 60000)} minutes old)`);
-              
-              // Use cached data
-              const { fullAnalysis, shortOutlook, sentiment } = data;
-              
-              // Update state with cached data
-              const newOutlook = {
-                sentiment: sentiment || 'Neutral',
-                shortOutlook: shortOutlook || 'Analysis cached',
-                fullAnalysis: fullAnalysis || '',
-                timestamp: new Date(timestamp).toISOString()
-              };
-              
-              setAiOutlooks(currentOutlooks => {
-                const updatedOutlooks = {
-                  ...currentOutlooks,
-                  [ticker]: newOutlook
-                };
-                localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
-                return updatedOutlooks;
-              });
-              
-              // Trigger portfolio recalculation
-              setPortfolioUpdateTrigger(prev => prev + 1);
-              
-              if (showModal) {
-                setAiAnalysisResult(fullAnalysis);
-                setShowAiModal(true);
-                setSnackbarMessage(`AI analysis loaded from local cache (${Math.round(age / 60000)} min old)`);
-                setShowSnackbar(true);
-              }
-              
-              setAiAnalysisLoading(null);
-              return; // Exit early with cached data
-            } else {
-              console.log(`Cache expired for ${ticker} (${Math.round(age / 60000)} minutes old)`);
-            }
-          } catch (error) {
-            console.error('Error parsing cached data:', error);
-            localStorage.removeItem(cacheKey); // Remove corrupted cache
-          }
+          console.error('Error parsing cached data:', error);
+          localStorage.removeItem(cacheKey); // Remove corrupted cache
         }
       }
+      
+      setAiAnalysisLoading(null);
+      return false; // No cache hit
+      
+    } catch (error) {
+      console.error('Cache check error:', error);
+      setAiAnalysisLoading(null);
+      return false;
+    }
+  };
+
+  // Real Polygon API analysis function
+  const analyzeWithPolygon = async (ticker: string, showModal: boolean = true, forceRefresh: boolean = false) => {
+    // Always check cache first (no auth required)
+    if (!forceRefresh) {
+      const cacheHit = await checkAiCache(ticker, showModal);
+      if (cacheHit) return; // Exit if we found cached data
+    }
+    
+    // Only require auth for fresh API calls
+    if (!checkAiAuth()) return;
+    
+    try {
+      setAiAnalysisLoading(ticker);
       
       // Fetch real data from Polygon API via serverless function
       // This ensures API keys stay secure on the server side
