@@ -2255,11 +2255,68 @@ Focus on actionable insights from the visual chart patterns and price action.`;
   };
 
   // Real Polygon API analysis function
-  const analyzeWithPolygon = async (ticker: string, showModal: boolean = true) => {
+  const analyzeWithPolygon = async (ticker: string, showModal: boolean = true, forceRefresh: boolean = false) => {
     if (!checkAiAuth()) return;
     
     try {
       setAiAnalysisLoading(ticker);
+      
+      // Check localStorage cache first (unless force refresh)
+      const cacheKey = `ai_cache_${ticker}`;
+      const cacheExpiry = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+      
+      if (!forceRefresh) {
+        const cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+          try {
+            const { data, timestamp } = JSON.parse(cachedData);
+            const age = Date.now() - timestamp;
+            
+            // Check if cache is still valid (less than 2 hours old)
+            if (age < cacheExpiry) {
+              console.log(`Using cached AI analysis for ${ticker} (${Math.round(age / 60000)} minutes old)`);
+              
+              // Use cached data
+              const { fullAnalysis, shortOutlook, sentiment } = data;
+              
+              // Update state with cached data
+              const newOutlook = {
+                sentiment: sentiment || 'Neutral',
+                shortOutlook: shortOutlook || 'Analysis cached',
+                fullAnalysis: fullAnalysis || '',
+                timestamp: new Date(timestamp).toISOString()
+              };
+              
+              setAiOutlooks(currentOutlooks => {
+                const updatedOutlooks = {
+                  ...currentOutlooks,
+                  [ticker]: newOutlook
+                };
+                localStorage.setItem('aiOutlooks', JSON.stringify(updatedOutlooks));
+                return updatedOutlooks;
+              });
+              
+              // Trigger portfolio recalculation
+              setPortfolioUpdateTrigger(prev => prev + 1);
+              
+              if (showModal) {
+                setAiAnalysisResult(fullAnalysis);
+                setShowAiModal(true);
+                setSnackbarMessage(`AI analysis loaded from cache (${Math.round(age / 60000)} min old)`);
+                setShowSnackbar(true);
+              }
+              
+              setAiAnalysisLoading(null);
+              return; // Exit early with cached data
+            } else {
+              console.log(`Cache expired for ${ticker} (${Math.round(age / 60000)} minutes old)`);
+            }
+          } catch (error) {
+            console.error('Error parsing cached data:', error);
+            localStorage.removeItem(cacheKey); // Remove corrupted cache
+          }
+        }
+      }
       
       // Fetch real data from Polygon API via serverless function
       // This ensures API keys stay secure on the server side
@@ -2380,6 +2437,18 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         dataSummary
       };
       
+      // Cache the fresh data
+      try {
+        const cacheData = {
+          data: analysisData,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        console.log(`Cached AI analysis for ${ticker}`);
+      } catch (error) {
+        console.warn('Failed to cache AI analysis:', error);
+      }
+      
       // Save the analysis result
       const newOutlook = {
         sentiment: analysisData.sentiment || 'Neutral',
@@ -2437,7 +2506,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Process all tickers sequentially to avoid overwhelming the APIs
       for (const ticker of tickers) {
         try {
-          await analyzeWithPolygon(ticker, false);
+          await analyzeWithPolygon(ticker, false, true);
           // Small delay between requests to be respectful to APIs
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
@@ -2476,7 +2545,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       // Process all tickers sequentially to avoid overwhelming the APIs
       for (const holding of portfolio.holdings) {
         try {
-          await analyzeWithPolygon(holding.ticker, false);
+          await analyzeWithPolygon(holding.ticker, false, true);
           // Small delay between requests to be respectful to APIs
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
