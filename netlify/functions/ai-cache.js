@@ -1,186 +1,162 @@
-import { getStore } from '@netlify/blobs';
+// Simplified version to debug Netlify Blobs issues
 
-const handler = async (event, context) => {
+export default async (request, context) => {
+  console.log('=== AI Cache Function Called (Simple Version) ===');
+  
   try {
-    console.log(`=== AI Cache Function Called ===`);
-    console.log(`Context available:`, !!context);
-    
-    // Handle both old (event-based) and new (request-based) function formats
-    const request = event.httpMethod ? {
-      method: event.httpMethod,
-      url: `https://${event.headers.host}${event.path}?${event.rawQuery || ''}`,
-      json: () => Promise.resolve(JSON.parse(event.body || '{}')),
-      headers: event.headers
-    } : event;
-    
-    // Try multiple store initialization methods
-    let store;
-    try {
-      // Method 1: Use context if available
-      console.log(`Attempting store initialization with context...`);
-      store = getStore('ai-cache');
-      console.log(`Store initialized successfully (method 1)`);
-    } catch (error) {
-      console.log(`Store init method 1 failed:`, error.message);
-      try {
-        // Method 2: Try without context
-        console.log(`Attempting store initialization without context...`);
-        store = getStore({
-          name: 'ai-cache',
-          consistency: 'eventual'
-        });
-        console.log(`Store initialized successfully (method 2)`);
-      } catch (error2) {
-        console.error(`Store init method 2 failed:`, error2.message);
-        return {
-          statusCode: 500,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Failed to initialize blob store' })
-        };
-      }
-    }
-    
+    // Test basic function execution first
     const url = new URL(request.url);
     const ticker = url.searchParams.get('ticker');
     
-    console.log(`Request method: ${request.method}`);
+    console.log(`Method: ${request.method}`);
     console.log(`URL: ${request.url}`);
-    console.log(`URL search params:`, url.searchParams.toString());
-    console.log(`Ticker parameter:`, ticker);
+    console.log(`Ticker: ${ticker}`);
     
     if (!ticker) {
       console.log('Missing ticker parameter');
-      return {
-        statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'ticker parameter required' })
-      };
+      return new Response(JSON.stringify({ error: 'ticker parameter required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
-
+    
+    // Test if we can import @netlify/blobs at all
+    let blobsAvailable = false;
+    let store = null;
+    
+    try {
+      console.log('Attempting to import @netlify/blobs...');
+      const { getStore } = await import('@netlify/blobs');
+      console.log('Successfully imported @netlify/blobs');
+      
+      console.log('Attempting to initialize store...');
+      store = getStore('ai-cache');
+      console.log('Store initialized successfully');
+      blobsAvailable = true;
+      
+    } catch (importError) {
+      console.error('Failed to import or initialize @netlify/blobs:', importError);
+      console.error('Error details:', importError.message);
+      console.error('Error stack:', importError.stack);
+      
+      // Return a response indicating blobs unavailable
+      return new Response(JSON.stringify({ 
+        error: 'Blobs unavailable', 
+        details: importError.message,
+        fallback: 'Using memory cache'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // If we get here, blobs should be working
     if (request.method === 'GET') {
       console.log(`=== GET REQUEST for ${ticker} ===`);
       
+      if (!blobsAvailable) {
+        return new Response(JSON.stringify(null), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
       try {
         const cacheKey = `ai_cache_${ticker}`;
-        console.log(`Attempting to get from store with key: ${cacheKey}`);
+        console.log(`Getting from store with key: ${cacheKey}`);
         
         const cached = await store.get(cacheKey);
-        console.log(`Retrieved data:`, cached ? 'Found data' : 'No data found');
+        console.log(`Store.get result:`, cached ? 'Data found' : 'No data');
         
         if (cached) {
           const data = JSON.parse(cached);
           const age = Date.now() - data.timestamp;
           const cacheExpiry = 2 * 60 * 60 * 1000; // 2 hours
           
-          console.log(`Cache age: ${Math.round(age / 60000)} minutes`);
-          console.log(`Cache expiry: ${Math.round(cacheExpiry / 60000)} minutes`);
-          
           if (age < cacheExpiry) {
-            console.log(`Server cache hit for ${ticker} (${Math.round(age / 60000)} min old)`);
-            return {
-              statusCode: 200,
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data)
-            };
+            console.log(`Cache hit for ${ticker} (${Math.round(age / 60000)} min old)`);
+            return new Response(JSON.stringify(data), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
           } else {
-            console.log(`Server cache expired for ${ticker} (${Math.round(age / 60000)} min old)`);
+            console.log(`Cache expired for ${ticker}`);
             await store.delete(cacheKey);
           }
-        } else {
-          console.log(`No server cache found for ${ticker}`);
         }
-      } catch (error) {
-        console.error('Error reading from server cache:', error);
+        
+        return new Response(JSON.stringify(null), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+      } catch (storeError) {
+        console.error('Store operation failed:', storeError);
+        return new Response(JSON.stringify({ error: 'Store operation failed', details: storeError.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
-      
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(null)
-      };
     }
     
     if (request.method === 'POST') {
       console.log(`=== POST REQUEST for ${ticker} ===`);
       
+      if (!blobsAvailable) {
+        return new Response(JSON.stringify({ error: 'Blobs not available' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
       try {
         const data = await request.json();
-        console.log(`Request body received:`, data ? 'Data present' : 'No data');
-        console.log(`Data keys:`, data ? Object.keys(data) : 'N/A');
+        console.log(`POST data received:`, data ? 'Yes' : 'No');
         
         if (!data.data || !data.timestamp) {
-          console.log(`Missing required fields - data: ${!!data.data}, timestamp: ${!!data.timestamp}`);
-          return {
-            statusCode: 400,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'data and timestamp required' })
-          };
+          return new Response(JSON.stringify({ error: 'data and timestamp required' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
         }
         
         const cacheKey = `ai_cache_${ticker}`;
-        console.log(`Storing to cache key: ${cacheKey}`);
+        console.log(`Storing to key: ${cacheKey}`);
         
         await store.set(cacheKey, JSON.stringify(data));
-        console.log(`Successfully stored server cache for ${ticker}`);
+        console.log(`Storage successful for ${ticker}`);
         
-        // Verify storage by reading it back
-        const verification = await store.get(cacheKey);
-        console.log(`Storage verification:`, verification ? 'Success - data found' : 'Failed - no data found');
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
         
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ success: true })
-        };
-      } catch (error) {
-        console.error('Error storing to server cache:', error);
-        return {
-          statusCode: 500,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Failed to store cache' })
-        };
+      } catch (storeError) {
+        console.error('POST store operation failed:', storeError);
+        return new Response(JSON.stringify({ error: 'Store operation failed', details: storeError.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
     }
     
-    if (request.method === 'DELETE') {
-      console.log(`=== DELETE REQUEST for ${ticker} ===`);
-      
-      try {
-        const cacheKey = `ai_cache_${ticker}`;
-        await store.delete(cacheKey);
-        console.log(`Deleted server cache for ${ticker}`);
-        
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ success: true })
-        };
-      } catch (error) {
-        console.error('Error deleting from server cache:', error);
-        return {
-          statusCode: 500,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ error: 'Failed to delete cache' })
-        };
-      }
-    }
-    
-    return {
-      statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
     
   } catch (error) {
-    console.error('=== CACHE FUNCTION ERROR ===', error);
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Internal server error' })
-    };
+    console.error('=== FUNCTION ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      message: error.message,
+      stack: error.stack 
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 };
-
-// Export for both old and new function formats
-export { handler };
-export default handler;

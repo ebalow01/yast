@@ -2310,6 +2310,18 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         }
       } catch (error) {
         console.log('Server cache unavailable, checking localStorage:', error.message);
+        
+        // Log more details about the server error
+        if (serverCacheResponse) {
+          console.log('Server cache response status:', serverCacheResponse.status);
+          console.log('Server cache response statusText:', serverCacheResponse.statusText);
+          try {
+            const errorText = await serverCacheResponse.text();
+            console.log('Server cache error body:', errorText);
+          } catch (e) {
+            console.log('Could not read error response body');
+          }
+        }
       }
       
       // Step 2: Check localStorage cache as fallback
