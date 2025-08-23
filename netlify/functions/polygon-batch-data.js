@@ -274,8 +274,8 @@ async function fetchTickerData(ticker, apiKey) {
       dividendCount: lastDividends.length
     };
     
-    // Add debug info for NVDW
-    if (ticker === 'NVDW') {
+    // Add debug info for NVDW and YETH
+    if (ticker === 'NVDW' || ticker === 'YETH') {
       result.debug = {
         totalDividends: dividendData.results ? dividendData.results.length : 0,
         consistentDividendsCount: consistentDividends ? consistentDividends.length : 0,

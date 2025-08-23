@@ -1537,6 +1537,13 @@ export default function DividendAnalysisDashboard() {
               console.log('NVDW not found in response');
             }
             
+            // Log YETH data if available
+            if (polygonResults.YETH) {
+              console.log('YETH Full Data:', polygonResults.YETH);
+            } else {
+              console.log('YETH not found in response');
+            }
+            
             setPolygonData(polygonResults);
           } else {
             console.error('Failed to fetch Polygon data:', polygonResponse.statusText);
