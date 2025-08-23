@@ -1955,21 +1955,81 @@ export default function DividendAnalysisDashboard() {
     // Allocate remaining 95% proportionally among non-cash assets
     const remainingAllocation = 100 - minCashAllocation;
     
-    return assetsWithScores.map(asset => {
+    // First pass: calculate raw allocations
+    let rawAllocations = assetsWithScores.map(asset => {
       if (asset.ticker === 'CASH') {
-        return { ...asset, mptAllocation: minCashAllocation };
+        return { ...asset, rawAllocation: minCashAllocation };
       }
       
       if (totalScore === 0) {
         // Equal weight if no valid scores
-        return { ...asset, mptAllocation: remainingAllocation / nonCashAssets.length };
+        return { ...asset, rawAllocation: remainingAllocation / nonCashAssets.length };
       }
       
       const proportionalWeight = Math.max(0, asset.riskAdjustedScore) / totalScore;
       const allocation = proportionalWeight * remainingAllocation;
       
-      return { ...asset, mptAllocation: allocation };
+      return { ...asset, rawAllocation: allocation };
     });
+    
+    // Second pass: round to nearest 5% increments
+    let roundedAllocations = rawAllocations.map(asset => {
+      const rounded = Math.round(asset.rawAllocation / 5) * 5;
+      return { ...asset, mptAllocation: Math.max(5, rounded) }; // Minimum 5%
+    });
+    
+    // Third pass: adjust to ensure exactly 100% total
+    let currentTotal = roundedAllocations.reduce((sum, asset) => sum + asset.mptAllocation, 0);
+    
+    if (currentTotal !== 100) {
+      const difference = 100 - currentTotal;
+      
+      if (difference > 0) {
+        // Need to add percentage - find best performer with room to grow
+        const eligibleToIncrease = roundedAllocations
+          .filter(asset => asset.mptAllocation < 15 && asset.ticker !== 'CASH')
+          .sort((a, b) => (b.rawAllocation || 0) - (a.rawAllocation || 0));
+          
+        if (eligibleToIncrease.length > 0) {
+          const bestAsset = eligibleToIncrease[0];
+          const increaseAmount = Math.min(difference, 15 - bestAsset.mptAllocation);
+          bestAsset.mptAllocation += increaseAmount;
+          
+          // If still short, distribute remaining among other assets
+          const remainingDiff = difference - increaseAmount;
+          if (remainingDiff > 0) {
+            for (let asset of eligibleToIncrease.slice(1)) {
+              if (remainingDiff <= 0) break;
+              const canAdd = Math.min(remainingDiff, 15 - asset.mptAllocation);
+              asset.mptAllocation += canAdd;
+            }
+          }
+        }
+      } else {
+        // Need to reduce percentage - find worst performer above 5%
+        const eligibleToDecrease = roundedAllocations
+          .filter(asset => asset.mptAllocation > 5)
+          .sort((a, b) => (a.rawAllocation || 0) - (b.rawAllocation || 0));
+          
+        if (eligibleToDecrease.length > 0) {
+          const worstAsset = eligibleToDecrease[0];
+          const decreaseAmount = Math.min(Math.abs(difference), worstAsset.mptAllocation - 5);
+          worstAsset.mptAllocation -= decreaseAmount;
+          
+          // If still over, distribute remaining reduction among other assets
+          const remainingDiff = Math.abs(difference) - decreaseAmount;
+          if (remainingDiff > 0) {
+            for (let asset of eligibleToDecrease.slice(1)) {
+              if (remainingDiff <= 0) break;
+              const canReduce = Math.min(remainingDiff, asset.mptAllocation - 5);
+              asset.mptAllocation -= canReduce;
+            }
+          }
+        }
+      }
+    }
+    
+    return roundedAllocations;
   };
 
   // Calculate optimal portfolio based on total return and AI sentiments

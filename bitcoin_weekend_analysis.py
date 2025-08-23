@@ -949,34 +949,9 @@ def analyze_monthly_performance():
     print("Buy 19:00 -> Sell 08:00 (5% Profit-Taking)")
     print("="*80)
     
-    # Get detailed strategy results
-    strategy_results = test_specific_strategy(hourly_data, 19, 8, 5.0)
-    
-    if not strategy_results:
-        print("Failed to get strategy results")
-        return
-    
-    # Group trades by month
-    monthly_results = {}
-    
-    for trade in strategy_results.get('trade_details', []):
-        # Parse buy date to get month
-        buy_date = pd.to_datetime(trade['buy_date'])
-        month_key = f"{buy_date.year}-{buy_date.month:02d}"
-        month_name = buy_date.strftime('%B %Y')
-        
-        if month_key not in monthly_results:
-            monthly_results[month_key] = {
-                'month_name': month_name,
-                'trades': [],
-                'returns': []
-            }
-        
-        monthly_results[month_key]['trades'].append(trade)
-        monthly_results[month_key]['returns'].append(trade['return_pct'])
-    
-    # Also get all trades (not just first 5)
+    # Skip the old test_specific_strategy and generate clean results
     all_trade_details = []
+    monthly_results = {}
     
     # Re-run strategy to get ALL trade details
     df = pd.DataFrame(hourly_data)
@@ -1087,7 +1062,7 @@ def analyze_monthly_performance():
     total_return = 0
     winning_months = 0
     
-    print(f"\nMonthly Breakdown ({len(all_trades)} total trades):")
+    print(f"\nMonthly Breakdown ({len(all_trade_details)} total trades):")
     print("-" * 100)
     print(f"{'Month':<15} {'Trades':<7} {'Avg Return':<12} {'Best Trade':<12} {'Worst Trade':<13} {'Profit Exits':<12} {'Status'}")
     print("-" * 100)
@@ -1121,19 +1096,19 @@ def analyze_monthly_performance():
     # Summary stats
     print("-" * 100)
     print(f"\nSUMMARY:")
-    print(f"Total Trades: {len(all_trades)}")
+    print(f"Total Trades: {len(all_trade_details)}")
     if len(monthly_results) > 0:
         print(f"Winning Months: {winning_months}/{len(monthly_results)} ({winning_months/len(monthly_results)*100:.1f}%)")
     
-    if len(all_trades) > 0:
-        print(f"Average Return per Trade: {np.mean([t['return_pct'] for t in all_trades]):+.2f}%")
-        print(f"Median Return per Trade: {np.median([t['return_pct'] for t in all_trades]):+.2f}%")
+    if len(all_trade_details) > 0:
+        print(f"Average Return per Trade: {np.mean([t['return_pct'] for t in all_trade_details]):+.2f}%")
+        print(f"Median Return per Trade: {np.median([t['return_pct'] for t in all_trade_details]):+.2f}%")
         
-        profit_exits_total = sum(1 for trade in all_trades if 'profit exit' in trade['exit_reason'])
-        print(f"Total Profit Exits: {profit_exits_total}/{len(all_trades)} ({profit_exits_total/len(all_trades)*100:.1f}%)")
+        profit_exits_total = sum(1 for trade in all_trade_details if 'profit exit' in trade['exit_reason'])
+        print(f"Total Profit Exits: {profit_exits_total}/{len(all_trade_details)} ({profit_exits_total/len(all_trade_details)*100:.1f}%)")
         
         # Calculate annualized return
-        annual_return = np.mean([t['return_pct'] for t in all_trades]) * 12
+        annual_return = np.mean([t['return_pct'] for t in all_trade_details]) * 12
         print(f"Annualized Return: {annual_return:+.1f}%")
     else:
         print("No trades found - check data and strategy")
