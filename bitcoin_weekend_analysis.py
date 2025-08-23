@@ -993,18 +993,18 @@ def analyze_monthly_performance():
     
     # Get the first Monday of each month (lowest day number for each month)
     first_monday_days = mondays_df.groupby('year_month')['day_of_month'].min().reset_index()
-    first_monday_days['is_first'] = True
+    first_monday_days.rename(columns={'day_of_month': 'first_day'}, inplace=True)
     
-    # Merge to identify first Mondays
-    mondays_df = mondays_df.merge(
-        first_monday_days[['year_month', 'day_of_month', 'is_first']], 
-        on=['year_month', 'day_of_month'], 
-        how='left'
-    )
+    # Merge back and mark only the actual first Monday
+    mondays_df = mondays_df.merge(first_monday_days, on='year_month', how='left')
+    mondays_df['is_first'] = mondays_df['day_of_month'] == mondays_df['first_day']
     
     # Filter to only first Mondays at 19:00
     first_mondays = mondays_df[mondays_df['is_first'] == True]
     buy_opportunities = first_mondays[first_mondays['hour'] == 19].copy()
+    
+    # Remove duplicate entries (same date/hour combinations)
+    buy_opportunities = buy_opportunities.drop_duplicates(subset=['date', 'hour'])
     
     all_trades = []
     
