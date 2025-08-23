@@ -123,11 +123,11 @@ async function fetchTickerData(ticker, apiKey) {
         .sort((a, b) => a - b);
       
       // Get historical dividends based on frequency change detection
-      if (frequencyChangeIndex > 0 && consistentDividends.length >= frequencyChangeIndex + 3) {
-        // Use dividends n-2 to n-4 relative to frequency change (last monthly dividends)
-        const startIdx = frequencyChangeIndex + 1; // n-1 position (skip as it might be transitional)
+      if (frequencyChangeIndex > 0 && frequencyChangeIndex >= 6) {
+        // Use 3 dividends before the frequency change (same frequency as recent dividends)
+        const endIdx = frequencyChangeIndex - 3; // Start 3 positions before the change
         historicalDividends = consistentDividends
-          .slice(startIdx, startIdx + 3) // n-2 to n-4
+          .slice(endIdx, frequencyChangeIndex) // n-3, n-2, n-1 before frequency change
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
