@@ -257,7 +257,7 @@ async function fetchTickerData(ticker, apiKey) {
       sharpeRatio = (totalReturn - riskFreeRate) / volatility14Day;
     }
     
-    return {
+    const result = {
       ticker,
       price: currentPrice,
       medianDividend: medianDividend,
@@ -271,6 +271,21 @@ async function fetchTickerData(ticker, apiKey) {
       historicalDividends: historicalDividends,
       dividendCount: lastDividends.length
     };
+    
+    // Add debug info for NVDW
+    if (ticker === 'NVDW') {
+      result.debug = {
+        totalDividends: dividendData.results ? dividendData.results.length : 0,
+        consistentDividendsCount: consistentDividends ? consistentDividends.length : 0,
+        frequencyChangeIndex: frequencyChangeIndex,
+        recentDividends: lastDividends,
+        historicalDividends: historicalDividends,
+        selectionMethod: frequencyChangeIndex > 0 && frequencyChangeIndex >= 6 ? 'pre-change' :
+                        consistentDividends && consistentDividends.length >= 13 ? 'standard' : 'fallback'
+      };
+    }
+    
+    return result;
   } catch (error) {
     console.error(`Error fetching data for ${ticker}:`, error);
     return {
