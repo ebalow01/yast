@@ -2868,7 +2868,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+        <Container maxWidth="xl" sx={{ py: 4, textAlign: 'center' }}>
           <CircularProgress />
           <Typography variant="body1" sx={{ mt: 2 }}>
             Loading dividend data...
@@ -2882,7 +2882,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+        <Container maxWidth="xl" sx={{ py: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="error">
             Error: {error}
           </Typography>
@@ -2895,7 +2895,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Container maxWidth="lg" sx={{ py: 4, textAlign: 'center' }}>
+        <Container maxWidth="xl" sx={{ py: 4, textAlign: 'center' }}>
           <Typography variant="h6">
             No data available
           </Typography>
@@ -2961,7 +2961,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           </AppBar>
 
           <Container 
-            maxWidth="lg" 
+            maxWidth="xl" 
             sx={{ 
               py: { xs: 2, sm: 3, md: 4 },
               px: { xs: 1, sm: 2, md: 3 }
@@ -3085,8 +3085,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         </Button>
                       </Box>
                       
-                      <TableContainer component={Paper} sx={{ background: 'rgba(255, 255, 255, 0.05)' }}>
-                        <Table>
+                      <TableContainer component={Paper} sx={{ 
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        maxWidth: '100%',
+                        overflowX: 'auto'
+                      }}>
+                        <Table size="small" sx={{ minWidth: 1200 }}>
                           <TableHead>
                             <TableRow>
                               <TableCell rowSpan={2}>
@@ -3357,8 +3361,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             </CardContent>
                           </Card>
                         ) : (
-                          <TableContainer component={Paper} sx={{ background: 'rgba(255, 255, 255, 0.05)' }}>
-                            <Table>
+                          <TableContainer component={Paper} sx={{ 
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            maxWidth: '100%',
+                            overflowX: 'auto'
+                          }}>
+                            <Table size="small" sx={{ minWidth: 1200 }}>
                               <TableHead>
                                 <TableRow>
                                   <TableCell rowSpan={2}>
@@ -3651,8 +3659,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           </CardContent>
                         </Card>
                       ) : (
-                        <TableContainer component={Paper} sx={{ background: 'rgba(255, 255, 255, 0.05)' }}>
-                          <Table>
+                        <TableContainer component={Paper} sx={{ 
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          maxWidth: '100%',
+                          overflowX: 'auto'
+                        }}>
+                          <Table size="small" sx={{ minWidth: 1200 }}>
                             <TableHead>
                               <TableRow>
                                 <TableCell>
