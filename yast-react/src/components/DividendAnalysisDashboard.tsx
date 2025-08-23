@@ -565,7 +565,7 @@ interface PortfolioMetrics {
   volatilityRegime?: 'Low' | 'Normal' | 'High' | 'Crisis';
 }
 
-function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<string, { sentiment: string; shortOutlook: string; fullAnalysis: string; timestamp: string }>): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
+function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<string, { sentiment: string; shortOutlook: string; fullAnalysis: string; timestamp: string }>, polygonData?: any): { allocation: AllocationItem[], metrics: PortfolioMetrics } {
   
   // Use ALL data (not just top performers) so filtering logic can work properly
   let allETFs = allData.filter(etf => etf.ticker !== 'SPY' && etf.category !== 'benchmark');
@@ -601,7 +601,8 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
   
   allETFs = allETFs.filter(etf => {
     // Check if we have NAV performance data from polygon
-    const navPerformance = etf.navPerformance;
+    const polygonNavData = polygonData?.[etf.ticker];
+    const navPerformance = polygonNavData?.navPerformance;
     if (navPerformance != null && navPerformance < -50) {
       navDeathSpirals.push(etf.ticker);
       return false; // Exclude NAV death spirals
@@ -1603,7 +1604,7 @@ export default function DividendAnalysisDashboard() {
   useEffect(() => {
     if (data.length > 0 && Object.keys(aiOutlooks).length > 0 && !loading) {
       try {
-        const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks);
+        const { allocation, metrics } = calculateMPTAllocation(data, aiOutlooks, polygonData);
         if (allocation && allocation.length > 0) {
           const enrichedAllocation = allocation.map(asset => {
             const originalETF = data.find(etf => etf.ticker === asset.ticker);
@@ -1622,7 +1623,7 @@ export default function DividendAnalysisDashboard() {
       }
     }
     // Remove data and aiOutlooks from dependencies to avoid circular updates
-  }, [loading]);
+  }, [loading, polygonData]);
 
   // Portfolio Management - Initialize sample data if portfolio is empty and data is loaded
   useEffect(() => {

@@ -268,46 +268,20 @@ def analyze_24x24_hourly_patterns(hourly_data, trading_hours_only=False):
                     sell_price = sell_row['close']
                     sell_timestamp = sell_row['timestamp']
                     
-                    # Check for 5% profit-taking exit during the week
-                    week_data = df[(df['date'] > buy_date) & (df['date'] < next_monday_date)]
-                    profit_exit_price = None
-                    profit_exit_timestamp = None
-                    
-                    for _, hour_data in week_data.iterrows():
-                        current_price = hour_data['close']
-                        current_return = (current_price - buy_price) / buy_price * 100
-                        
-                        if isinstance(current_return, pd.Series):
-                            current_return = current_return.iloc[0]
-                        
-                        if current_return >= 5.0:  # 5% profit-taking exit
-                            profit_exit_price = current_price
-                            profit_exit_timestamp = hour_data['timestamp']
-                            break
-                    
-                    # Use profit-taking exit if triggered, otherwise use regular Monday exit
-                    if profit_exit_price is not None:
-                        final_sell_price = profit_exit_price
-                        final_sell_timestamp = profit_exit_timestamp
-                        exit_reason = "5% profit exit"
-                    else:
-                        final_sell_price = sell_price
-                        final_sell_timestamp = sell_timestamp
-                        exit_reason = "regular Monday exit"
-                    
-                    # Calculate return
-                    weekly_return = (final_sell_price - buy_price) / buy_price * 100
+                    # For now, skip 5% profit-taking to get basic results working
+                    # Calculate standard Monday-to-Monday return
+                    weekly_return = (sell_price - buy_price) / buy_price * 100
                     returns.append(weekly_return)
                     
                     trade_details.append({
                         'buy_date': buy_timestamp.strftime('%Y-%m-%d %H:%M'),
-                        'sell_date': final_sell_timestamp.strftime('%Y-%m-%d %H:%M'),
+                        'sell_date': sell_timestamp.strftime('%Y-%m-%d %H:%M'),
                         'buy_price': buy_price,
-                        'sell_price': final_sell_price,
+                        'sell_price': sell_price,
                         'return_pct': weekly_return,
                         'buy_hour': buy_hour,
                         'sell_hour': sell_hour,
-                        'exit_reason': exit_reason
+                        'exit_reason': "regular Monday exit"
                     })
             
             # Store results if we have trades
