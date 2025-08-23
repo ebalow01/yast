@@ -839,10 +839,301 @@ def test_2024_all_hours():
     
     return results
 
+def test_2023_all_hours():
+    """Test multiple hour combinations in 2023 (pre-ETF) to compare"""
+    start_date = "2023-01-01"
+    end_date = "2023-12-31"
+    
+    # Get 2023 data - will need to download from scratch
+    cache_file = "bitcoin_hourly_cache_2023.pkl"
+    
+    # Try different approach - get 2-year data from 2022 to get 2023
+    extended_start = "2022-08-01"  # Go back far enough to capture 2023
+    extended_end = "2023-12-31"
+    hourly_data = fetch_bitcoin_hourly_data_yahoo(extended_start, extended_end, cache_file)
+    
+    if not hourly_data:
+        print("Failed to get 2023 data")
+        return
+    
+    # Filter to 2023 only
+    filtered_data = []
+    for record in hourly_data:
+        timestamp = pd.to_datetime(record['timestamp'])
+        if timestamp.year == 2023:
+            filtered_data.append(record)
+    
+    if not filtered_data:
+        print("No 2023 data found in dataset")
+        return
+    
+    print(f"Found {len(filtered_data)} hourly data points for 2023")
+    
+    # Calculate buy and hold baseline for 2023
+    buy_and_hold = calculate_buy_and_hold(filtered_data, start_date, end_date)
+    print(f"2023 Buy & Hold Baseline: {buy_and_hold['annual_return']:+.1f}%")
+    
+    # Test same hour combinations as 2024
+    test_combinations = [
+        (19, 8),   # Our "best" from optimization
+        (7, 20),   # Your preferred from earlier 
+        (13, 20),  # Previous "maximum returns"
+        (9, 17),   # Market hours
+        (0, 23),   # Full day
+        (12, 12),  # Noon to noon
+        (6, 18),   # Morning to evening
+    ]
+    
+    results = []
+    
+    print(f"\n" + "="*60)
+    print("TESTING DIFFERENT HOURS IN 2023 (PRE-ETF)")
+    print("="*60)
+    
+    for buy_hour, sell_hour in test_combinations:
+        strategy_results = test_specific_strategy(filtered_data, buy_hour, sell_hour, 5.0)
+        
+        if strategy_results:
+            annual_return = strategy_results['annual_return']
+            vs_bh = annual_return - buy_and_hold['annual_return']
+            
+            results.append({
+                'hours': f"{buy_hour:02d}:00 -> {sell_hour:02d}:00",
+                'annual_return': annual_return,
+                'vs_buy_hold': vs_bh,
+                'trades': strategy_results['total_trades'],
+                'win_rate': strategy_results['win_rate'],
+                'median': strategy_results['median_return'],
+                'profit_exits': strategy_results['profit_exit_rate']
+            })
+            
+            print(f"{buy_hour:02d}:00 -> {sell_hour:02d}:00: {annual_return:+6.1f}% (vs B&H: {vs_bh:+6.1f}%) | {strategy_results['total_trades']} trades | {strategy_results['win_rate']:.1f}% wins")
+    
+    # Sort by performance vs buy and hold
+    results.sort(key=lambda x: x['vs_buy_hold'], reverse=True)
+    
+    print(f"\n" + "="*60)
+    print("RANKED BY PERFORMANCE VS BUY & HOLD (2023)")
+    print("="*60)
+    
+    for i, result in enumerate(results, 1):
+        print(f"{i}. {result['hours']}: {result['annual_return']:+6.1f}% (vs B&H: {result['vs_buy_hold']:+6.1f}%) | Median: {result['median']:+.2f}% | Profit Exits: {result['profit_exits']:.1f}%")
+    
+    # Check if ANY strategy beats buy and hold
+    best_strategy = results[0] if results else None
+    
+    if best_strategy and best_strategy['vs_buy_hold'] > 0:
+        print(f"\n*** BEST STRATEGY FOUND: {best_strategy['hours']} outperforms by {best_strategy['vs_buy_hold']:+.1f}%")
+    else:
+        print(f"\nX NO STRATEGY BEATS BUY & HOLD in 2023")
+        if best_strategy:
+            print(f"Best strategy still underperforms by {best_strategy['vs_buy_hold']:+.1f}%")
+    
+    return results
+
+def analyze_monthly_performance():
+    """Show month-by-month performance of our best strategy: 19:00 -> 08:00 with 5% profit-taking"""
+    start_date = "2023-10-01"  # Start from Oct 2023 
+    end_date = "2025-08-23"    # Through today
+    
+    # Get full period data
+    cache_file = "bitcoin_hourly_cache_2023_2025.pkl"
+    hourly_data = fetch_bitcoin_hourly_data_yahoo(start_date, end_date, cache_file)
+    
+    if not hourly_data:
+        print("Failed to get data for the period")
+        return
+    
+    print("="*80)
+    print("MONTH-BY-MONTH ANALYSIS: Oct 2023 - Aug 2025")
+    print("Buy 19:00 -> Sell 08:00 (5% Profit-Taking)")
+    print("="*80)
+    
+    # Get detailed strategy results
+    strategy_results = test_specific_strategy(hourly_data, 19, 8, 5.0)
+    
+    if not strategy_results:
+        print("Failed to get strategy results")
+        return
+    
+    # Group trades by month
+    monthly_results = {}
+    
+    for trade in strategy_results.get('trade_details', []):
+        # Parse buy date to get month
+        buy_date = pd.to_datetime(trade['buy_date'])
+        month_key = f"{buy_date.year}-{buy_date.month:02d}"
+        month_name = buy_date.strftime('%B %Y')
+        
+        if month_key not in monthly_results:
+            monthly_results[month_key] = {
+                'month_name': month_name,
+                'trades': [],
+                'returns': []
+            }
+        
+        monthly_results[month_key]['trades'].append(trade)
+        monthly_results[month_key]['returns'].append(trade['return_pct'])
+    
+    # Also get all trades (not just first 5)
+    all_trade_details = []
+    
+    # Re-run strategy to get ALL trade details
+    df = pd.DataFrame(hourly_data)
+    df['date'] = pd.to_datetime(df['timestamp']).dt.date
+    df['day_of_week'] = pd.to_datetime(df['timestamp']).dt.dayofweek
+    df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
+    
+    # Get all Mondays
+    mondays_df = df[df['day_of_week'] == 0].copy()
+    
+    # Identify first Monday of each month
+    mondays_df['year_month'] = pd.to_datetime(mondays_df['timestamp']).dt.strftime('%Y-%m')
+    mondays_df['day_of_month'] = pd.to_datetime(mondays_df['timestamp']).dt.day
+    
+    # Get the first Monday of each month (lowest day number for each month)
+    first_monday_days = mondays_df.groupby('year_month')['day_of_month'].min().reset_index()
+    first_monday_days['is_first'] = True
+    
+    # Merge to identify first Mondays
+    mondays_df = mondays_df.merge(
+        first_monday_days[['year_month', 'day_of_month', 'is_first']], 
+        on=['year_month', 'day_of_month'], 
+        how='left'
+    )
+    
+    # Filter to only first Mondays at 19:00
+    first_mondays = mondays_df[mondays_df['is_first'] == True]
+    buy_opportunities = first_mondays[first_mondays['hour'] == 19].copy()
+    
+    all_trades = []
+    
+    for _, buy_row in buy_opportunities.iterrows():
+        buy_date = buy_row['date']
+        buy_timestamp = buy_row['timestamp']
+        buy_price = float(buy_row['close'])
+        
+        # Find next Monday at 8:00
+        next_monday_date = buy_date + timedelta(days=7)
+        sell_opportunity = mondays_df[
+            (pd.to_datetime(mondays_df['timestamp']).dt.date == next_monday_date) & 
+            (mondays_df['hour'] == 8)
+        ]
+        
+        if not sell_opportunity.empty:
+            sell_row = sell_opportunity.iloc[0]
+            sell_price = float(sell_row['close'])
+            sell_timestamp = sell_row['timestamp']
+            
+            # Check for profit-taking exit
+            profit_exit_price = None
+            profit_exit_timestamp = None
+            exit_reason = "regular exit"
+            
+            # Check week data for profit opportunities
+            week_start = pd.to_datetime(buy_timestamp)
+            week_end = week_start + pd.Timedelta(days=7)
+            
+            for hour_record in hourly_data:
+                hour_ts = pd.to_datetime(hour_record['timestamp'])
+                if week_start < hour_ts < week_end:
+                    hour_close = float(hour_record['close'])
+                    hour_return = (hour_close - buy_price) / buy_price * 100
+                    
+                    if hour_return >= 5.0:
+                        profit_exit_price = hour_close
+                        profit_exit_timestamp = hour_record['timestamp']
+                        exit_reason = "5% profit exit"
+                        break
+            
+            # Use profit exit if found
+            if profit_exit_price is not None:
+                final_sell_price = profit_exit_price
+                final_sell_timestamp = profit_exit_timestamp
+            else:
+                final_sell_price = sell_price
+                final_sell_timestamp = sell_timestamp
+            
+            # Calculate return
+            weekly_return = (final_sell_price - buy_price) / buy_price * 100
+            
+            trade_detail = {
+                'buy_date': buy_timestamp.strftime('%Y-%m-%d %H:%M'),
+                'sell_date': final_sell_timestamp.strftime('%Y-%m-%d %H:%M'),
+                'buy_price': buy_price,
+                'sell_price': final_sell_price,
+                'return_pct': weekly_return,
+                'exit_reason': exit_reason
+            }
+            
+            all_trades.append(trade_detail)
+            
+            # Group by month
+            buy_dt = pd.to_datetime(buy_timestamp)
+            month_key = f"{buy_dt.year}-{buy_dt.month:02d}"
+            month_name = buy_dt.strftime('%B %Y')
+            
+            if month_key not in monthly_results:
+                monthly_results[month_key] = {
+                    'month_name': month_name,
+                    'trades': [],
+                    'returns': []
+                }
+            
+            monthly_results[month_key]['trades'].append(trade_detail)
+            monthly_results[month_key]['returns'].append(weekly_return)
+    
+    # Print monthly breakdown
+    total_return = 0
+    winning_months = 0
+    
+    print(f"\nMonthly Breakdown ({len(all_trades)} total trades):")
+    print("-" * 100)
+    print(f"{'Month':<15} {'Trades':<7} {'Avg Return':<12} {'Best Trade':<12} {'Worst Trade':<13} {'Profit Exits':<12} {'Status'}")
+    print("-" * 100)
+    
+    for month_key in sorted(monthly_results.keys()):
+        month_data = monthly_results[month_key]
+        returns = month_data['returns']
+        
+        if returns:
+            avg_return = np.mean(returns)
+            best_trade = max(returns)
+            worst_trade = min(returns)
+            profit_exits = sum(1 for trade in month_data['trades'] if 'profit exit' in trade['exit_reason'])
+            profit_exit_rate = (profit_exits / len(returns)) * 100
+            
+            total_return += avg_return * len(returns)  # Contribution to total
+            
+            status = "WIN" if avg_return > 0 else "LOSS"
+            if avg_return > 0:
+                winning_months += 1
+            
+            print(f"{month_data['month_name']:<15} {len(returns):<7} {avg_return:+8.2f}%   {best_trade:+8.2f}%   {worst_trade:+8.2f}%    {profit_exits}/{len(returns)} ({profit_exit_rate:.0f}%)    {status}")
+    
+    # Summary stats
+    print("-" * 100)
+    print(f"\nSUMMARY:")
+    print(f"Total Trades: {len(all_trades)}")
+    if len(monthly_results) > 0:
+        print(f"Winning Months: {winning_months}/{len(monthly_results)} ({winning_months/len(monthly_results)*100:.1f}%)")
+    
+    if len(all_trades) > 0:
+        print(f"Average Return per Trade: {np.mean([t['return_pct'] for t in all_trades]):+.2f}%")
+        print(f"Median Return per Trade: {np.median([t['return_pct'] for t in all_trades]):+.2f}%")
+        
+        profit_exits_total = sum(1 for trade in all_trades if 'profit exit' in trade['exit_reason'])
+        print(f"Total Profit Exits: {profit_exits_total}/{len(all_trades)} ({profit_exits_total/len(all_trades)*100:.1f}%)")
+        
+        # Calculate annualized return
+        annual_return = np.mean([t['return_pct'] for t in all_trades]) * 12
+        print(f"Annualized Return: {annual_return:+.1f}%")
+    else:
+        print("No trades found - check data and strategy")
+
 def main():
-    # Test different hours in 2024 specifically
-    print("Testing if different hours work better in 2024...")
-    results_2024 = test_2024_all_hours()
+    # Show month-by-month performance of our best strategy
+    analyze_monthly_performance()
     
     return
 

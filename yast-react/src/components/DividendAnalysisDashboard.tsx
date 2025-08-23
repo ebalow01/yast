@@ -2004,8 +2004,24 @@ export default function DividendAnalysisDashboard() {
       console.log(`🚫 Excluded ${navDeathSpirals.length} NAV death spirals (< -50%):`, navDeathSpirals);
     }
     
+    // Filter out dividend death spirals (dividend erosion worse than -10%)
+    const divDeathSpirals: string[] = [];
+    const nonDivDeathSpiralTickers = nonDeathSpiralTickers.filter(item => {
+      const polygonDivData = polygonData?.[item.ticker];
+      const divErosion = polygonDivData?.divErosion;
+      if (divErosion != null && divErosion < -10) {
+        divDeathSpirals.push(item.ticker);
+        return false; // Exclude dividend death spirals
+      }
+      return true; // Include ETFs with good or unknown dividend erosion
+    });
+    
+    if (divDeathSpirals.length > 0) {
+      console.log(`💸 Excluded ${divDeathSpirals.length} dividend death spirals (< -10%):`, divDeathSpirals);
+    }
+    
     // Calculate total return for each ticker and sort by it (back to original approach)
-    const tickersWithTotalReturn = nonDeathSpiralTickers.map(item => {
+    const tickersWithTotalReturn = nonDivDeathSpiralTickers.map(item => {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
       const divErosion = polygonData[item.ticker]?.divErosion || 0;
@@ -2021,10 +2037,46 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
     
-    // Take top 5 by total return (back to simple approach that works)
-    const finalOptimal = tickersWithTotalReturn.slice(0, 5);
+    // Take top 5 by total return
+    const top5 = tickersWithTotalReturn.slice(0, 5);
+    const top5Tickers = top5.map(item => item.ticker);
     
-    // Add Cash as 6th item with 4% forward yield (minimum 5%)
+    // Find all bullish non-death spiral ETFs not already in top 5
+    const bullishNonDeathSpirals = nonDivDeathSpiralTickers.filter(item => {
+      // Skip if already in top 5
+      if (top5Tickers.includes(item.ticker)) return false;
+      
+      // Check if bullish
+      if (aiOutlooks[item.ticker]?.fullAnalysis) {
+        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+        const isBullish = sentiment.rating.toLowerCase().includes('bullish');
+        return isBullish;
+      }
+      return false; // Only include if explicitly bullish
+    }).map(item => {
+      // Add the calculated metrics like the top 5
+      const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
+      const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
+      const divErosion = polygonData[item.ticker]?.divErosion || 0;
+      const totalReturn = forwardYield + navPerformance + divErosion;
+      const volatility = polygonData[item.ticker]?.volatility14Day || 20;
+      const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
+      
+      return {
+        ...item,
+        calculatedTotalReturn: totalReturn,
+        volatility: volatility,
+        sharpeRatio: sharpeRatio
+      };
+    });
+    
+    // Combine top 5 + bullish non-death spirals
+    const finalOptimal = [...top5, ...bullishNonDeathSpirals];
+    
+    console.log(`📈 Optimal portfolio expanded: Top 5 + ${bullishNonDeathSpirals.length} bullish non-death spirals = ${finalOptimal.length} total ETFs`);
+    console.log('Bullish additions:', bullishNonDeathSpirals.map(item => item.ticker));
+    
+    // Add Cash as final item with 4% forward yield (minimum 5%)
     const cashEntry = {
       ticker: 'CASH',
       calculatedTotalReturn: 4,
@@ -2046,16 +2098,73 @@ export default function DividendAnalysisDashboard() {
     return portfolioWithAllocations;
   }, [data, aiOutlooks, polygonData, portfolioUpdateTrigger]);
 
-  // Calculate excluded tickers based on optimal portfolio
+  // Calculate categorized excluded tickers based on optimal portfolio
   const excludedTickersData = useMemo(() => {
     console.log('Calculating excluded tickers...');
-    console.log('optimalPortfolioData:', optimalPortfolioData);
     const optimalTickers = optimalPortfolioData.map(item => item.ticker);
-    console.log('Optimal tickers:', optimalTickers);
     const excluded = data.filter(item => !optimalTickers.includes(item.ticker));
-    console.log('Excluded tickers:', excluded.map(t => t.ticker));
-    return excluded;
-  }, [data, optimalPortfolioData, portfolioUpdateTrigger]);
+    
+    // Categorize excluded tickers
+    const navDeathSpirals: string[] = [];
+    const divDeathSpirals: string[] = [];
+    const bearishSentiment: string[] = [];
+    const bullishExcluded: string[] = [];
+    const otherExcluded: string[] = [];
+    
+    excluded.forEach(item => {
+      const polygonNavData = polygonData?.[item.ticker];
+      const navPerformance = polygonNavData?.navPerformance;
+      const divErosion = polygonNavData?.divErosion;
+      
+      // Check for NAV death spiral
+      if (navPerformance != null && navPerformance < -50) {
+        navDeathSpirals.push(item.ticker);
+        return;
+      }
+      
+      // Check for div death spiral
+      if (divErosion != null && divErosion < -10) {
+        divDeathSpirals.push(item.ticker);
+        return;
+      }
+      
+      // Check for bearish sentiment
+      if (aiOutlooks[item.ticker]?.fullAnalysis) {
+        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+        const isBearish = sentiment.rating.toLowerCase().includes('bearish');
+        if (isBearish) {
+          bearishSentiment.push(item.ticker);
+          return;
+        }
+        
+        // If not bearish and has AI analysis, check if bullish
+        const isBullish = sentiment.rating.toLowerCase().includes('bullish');
+        if (isBullish) {
+          bullishExcluded.push(item.ticker);
+          return;
+        }
+      }
+      
+      // Everything else
+      otherExcluded.push(item.ticker);
+    });
+    
+    console.log('Excluded tickers breakdown:');
+    console.log('- NAV death spirals:', navDeathSpirals);
+    console.log('- Div death spirals:', divDeathSpirals);
+    console.log('- Bearish sentiment:', bearishSentiment);
+    console.log('- Bullish excluded:', bullishExcluded);
+    console.log('- Other excluded:', otherExcluded);
+    
+    return {
+      all: excluded,
+      navDeathSpirals,
+      divDeathSpirals,
+      bearishSentiment,
+      bullishExcluded,
+      otherExcluded
+    };
+  }, [data, optimalPortfolioData, polygonData, aiOutlooks, portfolioUpdateTrigger]);
 
   // Table sorting function
   const handleSort = (field: string) => {
@@ -2148,8 +2257,13 @@ export default function DividendAnalysisDashboard() {
   }, [optimalPortfolioData, sortField, sortDirection, polygonData, aiOutlooks]);
 
   const sortedExcludedData = useMemo(() => {
-    return sortTableData(excludedTickersData, sortField, sortDirection);
+    return sortTableData(excludedTickersData.all, sortField, sortDirection);
   }, [excludedTickersData, sortField, sortDirection, polygonData, aiOutlooks]);
+  
+  const sortedBullishExcludedData = useMemo(() => {
+    const bullishExcludedETFs = data.filter(item => excludedTickersData.bullishExcluded.includes(item.ticker));
+    return sortTableData(bullishExcludedETFs, sortField, sortDirection);
+  }, [excludedTickersData, data, sortField, sortDirection, polygonData, aiOutlooks]);
 
   const sortedPortfolioData = useMemo(() => {
     return sortTableData(portfolio.holdings, sortField, sortDirection);
@@ -3083,6 +3197,17 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       }}
                     />
                     <Tab
+                      label={`AI Bullish Excluded (${excludedTickersData.bullishExcluded?.length || 0})`}
+                      icon={<TrendingUp />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
+                    <Tab
                       label={`My Portfolio (${portfolio.holdings.length})`}
                       icon={<BusinessCenter />}
                       iconPosition="start"
@@ -3385,7 +3510,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
                   {selectedTab === 1 && (() => {
                     // Use the shared excluded tickers data
-                    const excludedData = excludedTickersData;
+                    const excludedData = excludedTickersData.all;
                     console.log('Showing Excluded Tickers tab');
                     console.log('excludedData:', excludedData.map(t => t.ticker));
                     
@@ -3396,7 +3521,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             Excluded Tickers
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            {excludedTickersData.length} assets excluded from optimal portfolio (bearish sentiment or lower performance)
+                            {excludedTickersData.all?.length || 0} assets excluded from optimal portfolio (NAV death spirals, div death spirals, bearish sentiment, or lower performance)
                           </Typography>
                         </Box>
                         
@@ -3629,6 +3754,152 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   })()}
 
                   {selectedTab === 2 && (
+                    <Box sx={{ p: 3 }}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6">
+                          AI Bullish Excluded Tickers
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          {excludedTickersData.bullishExcluded?.length || 0} AI-bullish ETFs excluded from optimal portfolio (not NAV/div death spirals, not bearish sentiment)
+                        </Typography>
+                      </Box>
+                      
+                      {sortedBullishExcludedData.length === 0 ? (
+                        <Card sx={{
+                          background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%)',
+                          border: '1px solid rgba(76, 175, 80, 0.2)',
+                          textAlign: 'center',
+                          py: 4
+                        }}>
+                          <CardContent>
+                            <TrendingUp sx={{ fontSize: 48, color: 'rgba(76, 175, 80, 0.6)', mb: 2 }} />
+                            <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                              No AI Bullish Excluded Tickers
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                              All bullish ETFs are either included in the optimal portfolio or excluded for other reasons
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <TableContainer component={Paper} sx={{ backgroundColor: '#1e1e1e', mt: 2 }}>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'ticker'}
+                                    direction={sortField === 'ticker' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('ticker')}
+                                  >
+                                    Ticker
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'price'}
+                                    direction={sortField === 'price' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('price')}
+                                  >
+                                    Price
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'forwardYield'}
+                                    direction={sortField === 'forwardYield' ? sortDirection : 'desc'}
+                                    onClick={() => handleSort('forwardYield')}
+                                  >
+                                    Yield
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'navPerformance'}
+                                    direction={sortField === 'navPerformance' ? sortDirection : 'desc'}
+                                    onClick={() => handleSort('navPerformance')}
+                                  >
+                                    <Box>NAV<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>perf</span></Box>
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'divErosion'}
+                                    direction={sortField === 'divErosion' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('divErosion')}
+                                  >
+                                    <Box>Div<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>var</span></Box>
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>
+                                  <TableSortLabel
+                                    active={sortField === 'totalReturn'}
+                                    direction={sortField === 'totalReturn' ? sortDirection : 'desc'}
+                                    onClick={() => handleSort('totalReturn')}
+                                  >
+                                    <Box>Total<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>return</span></Box>
+                                  </TableSortLabel>
+                                </TableCell>
+                                <TableCell>AI Sentiment</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {sortedBullishExcludedData.map((item, index) => (
+                                <TableRow key={index}>
+                                  <TableCell>{item.ticker}</TableCell>
+                                  <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
+                                  <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(1) || '-'}%</TableCell>
+                                  <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
+                                  <TableCell>
+                                    {(() => {
+                                      const divErosion = polygonData[item.ticker]?.divErosion;
+                                      if (divErosion != null) {
+                                        const color = divErosion >= 0 ? '#34C759' : '#FF3B30';
+                                        return <span style={{ color }}>{divErosion >= 0 ? '+' : ''}{divErosion.toFixed(1)}%</span>;
+                                      }
+                                      return '-';
+                                    })()}
+                                  </TableCell>
+                                  <TableCell>
+                                    {(() => {
+                                      const fwdYield = polygonData[item.ticker]?.forwardYield;
+                                      const navPerf = polygonData[item.ticker]?.navPerformance;
+                                      const divErosion = polygonData[item.ticker]?.divErosion || 0;
+                                      if (fwdYield != null && navPerf != null) {
+                                        return `${(fwdYield + navPerf + divErosion).toFixed(1)}%`;
+                                      }
+                                      return '-';
+                                    })()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Box>
+                                      {aiOutlooks[item.ticker] && (() => {
+                                        const rating = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
+                                        return (
+                                          <Chip
+                                            label={rating.rating}
+                                            size="small"
+                                            sx={{
+                                              backgroundColor: rating.color,
+                                              color: '#000',
+                                              fontWeight: 'bold',
+                                              fontSize: '0.7rem'
+                                            }}
+                                          />
+                                        );
+                                      })()}
+                                    </Box>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                    </Box>
+                  )}
+
+                  {selectedTab === 3 && (
                     <Box sx={{ p: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Typography variant="h6">
