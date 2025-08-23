@@ -3098,8 +3098,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       }}>
                         <Table size="small" sx={{ minWidth: 1200 }}>
                           <TableHead>
-                            <TableRow>
-                              <TableCell rowSpan={2}>
+                            <TableRow sx={{ '& .MuiTableCell-root': { padding: '4px 8px' } }}>
+                              <TableCell>
                                 <TableSortLabel
                                   active={sortField === 'ticker'}
                                   direction={sortField === 'ticker' ? sortDirection : 'asc'}
@@ -3108,7 +3108,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Ticker
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell rowSpan={2}>
+                              <TableCell>
                                 <TableSortLabel
                                   active={sortField === 'price'}
                                   direction={sortField === 'price' ? sortDirection : 'asc'}
@@ -3117,81 +3117,31 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Price
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell rowSpan={2}>
+                              <TableCell>
                                 <TableSortLabel
                                   active={sortField === 'medianDiv'}
                                   direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('medianDiv')}
                                 >
-                                  Expected Div
+                                  <Box>Exp<br/>Div</Box>
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell rowSpan={2}>
+                              <TableCell>
                                 <TableSortLabel
                                   active={sortField === 'forwardYield'}
                                   direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('forwardYield')}
                                 >
-                                  Fwd Yield
+                                  <Box>Fwd<br/>Yield</Box>
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell align="center" colSpan={2} sx={{ borderBottom: '1px solid #444', fontSize: '0.9rem', fontWeight: 600 }}>
-                                Variance <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>(annualized)</span>
-                              </TableCell>
-                              <TableCell rowSpan={2}>
-                                <TableSortLabel
-                                  active={sortField === 'totalReturn'}
-                                  direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('totalReturn')}
-                                >
-                                  Total Return
-                                </TableSortLabel>
-                              </TableCell>
-                              <TableCell rowSpan={2}>
-                                <TableSortLabel
-                                  active={sortField === 'volatility'}
-                                  direction={sortField === 'volatility' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('volatility')}
-                                >
-                                  Vol <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>14d</span>
-                                </TableSortLabel>
-                              </TableCell>
-                              <TableCell rowSpan={2}>
-                                <TableSortLabel
-                                  active={sortField === 'sharpe'}
-                                  direction={sortField === 'sharpe' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('sharpe')}
-                                >
-                                  Sharpe Ratio
-                                </TableSortLabel>
-                              </TableCell>
-                              <TableCell rowSpan={2}>
-                                <TableSortLabel
-                                  active={sortField === 'mptAllocation'}
-                                  direction={sortField === 'mptAllocation' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('mptAllocation')}
-                                >
-                                  MPT
-                                </TableSortLabel>
-                              </TableCell>
-                              <TableCell rowSpan={2} align="center">
-                                <TableSortLabel
-                                  active={sortField === 'aiSentiment'}
-                                  direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('aiSentiment')}
-                                >
-                                  AI Evaluation
-                                </TableSortLabel>
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
                               <TableCell>
                                 <TableSortLabel
                                   active={sortField === 'nav'}
                                   direction={sortField === 'nav' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('nav')}
                                 >
-                                  NAV
+                                  <Box>NAV<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>ann</span></Box>
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell>
@@ -3200,7 +3150,52 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'divErosion' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('divErosion')}
                                 >
-                                  Div
+                                  <Box>Div<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>var</span></Box>
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'totalReturn'}
+                                  direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('totalReturn')}
+                                >
+                                  <Box>Total<br/>Return</Box>
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'volatility'}
+                                  direction={sortField === 'volatility' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('volatility')}
+                                >
+                                  <Box>Vol<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>14d</span></Box>
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'sharpe'}
+                                  direction={sortField === 'sharpe' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('sharpe')}
+                                >
+                                  Sharpe
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'mptAllocation'}
+                                  direction={sortField === 'mptAllocation' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('mptAllocation')}
+                                >
+                                  MPT
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell align="center">
+                                <TableSortLabel
+                                  active={sortField === 'aiSentiment'}
+                                  direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('aiSentiment')}
+                                >
+                                  AI
                                 </TableSortLabel>
                               </TableCell>
                             </TableRow>
