@@ -1813,12 +1813,10 @@ export default function DividendAnalysisDashboard() {
     // Try each match to find one with actual sentiment content
     for (const match of sentimentMatches) {
       const candidateRating = match[1].trim();
-      console.log(`Found FINAL SENTIMENT RATING candidate: "${candidateRating}"`);
       
       // Skip empty, asterisk-only, or non-alphabetic ratings
       if (candidateRating && candidateRating !== '**' && candidateRating !== '***' && candidateRating.match(/[A-Za-z]/)) {
         rating = candidateRating;
-        console.log(`Selected sentiment rating: "${rating}"`);
         break;
       }
     }
