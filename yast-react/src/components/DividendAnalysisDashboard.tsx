@@ -3184,7 +3184,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('aiSentiment')}
                                 >
-                                  AI
+                                  AI Eval
                                 </TableSortLabel>
                               </TableCell>
                             </TableRow>
@@ -3199,19 +3199,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 <TableCell>
                                   {item.ticker === 'CASH' ? 
                                     'N/A' : 
-                                    <>
+                                    <Box>
+                                      <Box>${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}</Box>
                                       {item.exDivDay && (
-                                        <Box component="span" sx={{ 
-                                          fontSize: '0.75rem', 
-                                          color: 'rgba(255, 255, 255, 0.7)',
-                                          mr: 1,
-                                          fontWeight: 600
+                                        <Box sx={{ 
+                                          fontSize: '0.7rem', 
+                                          color: 'rgba(255, 255, 255, 0.6)',
+                                          fontWeight: 500,
+                                          lineHeight: 1
                                         }}>
                                           {formatDivDay(item.exDivDay)}
                                         </Box>
                                       )}
-                                      ${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}
-                                    </>
+                                    </Box>
                                   }
                                 </TableCell>
                                 <TableCell>
@@ -3431,7 +3431,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('aiSentiment')}
                                     >
-                                      AI Evaluation
+                                      AI Eval Evaluation
                                     </TableSortLabel>
                                   </TableCell>
                                 </TableRow>
@@ -3462,17 +3462,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     <TableCell>{item.ticker}</TableCell>
                                     <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
                                     <TableCell>
-                                      {item.exDivDay && (
-                                        <Box component="span" sx={{ 
-                                          fontSize: '0.75rem', 
-                                          color: 'rgba(255, 255, 255, 0.7)',
-                                          mr: 1,
-                                          fontWeight: 600
-                                        }}>
-                                          {formatDivDay(item.exDivDay)}
-                                        </Box>
-                                      )}
-                                      ${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}
+                                      <Box>
+                                        <Box>${polygonData[item.ticker]?.medianDividend?.toFixed(2) || '-'}</Box>
+                                        {item.exDivDay && (
+                                          <Box sx={{ 
+                                            fontSize: '0.7rem', 
+                                            color: 'rgba(255, 255, 255, 0.6)',
+                                            fontWeight: 500,
+                                            lineHeight: 1
+                                          }}>
+                                            {formatDivDay(item.exDivDay)}
+                                          </Box>
+                                        )}
+                                      </Box>
                                     </TableCell>
                                     <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
                                     <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
@@ -3735,7 +3737,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('aiSentiment')}
                                   >
-                                    AI Evaluation
+                                    AI Eval Evaluation
                                   </TableSortLabel>
                                 </TableCell>
                               </TableRow>
@@ -3753,17 +3755,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   </TableCell>
                                   <TableCell>${polygonData[holding.ticker]?.price?.toFixed(2) || '-'}</TableCell>
                                   <TableCell>
-                                    {data.find(d => d.ticker === holding.ticker)?.exDivDay && (
-                                      <Box component="span" sx={{ 
-                                        fontSize: '0.75rem', 
-                                        color: 'rgba(255, 255, 255, 0.7)',
-                                        mr: 1,
-                                        fontWeight: 600
-                                      }}>
-                                        {formatDivDay(data.find(d => d.ticker === holding.ticker)?.exDivDay || '')}
-                                      </Box>
-                                    )}
-                                    ${polygonData[holding.ticker]?.medianDividend?.toFixed(2) || '-'}
+                                    <Box>
+                                      <Box>${polygonData[holding.ticker]?.medianDividend?.toFixed(2) || '-'}</Box>
+                                      {data.find(d => d.ticker === holding.ticker)?.exDivDay && (
+                                        <Box sx={{ 
+                                          fontSize: '0.7rem', 
+                                          color: 'rgba(255, 255, 255, 0.6)',
+                                          fontWeight: 500,
+                                          lineHeight: 1
+                                        }}>
+                                          {formatDivDay(data.find(d => d.ticker === holding.ticker)?.exDivDay || '')}
+                                        </Box>
+                                      )}
+                                    </Box>
                                   </TableCell>
                                   <TableCell>{polygonData[holding.ticker]?.forwardYield?.toFixed(2) || '-'}%</TableCell>
                                   <TableCell>{polygonData[holding.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
