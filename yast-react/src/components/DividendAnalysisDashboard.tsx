@@ -1947,7 +1947,8 @@ export default function DividendAnalysisDashboard() {
     const tickersWithTotalReturn = nonBearishTickers.map(item => {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
-      const totalReturn = forwardYield + navPerformance;
+      const divErosion = polygonData[item.ticker]?.divErosion || 0;
+      const totalReturn = forwardYield + navPerformance + divErosion;
       const volatility = polygonData[item.ticker]?.volatility14Day || 20; // Default 20% if missing
       const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
       
@@ -2031,13 +2032,19 @@ export default function DividendAnalysisDashboard() {
           aValue = polygonData[a.ticker]?.navPerformance || 0;
           bValue = polygonData[b.ticker]?.navPerformance || 0;
           break;
+        case 'divErosion':
+          aValue = polygonData[a.ticker]?.divErosion || 0;
+          bValue = polygonData[b.ticker]?.divErosion || 0;
+          break;
         case 'totalReturn':
           const aFwd = polygonData[a.ticker]?.forwardYield || 0;
           const aNav = polygonData[a.ticker]?.navPerformance || 0;
-          aValue = aFwd + aNav;
+          const aDivErosion = polygonData[a.ticker]?.divErosion || 0;
+          aValue = aFwd + aNav + aDivErosion;
           const bFwd = polygonData[b.ticker]?.forwardYield || 0;
           const bNav = polygonData[b.ticker]?.navPerformance || 0;
-          bValue = bFwd + bNav;
+          const bDivErosion = polygonData[b.ticker]?.divErosion || 0;
+          bValue = bFwd + bNav + bDivErosion;
           break;
         case 'volatility':
           aValue = polygonData[a.ticker]?.volatility14Day || 0;
@@ -3082,7 +3089,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         <Table>
                           <TableHead>
                             <TableRow>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'ticker'}
                                   direction={sortField === 'ticker' ? sortDirection : 'asc'}
@@ -3091,7 +3098,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Ticker
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'price'}
                                   direction={sortField === 'price' ? sortDirection : 'asc'}
@@ -3100,7 +3107,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Price
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'medianDiv'}
                                   direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
@@ -3109,7 +3116,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Expected Div
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'forwardYield'}
                                   direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
@@ -3118,16 +3125,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Fwd Yield
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'nav'}
-                                  direction={sortField === 'nav' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('nav')}
-                                >
-                                  NAV
-                                </TableSortLabel>
+                              <TableCell align="center" colSpan={2} sx={{ borderBottom: '1px solid #444', fontSize: '0.9rem', fontWeight: 600 }}>
+                                Variance (Annualized)
                               </TableCell>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'totalReturn'}
                                   direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
@@ -3136,7 +3137,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Total Return
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'volatility'}
                                   direction={sortField === 'volatility' ? sortDirection : 'asc'}
@@ -3145,7 +3146,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   14D Volatility
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'sharpe'}
                                   direction={sortField === 'sharpe' ? sortDirection : 'asc'}
@@ -3154,7 +3155,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   Sharpe Ratio
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell>
+                              <TableCell rowSpan={2}>
                                 <TableSortLabel
                                   active={sortField === 'mptAllocation'}
                                   direction={sortField === 'mptAllocation' ? sortDirection : 'asc'}
@@ -3163,13 +3164,33 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   MPT Allocation
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell align="center">
+                              <TableCell rowSpan={2} align="center">
                                 <TableSortLabel
                                   active={sortField === 'aiSentiment'}
                                   direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('aiSentiment')}
                                 >
                                   AI Evaluation
+                                </TableSortLabel>
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'nav'}
+                                  direction={sortField === 'nav' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('nav')}
+                                >
+                                  NAV %
+                                </TableSortLabel>
+                              </TableCell>
+                              <TableCell>
+                                <TableSortLabel
+                                  active={sortField === 'divErosion'}
+                                  direction={sortField === 'divErosion' ? sortDirection : 'asc'}
+                                  onClick={() => handleSort('divErosion')}
+                                >
+                                  Div Erosion %
                                 </TableSortLabel>
                               </TableCell>
                             </TableRow>
@@ -3206,11 +3227,22 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   {item.ticker === 'CASH' ? '0.0%' : `${polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%`}
                                 </TableCell>
                                 <TableCell>
+                                  {item.ticker === 'CASH' ? '0.0%' : (() => {
+                                    const divErosion = polygonData[item.ticker]?.divErosion;
+                                    if (divErosion != null) {
+                                      const color = divErosion >= 0 ? '#34C759' : '#FF3B30'; // Green for positive, red for negative
+                                      return <span style={{ color }}>{divErosion >= 0 ? '+' : ''}{divErosion.toFixed(1)}%</span>;
+                                    }
+                                    return '-';
+                                  })()}
+                                </TableCell>
+                                <TableCell>
                                   {item.ticker === 'CASH' ? '4.0%' : (() => {
                                     const fwdYield = polygonData[item.ticker]?.forwardYield;
                                     const navPerf = polygonData[item.ticker]?.navPerformance;
+                                    const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                     if (fwdYield != null && navPerf != null) {
-                                      return `${(fwdYield + navPerf).toFixed(1)}%`;
+                                      return `${(fwdYield + navPerf + divErosion).toFixed(1)}%`;
                                     }
                                     return '-';
                                   })()}
@@ -3329,7 +3361,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             <Table>
                               <TableHead>
                                 <TableRow>
-                                  <TableCell>
+                                  <TableCell rowSpan={2}>
                                     <TableSortLabel
                                       active={sortField === 'ticker'}
                                       direction={sortField === 'ticker' ? sortDirection : 'asc'}
@@ -3338,7 +3370,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       Ticker
                                     </TableSortLabel>
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell rowSpan={2}>
                                     <TableSortLabel
                                       active={sortField === 'price'}
                                       direction={sortField === 'price' ? sortDirection : 'asc'}
@@ -3347,7 +3379,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       Price
                                     </TableSortLabel>
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell rowSpan={2}>
                                     <TableSortLabel
                                       active={sortField === 'medianDiv'}
                                       direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
@@ -3356,7 +3388,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       Expected Div
                                     </TableSortLabel>
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell rowSpan={2}>
                                     <TableSortLabel
                                       active={sortField === 'forwardYield'}
                                       direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
@@ -3365,16 +3397,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       Fwd Yield
                                     </TableSortLabel>
                                   </TableCell>
-                                  <TableCell>
-                                    <TableSortLabel
-                                      active={sortField === 'nav'}
-                                      direction={sortField === 'nav' ? sortDirection : 'asc'}
-                                      onClick={() => handleSort('nav')}
-                                    >
-                                      NAV
-                                    </TableSortLabel>
+                                  <TableCell align="center" colSpan={2} sx={{ borderBottom: '1px solid #444', fontSize: '0.9rem', fontWeight: 600 }}>
+                                    Variance (Annualized)
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell rowSpan={2}>
                                     <TableSortLabel
                                       active={sortField === 'totalReturn'}
                                       direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
@@ -3383,7 +3409,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       Total Return
                                     </TableSortLabel>
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell rowSpan={2}>
                                     <TableSortLabel
                                       active={sortField === 'volatility'}
                                       direction={sortField === 'volatility' ? sortDirection : 'asc'}
@@ -3392,7 +3418,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       14D Volatility
                                     </TableSortLabel>
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell rowSpan={2}>
                                     <TableSortLabel
                                       active={sortField === 'sharpe'}
                                       direction={sortField === 'sharpe' ? sortDirection : 'asc'}
@@ -3401,13 +3427,33 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       Sharpe Ratio
                                     </TableSortLabel>
                                   </TableCell>
-                                  <TableCell align="center">
+                                  <TableCell rowSpan={2} align="center">
                                     <TableSortLabel
                                       active={sortField === 'aiSentiment'}
                                       direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('aiSentiment')}
                                     >
                                       AI Evaluation
+                                    </TableSortLabel>
+                                  </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'nav'}
+                                      direction={sortField === 'nav' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('nav')}
+                                    >
+                                      NAV %
+                                    </TableSortLabel>
+                                  </TableCell>
+                                  <TableCell>
+                                    <TableSortLabel
+                                      active={sortField === 'divErosion'}
+                                      direction={sortField === 'divErosion' ? sortDirection : 'asc'}
+                                      onClick={() => handleSort('divErosion')}
+                                    >
+                                      Div Erosion %
                                     </TableSortLabel>
                                   </TableCell>
                                 </TableRow>
@@ -3434,10 +3480,21 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
                                     <TableCell>
                                       {(() => {
+                                        const divErosion = polygonData[item.ticker]?.divErosion;
+                                        if (divErosion != null) {
+                                          const color = divErosion >= 0 ? '#34C759' : '#FF3B30';
+                                          return <span style={{ color }}>{divErosion >= 0 ? '+' : ''}{divErosion.toFixed(1)}%</span>;
+                                        }
+                                        return '-';
+                                      })()}
+                                    </TableCell>
+                                    <TableCell>
+                                      {(() => {
                                         const fwdYield = polygonData[item.ticker]?.forwardYield;
                                         const navPerf = polygonData[item.ticker]?.navPerformance;
+                                        const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                         if (fwdYield != null && navPerf != null) {
-                                          return `${(fwdYield + navPerf).toFixed(1)}%`;
+                                          return `${(fwdYield + navPerf + divErosion).toFixed(1)}%`;
                                         }
                                         return '-';
                                       })()}

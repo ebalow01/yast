@@ -66,22 +66,34 @@ async function fetchTickerData(ticker, apiKey) {
     const volatilityData = await httpsGet(volatilityUrl);
     await delay(100); // Rate limiting
     
-    // Fetch dividend data (last 10 dividends to ensure we get at least 3)
-    const dividendUrl = `https://api.polygon.io/v3/reference/dividends?ticker=${ticker}&order=desc&limit=10&apiKey=${apiKey}`;
+    // Fetch dividend data (last 15 dividends to get both recent and historical)
+    const dividendUrl = `https://api.polygon.io/v3/reference/dividends?ticker=${ticker}&order=desc&limit=15&apiKey=${apiKey}`;
     const dividendData = await httpsGet(dividendUrl);
     await delay(100); // Rate limiting
     
-    // Calculate median of last 3 dividends
+    // Calculate median of last 3 dividends and historical 3 dividends (10-12 weeks ago)
     let medianDividend = null;
+    let medianHistorical = null;
     let lastDividends = [];
+    let historicalDividends = [];
+    let divErosion = null;
+    
     if (dividendData.results && dividendData.results.length > 0) {
-      // Get the last 3 dividends
+      // Get the last 3 dividends (most recent)
       lastDividends = dividendData.results
         .slice(0, 3)
         .map(d => d.cash_amount)
         .filter(d => d > 0)
         .sort((a, b) => a - b);
       
+      // Get historical dividends from positions 10-12 (roughly 10-12 weeks ago for weekly dividends)
+      historicalDividends = dividendData.results
+        .slice(10, 13)
+        .map(d => d.cash_amount)
+        .filter(d => d > 0)
+        .sort((a, b) => a - b);
+      
+      // Calculate median for last 3 dividends
       if (lastDividends.length > 0) {
         if (lastDividends.length === 1) {
           medianDividend = lastDividends[0];
@@ -89,6 +101,23 @@ async function fetchTickerData(ticker, apiKey) {
           medianDividend = (lastDividends[0] + lastDividends[1]) / 2;
         } else {
           medianDividend = lastDividends[1]; // Middle value for 3 dividends
+        }
+      }
+      
+      // Calculate median for historical dividends (10-12 weeks ago)
+      if (historicalDividends.length > 0) {
+        if (historicalDividends.length === 1) {
+          medianHistorical = historicalDividends[0];
+        } else if (historicalDividends.length === 2) {
+          medianHistorical = (historicalDividends[0] + historicalDividends[1]) / 2;
+        } else {
+          medianHistorical = historicalDividends[1]; // Middle value for 3 dividends
+        }
+        
+        // Calculate dividend erosion (difference percentage, annualized)
+        if (medianDividend && medianHistorical && medianHistorical > 0) {
+          const erosionRate = ((medianDividend - medianHistorical) / medianHistorical);
+          divErosion = erosionRate * 4 * 100; // Annualize by *4 (quarterly basis) and convert to percentage
         }
       }
     }
@@ -150,11 +179,14 @@ async function fetchTickerData(ticker, apiKey) {
       ticker,
       price: currentPrice,
       medianDividend: medianDividend,
+      medianHistorical: medianHistorical,
+      divErosion: divErosion,
       forwardYield: forwardYield,
       navPerformance: navPerformance,
       volatility14Day: volatility14Day,
       sharpeRatio: sharpeRatio,
       lastDividends: lastDividends,
+      historicalDividends: historicalDividends,
       dividendCount: lastDividends.length
     };
   } catch (error) {
@@ -163,6 +195,8 @@ async function fetchTickerData(ticker, apiKey) {
       ticker,
       price: null,
       medianDividend: null,
+      medianHistorical: null,
+      divErosion: null,
       forwardYield: null,
       navPerformance: null,
       volatility14Day: null,
