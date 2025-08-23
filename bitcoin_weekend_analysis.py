@@ -23,13 +23,84 @@ import numpy as np
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
+import yfinance as yf
 
 # Load environment variables
 load_dotenv()
 
+def fetch_bitcoin_hourly_data_yahoo(start_date, end_date, cache_file="bitcoin_hourly_cache.pkl"):
+    """
+    Fetch Bitcoin hourly data from Yahoo Finance with local caching
+    """
+    import pickle
+    import os
+    
+    # Try to load from cache first
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, 'rb') as f:
+                cached_data = pickle.load(f)
+            
+            # Check if cached data is recent enough (same day)
+            cached_end_date = cached_data['end_date']
+            today = datetime.now().strftime("%Y-%m-%d")
+            
+            if cached_end_date >= today:
+                print(f"Using cached hourly data with {len(cached_data['data'])} data points")
+                return cached_data['data']
+            else:
+                print(f"Cache outdated (cached: {cached_end_date}, today: {today}), fetching new data...")
+        except Exception as e:
+            print(f"Cache read failed: {e}, fetching new data...")
+    
+    try:
+        print(f"Downloading fresh Bitcoin hourly data from Yahoo Finance...")
+        
+        # Download hourly Bitcoin data
+        btc_data = yf.download("BTC-USD", start=start_date, end=end_date, interval="1h")
+        
+        if btc_data.empty:
+            print("No data returned from Yahoo Finance")
+            return None
+            
+        print(f"Successfully fetched {len(btc_data)} hourly data points from Yahoo Finance")
+        
+        # Convert to our expected format
+        hourly_results = []
+        for timestamp, row in btc_data.iterrows():
+            hourly_results.append({
+                'timestamp': timestamp,
+                'open': row['Open'],
+                'high': row['High'], 
+                'low': row['Low'],
+                'close': row['Close'],
+                'volume': row['Volume'],
+                'hour': timestamp.hour
+            })
+        
+        # Save to cache
+        try:
+            cache_data = {
+                'data': hourly_results,
+                'start_date': start_date,
+                'end_date': end_date,
+                'fetched_at': datetime.now().isoformat()
+            }
+            with open(cache_file, 'wb') as f:
+                pickle.dump(cache_data, f)
+            print(f"Saved {len(hourly_results)} data points to cache file: {cache_file}")
+        except Exception as e:
+            print(f"Failed to save cache: {e}")
+            
+        return hourly_results
+        
+    except Exception as e:
+        print(f"Yahoo Finance failed: {e}")
+        return None
+
 def fetch_bitcoin_data(api_key, start_date, end_date):
     """
-    Fetch Bitcoin daily data from Polygon.io
+    Fetch Bitcoin daily data from Polygon.io (fallback)
     """
     url = f"https://api.polygon.io/v2/aggs/ticker/X:BTCUSD/range/1/day/{start_date}/{end_date}"
     params = {
@@ -135,6 +206,133 @@ def analyze_weekly_month_patterns(df):
             }
     
     return weekly_results
+
+def analyze_24x24_hourly_patterns(hourly_data, trading_hours_only=False):
+    """
+    Analyze all 24x24 combinations of buy hour and sell hour for Monday-to-Monday trades
+    """
+    if not hourly_data:
+        return {}
+    
+    # Convert to DataFrame
+    df = pd.DataFrame(hourly_data)
+    df['date'] = pd.to_datetime(df['timestamp']).dt.date
+    df['day_of_week'] = pd.to_datetime(df['timestamp']).dt.dayofweek
+    df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
+    
+    # Get all Mondays
+    mondays_df = df[df['day_of_week'] == 0].copy()
+    
+    # Results for each hour combination
+    hourly_results = {}
+    
+    # Define hour ranges based on trading_hours_only flag
+    if trading_hours_only:
+        # Fidelity trading hours: 7 AM ET to 8 PM ET
+        print("Testing combinations within Fidelity trading hours (7 AM to 8 PM ET)")
+        buy_hours = range(7, 21)  # 7 AM to 8 PM
+        sell_hours = range(7, 21)  # 7 AM to 8 PM
+        total_combinations = len(buy_hours) * len(sell_hours)
+        print(f"Total combinations: {total_combinations}")
+    else:
+        print("Testing all 576 combinations of buy hour (0-23) and sell hour (0-23)")
+        print("for Monday-to-Monday trades...")
+        buy_hours = range(24)
+        sell_hours = range(24)
+    
+    # Test specified hour combinations
+    for buy_hour in buy_hours:
+        for sell_hour in sell_hours:
+            combination_name = f"Buy {buy_hour:02d}:00 -> Sell {sell_hour:02d}:00"
+            
+            returns = []
+            trade_details = []
+            
+            # Get all Monday buy opportunities at this hour
+            buy_opportunities = mondays_df[mondays_df['hour'] == buy_hour].copy()
+            
+            for _, buy_row in buy_opportunities.iterrows():
+                buy_date = buy_row['date']
+                buy_timestamp = buy_row['timestamp']
+                buy_price = buy_row['close']  # Use close price of that hour
+                
+                # Find the next Monday at the sell hour
+                next_monday_date = buy_date + timedelta(days=7)
+                sell_opportunity = mondays_df[
+                    (pd.to_datetime(mondays_df['timestamp']).dt.date == next_monday_date) & 
+                    (mondays_df['hour'] == sell_hour)
+                ]
+                
+                if not sell_opportunity.empty:
+                    sell_row = sell_opportunity.iloc[0]
+                    sell_price = sell_row['close']
+                    sell_timestamp = sell_row['timestamp']
+                    
+                    # Check for 5% profit-taking exit during the week
+                    week_data = df[(df['date'] > buy_date) & (df['date'] < next_monday_date)]
+                    profit_exit_price = None
+                    profit_exit_timestamp = None
+                    
+                    for _, hour_data in week_data.iterrows():
+                        current_price = hour_data['close']
+                        current_return = (current_price - buy_price) / buy_price * 100
+                        
+                        if isinstance(current_return, pd.Series):
+                            current_return = current_return.iloc[0]
+                        
+                        if current_return >= 5.0:  # 5% profit-taking exit
+                            profit_exit_price = current_price
+                            profit_exit_timestamp = hour_data['timestamp']
+                            break
+                    
+                    # Use profit-taking exit if triggered, otherwise use regular Monday exit
+                    if profit_exit_price is not None:
+                        final_sell_price = profit_exit_price
+                        final_sell_timestamp = profit_exit_timestamp
+                        exit_reason = "5% profit exit"
+                    else:
+                        final_sell_price = sell_price
+                        final_sell_timestamp = sell_timestamp
+                        exit_reason = "regular Monday exit"
+                    
+                    # Calculate return
+                    weekly_return = (final_sell_price - buy_price) / buy_price * 100
+                    returns.append(weekly_return)
+                    
+                    trade_details.append({
+                        'buy_date': buy_timestamp.strftime('%Y-%m-%d %H:%M'),
+                        'sell_date': final_sell_timestamp.strftime('%Y-%m-%d %H:%M'),
+                        'buy_price': buy_price,
+                        'sell_price': final_sell_price,
+                        'return_pct': weekly_return,
+                        'buy_hour': buy_hour,
+                        'sell_hour': sell_hour,
+                        'exit_reason': exit_reason
+                    })
+            
+            # Store results if we have trades
+            if returns and len(returns) > 0:
+                returns_array = np.array(returns)
+                # Count profit exits
+                profit_exits = sum(1 for trade in trade_details if trade.get('exit_reason') == '5% profit exit')
+                
+                hourly_results[combination_name] = {
+                    'buy_hour': buy_hour,
+                    'sell_hour': sell_hour,
+                    'avg_return': np.mean(returns_array),
+                    'win_rate': (returns_array > 0).mean() * 100,
+                    'volatility': np.std(returns_array),
+                    'total_trades': len(returns_array),
+                    'profit_exits': profit_exits,
+                    'profit_exit_rate': (profit_exits / len(returns_array)) * 100,
+                    'best_return': np.max(returns_array),
+                    'worst_return': np.min(returns_array),
+                    'risk_adjusted_return': np.mean(returns_array) / np.std(returns_array) if np.std(returns_array) > 0 else 0,
+                    'returns': returns,
+                    'trade_details': trade_details[:5]  # Store only first 5 for space
+                }
+    
+    return hourly_results
 
 def analyze_calendar_days_1to7(df):
     """
@@ -373,17 +571,125 @@ def find_optimal_strategies(combination_results):
 
 def main():
     # Configuration
+    start_date = "2024-01-11"
+    end_date = datetime.now().strftime("%Y-%m-%d")
+    
+    print(f"Attempting to fetch HOURLY Bitcoin data from {start_date} to {end_date}...")
+    
+    # Try Yahoo Finance for hourly data first
+    hourly_data = fetch_bitcoin_hourly_data_yahoo(start_date, end_date)
+    
+    if hourly_data:
+        print(f"SUCCESS! Got hourly data. Running 24x24 hour analysis...")
+        print(f"Testing all 576 combinations of buy hour (0-23) and sell hour (0-23)")
+        print("for Monday-to-Monday trades...")
+        
+        # Run 24x24 hourly analysis for trading hours only
+        hourly_results = analyze_24x24_hourly_patterns(hourly_data, trading_hours_only=True)
+        
+        # Print results
+        print("\n" + "="*80)
+        print("BITCOIN 24x24 HOURLY ANALYSIS - Monday to Monday Strategy")
+        print(f"Period: {start_date} to {end_date}")
+        print("="*80)
+        
+        if hourly_results:
+            # Multiple sorting strategies for risk management
+            sorted_by_return = sorted(hourly_results.items(), key=lambda x: x[1]['avg_return'], reverse=True)
+            sorted_by_win_rate = sorted(hourly_results.items(), key=lambda x: x[1]['win_rate'], reverse=True)
+            sorted_by_risk_adjusted = sorted(hourly_results.items(), key=lambda x: x[1]['risk_adjusted_return'], reverse=True)
+            sorted_by_low_volatility = sorted(hourly_results.items(), key=lambda x: x[1]['volatility'], reverse=False)
+            sorted_by_smallest_loss = sorted(hourly_results.items(), key=lambda x: x[1]['worst_return'], reverse=True)
+            
+            print(f"\n[RISK MANAGEMENT ANALYSIS] Minimizing Losses vs Maximizing Gains:")
+            print("="*90)
+            
+            print(f"\n[STRATEGY 1] HIGHEST RETURNS (Your Current Best):")
+            print("-" * 80)
+            print(f"{'Rank':>4} {'Strategy':>25} {'Return':>8} {'WinRate':>8} {'Vol':>6} {'WorstLoss':>10}")
+            for i, (combo_name, stats) in enumerate(sorted_by_return[:5], 1):
+                print(f"{i:>4} {combo_name:>25} {stats['avg_return']:>6.2f}% {stats['win_rate']:>6.1f}% {stats['volatility']:>5.2f}% {stats['worst_return']:>8.2f}%")
+            
+            print(f"\n[STRATEGY 2] HIGHEST WIN RATES (Fewest Losing Trades):")
+            print("-" * 80)
+            print(f"{'Rank':>4} {'Strategy':>25} {'Return':>8} {'WinRate':>8} {'Vol':>6} {'WorstLoss':>10}")
+            for i, (combo_name, stats) in enumerate(sorted_by_win_rate[:5], 1):
+                print(f"{i:>4} {combo_name:>25} {stats['avg_return']:>6.2f}% {stats['win_rate']:>6.1f}% {stats['volatility']:>5.2f}% {stats['worst_return']:>8.2f}%")
+            
+            print(f"\n[STRATEGY 3] LOWEST VOLATILITY (Smoothest Ride):")
+            print("-" * 80)
+            print(f"{'Rank':>4} {'Strategy':>25} {'Return':>8} {'WinRate':>8} {'Vol':>6} {'WorstLoss':>10}")
+            for i, (combo_name, stats) in enumerate(sorted_by_low_volatility[:5], 1):
+                print(f"{i:>4} {combo_name:>25} {stats['avg_return']:>6.2f}% {stats['win_rate']:>6.1f}% {stats['volatility']:>5.2f}% {stats['worst_return']:>8.2f}%")
+            
+            print(f"\n[STRATEGY 4] SMALLEST MAXIMUM LOSSES (Best Downside Protection):")
+            print("-" * 80)
+            print(f"{'Rank':>4} {'Strategy':>25} {'Return':>8} {'WinRate':>8} {'Vol':>6} {'WorstLoss':>10}")
+            for i, (combo_name, stats) in enumerate(sorted_by_smallest_loss[:5], 1):
+                print(f"{i:>4} {combo_name:>25} {stats['avg_return']:>6.2f}% {stats['win_rate']:>6.1f}% {stats['volatility']:>5.2f}% {stats['worst_return']:>8.2f}%")
+            
+            print(f"\n[STRATEGY 5] BEST RISK-ADJUSTED RETURNS (Best Risk/Reward Balance):")
+            print("-" * 80)
+            print(f"{'Rank':>4} {'Strategy':>25} {'Return':>8} {'WinRate':>8} {'Vol':>6} {'RiskAdj':>8}")
+            for i, (combo_name, stats) in enumerate(sorted_by_risk_adjusted[:5], 1):
+                print(f"{i:>4} {combo_name:>25} {stats['avg_return']:>6.2f}% {stats['win_rate']:>6.1f}% {stats['volatility']:>5.2f}% {stats['risk_adjusted_return']:>6.3f}")
+            
+            # Key insights for risk management
+            print(f"\n[RISK MANAGEMENT INSIGHTS]")
+            print("="*60)
+            
+            best_return_combo = sorted_by_return[0]
+            best_winrate_combo = sorted_by_win_rate[0]
+            lowest_vol_combo = sorted_by_low_volatility[0]
+            smallest_loss_combo = sorted_by_smallest_loss[0]
+            best_risk_adj_combo = sorted_by_risk_adjusted[0]
+            
+            print(f"For MAXIMUM RETURNS: {best_return_combo[0]}")
+            print(f"   Return: {best_return_combo[1]['avg_return']:+.2f}%, Win Rate: {best_return_combo[1]['win_rate']:.1f}%, Worst Loss: {best_return_combo[1]['worst_return']:+.2f}%")
+            print(f"   Median Return: {np.median(best_return_combo[1]['returns']):+.2f}%")
+            print(f"   Profit Exits: {best_return_combo[1]['profit_exits']}/{best_return_combo[1]['total_trades']} ({best_return_combo[1]['profit_exit_rate']:.1f}%)")
+            
+            print(f"\nFor FEWEST LOSSES: {best_winrate_combo[0]}")  
+            print(f"   Return: {best_winrate_combo[1]['avg_return']:+.2f}%, Win Rate: {best_winrate_combo[1]['win_rate']:.1f}%, Worst Loss: {best_winrate_combo[1]['worst_return']:+.2f}%")
+            print(f"   Median Return: {np.median(best_winrate_combo[1]['returns']):+.2f}%")
+            print(f"   Profit Exits: {best_winrate_combo[1]['profit_exits']}/{best_winrate_combo[1]['total_trades']} ({best_winrate_combo[1]['profit_exit_rate']:.1f}%)")
+            
+            print(f"\nFor SMOOTHEST RIDE: {lowest_vol_combo[0]}")
+            print(f"   Return: {lowest_vol_combo[1]['avg_return']:+.2f}%, Volatility: {lowest_vol_combo[1]['volatility']:.2f}%, Worst Loss: {lowest_vol_combo[1]['worst_return']:+.2f}%")
+            print(f"   Median Return: {np.median(lowest_vol_combo[1]['returns']):+.2f}%")
+            print(f"   Profit Exits: {lowest_vol_combo[1]['profit_exits']}/{lowest_vol_combo[1]['total_trades']} ({lowest_vol_combo[1]['profit_exit_rate']:.1f}%)")
+            
+            print(f"\nFor SMALLEST LOSSES: {smallest_loss_combo[0]}")
+            print(f"   Return: {smallest_loss_combo[1]['avg_return']:+.2f}%, Win Rate: {smallest_loss_combo[1]['win_rate']:.1f}%, Worst Loss: {smallest_loss_combo[1]['worst_return']:+.2f}%")
+            print(f"   Median Return: {np.median(smallest_loss_combo[1]['returns']):+.2f}%")
+            print(f"   Profit Exits: {smallest_loss_combo[1]['profit_exits']}/{smallest_loss_combo[1]['total_trades']} ({smallest_loss_combo[1]['profit_exit_rate']:.1f}%)")
+            
+            print(f"\nFor BEST BALANCE: {best_risk_adj_combo[0]}")
+            print(f"   Return: {best_risk_adj_combo[1]['avg_return']:+.2f}%, Risk-Adj: {best_risk_adj_combo[1]['risk_adjusted_return']:.3f}, Worst Loss: {best_risk_adj_combo[1]['worst_return']:+.2f}%")
+            
+            # Trade-offs analysis
+            return_sacrifice = best_return_combo[1]['avg_return'] - best_winrate_combo[1]['avg_return']
+            loss_protection = best_winrate_combo[1]['worst_return'] - best_return_combo[1]['worst_return']
+            
+            print(f"\n[TRADE-OFF ANALYSIS]")
+            print(f"By choosing HIGHEST WIN RATE over HIGHEST RETURN:")
+            print(f"   You give up: {return_sacrifice:.2f}% average return per trade")
+            print(f"   You gain: {loss_protection:.2f}% better worst-case protection")
+            print(f"   Risk Reduction: {((best_return_combo[1]['volatility'] - best_winrate_combo[1]['volatility']) / best_return_combo[1]['volatility'] * 100):.1f}% less volatility")
+        
+        else:
+            print("No hourly combinations found - data might be insufficient")
+            
+        return  # Exit early if hourly analysis worked
+    
+    # Fallback to daily analysis if hourly fails
+    print("FAILED to get hourly data. Falling back to daily analysis...")
+    
     api_key = os.getenv('POLYGON_API_KEY')
     if not api_key:
         raise Exception("POLYGON_API_KEY not found in environment variables")
     
-    # Bitcoin ETF launch date (first Bitcoin ETF approvals)
-    start_date = "2024-01-11"
-    end_date = datetime.now().strftime("%Y-%m-%d")
-    
-    print(f"Fetching Bitcoin data from {start_date} to {end_date}...")
-    
-    # Fetch data
+    # Fetch daily data
     raw_data = fetch_bitcoin_data(api_key, start_date, end_date)
     
     # Convert to DataFrame
@@ -605,111 +911,20 @@ def main():
     
     print(f"\n" + "="*80)
     
-    # Print optimal strategies
-    print(f"\n[OPTIMAL STRATEGIES]")
-    print("="*50)
+    # Save focused analysis results
+    if weekly_month_results:
+        weekly_df = pd.DataFrame.from_dict(weekly_month_results, orient='index')
+        weekly_df = weekly_df.drop(['returns', 'trade_details'], axis=1, errors='ignore')  # Remove complex data for CSV
+        weekly_file = f"bitcoin_week1_strategy_{datetime.now().strftime('%Y%m%d')}.csv"
+        weekly_df.to_csv(weekly_file)
+        print(f"\n[SAVE] Week 1 strategy results saved to: {weekly_file}")
     
-    if 'best_return' in optimal_strategies:
-        strategy_name, stats = optimal_strategies['best_return']
-        print(f"\n[WINNER] HIGHEST RETURN STRATEGY: {strategy_name}")
-        print(f"   Average Return: {stats['avg_return']:+.2f}%")
-        print(f"   Win Rate: {stats['win_rate']:.1f}%")
-        print(f"   Volatility: {stats['volatility']:.2f}%")
-        print(f"   Risk-Adjusted: {stats['risk_adjusted_return']:.3f}")
-        print(f"   Total Trades: {stats['total_trades']}")
-    
-    if 'best_win_rate' in optimal_strategies:
-        strategy_name, stats = optimal_strategies['best_win_rate']
-        print(f"\n[TARGET] HIGHEST WIN RATE STRATEGY: {strategy_name}")
-        print(f"   Win Rate: {stats['win_rate']:.1f}%")
-        print(f"   Average Return: {stats['avg_return']:+.2f}%")
-        print(f"   Volatility: {stats['volatility']:.2f}%")
-        print(f"   Risk-Adjusted: {stats['risk_adjusted_return']:.3f}")
-        print(f"   Total Trades: {stats['total_trades']}")
-    
-    if 'best_risk_adjusted' in optimal_strategies:
-        strategy_name, stats = optimal_strategies['best_risk_adjusted']
-        print(f"\n[BALANCE] BEST RISK-ADJUSTED STRATEGY: {strategy_name}")
-        print(f"   Risk-Adjusted Return: {stats['risk_adjusted_return']:.3f}")
-        print(f"   Average Return: {stats['avg_return']:+.2f}%")
-        print(f"   Win Rate: {stats['win_rate']:.1f}%")
-        print(f"   Volatility: {stats['volatility']:.2f}%")
-        print(f"   Total Trades: {stats['total_trades']}")
-    
-    if 'lowest_risk' in optimal_strategies:
-        strategy_name, stats = optimal_strategies['lowest_risk']
-        print(f"\n[SAFE] LOWEST RISK STRATEGY: {strategy_name}")
-        print(f"   Volatility: {stats['volatility']:.2f}%")
-        print(f"   Average Return: {stats['avg_return']:+.2f}%")
-        print(f"   Win Rate: {stats['win_rate']:.1f}%")
-        print(f"   Risk-Adjusted: {stats['risk_adjusted_return']:.3f}")
-        print(f"   Total Trades: {stats['total_trades']}")
-    
-    # Top 10 strategies by return
-    print(f"\n[TOP 10 STRATEGIES BY RETURN]")
-    print("="*50)
-    sorted_strategies = sorted(combination_results.items(), key=lambda x: x[1]['avg_return'], reverse=True)
-    
-    for i, (strategy_name, stats) in enumerate(sorted_strategies[:10], 1):
-        print(f"{i:2d}. {strategy_name:>20}: "
-              f"Return {stats['avg_return']:+6.2f}% | "
-              f"Win {stats['win_rate']:5.1f}% | "
-              f"Vol {stats['volatility']:5.2f}% | "
-              f"Trades {stats['total_trades']:3d}")
-    
-    # Worst 5 strategies (for context)
-    print(f"\n[WORST 5 STRATEGIES BY RETURN]")
-    print("="*50)
-    for i, (strategy_name, stats) in enumerate(sorted_strategies[-5:], 1):
-        print(f"{i:2d}. {strategy_name:>20}: "
-              f"Return {stats['avg_return']:+6.2f}% | "
-              f"Win {stats['win_rate']:5.1f}% | "
-              f"Vol {stats['volatility']:5.2f}% | "
-              f"Trades {stats['total_trades']:3d}")
-    
-    # Analysis summary
-    print(f"\n[ANALYSIS SUMMARY]")
-    print("="*50)
-    positive_strategies = len([s for s in combination_results.values() if s['avg_return'] > 0])
-    total_strategies = len(combination_results)
-    
-    print(f"Total Strategies Tested: {total_strategies}")
-    print(f"Profitable Strategies: {positive_strategies}")
-    print(f"Success Rate: {positive_strategies/total_strategies*100:.1f}%")
-    
-    # Find best same-week vs cross-week strategies
-    same_week_strategies = {k: v for k, v in combination_results.items() 
-                           if not (k.endswith('-> Monday') and not k.startswith('Monday'))}
-    cross_week_strategies = {k: v for k, v in combination_results.items()
-                           if k.endswith('-> Monday') and not k.startswith('Monday')}
-    
-    if same_week_strategies:
-        best_same_week = max(same_week_strategies.items(), key=lambda x: x[1]['avg_return'])
-        print(f"\nBest Same-Week Strategy: {best_same_week[0]} ({best_same_week[1]['avg_return']:+.2f}%)")
-    
-    if cross_week_strategies:
-        best_cross_week = max(cross_week_strategies.items(), key=lambda x: x[1]['avg_return'])
-        print(f"Best Cross-Week Strategy: {best_cross_week[0]} ({best_cross_week[1]['avg_return']:+.2f}%)")
-    
-    # Save detailed results
-    results_df = pd.DataFrame.from_dict(combination_results, orient='index')
-    results_df = results_df.drop('returns', axis=1)  # Remove raw returns for CSV
-    results_file = f"bitcoin_day_combinations_{datetime.now().strftime('%Y%m%d')}.csv"
-    results_df.to_csv(results_file)
-    print(f"\n[SAVE] Detailed combination results saved to: {results_file}")
-    
-    # Save both weekly analyses
-    weekly_df = pd.DataFrame.from_dict(weekly_month_results, orient='index')
-    weekly_df = weekly_df.drop(['returns', 'trade_details'], axis=1, errors='ignore')  # Remove complex data for CSV
-    weekly_file = f"bitcoin_calendar_weeks_{datetime.now().strftime('%Y%m%d')}.csv"
-    weekly_df.to_csv(weekly_file)
-    print(f"[SAVE] Calendar week analysis saved to: {weekly_file}")
-    
-    rolling_df = pd.DataFrame.from_dict(rolling_4week_results, orient='index')
-    rolling_df = rolling_df.drop('returns', axis=1)  # Remove raw returns for CSV  
-    rolling_file = f"bitcoin_rolling_4weeks_{datetime.now().strftime('%Y%m%d')}.csv"
-    rolling_df.to_csv(rolling_file)
-    print(f"[SAVE] Rolling 4-week analysis saved to: {rolling_file}")
+    if calendar_days_results:
+        calendar_df = pd.DataFrame([calendar_days_results])
+        calendar_df = calendar_df.drop(['returns', 'trade_details'], axis=1, errors='ignore')
+        calendar_file = f"bitcoin_calendar_days_1to7_{datetime.now().strftime('%Y%m%d')}.csv"
+        calendar_df.to_csv(calendar_file, index=False)
+        print(f"[SAVE] Calendar Days 1-7 results saved to: {calendar_file}")
     
     # Save detailed data
     output_file = f"bitcoin_analysis_{datetime.now().strftime('%Y%m%d')}.csv"

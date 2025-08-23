@@ -595,6 +595,23 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     }
   }
   
+  // Filter out NAV death spirals (NAV performance worse than -50%)
+  const preNavCount = allETFs.length;
+  const navDeathSpirals: string[] = [];
+  
+  allETFs = allETFs.filter(etf => {
+    // Check if we have NAV performance data from polygon
+    const navPerformance = etf.navPerformance;
+    if (navPerformance != null && navPerformance < -50) {
+      navDeathSpirals.push(etf.ticker);
+      return false; // Exclude NAV death spirals
+    }
+    return true; // Include ETFs with good or unknown NAV performance
+  });
+  
+  if (navDeathSpirals.length > 0) {
+    console.log(`🚫 Excluded ${navDeathSpirals.length} NAV death spirals (< -50%):`, navDeathSpirals);
+  }
   
   // If no ETFs remain after filtering, return empty allocation
   if (allETFs.length === 0) {
