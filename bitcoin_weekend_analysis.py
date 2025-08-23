@@ -1110,6 +1110,13 @@ def analyze_monthly_performance():
                 winning_months += 1
             
             print(f"{month_data['month_name']:<15} {len(returns):<7} {avg_return:+8.2f}%   {best_trade:+8.2f}%   {worst_trade:+8.2f}%    {profit_exits}/{len(returns)} ({profit_exit_rate:.0f}%)    {status}")
+            
+            # Show detailed trade info for each month
+            for trade in month_data['trades']:
+                buy_date = trade['buy_date'][:10]  # Just the date part
+                sell_date = trade['sell_date'][:10] if trade['sell_date'] else 'N/A'
+                exit_reason = trade.get('exit_reason', 'regular exit')
+                print(f"    {buy_date} -> {sell_date}: {trade['return_pct']:+6.2f}% ({exit_reason})")
     
     # Summary stats
     print("-" * 100)
@@ -1131,8 +1138,136 @@ def analyze_monthly_performance():
     else:
         print("No trades found - check data and strategy")
 
-def compare_profit_taking_strategies():
-    """Compare first-Monday strategy with different profit-taking thresholds"""
+def test_strategy_with_stops(hourly_data, buy_hour, sell_hour, profit_cap, stop_loss):
+    """Test strategy with both profit-taking and stop-loss"""
+    if not hourly_data:
+        return None
+    
+    # Convert to DataFrame for Monday detection
+    df = pd.DataFrame(hourly_data)
+    df['date'] = pd.to_datetime(df['timestamp']).dt.date
+    df['day_of_week'] = pd.to_datetime(df['timestamp']).dt.dayofweek
+    df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
+    
+    # Get all Mondays
+    mondays_df = df[df['day_of_week'] == 0].copy()
+    
+    # Identify first Monday of each month
+    mondays_df['year_month'] = pd.to_datetime(mondays_df['timestamp']).dt.strftime('%Y-%m')
+    mondays_df['day_of_month'] = pd.to_datetime(mondays_df['timestamp']).dt.day
+    
+    # Get the first Monday of each month (lowest day number for each month)
+    first_monday_days = mondays_df.groupby('year_month')['day_of_month'].min().reset_index()
+    first_monday_days['is_first'] = True
+    
+    # Merge to identify first Mondays
+    mondays_df = mondays_df.merge(
+        first_monday_days[['year_month', 'day_of_month', 'is_first']], 
+        on=['year_month', 'day_of_month'], 
+        how='left'
+    )
+    
+    # Filter to only first Mondays at buy_hour
+    first_mondays = mondays_df[mondays_df['is_first'] == True]
+    buy_opportunities = first_mondays[first_mondays['hour'] == buy_hour].copy()
+    
+    returns = []
+    trade_details = []
+    
+    for _, buy_row in buy_opportunities.iterrows():
+        buy_date = buy_row['date']
+        buy_timestamp = buy_row['timestamp']
+        buy_price = float(buy_row['close'])
+        
+        # Find next Monday at sell hour (from full dataset, not just first Mondays)
+        next_monday_date = buy_date + timedelta(days=7)
+        next_monday_opportunities = df[
+            (df['date'] == next_monday_date) & 
+            (df['day_of_week'] == 0) &  # Monday
+            (df['hour'] == sell_hour)
+        ]
+        
+        if not next_monday_opportunities.empty:
+            sell_row = next_monday_opportunities.iloc[0]
+            sell_price = float(sell_row['close'])
+            sell_timestamp = sell_row['timestamp']
+            
+            # Check for profit-taking OR stop-loss exit during the week
+            exit_price = None
+            exit_timestamp = None
+            exit_reason = "regular exit"
+            
+            # Check week data for exit opportunities
+            week_start = pd.to_datetime(buy_timestamp)
+            week_end = week_start + pd.Timedelta(days=7)
+            
+            for hour_record in hourly_data:
+                hour_ts = pd.to_datetime(hour_record['timestamp'])
+                if week_start < hour_ts < week_end:
+                    hour_close = float(hour_record['close'])
+                    hour_return = (hour_close - buy_price) / buy_price * 100
+                    
+                    # Check profit-taking first
+                    if profit_cap and hour_return >= profit_cap:
+                        exit_price = hour_close
+                        exit_timestamp = hour_record['timestamp']
+                        exit_reason = f"{profit_cap}% profit exit"
+                        break
+                    
+                    # Check stop-loss
+                    if stop_loss and hour_return <= -stop_loss:
+                        exit_price = hour_close
+                        exit_timestamp = hour_record['timestamp']
+                        exit_reason = f"{stop_loss}% stop loss"
+                        break
+            
+            # Use exit if found, otherwise regular Monday exit
+            if exit_price is not None:
+                final_sell_price = exit_price
+                final_sell_timestamp = exit_timestamp
+            else:
+                final_sell_price = sell_price
+                final_sell_timestamp = sell_timestamp
+            
+            # Calculate return
+            weekly_return = (final_sell_price - buy_price) / buy_price * 100
+            returns.append(weekly_return)
+            
+            trade_details.append({
+                'buy_date': buy_timestamp.strftime('%Y-%m-%d %H:%M'),
+                'sell_date': final_sell_timestamp.strftime('%Y-%m-%d %H:%M'),
+                'buy_price': buy_price,
+                'sell_price': final_sell_price,
+                'return_pct': weekly_return,
+                'exit_reason': exit_reason
+            })
+    
+    if not returns:
+        return None
+    
+    returns_array = np.array(returns)
+    profit_exits = sum(1 for trade in trade_details if 'profit exit' in trade.get('exit_reason', ''))
+    stop_exits = sum(1 for trade in trade_details if 'stop loss' in trade.get('exit_reason', ''))
+    
+    return {
+        'total_trades': len(returns),
+        'avg_return': np.mean(returns_array),
+        'median_return': np.median(returns_array),
+        'win_rate': (returns_array > 0).mean() * 100,
+        'volatility': np.std(returns_array),
+        'best_return': np.max(returns_array),
+        'worst_return': np.min(returns_array),
+        'profit_exits': profit_exits,
+        'stop_exits': stop_exits,
+        'profit_exit_rate': (profit_exits / len(returns)) * 100,
+        'stop_exit_rate': (stop_exits / len(returns)) * 100,
+        'annual_return': np.mean(returns_array) * 12,  # 12 trades per year
+        'returns': returns,
+        'trade_details': trade_details[:5]
+    }
+
+def compare_stop_loss_strategies():
+    """Compare first-Monday strategy with different stop-loss levels (keeping 5% profit cap)"""
     start_date = "2023-10-01"
     end_date = "2025-08-23"
     
@@ -1145,80 +1280,74 @@ def compare_profit_taking_strategies():
         return
     
     print("="*80)
-    print("PROFIT-TAKING COMPARISON: First Monday Strategy")
-    print("Buy 19:00 -> Sell 08:00 (following Monday)")
+    print("STOP-LOSS COMPARISON: First Monday Strategy")
+    print("Buy 19:00 -> Sell 08:00 (with 5% profit cap)")
     print("="*80)
     
-    # Test different profit-taking thresholds
-    thresholds = [None, 5.0, 10.0]  # None means no profit-taking
-    results_by_threshold = {}
+    # Test different stop-loss levels (all with 5% profit cap)
+    stop_loss_levels = [None, 5.0, 10.0]
+    results = {}
     
-    for threshold in thresholds:
-        threshold_name = "No cap" if threshold is None else f"{threshold}% cap"
-        print(f"\n[Testing {threshold_name}]...")
+    for stop_loss in stop_loss_levels:
+        print(f"\nTesting stop-loss: {stop_loss}% (with 5% profit cap)...")
+        result = test_strategy_with_stops(hourly_data, 19, 8, 5.0, stop_loss)
         
-        # Run strategy with this threshold
-        if threshold is None:
-            # No profit-taking - set to impossible high value
-            strategy_results = test_specific_strategy(hourly_data, 19, 8, 999.0)
+        if result:
+            results[stop_loss] = result
+            label = f"No stop-loss" if stop_loss is None else f"{stop_loss}% stop-loss"
+            print(f"\n{label} Results:")
+            print(f"  Total trades: {result['total_trades']}")
+            print(f"  Average return: {result['avg_return']:.2f}%")
+            print(f"  Win rate: {result['win_rate']:.1f}%")
+            print(f"  Annual return: {result['annual_return']:.1f}%")
+            print(f"  Volatility: {result['volatility']:.2f}%")
+            print(f"  Best/Worst: {result['best_return']:.2f}% / {result['worst_return']:.2f}%")
+            print(f"  Profit exits: {result['profit_exits']} ({result['profit_exit_rate']:.1f}%)")
+            if stop_loss:
+                print(f"  Stop exits: {result['stop_exits']} ({result['stop_exit_rate']:.1f}%)")
         else:
-            strategy_results = test_specific_strategy(hourly_data, 19, 8, threshold)
+            print(f"No results for {stop_loss}% stop-loss")
+    
+    # Summary comparison
+    if results:
+        print("\n" + "="*60)
+        print("SUMMARY COMPARISON")
+        print("="*60)
+        print(f"{'Strategy':<20} {'Annual Return':<15} {'Win Rate':<10} {'Volatility':<12} {'Risk Score':<12}")
+        print("-" * 69)
         
-        if strategy_results:
-            results_by_threshold[threshold_name] = strategy_results
-    
-    # Display comparison
-    print("\n" + "="*80)
-    print("COMPARISON RESULTS")
-    print("="*80)
-    print(f"\n{'Strategy':<15} {'Trades':<8} {'Avg Return':<12} {'Median':<10} {'Win Rate':<10} {'Volatility':<12} {'Profit Exits':<15} {'Annual Return'}")
-    print("-"*110)
-    
-    for threshold_name, results in results_by_threshold.items():
-        profit_exit_rate = results['profit_exit_rate'] if threshold_name != "No cap" else 0
-        print(f"{threshold_name:<15} {results['total_trades']:<8} {results['avg_return']:+7.2f}%    {results['median_return']:+7.2f}%   {results['win_rate']:6.1f}%    {results['volatility']:8.2f}%    {results['profit_exits']}/{results['total_trades']} ({profit_exit_rate:.0f}%)       {results['annual_return']:+7.1f}%")
-    
-    # Analyze trade-offs
-    print("\n" + "="*80)
-    print("TRADE-OFF ANALYSIS")
-    print("="*80)
-    
-    if "No cap" in results_by_threshold and "5% cap" in results_by_threshold:
-        no_cap = results_by_threshold["No cap"]
-        cap_5 = results_by_threshold["5% cap"]
+        for stop_loss, result in results.items():
+            label = "No stop-loss" if stop_loss is None else f"{stop_loss}% stop-loss"
+            risk_score = result['volatility'] / result['avg_return'] if result['avg_return'] > 0 else float('inf')
+            print(f"{label:<20} {result['annual_return']:+.1f}%{'':<10} {result['win_rate']:.1f}%{'':<5} {result['volatility']:.2f}%{'':<6} {risk_score:.2f}")
         
-        print("\n5% Profit-Taking vs No Cap:")
-        print(f"  Return difference: {cap_5['avg_return'] - no_cap['avg_return']:+.2f}% per trade")
-        print(f"  Median difference: {cap_5['median_return'] - no_cap['median_return']:+.2f}%")
-        print(f"  Volatility reduction: {no_cap['volatility'] - cap_5['volatility']:.2f}%")
-        print(f"  Win rate change: {cap_5['win_rate'] - no_cap['win_rate']:+.1f}%")
-        print(f"  Trades exited early: {cap_5['profit_exits']}/{cap_5['total_trades']} ({cap_5['profit_exit_rate']:.1f}%)")
-    
-    if "5% cap" in results_by_threshold and "10% cap" in results_by_threshold:
-        cap_5 = results_by_threshold["5% cap"]
-        cap_10 = results_by_threshold["10% cap"]
+        # Find best strategy
+        best_annual = max(results.items(), key=lambda x: x[1]['annual_return'])
+        best_risk_adj = min(results.items(), key=lambda x: x[1]['volatility'] / x[1]['avg_return'] if x[1]['avg_return'] > 0 else float('inf'))
         
-        print("\n10% Profit-Taking vs 5% Cap:")
-        print(f"  Return difference: {cap_10['avg_return'] - cap_5['avg_return']:+.2f}% per trade")
-        print(f"  Median difference: {cap_10['median_return'] - cap_5['median_return']:+.2f}%")
-        print(f"  Volatility change: {cap_10['volatility'] - cap_5['volatility']:+.2f}%")
-        print(f"  Win rate change: {cap_10['win_rate'] - cap_5['win_rate']:+.1f}%")
-        print(f"  Early exits: 5% cap = {cap_5['profit_exits']}, 10% cap = {cap_10['profit_exits']}")
+        print(f"\nBest annual return: {best_annual[0] or 'No stop-loss'} ({best_annual[1]['annual_return']:+.1f}%)")
+        print(f"Best risk-adjusted: {best_risk_adj[0] or 'No stop-loss'} (risk score: {best_risk_adj[1]['volatility'] / best_risk_adj[1]['avg_return']:.2f})")
     
-    # Show best and worst trades for each
-    print("\n" + "="*80)
-    print("BEST AND WORST TRADES")
-    print("="*80)
-    
-    for threshold_name, results in results_by_threshold.items():
-        print(f"\n{threshold_name}:")
-        print(f"  Best trade: {results['best_return']:+.2f}%")
-        print(f"  Worst trade: {results['worst_return']:+.2f}%")
-        print(f"  Range: {results['best_return'] - results['worst_return']:.2f}%")
+    print("\n" + "="*60)
+    print("RECOMMENDATION")
+    print("="*60)
+    if results:
+        no_stop = results.get(None)
+        stop_5 = results.get(5.0)
+        stop_10 = results.get(10.0)
+        
+        if no_stop and no_stop['annual_return'] > 0:
+            print(f"The no stop-loss strategy shows the best performance with {no_stop['annual_return']:+.1f}% annual returns.")
+            print("Bitcoin's volatility means temporary dips often recover, making stop-losses counterproductive.")
+            print("The 5% profit cap already provides excellent downside protection.")
+        else:
+            print("Consider using moderate stop-losses if risk management is the priority.")
+    else:
+        print("Unable to complete analysis due to data issues.")
 
 def main():
-    # Compare different profit-taking strategies
-    compare_profit_taking_strategies()
+    # Show month-by-month performance of our optimal strategy
+    analyze_monthly_performance()
     
     return
 

@@ -2037,45 +2037,32 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.sharpeRatio - a.sharpeRatio);
     
-    // Take top 5 by Sharpe ratio (pure MPT approach)
-    const top5 = tickersWithTotalReturn.slice(0, 5);
-    const top5Tickers = top5.map(item => item.ticker);
-    
-    // Find all bullish non-death spiral ETFs not already in top 5
-    const bullishNonDeathSpirals = nonDivDeathSpiralTickers.filter(item => {
-      // Skip if already in top 5
-      if (top5Tickers.includes(item.ticker)) return false;
-      
-      // Check if bullish
+    // Filter to only bullish tickers for optimal portfolio
+    const bullishTickers = tickersWithTotalReturn.filter(item => {
       if (aiOutlooks[item.ticker]?.fullAnalysis) {
         const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
         const isBullish = sentiment.rating.toLowerCase().includes('bullish');
         return isBullish;
       }
       return false; // Only include if explicitly bullish
-    }).map(item => {
-      // Add the calculated metrics like the top 5
-      const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
-      const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
-      const divErosion = polygonData[item.ticker]?.divErosion || 0;
-      const totalReturn = forwardYield + navPerformance + divErosion;
-      const volatility = polygonData[item.ticker]?.volatility14Day || 20;
-      const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
-      
-      return {
-        ...item,
-        calculatedTotalReturn: totalReturn,
-        volatility: volatility,
-        sharpeRatio: sharpeRatio
-      };
+    });
+    
+    // Take top 5 bullish tickers by Sharpe ratio (pure MPT approach with bullish filter)
+    const top5 = bullishTickers.slice(0, 5);
+    const top5Tickers = top5.map(item => item.ticker);
+    
+    // Find remaining bullish non-death spiral ETFs not already in top 5
+    const bullishNonDeathSpirals = bullishTickers.filter(item => {
+      // Skip if already in top 5
+      return !top5Tickers.includes(item.ticker);
     });
     
     // Combine top 5 + bullish non-death spirals
     const finalOptimal = [...top5, ...bullishNonDeathSpirals];
     
-    console.log(`📈 Optimal portfolio (MPT-based): Top 5 by Sharpe + ${bullishNonDeathSpirals.length} bullish non-death spirals = ${finalOptimal.length} total ETFs`);
-    console.log('Top 5 by Sharpe ratio:', top5.map(item => `${item.ticker} (${item.sharpeRatio.toFixed(2)})`));
-    console.log('Bullish additions:', bullishNonDeathSpirals.map(item => item.ticker));
+    console.log(`📈 Optimal portfolio (MPT-based): Top 5 bullish by Sharpe + ${bullishNonDeathSpirals.length} remaining bullish = ${finalOptimal.length} total ETFs`);
+    console.log('Top 5 bullish by Sharpe ratio:', top5.map(item => `${item.ticker} (${item.sharpeRatio.toFixed(2)})`));
+    console.log('Remaining bullish additions:', bullishNonDeathSpirals.map(item => item.ticker));
     
     // Add Cash as final item with 4% forward yield (minimum 5%)
     const cashEntry = {
