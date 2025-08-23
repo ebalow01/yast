@@ -30,7 +30,8 @@ import {
   DialogActions,
   Alert,
   Snackbar,
-  TableSortLabel
+  TableSortLabel,
+  Tooltip
 } from '@mui/material';
 import {
   TrendingUp,
@@ -3232,7 +3233,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       }}
                     />
                     <Tab
-                      label="Excluded Tickers"
+                      label="Excluded ETFs"
                       icon={<Security />}
                       iconPosition="start"
                       sx={{
@@ -3327,103 +3328,125 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           <TableHead>
                             <TableRow>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'ticker'}
-                                  direction={sortField === 'ticker' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('ticker')}
-                                >
-                                  Ticker
-                                </TableSortLabel>
+                                <Tooltip title="ETF ticker symbol - the abbreviated code used to identify the ETF on stock exchanges">
+                                  <TableSortLabel
+                                    active={sortField === 'ticker'}
+                                    direction={sortField === 'ticker' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('ticker')}
+                                  >
+                                    ETF
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'price'}
-                                  direction={sortField === 'price' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('price')}
-                                >
-                                  Price
-                                </TableSortLabel>
+                                <Tooltip title="Current ETF share price in USD - the market price per share">
+                                  <TableSortLabel
+                                    active={sortField === 'price'}
+                                    direction={sortField === 'price' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('price')}
+                                  >
+                                    Price
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'medianDiv'}
-                                  direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('medianDiv')}
-                                >
-                                  <Box>Exp<br/>Div</Box>
-                                </TableSortLabel>
+                                <Tooltip title="Expected next dividend payment - the projected amount per share for the upcoming dividend">
+                                  <TableSortLabel
+                                    active={sortField === 'medianDiv'}
+                                    direction={sortField === 'medianDiv' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('medianDiv')}
+                                  >
+                                    <Box>Exp<br/>Div</Box>
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'forwardYield'}
-                                  direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('forwardYield')}
-                                >
-                                  <Box>Fwd<br/>Yld</Box>
-                                </TableSortLabel>
+                                <Tooltip title="Forward yield - annualized dividend rate as % of current price, calculated from recent dividends">
+                                  <TableSortLabel
+                                    active={sortField === 'forwardYield'}
+                                    direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('forwardYield')}
+                                  >
+                                    <Box>Fwd<br/>Yld</Box>
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'nav'}
-                                  direction={sortField === 'nav' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('nav')}
-                                >
-                                  <Box>NAV<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>ann</span></Box>
-                                </TableSortLabel>
+                                <Tooltip title="Net Asset Value annual performance - how much the ETF's underlying assets have gained/lost in value">
+                                  <TableSortLabel
+                                    active={sortField === 'nav'}
+                                    direction={sortField === 'nav' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('nav')}
+                                  >
+                                    <Box>NAV<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>ann</span></Box>
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'divErosion'}
-                                  direction={sortField === 'divErosion' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('divErosion')}
-                                >
-                                  <Box>Div<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>var</span></Box>
-                                </TableSortLabel>
+                                <Tooltip title="Dividend variation - how much dividends have changed over time. Negative means dividends are declining">
+                                  <TableSortLabel
+                                    active={sortField === 'divErosion'}
+                                    direction={sortField === 'divErosion' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('divErosion')}
+                                  >
+                                    <Box>Div<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>var</span></Box>
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'totalReturn'}
-                                  direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('totalReturn')}
-                                >
-                                  <Box>Tot<br/>Ret</Box>
-                                </TableSortLabel>
+                                <Tooltip title="Total expected return - sum of forward yield + NAV performance + dividend variation">
+                                  <TableSortLabel
+                                    active={sortField === 'totalReturn'}
+                                    direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('totalReturn')}
+                                  >
+                                    <Box>Tot<br/>Ret</Box>
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'volatility'}
-                                  direction={sortField === 'volatility' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('volatility')}
-                                >
-                                  <Box>Vol<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>14d</span></Box>
-                                </TableSortLabel>
+                                <Tooltip title="14-day volatility - annualized price volatility based on recent 14 days of trading">
+                                  <TableSortLabel
+                                    active={sortField === 'volatility'}
+                                    direction={sortField === 'volatility' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('volatility')}
+                                  >
+                                    <Box>Vol<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>14d</span></Box>
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'sharpe'}
-                                  direction={sortField === 'sharpe' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('sharpe')}
-                                >
-                                  Shrp
-                                </TableSortLabel>
+                                <Tooltip title="Sharpe ratio - risk-adjusted return calculated as (total return - 2% risk-free rate) / volatility">
+                                  <TableSortLabel
+                                    active={sortField === 'sharpe'}
+                                    direction={sortField === 'sharpe' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('sharpe')}
+                                  >
+                                    Shrp
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <TableSortLabel
-                                  active={sortField === 'mptAllocation'}
-                                  direction={sortField === 'mptAllocation' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('mptAllocation')}
-                                >
-                                  MPT
-                                </TableSortLabel>
+                                <Tooltip title="Modern Portfolio Theory allocation - optimized portfolio weight based on Sharpe ratio, rounded to 5% increments">
+                                  <TableSortLabel
+                                    active={sortField === 'mptAllocation'}
+                                    direction={sortField === 'mptAllocation' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('mptAllocation')}
+                                  >
+                                    MPT
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                               <TableCell align="center">
-                                <TableSortLabel
-                                  active={sortField === 'aiSentiment'}
-                                  direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
-                                  onClick={() => handleSort('aiSentiment')}
-                                >
-                                  AI Eval
-                                </TableSortLabel>
+                                <Tooltip title="AI sentiment evaluation - Claude's analysis of the ETF's outlook based on recent performance and market conditions">
+                                  <TableSortLabel
+                                    active={sortField === 'aiSentiment'}
+                                    direction={sortField === 'aiSentiment' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('aiSentiment')}
+                                  >
+                                    AI Eval
+                                  </TableSortLabel>
+                                </Tooltip>
                               </TableCell>
                             </TableRow>
                           </TableHead>
@@ -3564,7 +3587,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       <Box sx={{ p: 3 }}>
                         <Box sx={{ mb: 3 }}>
                           <Typography variant="h6">
-                            Excluded Tickers
+                            Excluded ETFs
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                             {excludedTickersData.all?.length || 0} assets excluded from optimal portfolio (NAV death spirals, div death spirals, bearish sentiment, or lower performance)
@@ -3581,10 +3604,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             <CardContent>
                               <Security sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
                               <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
-                                No Excluded Tickers
+                                No Excluded ETFs
                               </Typography>
                               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                                All available tickers are included in the optimal portfolio
+                                All available ETFs are included in the optimal portfolio
                               </Typography>
                             </CardContent>
                           </Card>
@@ -3803,7 +3826,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     <Box sx={{ p: 3 }}>
                       <Box sx={{ mb: 3 }}>
                         <Typography variant="h6">
-                          AI Bullish Excluded Tickers
+                          AI Bullish Excluded ETFs
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                           {excludedTickersData.bullishExcluded?.length || 0} AI-bullish ETFs excluded from optimal portfolio (not NAV/div death spirals, not bearish sentiment)
@@ -3820,7 +3843,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           <CardContent>
                             <TrendingUp sx={{ fontSize: 48, color: 'rgba(76, 175, 80, 0.6)', mb: 2 }} />
                             <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
-                              No AI Bullish Excluded Tickers
+                              No AI Bullish Excluded ETFs
                             </Typography>
                             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                               All bullish ETFs are either included in the optimal portfolio or excluded for other reasons
@@ -4298,7 +4321,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label="Ticker Symbol"
+              label="ETF Symbol"
               value={newTicker}
               onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
               fullWidth
