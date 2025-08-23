@@ -82,9 +82,9 @@ async function fetchTickerData(ticker, apiKey) {
     let divErosion = null;
     
     if (dividendData.results && dividendData.results.length > 0) {
-      // Filter dividends sequentially - each dividend must be within 10 days of the previous one
-      // Stop the chain if any gap is > 10 days to avoid mixing monthly/weekly frequencies
+      // Filter dividends sequentially and find frequency change point
       const consistentDividends = [];
+      let frequencyChangeIndex = -1;
       
       for (let i = 0; i < dividendData.results.length; i++) {
         const dividend = dividendData.results[i];
@@ -102,7 +102,14 @@ async function fetchTickerData(ticker, apiKey) {
           if (daysDiff <= 10) {
             consistentDividends.push(dividend);
           } else {
-            // Chain broken - stop including dividends
+            // Found frequency change - record position and continue with all remaining dividends
+            frequencyChangeIndex = consistentDividends.length;
+            // Add all remaining dividends for historical analysis
+            for (let j = i; j < dividendData.results.length; j++) {
+              if (dividendData.results[j].cash_amount > 0) {
+                consistentDividends.push(dividendData.results[j]);
+              }
+            }
             break;
           }
         }
@@ -115,11 +122,26 @@ async function fetchTickerData(ticker, apiKey) {
         .filter(d => d > 0)
         .sort((a, b) => a - b);
       
-      // Get historical dividends from positions 10-12 only if we have at least 13 consistent dividends
-      // This ensures we don't mix monthly/weekly data in the historical comparison
-      if (consistentDividends.length >= 13) {
+      // Get historical dividends based on frequency change detection
+      if (frequencyChangeIndex > 0 && consistentDividends.length >= frequencyChangeIndex + 3) {
+        // Use dividends n-2 to n-4 relative to frequency change (last monthly dividends)
+        const startIdx = frequencyChangeIndex + 1; // n-1 position (skip as it might be transitional)
+        historicalDividends = consistentDividends
+          .slice(startIdx, startIdx + 3) // n-2 to n-4
+          .map(d => d.cash_amount)
+          .filter(d => d > 0)
+          .sort((a, b) => a - b);
+      } else if (consistentDividends.length >= 13) {
+        // No frequency change detected, use standard positions 10-12
         historicalDividends = consistentDividends
           .slice(10, 13)
+          .map(d => d.cash_amount)
+          .filter(d => d > 0)
+          .sort((a, b) => a - b);
+      } else if (consistentDividends.length < 12) {
+        // Less than 12 dividends available, use last 3 for historical comparison
+        historicalDividends = consistentDividends
+          .slice(-3)
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
