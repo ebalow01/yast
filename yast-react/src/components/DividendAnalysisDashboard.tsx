@@ -3085,9 +3085,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         maxWidth: '100%',
                         overflowX: 'auto'
                       }}>
-                        <Table size="small" sx={{ minWidth: 1200 }}>
+                        <Table size="small" sx={{ 
+                          minWidth: 800,
+                          '& .MuiTableCell-root': { 
+                            padding: '6px 4px',
+                            fontSize: '0.8rem'
+                          }
+                        }}>
                           <TableHead>
-                            <TableRow sx={{ '& .MuiTableCell-root': { padding: '4px 8px' } }}>
+                            <TableRow>
                               <TableCell>
                                 <TableSortLabel
                                   active={sortField === 'ticker'}
@@ -3121,7 +3127,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'forwardYield' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('forwardYield')}
                                 >
-                                  <Box>Fwd<br/>Yield</Box>
+                                  <Box>Fwd<br/>Yld</Box>
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell>
@@ -3148,7 +3154,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('totalReturn')}
                                 >
-                                  <Box>Total<br/>Return</Box>
+                                  <Box>Tot<br/>Ret</Box>
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell>
@@ -3166,7 +3172,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'sharpe' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('sharpe')}
                                 >
-                                  Sharpe
+                                  Shrp
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell>
@@ -3356,7 +3362,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             maxWidth: '100%',
                             overflowX: 'auto'
                           }}>
-                            <Table size="small" sx={{ minWidth: 1200 }}>
+                            <Table size="small" sx={{ 
+                              minWidth: 800,
+                              '& .MuiTableCell-root': { 
+                                padding: '6px 4px',
+                                fontSize: '0.8rem'
+                              }
+                            }}>
                               <TableHead>
                                 <TableRow>
                                   <TableCell rowSpan={2}>
@@ -3422,7 +3434,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       direction={sortField === 'sharpe' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('sharpe')}
                                     >
-                                      Sharpe Ratio
+                                      Shrp Ratio
                                     </TableSortLabel>
                                   </TableCell>
                                   <TableCell rowSpan={2} align="center">
@@ -3656,7 +3668,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           maxWidth: '100%',
                           overflowX: 'auto'
                         }}>
-                          <Table size="small" sx={{ minWidth: 1200 }}>
+                          <Table size="small" sx={{ 
+                            minWidth: 800,
+                            '& .MuiTableCell-root': { 
+                              padding: '6px 4px',
+                              fontSize: '0.8rem'
+                            }
+                          }}>
                             <TableHead>
                               <TableRow>
                                 <TableCell>
@@ -3728,7 +3746,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     direction={sortField === 'sharpe' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('sharpe')}
                                   >
-                                    Sharpe Ratio
+                                    Shrp Ratio
                                   </TableSortLabel>
                                 </TableCell>
                                 <TableCell align="center">
