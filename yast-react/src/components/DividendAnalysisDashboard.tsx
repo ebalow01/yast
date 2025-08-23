@@ -3147,7 +3147,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'volatility' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('volatility')}
                                 >
-                                  14D Volatility
+                                  Vol <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>14d</span>
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell rowSpan={2}>
@@ -3165,7 +3165,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'mptAllocation' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('mptAllocation')}
                                 >
-                                  MPT Allocation
+                                  MPT
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell rowSpan={2} align="center">
@@ -3423,7 +3423,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       direction={sortField === 'volatility' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('volatility')}
                                     >
-                                      14D Volatility
+                                      Vol <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>14d</span>
                                     </TableSortLabel>
                                   </TableCell>
                                   <TableCell rowSpan={2}>
@@ -3727,7 +3727,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     direction={sortField === 'volatility' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('volatility')}
                                   >
-                                    14D Volatility
+                                    Vol <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>14d</span>
                                   </TableSortLabel>
                                 </TableCell>
                                 <TableCell>
