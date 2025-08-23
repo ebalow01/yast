@@ -1131,9 +1131,94 @@ def analyze_monthly_performance():
     else:
         print("No trades found - check data and strategy")
 
+def compare_profit_taking_strategies():
+    """Compare first-Monday strategy with different profit-taking thresholds"""
+    start_date = "2023-10-01"
+    end_date = "2025-08-23"
+    
+    # Get full period data
+    cache_file = "bitcoin_hourly_cache_2023_2025.pkl"
+    hourly_data = fetch_bitcoin_hourly_data_yahoo(start_date, end_date, cache_file)
+    
+    if not hourly_data:
+        print("Failed to get data for the period")
+        return
+    
+    print("="*80)
+    print("PROFIT-TAKING COMPARISON: First Monday Strategy")
+    print("Buy 19:00 -> Sell 08:00 (following Monday)")
+    print("="*80)
+    
+    # Test different profit-taking thresholds
+    thresholds = [None, 5.0, 10.0]  # None means no profit-taking
+    results_by_threshold = {}
+    
+    for threshold in thresholds:
+        threshold_name = "No cap" if threshold is None else f"{threshold}% cap"
+        print(f"\n[Testing {threshold_name}]...")
+        
+        # Run strategy with this threshold
+        if threshold is None:
+            # No profit-taking - set to impossible high value
+            strategy_results = test_specific_strategy(hourly_data, 19, 8, 999.0)
+        else:
+            strategy_results = test_specific_strategy(hourly_data, 19, 8, threshold)
+        
+        if strategy_results:
+            results_by_threshold[threshold_name] = strategy_results
+    
+    # Display comparison
+    print("\n" + "="*80)
+    print("COMPARISON RESULTS")
+    print("="*80)
+    print(f"\n{'Strategy':<15} {'Trades':<8} {'Avg Return':<12} {'Median':<10} {'Win Rate':<10} {'Volatility':<12} {'Profit Exits':<15} {'Annual Return'}")
+    print("-"*110)
+    
+    for threshold_name, results in results_by_threshold.items():
+        profit_exit_rate = results['profit_exit_rate'] if threshold_name != "No cap" else 0
+        print(f"{threshold_name:<15} {results['total_trades']:<8} {results['avg_return']:+7.2f}%    {results['median_return']:+7.2f}%   {results['win_rate']:6.1f}%    {results['volatility']:8.2f}%    {results['profit_exits']}/{results['total_trades']} ({profit_exit_rate:.0f}%)       {results['annual_return']:+7.1f}%")
+    
+    # Analyze trade-offs
+    print("\n" + "="*80)
+    print("TRADE-OFF ANALYSIS")
+    print("="*80)
+    
+    if "No cap" in results_by_threshold and "5% cap" in results_by_threshold:
+        no_cap = results_by_threshold["No cap"]
+        cap_5 = results_by_threshold["5% cap"]
+        
+        print("\n5% Profit-Taking vs No Cap:")
+        print(f"  Return difference: {cap_5['avg_return'] - no_cap['avg_return']:+.2f}% per trade")
+        print(f"  Median difference: {cap_5['median_return'] - no_cap['median_return']:+.2f}%")
+        print(f"  Volatility reduction: {no_cap['volatility'] - cap_5['volatility']:.2f}%")
+        print(f"  Win rate change: {cap_5['win_rate'] - no_cap['win_rate']:+.1f}%")
+        print(f"  Trades exited early: {cap_5['profit_exits']}/{cap_5['total_trades']} ({cap_5['profit_exit_rate']:.1f}%)")
+    
+    if "5% cap" in results_by_threshold and "10% cap" in results_by_threshold:
+        cap_5 = results_by_threshold["5% cap"]
+        cap_10 = results_by_threshold["10% cap"]
+        
+        print("\n10% Profit-Taking vs 5% Cap:")
+        print(f"  Return difference: {cap_10['avg_return'] - cap_5['avg_return']:+.2f}% per trade")
+        print(f"  Median difference: {cap_10['median_return'] - cap_5['median_return']:+.2f}%")
+        print(f"  Volatility change: {cap_10['volatility'] - cap_5['volatility']:+.2f}%")
+        print(f"  Win rate change: {cap_10['win_rate'] - cap_5['win_rate']:+.1f}%")
+        print(f"  Early exits: 5% cap = {cap_5['profit_exits']}, 10% cap = {cap_10['profit_exits']}")
+    
+    # Show best and worst trades for each
+    print("\n" + "="*80)
+    print("BEST AND WORST TRADES")
+    print("="*80)
+    
+    for threshold_name, results in results_by_threshold.items():
+        print(f"\n{threshold_name}:")
+        print(f"  Best trade: {results['best_return']:+.2f}%")
+        print(f"  Worst trade: {results['worst_return']:+.2f}%")
+        print(f"  Range: {results['best_return'] - results['worst_return']:.2f}%")
+
 def main():
-    # Show month-by-month performance of our best strategy
-    analyze_monthly_performance()
+    # Compare different profit-taking strategies
+    compare_profit_taking_strategies()
     
     return
 

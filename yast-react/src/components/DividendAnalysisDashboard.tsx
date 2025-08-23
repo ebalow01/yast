@@ -1942,9 +1942,9 @@ export default function DividendAnalysisDashboard() {
       const totalReturn = asset.calculatedTotalReturn || 0;
       const volatility = asset.volatility || 20;
       
-      // MPT score: Prioritize Sharpe ratio but consider total return
-      // Higher Sharpe = better risk-adjusted return
-      const riskAdjustedScore = (sharpe * 0.6) + (totalReturn / volatility * 0.4);
+      // MPT score: Use Sharpe ratio as primary metric (risk-adjusted returns)
+      // Pure MPT approach - Sharpe ratio is the definitive measure
+      const riskAdjustedScore = sharpe;
       return { ...asset, riskAdjustedScore };
     });
     
@@ -2035,9 +2035,9 @@ export default function DividendAnalysisDashboard() {
         volatility: volatility,
         sharpeRatio: sharpeRatio
       };
-    }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
+    }).sort((a, b) => b.sharpeRatio - a.sharpeRatio);
     
-    // Take top 5 by total return
+    // Take top 5 by Sharpe ratio (pure MPT approach)
     const top5 = tickersWithTotalReturn.slice(0, 5);
     const top5Tickers = top5.map(item => item.ticker);
     
@@ -2073,7 +2073,8 @@ export default function DividendAnalysisDashboard() {
     // Combine top 5 + bullish non-death spirals
     const finalOptimal = [...top5, ...bullishNonDeathSpirals];
     
-    console.log(`📈 Optimal portfolio expanded: Top 5 + ${bullishNonDeathSpirals.length} bullish non-death spirals = ${finalOptimal.length} total ETFs`);
+    console.log(`📈 Optimal portfolio (MPT-based): Top 5 by Sharpe + ${bullishNonDeathSpirals.length} bullish non-death spirals = ${finalOptimal.length} total ETFs`);
+    console.log('Top 5 by Sharpe ratio:', top5.map(item => `${item.ticker} (${item.sharpeRatio.toFixed(2)})`));
     console.log('Bullish additions:', bullishNonDeathSpirals.map(item => item.ticker));
     
     // Add Cash as final item with 4% forward yield (minimum 5%)
