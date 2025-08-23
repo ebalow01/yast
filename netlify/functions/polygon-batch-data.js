@@ -82,17 +82,31 @@ async function fetchTickerData(ticker, apiKey) {
     let divErosion = null;
     
     if (dividendData.results && dividendData.results.length > 0) {
-      // Filter dividends to only include those from the same frequency (weekly vs monthly)
-      // by checking date gaps - exclude dividends more than 10 days from the most recent
-      const mostRecentDate = new Date(dividendData.results[0].ex_dividend_date);
-      const tenDaysInMs = 10 * 24 * 60 * 60 * 1000;
+      // Filter dividends sequentially - each dividend must be within 10 days of the previous one
+      // Stop the chain if any gap is > 10 days to avoid mixing monthly/weekly frequencies
+      const consistentDividends = [];
       
-      const consistentDividends = dividendData.results.filter(d => {
-        if (d.cash_amount <= 0) return false;
-        const divDate = new Date(d.ex_dividend_date);
-        const daysDiff = Math.abs(mostRecentDate - divDate) / (24 * 60 * 60 * 1000);
-        return daysDiff <= 10; // Only include dividends within 10 days of most recent
-      });
+      for (let i = 0; i < dividendData.results.length; i++) {
+        const dividend = dividendData.results[i];
+        if (dividend.cash_amount <= 0) continue;
+        
+        if (i === 0) {
+          // Always include the most recent dividend
+          consistentDividends.push(dividend);
+        } else {
+          // Check if this dividend is within 10 days of the previous included dividend
+          const prevDate = new Date(consistentDividends[consistentDividends.length - 1].ex_dividend_date);
+          const currDate = new Date(dividend.ex_dividend_date);
+          const daysDiff = Math.abs(prevDate - currDate) / (24 * 60 * 60 * 1000);
+          
+          if (daysDiff <= 10) {
+            consistentDividends.push(dividend);
+          } else {
+            // Chain broken - stop including dividends
+            break;
+          }
+        }
+      }
       
       // Get the last 3 consistent dividends (most recent)
       lastDividends = consistentDividends
@@ -101,12 +115,15 @@ async function fetchTickerData(ticker, apiKey) {
         .filter(d => d > 0)
         .sort((a, b) => a - b);
       
-      // Get historical dividends from positions 10-12 of consistent dividends
-      historicalDividends = consistentDividends
-        .slice(10, 13)
-        .map(d => d.cash_amount)
-        .filter(d => d > 0)
-        .sort((a, b) => a - b);
+      // Get historical dividends from positions 10-12 only if we have at least 13 consistent dividends
+      // This ensures we don't mix monthly/weekly data in the historical comparison
+      if (consistentDividends.length >= 13) {
+        historicalDividends = consistentDividends
+          .slice(10, 13)
+          .map(d => d.cash_amount)
+          .filter(d => d > 0)
+          .sort((a, b) => a - b);
+      }
       
       // Calculate median for last 3 dividends
       if (lastDividends.length > 0) {
