@@ -2,6 +2,9 @@
 [build]
   command = "cd yast-react && npm ci && npx vite build"
   publish = "yast-react/dist"
+
+[dev]
+  port = 4000
   
 [build.environment]
   NODE_VERSION = "20"

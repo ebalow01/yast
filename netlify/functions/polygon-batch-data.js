@@ -82,15 +82,27 @@ async function fetchTickerData(ticker, apiKey) {
     let divErosion = null;
     
     if (dividendData.results && dividendData.results.length > 0) {
-      // Get the last 3 dividends (most recent)
-      lastDividends = dividendData.results
+      // Filter dividends to only include those from the same frequency (weekly vs monthly)
+      // by checking date gaps - exclude dividends more than 10 days from the most recent
+      const mostRecentDate = new Date(dividendData.results[0].ex_dividend_date);
+      const tenDaysInMs = 10 * 24 * 60 * 60 * 1000;
+      
+      const consistentDividends = dividendData.results.filter(d => {
+        if (d.cash_amount <= 0) return false;
+        const divDate = new Date(d.ex_dividend_date);
+        const daysDiff = Math.abs(mostRecentDate - divDate) / (24 * 60 * 60 * 1000);
+        return daysDiff <= 10; // Only include dividends within 10 days of most recent
+      });
+      
+      // Get the last 3 consistent dividends (most recent)
+      lastDividends = consistentDividends
         .slice(0, 3)
         .map(d => d.cash_amount)
         .filter(d => d > 0)
         .sort((a, b) => a - b);
       
-      // Get historical dividends from positions 10-12 (roughly 10-12 weeks ago for weekly dividends)
-      historicalDividends = dividendData.results
+      // Get historical dividends from positions 10-12 of consistent dividends
+      historicalDividends = consistentDividends
         .slice(10, 13)
         .map(d => d.cash_amount)
         .filter(d => d > 0)
