@@ -3185,7 +3185,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'nav' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('nav')}
                                 >
-                                  NAV %
+                                  NAV
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell>
@@ -3194,7 +3194,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   direction={sortField === 'divErosion' ? sortDirection : 'asc'}
                                   onClick={() => handleSort('divErosion')}
                                 >
-                                  Div Erosion %
+                                  Div
                                 </TableSortLabel>
                               </TableCell>
                             </TableRow>
@@ -3452,7 +3452,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       direction={sortField === 'nav' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('nav')}
                                     >
-                                      NAV %
+                                      NAV
                                     </TableSortLabel>
                                   </TableCell>
                                   <TableCell>
@@ -3461,7 +3461,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       direction={sortField === 'divErosion' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('divErosion')}
                                     >
-                                      Div Erosion %
+                                      Div
                                     </TableSortLabel>
                                   </TableCell>
                                 </TableRow>
