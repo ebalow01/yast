@@ -1515,7 +1515,7 @@ export default function DividendAnalysisDashboard() {
         const tickers = data.map(item => item.ticker);
         setPolygonLoading(true);
         try {
-          console.log('Fetching Polygon batch data for', tickers.length, 'tickers (async)');
+          // Fetching market data asynchronously
           const polygonResponse = await fetch('/.netlify/functions/polygon-batch-data', {
             method: 'POST',
             headers: {
@@ -1526,13 +1526,7 @@ export default function DividendAnalysisDashboard() {
           
           if (polygonResponse.ok) {
             const polygonResults = await polygonResponse.json();
-            console.log('Polygon data fetched:', Object.keys(polygonResults).length, 'tickers');
-            
-            // Log NVDW debug info if available
-            if (polygonResults.NVDW && polygonResults.NVDW.navDebug) {
-              console.log('NVDW NAV Debug Info:', polygonResults.NVDW.navDebug);
-            }
-            
+            console.log(`Market data loaded for ${Object.keys(polygonResults).length} tickers`);
             setPolygonData(polygonResults);
           } else {
             console.error('Failed to fetch Polygon data:', polygonResponse.statusText);
@@ -2304,7 +2298,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
       
       // Step 1: Check server cache first
       try {
-        console.log(`Checking server cache for ${ticker}`);
         const serverCacheResponse = await fetch(`/.netlify/functions/ai-cache?ticker=${ticker}`);
         
         if (!serverCacheResponse.ok) {
@@ -2313,10 +2306,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         }
         
         const serverCacheData = await serverCacheResponse.json();
-        console.log(`Server cache response for ${ticker}:`, serverCacheData);
         
         if (serverCacheData && serverCacheData.data) {
-          console.log(`Server cache hit for ${ticker}`);
           const { data, timestamp } = serverCacheData;
           const age = Date.now() - timestamp;
           const { fullAnalysis, shortOutlook, sentiment } = data;
@@ -2383,7 +2374,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           
           // Check if cache is still valid (less than 2 hours old)
           if (age < cacheExpiry) {
-            console.log(`Using localStorage cached AI analysis for ${ticker} (${Math.round(age / 60000)} minutes old)`);
             
             // Use cached data
             const { fullAnalysis, shortOutlook, sentiment } = data;
@@ -2418,7 +2408,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
             setAiAnalysisLoading(null);
             return true; // Cache hit
           } else {
-            console.log(`Cache expired for ${ticker} (${Math.round(age / 60000)} minutes old)`);
           }
         } catch (error) {
           console.error('Error parsing cached data:', error);

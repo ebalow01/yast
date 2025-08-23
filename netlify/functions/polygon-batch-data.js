@@ -59,18 +59,9 @@ async function fetchTickerData(ticker, apiKey) {
     const thirtyFiveDaysAgo = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const twentyEightDaysAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
-    // Debug logging for NVDW
-    if (ticker === 'NVDW') {
-      console.log(`NVDW: Fetching historical price from ${thirtyFiveDaysAgo} to ${twentyEightDaysAgo}`);
-    }
-    
     const monthAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${thirtyFiveDaysAgo}/${twentyEightDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
     const monthAgoData = await httpsGet(monthAgoUrl);
     await delay(100); // Rate limiting
-    
-    if (ticker === 'NVDW' && monthAgoData.results) {
-      console.log(`NVDW: Historical data received, ${monthAgoData.results.length} results`);
-    }
     
     // Fetch 14-day historical data for volatility calculation
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -136,10 +127,8 @@ async function fetchTickerData(ticker, apiKey) {
     
     // Get the month ago price
     let monthAgoPrice = null;
-    let monthAgoDate = null;
     if (monthAgoData.results && monthAgoData.results.length > 0) {
       monthAgoPrice = monthAgoData.results[0].c; // closing price from ~30 days ago
-      monthAgoDate = new Date(monthAgoData.results[0].t).toISOString().split('T')[0]; // timestamp of that price
     }
     
     // Calculate forward yield (annualized)
@@ -151,25 +140,9 @@ async function fetchTickerData(ticker, apiKey) {
     
     // Calculate NAV (annualized price performance)
     let navPerformance = null;
-    let navDebug = null;
     if (currentPrice && monthAgoPrice && monthAgoPrice > 0) {
       // (current price - month ago price) / month ago price * 12 (to annualize)
-      const monthlyChange = ((currentPrice - monthAgoPrice) / monthAgoPrice);
-      navPerformance = monthlyChange * 12 * 100; // As percentage
-      
-      // Debug info for NVDW specifically
-      if (ticker === 'NVDW') {
-        navDebug = {
-          currentPrice: currentPrice,
-          monthAgoPrice: monthAgoPrice,
-          monthAgoDate: monthAgoDate,
-          priceDiff: currentPrice - monthAgoPrice,
-          monthlyChangePercent: monthlyChange * 100,
-          annualizedPercent: navPerformance,
-          calculation: `((${currentPrice} - ${monthAgoPrice}) / ${monthAgoPrice}) * 12 * 100 = ${navPerformance}`
-        };
-        console.log(`NVDW NAV Debug:`, navDebug);
-      }
+      navPerformance = ((currentPrice - monthAgoPrice) / monthAgoPrice) * 12 * 100; // As percentage
     }
     
     // Calculate 14-day volatility (standard deviation of daily returns)
@@ -205,7 +178,7 @@ async function fetchTickerData(ticker, apiKey) {
       sharpeRatio = (totalReturn - riskFreeRate) / volatility14Day;
     }
     
-    const result = {
+    return {
       ticker,
       price: currentPrice,
       medianDividend: medianDividend,
@@ -219,13 +192,6 @@ async function fetchTickerData(ticker, apiKey) {
       historicalDividends: historicalDividends,
       dividendCount: lastDividends.length
     };
-    
-    // Add debug info for NVDW
-    if (ticker === 'NVDW' && navDebug) {
-      result.navDebug = navDebug;
-    }
-    
-    return result;
   } catch (error) {
     console.error(`Error fetching data for ${ticker}:`, error);
     return {
