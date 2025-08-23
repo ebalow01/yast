@@ -650,9 +650,9 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     }),
     {
       ticker: 'CASH',
-      return: 0.0, // Will be set from live data
+      return: 0.05, // ~5% money market rate
       risk: 0.001, // Minimal risk for cash
-      sharpe: 0,
+      sharpe: 50, // Very high Sharpe ratio for cash
       dividendCapture: 0.0,
       exDivDay: undefined,
       isRule1: false,
@@ -3256,7 +3256,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   }
                                 </TableCell>
                                 <TableCell>
-                                  {item.ticker === 'CASH' ? '4.00%' : `${polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%`}
+                                  {item.ticker === 'CASH' ? '5.00%' : `${polygonData[item.ticker]?.forwardYield?.toFixed(2) || '-'}%`}
                                 </TableCell>
                                 <TableCell>
                                   {item.ticker === 'CASH' ? '0.0%' : `${polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%`}
@@ -3272,7 +3272,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   })()}
                                 </TableCell>
                                 <TableCell>
-                                  {item.ticker === 'CASH' ? '4.0%' : (() => {
+                                  {item.ticker === 'CASH' ? '5.0%' : (() => {
                                     const fwdYield = polygonData[item.ticker]?.forwardYield;
                                     const navPerf = polygonData[item.ticker]?.navPerformance;
                                     const divErosion = polygonData[item.ticker]?.divErosion || 0;
