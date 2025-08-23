@@ -1041,7 +1041,7 @@ def analyze_monthly_performance():
                 'exit_reason': exit_reason
             }
             
-            all_trades.append(trade_detail)
+            all_trade_details.append(trade_detail)
             
             # Group by month
             buy_dt = pd.to_datetime(buy_timestamp)
