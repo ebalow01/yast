@@ -80,11 +80,11 @@ async function fetchTickerData(ticker, apiKey) {
     let lastDividends = [];
     let historicalDividends = [];
     let divErosion = null;
+    let consistentDividends = [];
+    let frequencyChangeIndex = -1;
     
     if (dividendData.results && dividendData.results.length > 0) {
       // Filter dividends sequentially and find frequency change point
-      const consistentDividends = [];
-      let frequencyChangeIndex = -1;
       
       // Debug logging for NVDW
       if (ticker === 'NVDW') {
