@@ -575,7 +575,278 @@ def find_optimal_strategies(combination_results):
         'lowest_risk': lowest_risk
     }
 
+def test_single_strategy_by_year(buy_hour=19, sell_hour=8, profit_taking_pct=5.0):
+    """
+    Test our best strategy year by year from 2019 to compare pre/post ETF
+    """
+    years = [2019, 2020, 2021, 2022, 2023, 2024]
+    results_by_year = {}
+    
+    for year in years:
+        print(f"\n" + "="*60)
+        print(f"TESTING {year}: Buy {buy_hour:02d}:00 -> Sell {sell_hour:02d}:00 (5% profit-taking)")
+        print("="*60)
+        
+        start_date = f"{year}-01-01"
+        if year == 2024:
+            # Start from ETF launch
+            start_date = "2024-01-11"
+        
+        end_date = f"{year}-12-31"
+        if year == datetime.now().year:
+            end_date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Fetch year data
+        cache_file = f"bitcoin_hourly_cache_{year}.pkl"
+        hourly_data = fetch_bitcoin_hourly_data_yahoo(start_date, end_date, cache_file)
+        
+        if not hourly_data:
+            print(f"Failed to get data for {year}")
+            continue
+        
+        # Test our specific strategy
+        strategy_results = test_specific_strategy(hourly_data, buy_hour, sell_hour, profit_taking_pct)
+        
+        # Calculate buy-and-hold for comparison
+        buy_and_hold = calculate_buy_and_hold(hourly_data, start_date, end_date)
+        
+        results_by_year[year] = {
+            'strategy': strategy_results,
+            'buy_and_hold': buy_and_hold,
+            'data_points': len(hourly_data)
+        }
+        
+        # Print results
+        if strategy_results:
+            print(f"\nStrategy Results:")
+            print(f"  Trades: {strategy_results['total_trades']}")
+            print(f"  Average Return: {strategy_results['avg_return']:+.2f}% per trade")
+            print(f"  Median Return: {strategy_results['median_return']:+.2f}% per trade")
+            print(f"  Win Rate: {strategy_results['win_rate']:.1f}%")
+            print(f"  Profit Exits: {strategy_results['profit_exits']}/{strategy_results['total_trades']} ({strategy_results['profit_exit_rate']:.1f}%)")
+            print(f"  Annual Return: {strategy_results['annual_return']:+.1f}%")
+            print(f"  Best Trade: {strategy_results['best_return']:+.2f}%")
+            print(f"  Worst Trade: {strategy_results['worst_return']:+.2f}%")
+        
+        if buy_and_hold:
+            print(f"\nBuy & Hold Results:")
+            print(f"  Annual Return: {buy_and_hold['annual_return']:+.1f}%")
+            print(f"  Total Return: {buy_and_hold['total_return']:+.1f}%")
+        
+        if strategy_results and buy_and_hold:
+            outperformance = strategy_results['annual_return'] - buy_and_hold['annual_return']
+            print(f"\nStrategy vs Buy & Hold: {outperformance:+.1f}% outperformance")
+    
+    return results_by_year
+
+def test_specific_strategy(hourly_data, buy_hour, sell_hour, profit_taking_pct):
+    """Test a specific hour combination with profit-taking"""
+    if not hourly_data:
+        return None
+    
+    # Convert to DataFrame for Monday detection
+    df = pd.DataFrame(hourly_data)
+    df['date'] = pd.to_datetime(df['timestamp']).dt.date
+    df['day_of_week'] = pd.to_datetime(df['timestamp']).dt.dayofweek
+    df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
+    
+    # Get all Mondays at buy hour
+    mondays_df = df[df['day_of_week'] == 0].copy()
+    buy_opportunities = mondays_df[mondays_df['hour'] == buy_hour].copy()
+    
+    returns = []
+    trade_details = []
+    
+    for _, buy_row in buy_opportunities.iterrows():
+        buy_date = buy_row['date']
+        buy_timestamp = buy_row['timestamp']
+        buy_price = float(buy_row['close'])
+        
+        # Find next Monday at sell hour
+        next_monday_date = buy_date + timedelta(days=7)
+        sell_opportunity = mondays_df[
+            (pd.to_datetime(mondays_df['timestamp']).dt.date == next_monday_date) & 
+            (mondays_df['hour'] == sell_hour)
+        ]
+        
+        if not sell_opportunity.empty:
+            sell_row = sell_opportunity.iloc[0]
+            sell_price = float(sell_row['close'])
+            sell_timestamp = sell_row['timestamp']
+            
+            # Check for profit-taking exit
+            profit_exit_price = None
+            profit_exit_timestamp = None
+            exit_reason = "regular exit"
+            
+            # Check week data for profit opportunities
+            week_start = pd.to_datetime(buy_timestamp)
+            week_end = week_start + pd.Timedelta(days=7)
+            
+            for hour_record in hourly_data:
+                hour_ts = pd.to_datetime(hour_record['timestamp'])
+                if week_start < hour_ts < week_end:
+                    hour_close = float(hour_record['close'])
+                    hour_return = (hour_close - buy_price) / buy_price * 100
+                    
+                    if hour_return >= profit_taking_pct:
+                        profit_exit_price = hour_close
+                        profit_exit_timestamp = hour_record['timestamp']
+                        exit_reason = f"{profit_taking_pct}% profit exit"
+                        break
+            
+            # Use profit exit if found
+            if profit_exit_price is not None:
+                final_sell_price = profit_exit_price
+                final_sell_timestamp = profit_exit_timestamp
+            else:
+                final_sell_price = sell_price
+                final_sell_timestamp = sell_timestamp
+            
+            # Calculate return
+            weekly_return = (final_sell_price - buy_price) / buy_price * 100
+            returns.append(weekly_return)
+            
+            trade_details.append({
+                'buy_date': buy_timestamp.strftime('%Y-%m-%d %H:%M'),
+                'sell_date': final_sell_timestamp.strftime('%Y-%m-%d %H:%M'),
+                'buy_price': buy_price,
+                'sell_price': final_sell_price,
+                'return_pct': weekly_return,
+                'exit_reason': exit_reason
+            })
+    
+    if not returns:
+        return None
+    
+    returns_array = np.array(returns)
+    profit_exits = sum(1 for trade in trade_details if 'profit exit' in trade.get('exit_reason', ''))
+    
+    return {
+        'total_trades': len(returns),
+        'avg_return': np.mean(returns_array),
+        'median_return': np.median(returns_array),
+        'win_rate': (returns_array > 0).mean() * 100,
+        'volatility': np.std(returns_array),
+        'best_return': np.max(returns_array),
+        'worst_return': np.min(returns_array),
+        'profit_exits': profit_exits,
+        'profit_exit_rate': (profit_exits / len(returns)) * 100,
+        'annual_return': np.mean(returns_array) * 12,  # 12 trades per year
+        'returns': returns,
+        'trade_details': trade_details[:5]
+    }
+
+def calculate_buy_and_hold(hourly_data, start_date, end_date):
+    """Calculate buy and hold return for the period"""
+    if not hourly_data:
+        return None
+    
+    start_price = float(hourly_data[0]['close'])
+    end_price = float(hourly_data[-1]['close'])
+    
+    total_return = (end_price - start_price) / start_price * 100
+    
+    # Convert to annualized
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    years = (end_dt - start_dt).days / 365.25
+    
+    if years > 0:
+        annual_return = (1 + total_return/100) ** (1/years) - 1
+        annual_return *= 100
+    else:
+        annual_return = total_return
+    
+    return {
+        'total_return': total_return,
+        'annual_return': annual_return,
+        'start_price': start_price,
+        'end_price': end_price
+    }
+
+def test_2024_all_hours():
+    """Test multiple hour combinations in 2024 to see if any work"""
+    start_date = "2024-01-11"
+    end_date = "2024-12-31"
+    
+    # Get 2024 data
+    cache_file = "bitcoin_hourly_cache_2024.pkl"
+    hourly_data = fetch_bitcoin_hourly_data_yahoo(start_date, end_date, cache_file)
+    
+    if not hourly_data:
+        print("Failed to get 2024 data")
+        return
+    
+    # Calculate buy and hold baseline
+    buy_and_hold = calculate_buy_and_hold(hourly_data, start_date, end_date)
+    print(f"2024 Buy & Hold Baseline: {buy_and_hold['annual_return']:+.1f}%")
+    
+    # Test different hour combinations
+    test_combinations = [
+        (19, 8),   # Our "best" from optimization
+        (7, 20),   # Your preferred from earlier 
+        (13, 20),  # Previous "maximum returns"
+        (9, 17),   # Market hours
+        (0, 23),   # Full day
+        (12, 12),  # Noon to noon
+        (6, 18),   # Morning to evening
+    ]
+    
+    results = []
+    
+    print(f"\n" + "="*60)
+    print("TESTING DIFFERENT HOURS IN 2024")
+    print("="*60)
+    
+    for buy_hour, sell_hour in test_combinations:
+        strategy_results = test_specific_strategy(hourly_data, buy_hour, sell_hour, 5.0)
+        
+        if strategy_results:
+            annual_return = strategy_results['annual_return']
+            vs_bh = annual_return - buy_and_hold['annual_return']
+            
+            results.append({
+                'hours': f"{buy_hour:02d}:00 -> {sell_hour:02d}:00",
+                'annual_return': annual_return,
+                'vs_buy_hold': vs_bh,
+                'trades': strategy_results['total_trades'],
+                'win_rate': strategy_results['win_rate'],
+                'median': strategy_results['median_return'],
+                'profit_exits': strategy_results['profit_exit_rate']
+            })
+            
+            print(f"{buy_hour:02d}:00 -> {sell_hour:02d}:00: {annual_return:+6.1f}% (vs B&H: {vs_bh:+6.1f}%) | {strategy_results['total_trades']} trades | {strategy_results['win_rate']:.1f}% wins")
+    
+    # Sort by performance vs buy and hold
+    results.sort(key=lambda x: x['vs_buy_hold'], reverse=True)
+    
+    print(f"\n" + "="*60)
+    print("RANKED BY PERFORMANCE VS BUY & HOLD")
+    print("="*60)
+    
+    for i, result in enumerate(results, 1):
+        print(f"{i}. {result['hours']}: {result['annual_return']:+6.1f}% (vs B&H: {result['vs_buy_hold']:+6.1f}%) | Median: {result['median']:+.2f}% | Profit Exits: {result['profit_exits']:.1f}%")
+    
+    # Check if ANY strategy beats buy and hold
+    best_strategy = results[0] if results else None
+    
+    if best_strategy and best_strategy['vs_buy_hold'] > 0:
+        print(f"\n✅ BEST STRATEGY FOUND: {best_strategy['hours']} outperforms by {best_strategy['vs_buy_hold']:+.1f}%")
+    else:
+        print(f"\n❌ NO STRATEGY BEATS BUY & HOLD in 2024")
+        print(f"Best strategy still underperforms by {best_strategy['vs_buy_hold']:+.1f}%")
+    
+    return results
+
 def main():
+    # Test different hours in 2024 specifically
+    print("Testing if different hours work better in 2024...")
+    results_2024 = test_2024_all_hours()
+    
+    return
+
+    # Original code below (keep for reference)
     # Configuration
     start_date = "2024-01-11"
     end_date = datetime.now().strftime("%Y-%m-%d")

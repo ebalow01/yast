@@ -614,6 +614,16 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     console.log(`🚫 Excluded ${navDeathSpirals.length} NAV death spirals (< -50%):`, navDeathSpirals);
   }
   
+  // Debug NAV filtering for troubleshooting
+  console.log(`NAV filtering debug: ${preNavCount} ETFs before NAV filter, ${allETFs.length} after`);
+  allETFs.forEach(etf => {
+    const polygonNavData = polygonData?.[etf.ticker];
+    const navPerformance = polygonNavData?.navPerformance;
+    if (etf.ticker === 'PLTW' || etf.ticker === 'HOOW') {
+      console.log(`${etf.ticker}: NAV=${navPerformance}, excluded=${navPerformance != null && navPerformance < -50}`);
+    }
+  });
+  
   // If no ETFs remain after filtering, return empty allocation
   if (allETFs.length === 0) {
     console.warn('⚠️ No ETFs available for allocation after filtering');
@@ -1978,8 +1988,24 @@ export default function DividendAnalysisDashboard() {
       return true; // Include tickers without AI analysis
     });
     
+    // Filter out NAV death spirals (NAV performance worse than -50%)
+    const navDeathSpirals: string[] = [];
+    const nonDeathSpiralTickers = nonBearishTickers.filter(item => {
+      const polygonNavData = polygonData?.[item.ticker];
+      const navPerformance = polygonNavData?.navPerformance;
+      if (navPerformance != null && navPerformance < -50) {
+        navDeathSpirals.push(item.ticker);
+        return false; // Exclude NAV death spirals
+      }
+      return true; // Include ETFs with good or unknown NAV performance
+    });
+    
+    if (navDeathSpirals.length > 0) {
+      console.log(`🚫 Excluded ${navDeathSpirals.length} NAV death spirals (< -50%):`, navDeathSpirals);
+    }
+    
     // Calculate total return for each ticker and sort by it (back to original approach)
-    const tickersWithTotalReturn = nonBearishTickers.map(item => {
+    const tickersWithTotalReturn = nonDeathSpiralTickers.map(item => {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
       const divErosion = polygonData[item.ticker]?.divErosion || 0;
