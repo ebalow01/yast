@@ -268,20 +268,52 @@ def analyze_24x24_hourly_patterns(hourly_data, trading_hours_only=False):
                     sell_price = sell_row['close']
                     sell_timestamp = sell_row['timestamp']
                     
-                    # For now, skip 5% profit-taking to get basic results working
-                    # Calculate standard Monday-to-Monday return
-                    weekly_return = (sell_price - buy_price) / buy_price * 100
+                    # Implement 5% profit-taking exit with proper data handling
+                    profit_exit_price = None
+                    profit_exit_timestamp = None
+                    exit_reason = "regular Monday exit"
+                    
+                    # Check week data for 5% profit opportunities
+                    week_start = pd.to_datetime(buy_timestamp)
+                    week_end = week_start + pd.Timedelta(days=7)
+                    
+                    # Filter hourly data for the week between buy and sell
+                    weekly_hours = []
+                    for hour_record in hourly_data:
+                        hour_ts = pd.to_datetime(hour_record['timestamp'])
+                        if week_start < hour_ts < week_end:
+                            # Calculate return for this hour - ensure scalar values
+                            hour_close = float(hour_record['close'])
+                            buy_price_scalar = float(buy_price)
+                            hour_return = (hour_close - buy_price_scalar) / buy_price_scalar * 100
+                            
+                            if hour_return >= 5.0:
+                                profit_exit_price = hour_record['close']
+                                profit_exit_timestamp = hour_record['timestamp']
+                                exit_reason = "5% profit exit"
+                                break
+                    
+                    # Use profit exit if found, otherwise regular Monday exit
+                    if profit_exit_price is not None:
+                        final_sell_price = profit_exit_price
+                        final_sell_timestamp = profit_exit_timestamp
+                    else:
+                        final_sell_price = sell_price
+                        final_sell_timestamp = sell_timestamp
+                    
+                    # Calculate final return
+                    weekly_return = (final_sell_price - buy_price) / buy_price * 100
                     returns.append(weekly_return)
                     
                     trade_details.append({
                         'buy_date': buy_timestamp.strftime('%Y-%m-%d %H:%M'),
-                        'sell_date': sell_timestamp.strftime('%Y-%m-%d %H:%M'),
+                        'sell_date': final_sell_timestamp.strftime('%Y-%m-%d %H:%M'),
                         'buy_price': buy_price,
-                        'sell_price': sell_price,
+                        'sell_price': final_sell_price,
                         'return_pct': weekly_return,
                         'buy_hour': buy_hour,
                         'sell_hour': sell_hour,
-                        'exit_reason': "regular Monday exit"
+                        'exit_reason': exit_reason
                     })
             
             # Store results if we have trades

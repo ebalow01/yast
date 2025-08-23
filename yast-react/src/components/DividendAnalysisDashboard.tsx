@@ -650,9 +650,9 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     }),
     {
       ticker: 'CASH',
-      return: 0.045, // 4.5% annual yield
-      risk: 0.0, // 0% risk
-      sharpe: Infinity,
+      return: 0.0, // Will be set from live data
+      risk: 0.001, // Minimal risk for cash
+      sharpe: 0,
       dividendCapture: 0.0,
       exDivDay: undefined,
       isRule1: false,
@@ -660,9 +660,9 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     },
     {
       ticker: 'SPY',
-      return: 0.1574, // 15.74% from actual data
-      risk: 0.205, // 20.5% from actual data
-      sharpe: 0.1574 / 0.205,
+      return: 0.0, // Will be set from live data
+      risk: 0.1, // Default moderate risk
+      sharpe: 0,
       dividendCapture: 0.0,
       exDivDay: undefined,
       isRule1: false,
@@ -1286,20 +1286,8 @@ const generateRealisticPrice = (ticker: string, forwardYield: number, medianDivi
   const annualDividend = (medianDividend || 0.2) * 52; // Weekly dividends * 52
   const basePrice = annualDividend / yieldDecimal;
   
-  // Ticker-specific price adjustments for realism
-  const priceMultipliers: { [key: string]: number } = {
-    'PLTW': 0.8,  'COIW': 0.9,  'QDTE': 1.1,  'YMAX': 1.0,  'YETH': 0.7,
-    'LFGY': 1.2,  'YMAG': 1.1,  'ULTY': 1.3,  'XDTE': 1.0,  'NVDW': 0.9,
-    'HOOW': 0.6,  'COII': 1.4,  'QQQY': 1.2,  'YBTC': 0.8,  'CHPY': 1.1,
-    'IWMY': 1.0,  'RDTE': 1.1,  'NVYY': 0.9,  'TSLW': 0.7,  'GPTY': 1.0,
-    'AAPW': 1.3,  'NVII': 1.5,  'YSPY': 1.4,  'XBTY': 0.8,  'TSYY': 0.9,
-    'WDTE': 1.2,  'BLOX': 1.6,  'RDTY': 1.1,  'MAGY': 1.8,  'SDTY': 2.1,
-    'QDTY': 1.9,  'SPY': 8.5,   'TQQY': 2.2,  'MSII': 1.7,  'MST': 1.4,
-    'GLDY': 2.0,  'BCCC': 2.3,  'USOY': 1.5,  'AMZW': 3.2,  'TSII': 1.8,
-    'MMKT': 12.7, 'WEEK': 12.8, 'METW': 3.5,  'BRKW': 4.1,  'NFLW': 2.9
-  };
-  
-  const multiplier = priceMultipliers[ticker] || 1.0;
+  // Use only live data - no hardcoded price multipliers
+  const multiplier = 1.0;
   const adjustedPrice = basePrice * multiplier;
   
   // Add some realistic variation
@@ -1633,19 +1621,19 @@ export default function DividendAnalysisDashboard() {
         {
           ticker: 'YMAX',
           shares: 100,
-          averagePrice: 25.50,
+          averagePrice: 0, // Will use live price data
           dateAdded: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 1 week ago
         },
         {
           ticker: 'QDTE',
           shares: 50,
-          averagePrice: 18.75,
+          averagePrice: 0, // Will use live price data
           dateAdded: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() // 2 weeks ago
         },
         {
           ticker: 'ULTY',
           shares: 75,
-          averagePrice: 12.30,
+          averagePrice: 0, // Will use live price data
           dateAdded: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString() // 3 weeks ago
         }
       ];
