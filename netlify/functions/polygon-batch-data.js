@@ -86,6 +86,14 @@ async function fetchTickerData(ticker, apiKey) {
       const consistentDividends = [];
       let frequencyChangeIndex = -1;
       
+      // Debug logging for NVDW
+      if (ticker === 'NVDW') {
+        console.log(`NVDW Debug: Found ${dividendData.results.length} dividends`);
+        dividendData.results.slice(0, 15).forEach((div, idx) => {
+          console.log(`NVDW Div ${idx}: ${div.ex_dividend_date} - $${div.cash_amount}`);
+        });
+      }
+      
       for (let i = 0; i < dividendData.results.length; i++) {
         const dividend = dividendData.results[i];
         if (dividend.cash_amount <= 0) continue;
@@ -99,11 +107,18 @@ async function fetchTickerData(ticker, apiKey) {
           const currDate = new Date(dividend.ex_dividend_date);
           const daysDiff = Math.abs(prevDate - currDate) / (24 * 60 * 60 * 1000);
           
+          if (ticker === 'NVDW') {
+            console.log(`NVDW Gap check ${i}: ${daysDiff.toFixed(1)} days between ${prevDate.toISOString().split('T')[0]} and ${currDate.toISOString().split('T')[0]}`);
+          }
+          
           if (daysDiff <= 10) {
             consistentDividends.push(dividend);
           } else {
             // Found frequency change - record position and continue with all remaining dividends
             frequencyChangeIndex = consistentDividends.length;
+            if (ticker === 'NVDW') {
+              console.log(`NVDW: Frequency change detected at position ${frequencyChangeIndex}`);
+            }
             // Add all remaining dividends for historical analysis
             for (let j = i; j < dividendData.results.length; j++) {
               if (dividendData.results[j].cash_amount > 0) {
@@ -131,6 +146,9 @@ async function fetchTickerData(ticker, apiKey) {
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
+        if (ticker === 'NVDW') {
+          console.log(`NVDW: Using pre-change dividends ${endIdx}-${frequencyChangeIndex-1}: [${historicalDividends.join(', ')}]`);
+        }
       } else if (consistentDividends.length >= 13) {
         // No frequency change detected, use standard positions 10-12
         historicalDividends = consistentDividends
@@ -138,6 +156,9 @@ async function fetchTickerData(ticker, apiKey) {
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
+        if (ticker === 'NVDW') {
+          console.log(`NVDW: Using standard positions 10-12: [${historicalDividends.join(', ')}]`);
+        }
       } else if (consistentDividends.length < 12) {
         // Less than 12 dividends available, use last 3 for historical comparison
         historicalDividends = consistentDividends
@@ -145,6 +166,13 @@ async function fetchTickerData(ticker, apiKey) {
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
+        if (ticker === 'NVDW') {
+          console.log(`NVDW: Using fallback last 3: [${historicalDividends.join(', ')}]`);
+        }
+      }
+      
+      if (ticker === 'NVDW') {
+        console.log(`NVDW: Total consistent dividends: ${consistentDividends.length}, Recent: [${lastDividends.join(', ')}], Historical: [${historicalDividends.join(', ')}]`);
       }
       
       // Calculate median for last 3 dividends
