@@ -2035,9 +2035,9 @@ export default function DividendAnalysisDashboard() {
         volatility: volatility,
         sharpeRatio: sharpeRatio
       };
-    }).sort((a, b) => b.sharpeRatio - a.sharpeRatio);
+    }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
     
-    // Take top 5 by Sharpe ratio (regardless of AI sentiment, but not bearish or death spirals)
+    // Take top 5 by total return (regardless of AI sentiment, but not bearish or death spirals)
     const top5 = tickersWithTotalReturn.slice(0, 5);
     const top5Tickers = top5.map(item => item.ticker);
     
@@ -2058,8 +2058,8 @@ export default function DividendAnalysisDashboard() {
     // Combine top 5 + additional bullish tickers
     const finalOptimal = [...top5, ...additionalBullishTickers];
     
-    console.log(`📈 Optimal portfolio (MPT-based): Top 5 by Sharpe (any sentiment) + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
-    console.log('Top 5 by Sharpe ratio:', top5.map(item => `${item.ticker} (${item.sharpeRatio.toFixed(2)})`));
+    console.log(`📈 Optimal portfolio: Top 5 by total return (any sentiment) + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
+    console.log('Top 5 by total return:', top5.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
     console.log('Additional bullish tickers:', additionalBullishTickers.map(item => item.ticker));
     
     // Add Cash as final item with 4% forward yield (minimum 5%)
