@@ -1561,6 +1561,20 @@ export default function DividendAnalysisDashboard() {
               console.log('YETH not found in response');
             }
             
+            // Log HOOW data if available
+            if (polygonResults.HOOW) {
+              console.log('HOOW Full Data:', polygonResults.HOOW);
+            } else {
+              console.log('HOOW not found in response');
+            }
+            
+            // Log PLTW data if available
+            if (polygonResults.PLTW) {
+              console.log('PLTW Full Data:', polygonResults.PLTW);
+            } else {
+              console.log('PLTW not found in response');
+            }
+            
             setPolygonData(polygonResults);
           } else {
             console.error('Failed to fetch Polygon data:', polygonResponse.statusText);
