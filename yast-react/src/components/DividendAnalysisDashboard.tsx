@@ -3130,7 +3130,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </TableSortLabel>
                               </TableCell>
                               <TableCell align="center" colSpan={2} sx={{ borderBottom: '1px solid #444', fontSize: '0.9rem', fontWeight: 600 }}>
-                                Variance (Annualized)
+                                Variance <span style={{ fontSize: '0.65rem', fontWeight: 400, opacity: 0.7 }}>(annualized)</span>
                               </TableCell>
                               <TableCell rowSpan={2}>
                                 <TableSortLabel
