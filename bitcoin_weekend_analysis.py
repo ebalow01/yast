@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Bitcoin Weekend vs Weekday Performance Analysis
-Analyzes Bitcoin price patterns from Bitcoin ETF launch date (Jan 11, 2024) to present
+Bitcoin Weekend Gap vs Market Week Performance Analysis
+Compares Bitcoin performance during:
+- Weekend Gaps: Friday 4PM ET close -> Monday 9:30AM ET open (market closed)
+- Market Weeks: Monday 9:30AM ET open -> Friday 4PM ET close (market open)
+
+Analyzes data from Bitcoin ETF launch date (Jan 11, 2024) to present
 """
 
 import requests
@@ -45,55 +49,81 @@ def fetch_bitcoin_data(api_key, start_date, end_date):
 
 def analyze_weekend_weekday_patterns(df):
     """
-    Analyze Bitcoin performance patterns between weekends and weekdays
+    Analyze Bitcoin performance: Weekend Gaps vs Market Week Performance
+    Weekend Gap: Friday 4PM close -> Monday 9:30AM open
+    Market Week: Monday 9:30AM open -> Friday 4PM close
     """
+    # Make a copy to avoid SettingWithCopyWarning
+    df = df.copy()
+    
     # Add day of week (0=Monday, 6=Sunday)
-    df['day_of_week'] = df['date'].dt.dayofweek
-    df['is_weekend'] = df['day_of_week'].isin([5, 6])  # Saturday, Sunday
+    df.loc[:, 'day_of_week'] = df['date'].dt.dayofweek
     
-    # Calculate daily returns
-    df['daily_return'] = (df['close'] - df['open']) / df['open'] * 100
-    df['overnight_return'] = df['open'].pct_change() * 100  # Gap from prev close to open
+    # WEEKEND GAPS: Friday Close -> Monday Open (market closed period)
+    friday_data = df[df['day_of_week'] == 4].copy()  # Friday
+    monday_data = df[df['day_of_week'] == 0].copy()  # Monday
     
-    # Weekend periods (Friday close to Monday open)
-    friday_closes = df[df['day_of_week'] == 4]['close'].values
-    monday_opens = df[df['day_of_week'] == 0]['open'].values
+    weekend_returns = []
+    weekend_periods = []
     
-    # Align arrays (Monday opens should follow Friday closes)
-    min_len = min(len(friday_closes), len(monday_opens))
-    if len(monday_opens) > 0 and len(friday_closes) > 0:
-        # Check if we need to offset (first Monday might not have preceding Friday)
-        friday_dates = df[df['day_of_week'] == 4]['date'].values[:min_len]
-        monday_dates = df[df['day_of_week'] == 0]['date'].values[:min_len]
+    # Match Fridays to following Mondays
+    for _, friday_row in friday_data.iterrows():
+        friday_date = friday_row['date']
+        friday_close = friday_row['close']
         
-        weekend_returns = []
-        weekend_periods = []
-        
-        for i in range(min_len):
-            if i < len(friday_closes) and i < len(monday_opens):
-                friday_close = friday_closes[i]
-                monday_open = monday_opens[i]
-                weekend_return = (monday_open - friday_close) / friday_close * 100
-                weekend_returns.append(weekend_return)
-                weekend_periods.append((friday_dates[i], monday_dates[i]))
+        # Find the next Monday after this Friday
+        next_monday = monday_data[monday_data['date'] > friday_date]
+        if not next_monday.empty:
+            next_monday_row = next_monday.iloc[0]
+            monday_open = next_monday_row['open']
+            monday_date = next_monday_row['date']
+            
+            # Calculate weekend gap return (Friday close to Monday open)
+            weekend_return = (monday_open - friday_close) / friday_close * 100
+            weekend_returns.append(weekend_return)
+            weekend_periods.append((friday_date, monday_date))
     
-    # Calculate statistics
+    # MARKET WEEK PERFORMANCE: Monday Open -> Friday Close (market open period)
+    market_week_returns = []
+    market_week_periods = []
+    
+    # Match Mondays to following Fridays
+    for _, monday_row in monday_data.iterrows():
+        monday_date = monday_row['date']
+        monday_open = monday_row['open']
+        
+        # Find the next Friday after this Monday
+        next_friday = friday_data[friday_data['date'] > monday_date]
+        if not next_friday.empty:
+            next_friday_row = next_friday.iloc[0]
+            friday_close = next_friday_row['close']
+            friday_date = next_friday_row['date']
+            
+            # Calculate market week return (Monday open to Friday close)
+            market_week_return = (friday_close - monday_open) / monday_open * 100
+            market_week_returns.append(market_week_return)
+            market_week_periods.append((monday_date, friday_date))
+    
+    # Calculate weekend gap statistics
     weekend_stats = {
         'weekend_returns': weekend_returns,
         'avg_weekend_return': np.mean(weekend_returns) if weekend_returns else 0,
         'weekend_win_rate': (np.array(weekend_returns) > 0).mean() * 100 if weekend_returns else 0,
-        'weekend_count': len(weekend_returns)
+        'weekend_count': len(weekend_returns),
+        'weekend_volatility': np.std(weekend_returns) if weekend_returns else 0
     }
     
-    # Weekday returns (Monday-Friday intraday)
-    weekday_data = df[~df['is_weekend']]
-    weekday_stats = {
-        'avg_weekday_return': weekday_data['daily_return'].mean(),
-        'weekday_win_rate': (weekday_data['daily_return'] > 0).mean() * 100,
-        'weekday_count': len(weekday_data)
+    # Calculate market week statistics
+    market_week_stats = {
+        'market_week_returns': market_week_returns,
+        'avg_market_week_return': np.mean(market_week_returns) if market_week_returns else 0,
+        'market_week_win_rate': (np.array(market_week_returns) > 0).mean() * 100 if market_week_returns else 0,
+        'market_week_count': len(market_week_returns),
+        'market_week_volatility': np.std(market_week_returns) if market_week_returns else 0
     }
     
-    # Day-specific analysis
+    # Day-specific intraday analysis (for reference)
+    df.loc[:, 'daily_return'] = (df['close'] - df['open']) / df['open'] * 100
     day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     daily_stats = {}
     
@@ -103,11 +133,10 @@ def analyze_weekend_weekday_patterns(df):
             daily_stats[day_names[day]] = {
                 'avg_return': day_data['daily_return'].mean(),
                 'win_rate': (day_data['daily_return'] > 0).mean() * 100,
-                'count': len(day_data),
-                'avg_overnight_gap': day_data['overnight_return'].mean()
+                'count': len(day_data)
             }
     
-    return weekend_stats, weekday_stats, daily_stats
+    return weekend_stats, market_week_stats, daily_stats
 
 def main():
     # Configuration
@@ -133,45 +162,56 @@ def main():
     print(f"Analyzing {len(df)} days of Bitcoin data...")
     
     # Analyze patterns
-    weekend_stats, weekday_stats, daily_stats = analyze_weekend_weekday_patterns(df)
+    weekend_stats, market_week_stats, daily_stats = analyze_weekend_weekday_patterns(df)
     
     # Print results
-    print("\n" + "="*60)
-    print("BITCOIN WEEKEND vs WEEKDAY ANALYSIS")
+    print("\n" + "="*70)
+    print("BITCOIN MARKET GAPS vs MARKET WEEK ANALYSIS")
     print(f"Period: {start_date} to {end_date}")
-    print("="*60)
+    print("="*70)
     
-    print(f"\n[WEEKEND] WEEKEND PERFORMANCE (Friday Close -> Monday Open)")
-    print(f"Average Weekend Return: {weekend_stats['avg_weekend_return']:.2f}%")
-    print(f"Weekend Win Rate: {weekend_stats['weekend_win_rate']:.1f}%")
-    print(f"Total Weekends: {weekend_stats['weekend_count']}")
+    print(f"\n[WEEKEND GAP] FRIDAY 4PM CLOSE -> MONDAY 9:30AM OPEN (Market Closed)")
+    print(f"Average Weekend Gap Return: {weekend_stats['avg_weekend_return']:+.2f}%")
+    print(f"Weekend Gap Win Rate: {weekend_stats['weekend_win_rate']:.1f}%")
+    print(f"Weekend Gap Volatility: {weekend_stats['weekend_volatility']:.2f}%")
+    print(f"Total Weekend Periods: {weekend_stats['weekend_count']}")
     
-    print(f"\n[WEEKDAY] WEEKDAY PERFORMANCE (Intraday Mon-Fri)")
-    print(f"Average Weekday Return: {weekday_stats['avg_weekday_return']:.2f}%")
-    print(f"Weekday Win Rate: {weekday_stats['weekday_win_rate']:.1f}%")
-    print(f"Total Weekdays: {weekday_stats['weekday_count']}")
+    print(f"\n[MARKET WEEK] MONDAY 9:30AM OPEN -> FRIDAY 4PM CLOSE (Market Open)")
+    print(f"Average Market Week Return: {market_week_stats['avg_market_week_return']:+.2f}%")
+    print(f"Market Week Win Rate: {market_week_stats['market_week_win_rate']:.1f}%")
+    print(f"Market Week Volatility: {market_week_stats['market_week_volatility']:.2f}%")
+    print(f"Total Market Weeks: {market_week_stats['market_week_count']}")
     
-    print(f"\n[DAILY] DAY-BY-DAY BREAKDOWN:")
+    print(f"\n[DAILY] INDIVIDUAL DAY PERFORMANCE (for reference):")
     for day, stats in daily_stats.items():
-        print(f"{day:>9}: Avg Return {stats['avg_return']:>6.2f}% | Win Rate {stats['win_rate']:>5.1f}% | Gap {stats['avg_overnight_gap']:>6.2f}% | Days {stats['count']:>3}")
+        print(f"{day:>9}: Avg Return {stats['avg_return']:>6.2f}% | Win Rate {stats['win_rate']:>5.1f}% | Days {stats['count']:>3}")
     
     # Additional insights
     print(f"\n[INSIGHTS] KEY INSIGHTS:")
-    weekend_vs_weekday = weekend_stats['avg_weekend_return'] - weekday_stats['avg_weekday_return']
-    print(f"Weekend vs Weekday Difference: {weekend_vs_weekday:+.2f}%")
+    gap_vs_week = weekend_stats['avg_weekend_return'] - market_week_stats['avg_market_week_return']
+    print(f"Weekend Gap vs Market Week Difference: {gap_vs_week:+.2f}%")
     
-    if weekend_stats['avg_weekend_return'] > weekday_stats['avg_weekday_return']:
-        print("[+] Weekends outperform weekdays on average")
+    # Risk-adjusted comparison (Return / Volatility)
+    weekend_risk_adj = weekend_stats['avg_weekend_return'] / weekend_stats['weekend_volatility'] if weekend_stats['weekend_volatility'] > 0 else 0
+    market_week_risk_adj = market_week_stats['avg_market_week_return'] / market_week_stats['market_week_volatility'] if market_week_stats['market_week_volatility'] > 0 else 0
+    
+    print(f"Weekend Gap Risk-Adjusted Return: {weekend_risk_adj:.3f}")
+    print(f"Market Week Risk-Adjusted Return: {market_week_risk_adj:.3f}")
+    
+    if weekend_stats['avg_weekend_return'] > market_week_stats['avg_market_week_return']:
+        print("[+] Weekend gaps outperform market weeks on average")
+        print("    -> Bitcoin tends to gap higher over weekends")
     else:
-        print("[-] Weekdays outperform weekends on average")
+        print("[-] Market weeks outperform weekend gaps on average") 
+        print("    -> Bitcoin performs better during market hours")
     
     # Recent trend (last 4 weeks)
     recent_data = df.tail(28)  # Last ~4 weeks
-    recent_weekend_stats, recent_weekday_stats, _ = analyze_weekend_weekday_patterns(recent_data)
+    recent_weekend_stats, recent_market_week_stats, _ = analyze_weekend_weekday_patterns(recent_data)
     
     print(f"\n[RECENT] RECENT TREND (Last 4 weeks):")
-    print(f"Recent Weekend Avg: {recent_weekend_stats['avg_weekend_return']:+.2f}%")
-    print(f"Recent Weekday Avg: {recent_weekday_stats['avg_weekday_return']:+.2f}%")
+    print(f"Recent Weekend Gap Avg: {recent_weekend_stats['avg_weekend_return']:+.2f}%")
+    print(f"Recent Market Week Avg: {recent_market_week_stats['avg_market_week_return']:+.2f}%")
     
     # Save detailed data
     output_file = f"bitcoin_analysis_{datetime.now().strftime('%Y%m%d')}.csv"
