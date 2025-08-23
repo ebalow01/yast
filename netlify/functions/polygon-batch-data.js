@@ -149,17 +149,19 @@ async function fetchTickerData(ticker, apiKey) {
         if (ticker === 'NVDW') {
           console.log(`NVDW: Using pre-change dividends ${endIdx}-${frequencyChangeIndex-1}: [${historicalDividends.join(', ')}]`);
         }
-      } else if (consistentDividends.length >= 13) {
-        // No frequency change detected, use standard positions 10-12
+      } else if (consistentDividends.length >= 12) {
+        // No frequency change detected, use standard positions 9-11 (or available positions)
+        const startPos = Math.min(9, consistentDividends.length - 3);
+        const endPos = startPos + 3;
         historicalDividends = consistentDividends
-          .slice(10, 13)
+          .slice(startPos, endPos)
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
         if (ticker === 'NVDW') {
-          console.log(`NVDW: Using standard positions 10-12: [${historicalDividends.join(', ')}]`);
+          console.log(`NVDW: Using positions ${startPos}-${endPos-1}: [${historicalDividends.join(', ')}]`);
         }
-      } else if (consistentDividends.length < 12) {
+      } else {
         // Less than 12 dividends available, use last 3 for historical comparison
         historicalDividends = consistentDividends
           .slice(-3)
