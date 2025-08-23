@@ -55,8 +55,10 @@ async function fetchTickerData(ticker, apiKey) {
     }
     
     // Fetch stock price from 30 days ago for NAV calculation
-    const monthAgoDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const monthAgoUrl = `https://api.polygon.io/v1/open-close/${ticker}/${monthAgoDate}?adjusted=true&apiKey=${apiKey}`;
+    // Use a range to handle weekends/holidays
+    const thirtyFiveDaysAgo = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const twentyEightDaysAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const monthAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${thirtyFiveDaysAgo}/${twentyEightDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
     const monthAgoData = await httpsGet(monthAgoUrl);
     await delay(100); // Rate limiting
     
@@ -124,8 +126,8 @@ async function fetchTickerData(ticker, apiKey) {
     
     // Get the month ago price
     let monthAgoPrice = null;
-    if (monthAgoData.close) {
-      monthAgoPrice = monthAgoData.close;
+    if (monthAgoData.results && monthAgoData.results.length > 0) {
+      monthAgoPrice = monthAgoData.results[0].c; // closing price from ~30 days ago
     }
     
     // Calculate forward yield (annualized)
