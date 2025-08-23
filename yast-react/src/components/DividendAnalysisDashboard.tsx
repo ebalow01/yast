@@ -3282,9 +3282,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               />
                             )}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            Top performing dividend assets (bearish tickers excluded)
-                          </Typography>
                         </Box>
                         <Button
                           variant="outlined"
