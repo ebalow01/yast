@@ -1527,6 +1527,12 @@ export default function DividendAnalysisDashboard() {
           if (polygonResponse.ok) {
             const polygonResults = await polygonResponse.json();
             console.log('Polygon data fetched:', Object.keys(polygonResults).length, 'tickers');
+            
+            // Log NVDW debug info if available
+            if (polygonResults.NVDW && polygonResults.NVDW.navDebug) {
+              console.log('NVDW NAV Debug Info:', polygonResults.NVDW.navDebug);
+            }
+            
             setPolygonData(polygonResults);
           } else {
             console.error('Failed to fetch Polygon data:', polygonResponse.statusText);
