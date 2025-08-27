@@ -1,0 +1,10 @@
+{
+  "ticker": "SMCI",
+  "timeframe": "15min",
+  "total_records": 14681,
+  "start_date": "2022-08-29 09:30:00",
+  "end_date": "2025-08-26 15:45:00",
+  "regular_hours_only": true,
+  "rsi_calculated": true,
+  "downloaded_at": "2025-08-27 05:46:48.950493"
+}

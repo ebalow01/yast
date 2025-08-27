@@ -1,0 +1,5 @@
+strategy,recommended_ticker,testing_return,training_return,current_price,testing_win_rate,training_win_rate,filter_applied
+1ST→2ND,QS,73.60111351745806,-5.370462050683267,8.04,100.0,80.0,Over $5 only
+2ND→3RD,CRML,242.16720948741545,-65.00691470112912,6.51,100.0,20.0,Over $5 only
+3RD→4TH,OSCR,47.64874620764304,1.1855327069070665,17.02,100.0,60.0,Over $5 only
+LAST→1ST,UNIT,38.972953216374286,-17.765554474104363,6.63,50.0,20.0,Over $5 only

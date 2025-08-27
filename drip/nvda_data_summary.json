@@ -1,0 +1,10 @@
+{
+  "ticker": "NVDA",
+  "timeframe": "15min",
+  "total_records": 20551,
+  "start_date": "2022-08-29 09:30:00-04:00",
+  "end_date": "2025-08-12 16:00:00-04:00",
+  "regular_hours_only": true,
+  "rsi_calculated": true,
+  "downloaded_at": "2025-08-27 06:07:59.606080"
+}

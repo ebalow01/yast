@@ -1,0 +1,9 @@
+{
+  "ticker": "DRIP",
+  "timeframe": "15min",
+  "total_records": 21838,
+  "start_date": "2020-08-28 09:30:00",
+  "end_date": "2025-08-26 15:45:00",
+  "regular_hours_only": true,
+  "last_updated": "2025-08-27 04:53:20.445382"
+}
