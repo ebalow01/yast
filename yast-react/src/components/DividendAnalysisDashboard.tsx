@@ -46,7 +46,8 @@ import {
   MonetizationOn,
   Refresh,
   SmartToy,
-  Clear
+  Clear,
+  Analytics
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
@@ -1351,6 +1352,11 @@ export default function DividendAnalysisDashboard() {
     return !localStorage.getItem('cookieAccepted');
   });
 
+  // Enhanced Monthly Pipeline state
+  const [enhancedPipelineData, setEnhancedPipelineData] = useState<any>(null);
+  const [enhancedPipelineLoading, setEnhancedPipelineLoading] = useState(false);
+  const [enhancedPipelineError, setEnhancedPipelineError] = useState<string | null>(null);
+
   // AI Authentication state
   const [isAiAuthenticated, setIsAiAuthenticated] = useState(() => {
     return localStorage.getItem('aiAuthenticated') === 'true';
@@ -1728,6 +1734,39 @@ export default function DividendAnalysisDashboard() {
     setPortfolio(updatedPortfolio);
   };
 
+  // Enhanced Monthly Pipeline function
+  const runEnhancedPipeline = async () => {
+    setEnhancedPipelineLoading(true);
+    setEnhancedPipelineError(null);
+
+    try {
+      const response = await fetch('/.netlify/functions/enhanced-monthly-pipeline', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to run Enhanced Pipeline');
+      }
+
+      setEnhancedPipelineData(result);
+      setSnackbarMessage('Enhanced Monthly Pipeline completed successfully!');
+      setShowSnackbar(true);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setEnhancedPipelineError(errorMessage);
+      setSnackbarMessage(`Error: ${errorMessage}`);
+      setShowSnackbar(true);
+    } finally {
+      setEnhancedPipelineLoading(false);
+    }
+  };
+
   const addHolding = () => {
     if (!newTicker) {
       setSnackbarMessage('Please enter a ticker symbol');
@@ -2065,12 +2104,12 @@ export default function DividendAnalysisDashboard() {
       console.log(`🚫 Excluded ${navDeathSpirals.length} NAV death spirals (< -50%):`, navDeathSpirals);
     }
     
-    // Filter out dividend death spirals (dividend erosion worse than -10%)
+    // Filter out dividend death spirals (dividend erosion worse than -40%)
     const divDeathSpirals: string[] = [];
     const nonDivDeathSpiralTickers = nonDeathSpiralTickers.filter(item => {
       const polygonDivData = polygonData?.[item.ticker];
       const divErosion = polygonDivData?.divErosion;
-      if (divErosion != null && divErosion < -10) {
+      if (divErosion != null && divErosion < -40) {
         divDeathSpirals.push(item.ticker);
         return false; // Exclude dividend death spirals
       }
@@ -2078,7 +2117,7 @@ export default function DividendAnalysisDashboard() {
     });
     
     if (divDeathSpirals.length > 0) {
-      console.log(`💸 Excluded ${divDeathSpirals.length} dividend death spirals (< -10%):`, divDeathSpirals);
+      console.log(`💸 Excluded ${divDeathSpirals.length} dividend death spirals (< -40%):`, divDeathSpirals);
     }
     
     // Calculate total return for each ticker and sort by it (back to original approach)
@@ -2170,7 +2209,7 @@ export default function DividendAnalysisDashboard() {
       }
       
       // Check for div death spiral
-      if (divErosion != null && divErosion < -10) {
+      if (divErosion != null && divErosion < -40) {
         divDeathSpirals.push(item.ticker);
         return;
       }
@@ -3265,6 +3304,17 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         }
                       }}
                     />
+                    <Tab
+                      label="Enhanced Pipeline"
+                      icon={<Analytics />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
                   </Tabs>
 
                   {/* Tab Panels */}
@@ -4257,6 +4307,214 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         </TableContainer>
                       )}
 
+                    </Box>
+                  )}
+
+                  {/* Enhanced Monthly Pipeline Tab */}
+                  {selectedTab === 4 && (
+                    <Box sx={{ p: 3 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
+                          Enhanced Monthly Trading Pipeline
+                          {enhancedPipelineLoading && (
+                            <Chip
+                              label="Running pipeline..."
+                              size="small"
+                              sx={{ ml: 2, backgroundColor: 'rgba(108, 99, 255, 0.2)', color: '#6C63FF' }}
+                            />
+                          )}
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          startIcon={enhancedPipelineLoading ? <CircularProgress size={16} /> : <Analytics />}
+                          onClick={runEnhancedPipeline}
+                          disabled={enhancedPipelineLoading}
+                          sx={{ 
+                            background: 'linear-gradient(135deg, #6C63FF 0%, #00D4FF 100%)',
+                            '&:hover': {
+                              background: 'linear-gradient(135deg, #5A52D0 0%, #0056CC 100%)',
+                            },
+                            '&:disabled': {
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              color: 'rgba(255, 255, 255, 0.3)'
+                            }
+                          }}
+                        >
+                          {enhancedPipelineLoading ? 'Running...' : 'Run Pipeline'}
+                        </Button>
+                      </Box>
+
+                      {enhancedPipelineError && (
+                        <Alert severity="error" sx={{ mb: 3 }}>
+                          {enhancedPipelineError}
+                        </Alert>
+                      )}
+
+                      {!enhancedPipelineData && !enhancedPipelineLoading && (
+                        <Card sx={{ 
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          textAlign: 'center',
+                          py: 4
+                        }}>
+                          <CardContent>
+                            <Analytics sx={{ fontSize: 48, color: 'rgba(108, 99, 255, 0.7)', mb: 2 }} />
+                            <Typography variant="h6" sx={{ mb: 1 }}>
+                              Enhanced Monthly Trading Strategy
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 3, maxWidth: 600, mx: 'auto' }}>
+                              Analyze multiple enhanced trading strategies with RSI filtering, double-down tactics, 
+                              and stop-loss mechanisms across 300+ tickers to find optimal monthly trading opportunities.
+                            </Typography>
+                            <Button
+                              variant="outlined"
+                              startIcon={<Analytics />}
+                              onClick={runEnhancedPipeline}
+                              sx={{ 
+                                borderColor: '#6C63FF',
+                                color: '#6C63FF',
+                                '&:hover': {
+                                  borderColor: '#5A52D0',
+                                  backgroundColor: 'rgba(108, 99, 255, 0.1)'
+                                }
+                              }}
+                            >
+                              Run Enhanced Pipeline
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {enhancedPipelineData && (
+                        <Box>
+                          {/* Summary Card */}
+                          <Card sx={{ 
+                            background: 'rgba(108, 99, 255, 0.1)',
+                            border: '1px solid rgba(108, 99, 255, 0.3)',
+                            mb: 3
+                          }}>
+                            <CardContent>
+                              <Typography variant="h6" sx={{ mb: 2, color: '#6C63FF' }}>
+                                Pipeline Results Summary
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                                <Box>
+                                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                    Combined Testing Return
+                                  </Typography>
+                                  <Typography variant="h5" sx={{ color: '#00D4FF', fontWeight: 600 }}>
+                                    {enhancedPipelineData.summary?.combinedReturn || 'N/A'}
+                                  </Typography>
+                                </Box>
+                                <Box>
+                                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                    Strategy Variants
+                                  </Typography>
+                                  <Typography variant="h5" sx={{ color: '#6C63FF', fontWeight: 600 }}>
+                                    {enhancedPipelineData.summary?.variantsTested || '4'} per strategy
+                                  </Typography>
+                                </Box>
+                                <Box>
+                                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                    Last Updated
+                                  </Typography>
+                                  <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                                    {enhancedPipelineData.timestamp ? new Date(enhancedPipelineData.timestamp).toLocaleString() : 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </CardContent>
+                          </Card>
+
+                          {/* Recommendations Table */}
+                          {enhancedPipelineData.recommendations && enhancedPipelineData.recommendations.length > 0 && (
+                            <TableContainer component={Paper} sx={{ 
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              maxWidth: '100%',
+                              overflowX: 'auto'
+                            }}>
+                              <Table size="small" sx={{ 
+                                minWidth: 650,
+                                '& .MuiTableCell-root': { 
+                                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                                  fontSize: '0.85rem'
+                                }
+                              }}>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>Strategy</TableCell>
+                                    <TableCell>Best Variant</TableCell>
+                                    <TableCell>Ticker</TableCell>
+                                    <TableCell>Training Return</TableCell>
+                                    <TableCell>Testing Return</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {enhancedPipelineData.recommendations.map((rec: any, index: number) => (
+                                    <TableRow key={index}>
+                                      <TableCell sx={{ fontWeight: 600 }}>
+                                        {rec.strategy}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Chip
+                                          label={rec.variant}
+                                          size="small"
+                                          sx={{
+                                            backgroundColor: 'rgba(108, 99, 255, 0.2)',
+                                            color: '#6C63FF',
+                                            fontWeight: 500
+                                          }}
+                                        />
+                                      </TableCell>
+                                      <TableCell sx={{ fontWeight: 600, color: '#00D4FF' }}>
+                                        {rec.ticker}
+                                      </TableCell>
+                                      <TableCell sx={{ 
+                                        color: rec.training?.startsWith('+') ? '#00D4AA' : '#FF3B30',
+                                        fontWeight: 500
+                                      }}>
+                                        {rec.training}
+                                      </TableCell>
+                                      <TableCell sx={{ 
+                                        color: rec.testing?.startsWith('+') ? '#00D4AA' : '#FF3B30',
+                                        fontWeight: 600
+                                      }}>
+                                        {rec.testing}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          )}
+
+                          {/* Full Output Toggle */}
+                          <Box sx={{ mt: 3, textAlign: 'center' }}>
+                            <Button
+                              variant="outlined"
+                              onClick={() => {
+                                if (enhancedPipelineData.fullOutput) {
+                                  const output = enhancedPipelineData.fullOutput;
+                                  navigator.clipboard.writeText(output).then(() => {
+                                    setSnackbarMessage('Full pipeline output copied to clipboard!');
+                                    setShowSnackbar(true);
+                                  });
+                                }
+                              }}
+                              sx={{
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                '&:hover': {
+                                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                                }
+                              }}
+                            >
+                              Copy Full Output to Clipboard
+                            </Button>
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
                   )}
                 </Paper>
