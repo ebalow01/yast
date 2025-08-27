@@ -198,10 +198,10 @@ async function fetchTickerData(ticker, apiKey) {
           medianHistorical = historicalDividends[1]; // Middle value for 3 dividends
         }
         
-        // Calculate dividend erosion (difference percentage, annualized)
+        // Calculate dividend erosion (difference percentage)
         if (medianDividend && medianHistorical && medianHistorical > 0) {
           const erosionRate = ((medianDividend - medianHistorical) / medianHistorical);
-          divErosion = erosionRate * 4 * 100; // Annualize by *4 (quarterly basis) and convert to percentage
+          divErosion = erosionRate * 100; // Convert to percentage (no multiplication by 4)
         }
       }
     }
@@ -219,11 +219,11 @@ async function fetchTickerData(ticker, apiKey) {
       forwardYield = (medianDividend * 52 / currentPrice) * 100; // As percentage
     }
     
-    // Calculate NAV (annualized price performance)
+    // Calculate NAV (monthly price performance)
     let navPerformance = null;
     if (currentPrice && monthAgoPrice && monthAgoPrice > 0) {
-      // (current price - month ago price) / month ago price * 12 (to annualize)
-      navPerformance = ((currentPrice - monthAgoPrice) / monthAgoPrice) * 12 * 100; // As percentage
+      // (current price - month ago price) / month ago price
+      navPerformance = ((currentPrice - monthAgoPrice) / monthAgoPrice) * 100; // As percentage (actual monthly change)
     }
     
     // Calculate 14-day volatility (standard deviation of daily returns)
