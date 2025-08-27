@@ -1740,7 +1740,7 @@ export default function DividendAnalysisDashboard() {
     setEnhancedPipelineError(null);
 
     try {
-      const response = await fetch('/.netlify/functions/enhanced-monthly-pipeline', {
+      const response = await fetch('/.netlify/functions/enhanced-monthly-pipeline-js', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
