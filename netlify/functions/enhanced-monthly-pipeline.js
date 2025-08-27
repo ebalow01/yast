@@ -30,8 +30,17 @@ exports.handler = async (event, context) => {
     // Get the path to the Python script
     const scriptPath = path.join(process.cwd(), 'drip', 'enhanced_monthly_pipeline.py');
     
+    // Add debug logging
+    console.log('Process cwd:', process.cwd());
+    console.log('Script path:', scriptPath);
+    console.log('Python PATH:', process.env.PATH);
+    
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python', [scriptPath], {
+      // Try python3 first, then python
+      const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+      console.log('Using Python command:', pythonCmd);
+      
+      const pythonProcess = spawn(pythonCmd, [scriptPath], {
         cwd: path.join(process.cwd(), 'drip'),
         env: {
           ...process.env,
@@ -161,6 +170,7 @@ exports.handler = async (event, context) => {
       });
 
       pythonProcess.on('error', (error) => {
+        console.error('Python process error:', error);
         resolve({
           statusCode: 500,
           headers: {
@@ -169,7 +179,11 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify({
             error: 'Failed to start Python process',
-            details: error.message
+            details: error.message,
+            platform: process.platform,
+            cwd: process.cwd(),
+            pythonCmd: process.platform === 'win32' ? 'python' : 'python3',
+            scriptPath: scriptPath
           })
         });
       });
