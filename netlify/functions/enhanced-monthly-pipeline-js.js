@@ -288,10 +288,10 @@ function findClosestTradingDay(monthData, targetDate) {
 async function runEnhancedAnalysis(apiKey) {
   const startTime = Date.now();
   
-  console.log('🚀 ENHANCED MONTHLY STRATEGY PIPELINE (Enterprise)');
+  console.log('🚀 ENHANCED MONTHLY STRATEGY PIPELINE (Optimized)');
   console.log('================================================================================');
   console.log('🎯 Testing: Basic, RSI Filter, Double Down, Stop Loss variants');
-  console.log('💎 Paid Netlify Plan: No timeout limits');
+  console.log('📊 Smart Caching: Download once, analyze many times');
   console.log('================================================================================');
   console.log('📅 Run Date:', new Date().toISOString().slice(0, 16).replace('T', ' '));
   console.log('📚 Training Period: January 2025 - April 2025');
@@ -299,11 +299,41 @@ async function runEnhancedAnalysis(apiKey) {
   console.log('⚠️  Selection Methodology: Tickers chosen based on TRAINING performance only (no data leakage)');
   console.log('================================================================================');
   
-  // Minimal delays for production speed
+  // Step 1: Download all ticker data ONCE and cache it
   console.log('📥 Loading ticker universe...');
-  console.log(`✅ Loaded ${ANALYSIS_TICKERS.length} Python-validated high-performance tickers (BMNR +557%, TMC +342%, etc.)`);
-  console.log('📊 Downloading stock data and analyzing strategies...');
-  console.log('🎯 Optimized for 30s limit: Testing 150 tickers per strategy variant (6 batches)');
+  console.log(`✅ Loaded ${ANALYSIS_TICKERS.length} Python-validated high-performance tickers`);
+  console.log('📊 Downloading stock data ONCE per ticker (smart caching)...');
+  
+  const tickerDataCache = new Map();
+  const tickersToTest = ANALYSIS_TICKERS.slice(0, 150); // Can now test more with caching!
+  
+  console.log(`🎯 Downloading data for ${tickersToTest.length} tickers...`);
+  
+  // Download all ticker data in batches
+  for (let i = 0; i < tickersToTest.length; i += 25) {
+    const batch = tickersToTest.slice(i, i + 25);
+    
+    const batchPromises = batch.map(async (ticker) => {
+      try {
+        const data = await fetchTickerData(ticker, apiKey);
+        if (data && data.length > 100) {
+          tickerDataCache.set(ticker, data);
+          return ticker;
+        }
+        return null;
+      } catch (error) {
+        console.log(`⚠️  Failed to fetch ${ticker}: ${error.message}`);
+        return null;
+      }
+    });
+    
+    const results = await Promise.all(batchPromises);
+    const successCount = results.filter(r => r !== null).length;
+    console.log(`   ✅ Batch ${Math.floor(i/25) + 1}/${Math.ceil(tickersToTest.length/25)}: Downloaded ${successCount} tickers`);
+  }
+  
+  console.log(`✅ Downloaded ${tickerDataCache.size} ticker datasets successfully`);
+  console.log('================================================================================');
   
   const strategies = [
     { name: '1ST→2ND', variants: ['Basic Strategy', 'RSI Filter (≤70)', 'Double Down (Thu)', 'Stop Loss (Thu)'] },
@@ -322,10 +352,6 @@ async function runEnhancedAnalysis(apiKey) {
     
     const variantResults = [];
     
-    // Limit to 6 batches (150 tickers) to stay under 30-second timeout
-    // This still includes all Python winners: CRWV(#11), SBET(#13), CDE(#22), RKT(#40)
-    const tickersToTest = ANALYSIS_TICKERS.slice(0, 150); // 6 batches × 25 = 150 tickers
-    
     for (const variant of strategy.variants) {
       console.log(`Analyzing ${variant}...`);
       
@@ -333,43 +359,21 @@ async function runEnhancedAnalysis(apiKey) {
       let bestTraining = -Infinity;
       let bestTesting = -Infinity;
       
-      // Stage 1: Analyze ALL tickers to find best training performers (proper methodology)
-      console.log(`   Analyzing ${tickersToTest.length} tickers for best training performance...`);
-      
+      // Use CACHED data - no more API calls needed!
       const allResults = [];
       
-      // Process in smaller parallel batches to manage memory and API limits
-      for (let i = 0; i < tickersToTest.length; i += 25) {
-        const batch = tickersToTest.slice(i, i + 25);
-        
-        const batchPromises = batch.map(async (ticker) => {
-          try {
-            const data = await fetchTickerData(ticker, apiKey);
-            if (!data) return null;
-            
-            const analysis = analyzeMonthlyStrategy(data, `${strategy.name}-${variant}`);
-            if (!analysis || !analysis.training || !analysis.testing) return null;
-            
-            return {
-              ticker,
-              training: analysis.training,
-              testing: analysis.testing
-            };
-          } catch (error) {
-            console.log(`⚠️  Skipping ${ticker}: ${error.message}`);
-            return null;
-          }
-        });
-        
-        const batchResults = await Promise.all(batchPromises);
-        const validBatchResults = batchResults.filter(r => r !== null);
-        allResults.push(...validBatchResults);
-        
-        processedTickers += validBatchResults.length;
-        console.log(`   ✅ Batch ${Math.floor(i/25) + 1}: Found ${validBatchResults.length} valid analyses`);
+      for (const [ticker, data] of tickerDataCache) {
+        const analysis = analyzeMonthlyStrategy(data, `${strategy.name}-${variant}`);
+        if (analysis && analysis.training && analysis.testing) {
+          allResults.push({
+            ticker,
+            training: analysis.training,
+            testing: analysis.testing
+          });
+        }
       }
       
-      // Stage 2: Select best performer based on TRAINING performance only
+      // Select best performer based on TRAINING performance only
       if (allResults.length > 0) {
         const bestResult = allResults.reduce((best, current) => 
           current.training > best.training ? current : best
@@ -379,7 +383,8 @@ async function runEnhancedAnalysis(apiKey) {
         bestTraining = bestResult.training;
         bestTesting = bestResult.testing;
         
-        console.log(`   🏆 Best training performer: ${bestTicker} (${bestTraining.toFixed(1)}% train, ${bestTesting.toFixed(1)}% test)`);
+        console.log(`   ${variant}: ${bestTicker} - Training: +${bestTraining.toFixed(1)}%, Testing: +${bestTesting.toFixed(1)}%`);
+        processedTickers++;
       }
       
       if (bestTicker) {
@@ -434,7 +439,7 @@ async function runEnhancedAnalysis(apiKey) {
   console.log(`   Combined Testing Return: +${totalCombinedReturn.toFixed(1)}%`);
   console.log('   Strategy Variants Tested: 4 per strategy');
   console.log('   Enhanced Features: RSI Filter, Double Down, Stop Loss');
-  console.log(`   Tickers Analyzed: ${processedTickers} (from Python-validated universe)`);
+  console.log(`   API Calls: ${tickerDataCache.size} (cached & reused for all strategies)`);
   console.log(`   Execution Time: ${executionTime}s`);
   console.log('   Price Filter: All tickers > $5');
   
