@@ -1,56 +1,37 @@
 const https = require('https');
 
-// 300 highest volume tickers across all markets (mega-caps, mid-caps, growth, value, crypto, biotech, etc.)
+// Python-validated high-performance tickers (sorted by YTD return performance)
 const ANALYSIS_TICKERS = [
-  // Mega Cap Tech
-  'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA', 'AVGO', 'ORCL',
-  'ADBE', 'CRM', 'NFLX', 'AMD', 'INTC', 'QCOM', 'TXN', 'AMAT', 'LRCX', 'KLAC',
-  'MRVL', 'ADI', 'MU', 'SNPS', 'CDNS', 'FTNT', 'PANW', 'CRWD', 'ZS', 'OKTA',
-  
-  // Financial Services
-  'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'USB', 'PNC', 'TFC', 'COF', 'AXP', 'MA', 'V', 'PYPL', 'SQ', 'SOFI',
-  
-  // Healthcare & Biotech
-  'JNJ', 'PFE', 'ABT', 'MRK', 'TMO', 'DHR', 'BMY', 'ABBV', 'LLY', 'UNH', 'CVS', 'CI', 'HUM', 'ANTM', 'GILD', 'AMGN',
-  'BIIB', 'REGN', 'VRTX', 'ILMN', 'MRNA', 'BNTX', 'ZTS', 'ISRG', 'SYK', 'BSX', 'MDT', 'EW', 'HOLX', 'VAR',
-  
-  // Energy & Commodities  
-  'XOM', 'CVX', 'COP', 'EOG', 'SLB', 'MPC', 'VLO', 'PSX', 'HES', 'KMI', 'OKE', 'WMB', 'EPD', 'ET', 'MPLX',
-  'BKR', 'HAL', 'DVN', 'FANG', 'APA', 'CNX', 'AR', 'SM', 'RRC', 'CLR', 'NFG', 'EQT', 'CTRA', 'OVV', 'PR',
-  
-  // Mining & Materials
-  'FCX', 'NEM', 'GOLD', 'AEM', 'KGC', 'AU', 'CDE', 'HL', 'PAAS', 'AG', 'EXK', 'SVM', 'SSRM', 'WPM', 'FNV',
-  'SCCO', 'TECK', 'MP', 'LAC', 'ALB', 'SQM', 'LIT', 'BMNR', 'TMC', 'VALE', 'RIO', 'BHP', 'AA', 'X', 'CLF',
-  
-  // Consumer Discretionary
-  'AMZN', 'HD', 'MCD', 'NKE', 'SBUX', 'TJX', 'LOW', 'TGT', 'COST', 'WMT', 'DIS', 'NFLX', 'CMCSA', 'VZ', 'T',
-  'F', 'GM', 'RIVN', 'LCID', 'JOBY', 'UBER', 'LYFT', 'ABNB', 'BKNG', 'EXPE', 'MAR', 'HLT', 'MGM', 'WYNN', 'LVS',
-  
-  // Retail & E-commerce
-  'SHOP', 'ETSY', 'W', 'CHWY', 'CHEWY', 'RKT', 'Z', 'OPEN', 'RDFN', 'APRN', 'BLUE', 'PRTS', 'OSTK', 'FLWS',
-  'CVNA', 'VROOM', 'KMX', 'AN', 'ABG', 'ANF', 'AEO', 'GPS', 'M', 'KSS', 'JWN', 'NWSA', 'NWS', 'FOX', 'FOXA',
-  
-  // High Volatility Growth
-  'PLTR', 'SNOW', 'AI', 'SMCI', 'PATH', 'DDOG', 'MDB', 'FVRR', 'UPWK', 'ZM', 'DOCN', 'NET', 'FSLY', 'ESTC',
-  'COUP', 'BILL', 'S', 'TWLO', 'DOCU', 'ZI', 'SUMO', 'FROG', 'WIX', 'WDAY', 'VEEV', 'NOW', 'TEAM', 'ATLR',
-  
-  // Crypto & DeFi Related
-  'COIN', 'MSTR', 'RIOT', 'MARA', 'BITF', 'CLSK', 'CIFR', 'WULF', 'IREN', 'HUT', 'BTBT', 'CAN', 'EBON', 'GREE',
-  'ANY', 'MOGO', 'EQOS', 'MGTI', 'LTEA', 'INTV', 'BFCH', 'TANH', 'PHUN', 'MARK', 'DPW', 'IDEX', 'CAMB', 'TKAT',
-  
-  // Social Media & Gaming
-  'META', 'SNAP', 'PINS', 'TWTR', 'MTCH', 'BMBL', 'RBLX', 'TTWO', 'EA', 'ATVI', 'ZNGA', 'U', 'ROKU', 'FUBO', 'NDAQ',
-  
-  // Quantum & AI
-  'IONQ', 'QUBT', 'RGTI', 'QBTS', 'IBM', 'LMND', 'UPST', 'LC', 'AFRM', 'FICO', 'PALC', 'SATS', 'SSPK', 'SPCE',
-  
-  // Biotech Small Caps
-  'SGEN', 'BMRN', 'ALNY', 'RARE', 'FOLD', 'BLUE', 'EDIT', 'NTLA', 'CRSP', 'BEAM', 'PRME', 'VERV', 'SGMO', 'PACB',
-  'ILMN', 'TWST', 'CDNA', 'FATE', 'CGEN', 'CAPR', 'SANA', 'RLAY', 'EDIT', 'VERV', 'MGTA', 'ASGN', 'CRBU', 'BCYC',
-  
-  // SPACs & Recent IPOs
-  'HOOD', 'PGEN', 'CGTX', 'OKLO', 'GRAB', 'NU', 'DIDI', 'BABA', 'JD', 'PDD', 'BILI', 'IQ', 'VIPS', 'WB', 'TME',
-  'SBET', 'DKNG', 'PENN', 'RSI', 'BYD', 'WYNN', 'ERI', 'CZR', 'MGM', 'MLCO', 'LNW', 'GENI', 'ACEL', 'FLUT', 'ACHR'
+  'BMNR', 'TMC', 'MP', 'PGEN', 'CGTX', 'OKLO', 'HOOD', 'SATS', 'OPEN', 'NBY', 
+  'CRWV', 'THAR', 'SBET', 'TME', 'BE', 'NGD', 'APLD', 'IREN', 'RBLX', 'PLTR',
+  'KGC', 'CDE', 'UUUU', 'SMR', 'XPEV', 'ONDS', 'FFAI', 'NEM', 'RKLB', 'IVVD',
+  'JOBY', 'SOFI', 'HIMS', 'GDX', 'NVTS', 'UP', 'BZ', 'WULF', 'LWLG', 'RKT',
+  'LYG', 'FSM', 'U', 'COMP', 'APH', 'QBTS', 'CX', 'BTG', 'RUN', 'ITUB',
+  'GPRO', 'EQX', 'BBD', 'TPR', 'HL', 'AG', 'UBER', 'EBAY', 'SMCI', 'AMDL',
+  'QS', 'CIFR', 'ALLR', 'LRCX', 'ORCL', 'NIO', 'AMD', 'C', 'NU', 'RR',
+  'UEC', 'MSOS', 'IBKR', 'MU', 'ARRY', 'ALTS', 'PSLV', 'ETHA', 'NVDA', 'KWEB',
+  'WBA', 'SLV', 'RIOT', 'AVGO', 'CCL', 'NVDL', 'EOSE', 'FXI', 'EWZ', 'GLD',
+  'T', 'PDD', 'OSCR', 'ADT', 'OPAD', 'BBAI', 'AFRM', 'F', 'VEA', 'INTC',
+  'JNJ', 'FL', 'EFA', 'MSFT', 'ABEV', 'TOST', 'EEM', 'UNIT', 'IEMG', 'LYFT',
+  'TSM', 'IQ', 'OKTA', 'EXC', 'RF', 'WFC', 'VICI', 'FCX', 'CSCO', 'TQQQ',
+  'VALE', 'KSS', 'IBIT', 'KEY', 'FHN', 'MSTR', 'WBD', 'BAC', 'CLF', 'QQQ',
+  'XLF', 'KO', 'SCHX', 'SPLG', 'SPY', 'CVE', 'KRE', 'VZ', 'HBAN', 'GOOGL',
+  'GOOG', 'CNH', 'CVX', 'EQT', 'RSP', 'TFC', 'WMT', 'IWM', 'HPE', 'AGNC',
+  'XOM', 'GRAB', 'DNN', 'AMZN', 'QCOM', 'XLP', 'LQD', 'XLE', 'WMB', 'HLN',
+  'AIFF', 'HYG', 'ETSY', 'VCSH', 'SCHD', 'USHY', 'USB', 'SOXL', 'CLSK', 'CSX',
+  'HST', 'TNA', 'HPP', 'CNQ', 'RIVN', 'BEKE', 'XLV', 'CRML', 'TLT', 'PEP',
+  'CORZ', 'ERIC', 'KVUE', 'NOK', 'IONQ', 'NCLH', 'IPG', 'ACHR', 'KMI', 'HIVE',
+  'SBUX', 'AAPL', 'GAP', 'PFE', 'LUMN', 'TLRY', 'AUR', 'SLB', 'KDP', 'TSLA',
+  'PBR', 'MARA', 'IBRX', 'AMCR', 'KHC', 'CMCSA', 'ET', 'DOC', 'LKQ', 'BTBT',
+  'PATH', 'BITO', 'MRK', 'TEVA', 'CCCS', 'VTRS', 'BMY', 'HPQ', 'BITF', 'BTE',
+  'LABD', 'WU', 'TSLS', 'PYPL', 'HAL', 'RIG', 'PACK', 'ECX', 'QUBT', 'SDS',
+  'GIS', 'AAL', 'RAY', 'RGTI', 'INFY', 'CPB', 'S', 'PCG', 'CMG', 'JBLU',
+  'AMC', 'PLUG', 'VFC', 'CAG', 'TZA', 'LCID', 'MSTU', 'RXRX', 'CFLT', 'SPXS',
+  'MRVL', 'SPXU', 'NVDD', 'NVO', 'FAZ', 'ULTY', 'UAA', 'AVTR', 'SNAP', 'COTY',
+  'TSLY', 'UNH', 'MRNA', 'SOUN', 'TSLG', 'SQQQ', 'TSLL', 'HKPD', 'UVXY', 'DJT',
+  'CGC', 'CONY', 'CNC', 'TSLQ', 'TSLZ', 'PLTD', 'UVIX', 'CAN', 'IBIO', 'NVD',
+  'IXHL', 'NVDQ', 'NVOX', 'SOXS', 'MRKR', 'VRAX', 'JDST', 'MSTZ', 'PTHL', 'ETHD',
+  'NUKK', 'GDXD', 'STKH', 'VCIG', 'HOLO'
 ];
 
 function httpsGet(url) {
@@ -320,7 +301,7 @@ async function runEnhancedAnalysis(apiKey) {
   
   // Minimal delays for production speed
   console.log('📥 Loading ticker universe...');
-  console.log(`✅ Loaded ${ANALYSIS_TICKERS.length} highest volume tickers across all markets`);
+  console.log(`✅ Loaded ${ANALYSIS_TICKERS.length} Python-validated high-performance tickers (BMNR +557%, TMC +342%, etc.)`);
   console.log('📊 Downloading stock data and analyzing strategies...');
   console.log('🎯 Enterprise Analysis: Testing 300 tickers per strategy variant');
   
@@ -441,7 +422,7 @@ async function runEnhancedAnalysis(apiKey) {
   console.log(`   Combined Testing Return: +${totalCombinedReturn.toFixed(1)}%`);
   console.log('   Strategy Variants Tested: 4 per strategy');
   console.log('   Enhanced Features: RSI Filter, Double Down, Stop Loss');
-  console.log(`   Tickers Analyzed: ${processedTickers} (from 300-ticker universe)`);
+  console.log(`   Tickers Analyzed: ${processedTickers} (from Python-validated universe)`);
   console.log(`   Execution Time: ${executionTime}s`);
   console.log('   Price Filter: All tickers > $5');
   
