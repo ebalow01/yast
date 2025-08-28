@@ -303,7 +303,7 @@ async function runEnhancedAnalysis(apiKey) {
   console.log('📥 Loading ticker universe...');
   console.log(`✅ Loaded ${ANALYSIS_TICKERS.length} Python-validated high-performance tickers (BMNR +557%, TMC +342%, etc.)`);
   console.log('📊 Downloading stock data and analyzing strategies...');
-  console.log('🎯 Enterprise Analysis: Testing 300 tickers per strategy variant');
+  console.log('🎯 Optimized for 30s limit: Testing 150 tickers per strategy variant (6 batches)');
   
   const strategies = [
     { name: '1ST→2ND', variants: ['Basic Strategy', 'RSI Filter (≤70)', 'Double Down (Thu)', 'Stop Loss (Thu)'] },
@@ -322,8 +322,9 @@ async function runEnhancedAnalysis(apiKey) {
     
     const variantResults = [];
     
-    // Enterprise analysis: test more tickers per variant with paid plan
-    const tickersToTest = ANALYSIS_TICKERS; // Full 300 ticker universe
+    // Limit to 6 batches (150 tickers) to stay under 30-second timeout
+    // This still includes all Python winners: CRWV(#11), SBET(#13), CDE(#22), RKT(#40)
+    const tickersToTest = ANALYSIS_TICKERS.slice(0, 150); // 6 batches × 25 = 150 tickers
     
     for (const variant of strategy.variants) {
       console.log(`Analyzing ${variant}...`);
@@ -451,6 +452,9 @@ async function runEnhancedAnalysis(apiKey) {
 }
 
 exports.handler = async (event, context) => {
+  // Set function timeout warning
+  context.callbackWaitsForEmptyEventLoop = false;
+  
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -477,6 +481,7 @@ exports.handler = async (event, context) => {
 
   try {
     console.log('Enhanced Pipeline: Starting live market analysis...');
+    console.log('Analyzing top 150 high-performance tickers (6 batches to stay under 30s limit)...');
     
     const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
     if (!POLYGON_API_KEY) {
@@ -501,7 +506,9 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Enhanced Pipeline Error:', error);
+    console.error('Stack trace:', error.stack);
     
+    // Return a valid JSON response even on error
     return {
       statusCode: 500,
       headers: {
@@ -510,7 +517,13 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         error: 'Enhanced Pipeline execution failed',
-        details: error.message
+        details: error.message,
+        recommendations: [],
+        summary: {
+          combinedReturn: '0%',
+          variantsTested: '0'
+        },
+        note: 'Function failed - check logs for details'
       })
     };
   }
