@@ -213,6 +213,12 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
     
     const [year, month] = monthKey.split('-').map(Number);
     
+    // Debug: Show month keys and their meanings
+    if (year === 2025 && (month === 4 || month === 5)) {
+      const monthName = month === 4 ? 'May' : 'June';
+      console.log(`Processing ${monthKey} = ${monthName} 2025 (${monthData.length} trading days)`);
+    }
+    
     let entryMonday, exitMonday;
     
     // Determine Monday strategy
