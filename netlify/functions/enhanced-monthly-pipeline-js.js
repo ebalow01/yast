@@ -315,6 +315,7 @@ async function runEnhancedAnalysis(apiKey) {
   console.log('📅 Run Date:', new Date().toISOString().slice(0, 16).replace('T', ' '));
   console.log('📚 Training Period: January 2025 - April 2025');
   console.log('🧪 Testing Period: May 2025 - July 2025');
+  console.log('⚠️  Selection Methodology: Tickers chosen based on TRAINING performance only (no data leakage)');
   console.log('================================================================================');
   
   // Minimal delays for production speed
@@ -374,10 +375,10 @@ async function runEnhancedAnalysis(apiKey) {
       const results = await Promise.all(analysisPromises);
       const validResults = results.filter(r => r !== null);
       
-      // Find best performer from parallel results
+      // Find best performer based on TRAINING performance only (no data leakage)
       if (validResults.length > 0) {
         const bestResult = validResults.reduce((best, current) => 
-          current.testing > best.testing ? current : best
+          current.training > best.training ? current : best
         );
         
         bestTicker = bestResult.ticker;
@@ -400,10 +401,10 @@ async function runEnhancedAnalysis(apiKey) {
       }
     }
     
-    // Select best variant for this strategy
+    // Select best variant based on TRAINING performance (no data leakage)  
     if (variantResults.length > 0) {
       const bestVariant = variantResults.reduce((best, current) => 
-        current.testing > best.testing ? current : best
+        current.training > best.training ? current : best
       );
       
       finalRecommendations.push({
@@ -415,7 +416,7 @@ async function runEnhancedAnalysis(apiKey) {
       });
       
       totalCombinedReturn += bestVariant.testing;
-      console.log(`🏆 Best: ${bestVariant.variant} - ${bestVariant.ticker} (+${bestVariant.testing.toFixed(1)}%)`);
+      console.log(`🏆 Best (Training): ${bestVariant.variant} - ${bestVariant.ticker} (Train: +${bestVariant.training.toFixed(1)}%, Test: +${bestVariant.testing.toFixed(1)}%)`);
     }
     
     console.log('');
