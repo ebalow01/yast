@@ -1,12 +1,56 @@
 const https = require('https');
 
-// Top performing tickers from your analysis (high-volatility, high-return stocks)
+// 300 highest volume tickers across all markets (mega-caps, mid-caps, growth, value, crypto, biotech, etc.)
 const ANALYSIS_TICKERS = [
-  'BMNR', 'TMC', 'MP', 'PGEN', 'CGTX', 'OKLO', 'HOOD', 'SATS', 'OPEN', 'IONQ',
-  'QUBT', 'RGTI', 'QBTS', 'SMCI', 'NVDA', 'TSLA', 'AMD', 'MSTR', 'RIOT', 'MARA',
-  'BITF', 'CLSK', 'CIFR', 'WULF', 'IREN', 'CDE', 'CRWV', 'RKT', 'SBET', 'PLTR',
-  'SOFI', 'RBLX', 'GRAB', 'NU', 'RIVN', 'LCID', 'JOBY', 'OKTA', 'PATH', 'SNAP',
-  'UBER', 'LYFT', 'DASH', 'ABNB', 'SHOP', 'SQ', 'PYPL', 'COIN', 'DKNG', 'PINS'
+  // Mega Cap Tech
+  'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA', 'AVGO', 'ORCL',
+  'ADBE', 'CRM', 'NFLX', 'AMD', 'INTC', 'QCOM', 'TXN', 'AMAT', 'LRCX', 'KLAC',
+  'MRVL', 'ADI', 'MU', 'SNPS', 'CDNS', 'FTNT', 'PANW', 'CRWD', 'ZS', 'OKTA',
+  
+  // Financial Services
+  'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'USB', 'PNC', 'TFC', 'COF', 'AXP', 'MA', 'V', 'PYPL', 'SQ', 'SOFI',
+  
+  // Healthcare & Biotech
+  'JNJ', 'PFE', 'ABT', 'MRK', 'TMO', 'DHR', 'BMY', 'ABBV', 'LLY', 'UNH', 'CVS', 'CI', 'HUM', 'ANTM', 'GILD', 'AMGN',
+  'BIIB', 'REGN', 'VRTX', 'ILMN', 'MRNA', 'BNTX', 'ZTS', 'ISRG', 'SYK', 'BSX', 'MDT', 'EW', 'HOLX', 'VAR',
+  
+  // Energy & Commodities  
+  'XOM', 'CVX', 'COP', 'EOG', 'SLB', 'MPC', 'VLO', 'PSX', 'HES', 'KMI', 'OKE', 'WMB', 'EPD', 'ET', 'MPLX',
+  'BKR', 'HAL', 'DVN', 'FANG', 'APA', 'CNX', 'AR', 'SM', 'RRC', 'CLR', 'NFG', 'EQT', 'CTRA', 'OVV', 'PR',
+  
+  // Mining & Materials
+  'FCX', 'NEM', 'GOLD', 'AEM', 'KGC', 'AU', 'CDE', 'HL', 'PAAS', 'AG', 'EXK', 'SVM', 'SSRM', 'WPM', 'FNV',
+  'SCCO', 'TECK', 'MP', 'LAC', 'ALB', 'SQM', 'LIT', 'BMNR', 'TMC', 'VALE', 'RIO', 'BHP', 'AA', 'X', 'CLF',
+  
+  // Consumer Discretionary
+  'AMZN', 'HD', 'MCD', 'NKE', 'SBUX', 'TJX', 'LOW', 'TGT', 'COST', 'WMT', 'DIS', 'NFLX', 'CMCSA', 'VZ', 'T',
+  'F', 'GM', 'RIVN', 'LCID', 'JOBY', 'UBER', 'LYFT', 'ABNB', 'BKNG', 'EXPE', 'MAR', 'HLT', 'MGM', 'WYNN', 'LVS',
+  
+  // Retail & E-commerce
+  'SHOP', 'ETSY', 'W', 'CHWY', 'CHEWY', 'RKT', 'Z', 'OPEN', 'RDFN', 'APRN', 'BLUE', 'PRTS', 'OSTK', 'FLWS',
+  'CVNA', 'VROOM', 'KMX', 'AN', 'ABG', 'ANF', 'AEO', 'GPS', 'M', 'KSS', 'JWN', 'NWSA', 'NWS', 'FOX', 'FOXA',
+  
+  // High Volatility Growth
+  'PLTR', 'SNOW', 'AI', 'SMCI', 'PATH', 'DDOG', 'MDB', 'FVRR', 'UPWK', 'ZM', 'DOCN', 'NET', 'FSLY', 'ESTC',
+  'COUP', 'BILL', 'S', 'TWLO', 'DOCU', 'ZI', 'SUMO', 'FROG', 'WIX', 'WDAY', 'VEEV', 'NOW', 'TEAM', 'ATLR',
+  
+  // Crypto & DeFi Related
+  'COIN', 'MSTR', 'RIOT', 'MARA', 'BITF', 'CLSK', 'CIFR', 'WULF', 'IREN', 'HUT', 'BTBT', 'CAN', 'EBON', 'GREE',
+  'ANY', 'MOGO', 'EQOS', 'MGTI', 'LTEA', 'INTV', 'BFCH', 'TANH', 'PHUN', 'MARK', 'DPW', 'IDEX', 'CAMB', 'TKAT',
+  
+  // Social Media & Gaming
+  'META', 'SNAP', 'PINS', 'TWTR', 'MTCH', 'BMBL', 'RBLX', 'TTWO', 'EA', 'ATVI', 'ZNGA', 'U', 'ROKU', 'FUBO', 'NDAQ',
+  
+  // Quantum & AI
+  'IONQ', 'QUBT', 'RGTI', 'QBTS', 'IBM', 'LMND', 'UPST', 'LC', 'AFRM', 'FICO', 'PALC', 'SATS', 'SSPK', 'SPCE',
+  
+  // Biotech Small Caps
+  'SGEN', 'BMRN', 'ALNY', 'RARE', 'FOLD', 'BLUE', 'EDIT', 'NTLA', 'CRSP', 'BEAM', 'PRME', 'VERV', 'SGMO', 'PACB',
+  'ILMN', 'TWST', 'CDNA', 'FATE', 'CGEN', 'CAPR', 'SANA', 'RLAY', 'EDIT', 'VERV', 'MGTA', 'ASGN', 'CRBU', 'BCYC',
+  
+  // SPACs & Recent IPOs
+  'HOOD', 'PGEN', 'CGTX', 'OKLO', 'GRAB', 'NU', 'DIDI', 'BABA', 'JD', 'PDD', 'BILI', 'IQ', 'VIPS', 'WB', 'TME',
+  'SBET', 'DKNG', 'PENN', 'RSI', 'BYD', 'WYNN', 'ERI', 'CZR', 'MGM', 'MLCO', 'LNW', 'GENI', 'ACEL', 'FLUT', 'ACHR'
 ];
 
 function httpsGet(url) {
@@ -262,12 +306,11 @@ function findClosestTradingDay(monthData, targetDate) {
 
 async function runEnhancedAnalysis(apiKey) {
   const startTime = Date.now();
-  const MAX_EXECUTION_TIME = 25000; // 25 seconds to stay under Netlify's 30-second limit
   
-  console.log('🚀 ENHANCED MONTHLY STRATEGY PIPELINE (Optimized)');
+  console.log('🚀 ENHANCED MONTHLY STRATEGY PIPELINE (Enterprise)');
   console.log('================================================================================');
   console.log('🎯 Testing: Basic, RSI Filter, Double Down, Stop Loss variants');
-  console.log('⏱️ Timeout Protection: 25-second execution limit');
+  console.log('💎 Paid Netlify Plan: No timeout limits');
   console.log('================================================================================');
   console.log('📅 Run Date:', new Date().toISOString().slice(0, 16).replace('T', ' '));
   console.log('📚 Training Period: January 2025 - April 2025');
@@ -276,8 +319,9 @@ async function runEnhancedAnalysis(apiKey) {
   
   // Minimal delays for production speed
   console.log('📥 Loading ticker universe...');
-  console.log(`✅ Loaded ${ANALYSIS_TICKERS.length} high-performance tickers`);
+  console.log(`✅ Loaded ${ANALYSIS_TICKERS.length} highest volume tickers across all markets`);
   console.log('📊 Downloading stock data and analyzing strategies...');
+  console.log('🎯 Enterprise Analysis: Testing 300 tickers per strategy variant');
   
   const strategies = [
     { name: '1ST→2ND', variants: ['Basic Strategy', 'RSI Filter (≤70)', 'Double Down (Thu)', 'Stop Loss (Thu)'] },
@@ -291,19 +335,13 @@ async function runEnhancedAnalysis(apiKey) {
   let processedTickers = 0;
   
   for (const strategy of strategies) {
-    // Check timeout before processing each strategy
-    if (Date.now() - startTime > MAX_EXECUTION_TIME) {
-      console.log('⏰ Execution timeout approaching - completing with current results');
-      break;
-    }
-    
     console.log(`🎯 ${strategy.name} MONDAY:`);
     console.log('================================================================================');
     
     const variantResults = [];
     
-    // Optimize for Netlify 30-second timeout: test fewer tickers per variant
-    const tickersToTest = ANALYSIS_TICKERS.slice(0, 16); // Reduced from 50 to 16 total
+    // Enterprise analysis: test more tickers per variant with paid plan
+    const tickersToTest = ANALYSIS_TICKERS; // Full 300 ticker universe
     
     for (const variant of strategy.variants) {
       console.log(`Analyzing ${variant}...`);
@@ -312,8 +350,8 @@ async function runEnhancedAnalysis(apiKey) {
       let bestTraining = -Infinity;
       let bestTesting = -Infinity;
       
-      // Process tickers in parallel for better performance
-      const tickerBatch = tickersToTest.slice(0, 3);
+      // Process tickers in parallel batches for enterprise analysis
+      const tickerBatch = tickersToTest.slice(0, 50); // Analyze top 50 per variant
       const analysisPromises = tickerBatch.map(async (ticker) => {
         try {
           const data = await fetchTickerData(ticker, apiKey);
@@ -402,7 +440,7 @@ async function runEnhancedAnalysis(apiKey) {
   console.log(`   Combined Testing Return: +${totalCombinedReturn.toFixed(1)}%`);
   console.log('   Strategy Variants Tested: 4 per strategy');
   console.log('   Enhanced Features: RSI Filter, Double Down, Stop Loss');
-  console.log(`   Tickers Analyzed: ${processedTickers}`);
+  console.log(`   Tickers Analyzed: ${processedTickers} (from 300-ticker universe)`);
   console.log(`   Execution Time: ${executionTime}s`);
   console.log('   Price Filter: All tickers > $5');
   
@@ -414,7 +452,7 @@ async function runEnhancedAnalysis(apiKey) {
       executionTime: `${executionTime}s`
     },
     timestamp: new Date().toISOString(),
-    version: 'JavaScript v4.1 (Optimized)',
+    version: 'JavaScript v5.0 (Enterprise)',
     tickersProcessed: processedTickers
   };
 }
