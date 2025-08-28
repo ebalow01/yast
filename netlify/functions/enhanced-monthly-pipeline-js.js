@@ -317,6 +317,12 @@ async function runEnhancedAnalysis(apiKey) {
       try {
         const data = await fetchTickerData(ticker, apiKey);
         if (data && data.length > 100) {
+          // Filter out stocks below $5
+          const currentPrice = data[data.length - 1].close;
+          if (currentPrice < 5) {
+            console.log(`   ⚠️  Skipping ${ticker}: Price $${currentPrice.toFixed(2)} below $5 minimum`);
+            return null;
+          }
           tickerDataCache.set(ticker, data);
           return ticker;
         }
@@ -333,6 +339,7 @@ async function runEnhancedAnalysis(apiKey) {
   }
   
   console.log(`✅ Downloaded ${tickerDataCache.size} ticker datasets successfully`);
+  console.log(`📊 Filtered: ${tickersToTest.length - tickerDataCache.size} stocks below $5 minimum price`);
   console.log('================================================================================');
   
   const strategies = [
@@ -457,7 +464,7 @@ async function runEnhancedAnalysis(apiKey) {
   console.log('   Enhanced Features: RSI Filter, Double Down, Stop Loss');
   console.log(`   API Calls: ${tickerDataCache.size} (cached & reused for all strategies)`);
   console.log(`   Execution Time: ${executionTime}s`);
-  console.log('   Price Filter: All tickers > $5');
+  console.log('   Price Filter: Minimum $5 per share (quality stocks only)');
   
   return {
     recommendations: finalRecommendations,
