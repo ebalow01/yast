@@ -147,6 +147,13 @@ function getLastMondayOfMonth(year, month) {
     const monday = getNthMondayOfMonth(year, month, n);
     if (monday) mondays.push(monday);
   }
+  
+  // Debug logging for June 2025
+  if (year === 2025 && month === 6) {
+    console.log(`June 2025 Mondays found: ${mondays.map(m => m.toISOString().slice(0,10)).join(', ')}`);
+    console.log(`Last Monday selected: ${mondays.length > 0 ? mondays[mondays.length - 1].toISOString().slice(0,10) : 'null'}`);
+  }
+  
   return mondays.length > 0 ? mondays[mondays.length - 1] : null;
 }
 
