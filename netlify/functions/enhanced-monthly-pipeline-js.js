@@ -375,15 +375,23 @@ async function runEnhancedAnalysis(apiKey) {
       
       // Select best performer based on TRAINING performance only
       if (allResults.length > 0) {
-        const bestResult = allResults.reduce((best, current) => 
-          current.training > best.training ? current : best
-        );
+        // Sort by training performance (best first)
+        allResults.sort((a, b) => b.training - a.training);
         
+        // Log top 10 performers for transparency
+        console.log(`   📊 Top 10 Training Performers for ${variant}:`);
+        const top10 = allResults.slice(0, 10);
+        top10.forEach((result, index) => {
+          console.log(`      ${index + 1}. ${result.ticker}: Train +${result.training.toFixed(1)}%, Test +${result.testing.toFixed(1)}%`);
+        });
+        
+        // Select the best (first) one
+        const bestResult = allResults[0];
         bestTicker = bestResult.ticker;
         bestTraining = bestResult.training;
         bestTesting = bestResult.testing;
         
-        console.log(`   ${variant}: ${bestTicker} - Training: +${bestTraining.toFixed(1)}%, Testing: +${bestTesting.toFixed(1)}%`);
+        console.log(`   🏆 Selected: ${bestTicker} (best training performance)`);
         processedTickers++;
       }
       
@@ -414,7 +422,8 @@ async function runEnhancedAnalysis(apiKey) {
       });
       
       totalCombinedReturn += bestVariant.testing;
-      console.log(`🏆 Best (Training): ${bestVariant.variant} - ${bestVariant.ticker} (Train: +${bestVariant.training.toFixed(1)}%, Test: +${bestVariant.testing.toFixed(1)}%)`);
+      console.log(`🏆 Strategy Winner: ${bestVariant.variant} - ${bestVariant.ticker} (Train: +${bestVariant.training.toFixed(1)}%, Test: +${bestVariant.testing.toFixed(1)}%)`);
+      console.log('');
     }
     
     console.log('');
