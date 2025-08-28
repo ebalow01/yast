@@ -3,17 +3,52 @@ const path = require('path');
 
 function readLatestPythonResults() {
   try {
-    // Find the most recent enhanced recommendations file
-    const dripPath = path.join(process.cwd(), 'drip');
-    const files = fs.readdirSync(dripPath);
+    // Try multiple possible paths for the drip folder
+    const possiblePaths = [
+      path.join(process.cwd(), 'drip'),
+      path.join(__dirname, '..', '..', 'drip'),
+      path.join('/var/task', 'drip'),
+      path.join('/opt/build/repo', 'drip')
+    ];
+    
+    let dripPath = null;
+    let files = null;
+    
+    console.log('Searching for drip folder in production...');
+    console.log('Current working directory:', process.cwd());
+    console.log('Function __dirname:', __dirname);
+    
+    for (const testPath of possiblePaths) {
+      try {
+        console.log(`Trying path: ${testPath}`);
+        if (fs.existsSync(testPath)) {
+          files = fs.readdirSync(testPath);
+          dripPath = testPath;
+          console.log(`✅ Found drip folder at: ${testPath}`);
+          console.log(`Files found: ${files.length}`);
+          break;
+        } else {
+          console.log(`❌ Path not found: ${testPath}`);
+        }
+      } catch (error) {
+        console.log(`❌ Error accessing ${testPath}:`, error.message);
+      }
+    }
+    
+    if (!dripPath || !files) {
+      console.log('Could not find drip folder in any location');
+      return null;
+    }
     
     const recommendationFiles = files
       .filter(file => file.startsWith('enhanced_recommendations_') && file.endsWith('.csv'))
       .sort()
       .reverse(); // Get newest first
     
+    console.log('CSV files found:', recommendationFiles);
+    
     if (recommendationFiles.length === 0) {
-      console.log('No enhanced recommendations files found');
+      console.log('No enhanced recommendations files found in folder');
       return null;
     }
     
