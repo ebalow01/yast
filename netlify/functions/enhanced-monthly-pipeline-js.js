@@ -332,33 +332,45 @@ async function runEnhancedAnalysis(apiKey) {
       let bestTraining = -Infinity;
       let bestTesting = -Infinity;
       
-      // Process tickers in parallel batches for enterprise analysis
-      const tickerBatch = tickersToTest.slice(0, 50); // Analyze top 50 per variant
-      const analysisPromises = tickerBatch.map(async (ticker) => {
-        try {
-          const data = await fetchTickerData(ticker, apiKey);
-          if (!data) return null;
-          
-          const analysis = analyzeMonthlyStrategy(data, `${strategy.name}-${variant}`);
-          if (!analysis || !analysis.training || !analysis.testing) return null;
-          
-          return {
-            ticker,
-            training: analysis.training,
-            testing: analysis.testing
-          };
-        } catch (error) {
-          console.log(`⚠️  Skipping ${ticker}: ${error.message}`);
-          return null;
-        }
-      });
+      // Stage 1: Analyze ALL tickers to find best training performers (proper methodology)
+      console.log(`   Analyzing ${tickersToTest.length} tickers for best training performance...`);
       
-      const results = await Promise.all(analysisPromises);
-      const validResults = results.filter(r => r !== null);
+      const allResults = [];
       
-      // Find best performer based on TRAINING performance only (no data leakage)
-      if (validResults.length > 0) {
-        const bestResult = validResults.reduce((best, current) => 
+      // Process in smaller parallel batches to manage memory and API limits
+      for (let i = 0; i < tickersToTest.length; i += 25) {
+        const batch = tickersToTest.slice(i, i + 25);
+        
+        const batchPromises = batch.map(async (ticker) => {
+          try {
+            const data = await fetchTickerData(ticker, apiKey);
+            if (!data) return null;
+            
+            const analysis = analyzeMonthlyStrategy(data, `${strategy.name}-${variant}`);
+            if (!analysis || !analysis.training || !analysis.testing) return null;
+            
+            return {
+              ticker,
+              training: analysis.training,
+              testing: analysis.testing
+            };
+          } catch (error) {
+            console.log(`⚠️  Skipping ${ticker}: ${error.message}`);
+            return null;
+          }
+        });
+        
+        const batchResults = await Promise.all(batchPromises);
+        const validBatchResults = batchResults.filter(r => r !== null);
+        allResults.push(...validBatchResults);
+        
+        processedTickers += validBatchResults.length;
+        console.log(`   ✅ Batch ${Math.floor(i/25) + 1}: Found ${validBatchResults.length} valid analyses`);
+      }
+      
+      // Stage 2: Select best performer based on TRAINING performance only
+      if (allResults.length > 0) {
+        const bestResult = allResults.reduce((best, current) => 
           current.training > best.training ? current : best
         );
         
@@ -366,8 +378,7 @@ async function runEnhancedAnalysis(apiKey) {
         bestTraining = bestResult.training;
         bestTesting = bestResult.testing;
         
-        processedTickers += validResults.length;
-        console.log(`✅ Processed ${validResults.length} ticker analyses in parallel...`);
+        console.log(`   🏆 Best training performer: ${bestTicker} (${bestTraining.toFixed(1)}% train, ${bestTesting.toFixed(1)}% test)`);
       }
       
       if (bestTicker) {
