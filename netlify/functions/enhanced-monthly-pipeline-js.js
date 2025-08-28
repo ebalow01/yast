@@ -190,21 +190,22 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
     
     let entryMonday, exitMonday;
     
-    // Determine Monday strategy
+    // Determine Monday strategy - fix month indexing (getMonth() is 0-based, need 1-based)
+    const actualMonth = month + 1; // Convert 0-based to 1-based
     if (strategyType.includes('1ST→2ND')) {
-      entryMonday = getNthMondayOfMonth(year, month + 1, 1);
-      exitMonday = getNthMondayOfMonth(year, month + 1, 2);
+      entryMonday = getNthMondayOfMonth(year, actualMonth, 1);
+      exitMonday = getNthMondayOfMonth(year, actualMonth, 2);
     } else if (strategyType.includes('2ND→3RD')) {
-      entryMonday = getNthMondayOfMonth(year, month + 1, 2);
-      exitMonday = getNthMondayOfMonth(year, month + 1, 3);
+      entryMonday = getNthMondayOfMonth(year, actualMonth, 2);
+      exitMonday = getNthMondayOfMonth(year, actualMonth, 3);
     } else if (strategyType.includes('3RD→4TH')) {
-      entryMonday = getNthMondayOfMonth(year, month + 1, 3);
-      exitMonday = getNthMondayOfMonth(year, month + 1, 4);
+      entryMonday = getNthMondayOfMonth(year, actualMonth, 3);
+      exitMonday = getNthMondayOfMonth(year, actualMonth, 4);
     } else if (strategyType.includes('LAST→1ST')) {
-      entryMonday = getLastMondayOfMonth(year, month + 1);
-      const nextMonth = month === 11 ? 0 : month + 1;
-      const nextYear = month === 11 ? year + 1 : year;
-      exitMonday = getNthMondayOfMonth(nextYear, nextMonth + 1, 1);
+      entryMonday = getLastMondayOfMonth(year, actualMonth);
+      const nextMonth = actualMonth === 12 ? 1 : actualMonth + 1;
+      const nextYear = actualMonth === 12 ? year + 1 : year;
+      exitMonday = getNthMondayOfMonth(nextYear, nextMonth, 1);
     }
     
     if (!entryMonday || !exitMonday) return;
