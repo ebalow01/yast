@@ -217,7 +217,7 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
     const exitDay = findClosestTradingDay(monthData, exitMonday);
     
     // Debug: Log calculated Mondays
-    if (monthKey.includes('2024-5') || monthKey.includes('2024-6')) { // June 2024
+    if (monthKey.includes('2025-5') || monthKey.includes('2025-6')) { // June 2025
       console.log(`${monthKey} Strategy ${strategyType}: Entry ${entryMonday.toISOString().slice(0,10)} → Exit ${exitMonday.toISOString().slice(0,10)}`);
     }
     
