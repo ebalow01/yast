@@ -62,28 +62,7 @@ async function fetchTickerData(ticker, apiKey) {
     
     const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${startDate}/${endDate}?adjusted=true&sort=asc&apiKey=${apiKey}`;
     
-    console.log(`📊 Fetching ${ticker} data from ${startDate} to ${endDate}...`);
-    console.log(`🌐 API URL: https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${startDate}/${endDate}?adjusted=true&sort=asc&apiKey=***`);
     const data = await httpsGet(url);
-    
-    // Debug: Check if June 30, 2025 data exists
-    if (ticker === 'SBET' && data.results) {
-      const june30_2025 = data.results.find(bar => {
-        const date = new Date(bar.t);
-        return date.getFullYear() === 2025 && date.getMonth() === 5 && date.getDate() === 30;
-      });
-      if (june30_2025) {
-        console.log(`✅ SBET has June 30, 2025 data: $${june30_2025.c}`);
-      } else {
-        console.log(`❌ SBET missing June 30, 2025 data`);
-        // Show what dates we DO have around June 30
-        const juneDates = data.results.filter(bar => {
-          const date = new Date(bar.t);
-          return date.getFullYear() === 2025 && date.getMonth() === 5 && date.getDate() >= 25;
-        });
-        console.log(`June 2025 dates available: ${juneDates.map(d => new Date(d.t).toISOString().slice(0,10)).join(', ')}`);
-      }
-    }
     await delay(200); // Reduced delay for faster processing
     
     if (data.results && data.results.length > 100) { // Need sufficient data
@@ -167,11 +146,6 @@ function getLastMondayOfMonth(year, month) {
     if (monday) mondays.push(monday);
   }
   
-  // Debug logging for June 2025
-  if (year === 2025 && month === 6) {
-    console.log(`June 2025 Mondays found: ${mondays.map(m => m.toISOString().slice(0,10)).join(', ')}`);
-    console.log(`Last Monday selected: ${mondays.length > 0 ? mondays[mondays.length - 1].toISOString().slice(0,10) : 'null'}`);
-  }
   
   return mondays.length > 0 ? mondays[mondays.length - 1] : null;
 }
@@ -213,11 +187,6 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
     
     const [year, month] = monthKey.split('-').map(Number);
     
-    // Debug: Show month keys and their meanings
-    if (year === 2025 && (month === 4 || month === 5)) {
-      const monthName = month === 4 ? 'May' : 'June';
-      console.log(`Processing ${monthKey} = ${monthName} 2025 (${monthData.length} trading days)`);
-    }
     
     let entryMonday, exitMonday;
     
@@ -238,29 +207,12 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
       exitMonday = getNthMondayOfMonth(nextYear, nextMonth + 1, 1);
     }
     
-    if (!entryMonday || !exitMonday) {
-      // Debug: Log why trade was skipped
-      console.log(`Skipped ${monthKey}: Entry ${entryMonday ? entryMonday.toISOString().slice(0,10) : 'null'}, Exit ${exitMonday ? exitMonday.toISOString().slice(0,10) : 'null'}`);
-      return;
-    }
+    if (!entryMonday || !exitMonday) return;
     
     // Find closest trading days to target Mondays
     const entryDay = findClosestTradingDay(monthData, entryMonday);
     const exitDay = findClosestTradingDay(monthData, exitMonday);
     
-    // Debug: Log calculated Mondays
-    if (monthKey.includes('2025-5') || monthKey.includes('2025-6')) { // June 2025
-      console.log(`${monthKey} Strategy ${strategyType}: Entry ${entryMonday.toISOString().slice(0,10)} → Exit ${exitMonday.toISOString().slice(0,10)}`);
-      console.log(`   Found entry day: ${entryDay ? entryDay.date.toISOString().slice(0,10) : 'null'}`);
-      console.log(`   Found exit day: ${exitDay ? exitDay.date.toISOString().slice(0,10) : 'null'}`);
-      
-      if (entryMonday.toISOString().slice(0,10) === '2025-06-30') {
-        console.log(`🔍 June 30th trade attempt - Entry found: ${entryDay ? 'YES' : 'NO'}, Exit found: ${exitDay ? 'YES' : 'NO'}`);
-        if (entryDay && exitDay) {
-          console.log(`   Entry < Exit? ${entryDay.date < exitDay.date}`);
-        }
-      }
-    }
     
     if (entryDay && exitDay && entryDay.date < exitDay.date) {
       // Basic strategy return
@@ -310,10 +262,11 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
         exitPrice: exitDay.close
       });
       
-      // Debug logging for specific ticker
-      if (data[0] && data[0].date && data[0].date.getFullYear && monthData.some(d => d.close > 15 && d.close < 25)) {
-        console.log(`Trade: ${entryDay.date.toISOString().slice(0,10)} $${entryDay.close.toFixed(2)} → ${exitDay.date.toISOString().slice(0,10)} $${exitDay.close.toFixed(2)} = ${finalReturn.toFixed(1)}%`);
+      // Debug: Log SBET June 30th trades specifically
+      if (data[0] && entryDay.date.toISOString().slice(0,10) === '2025-06-30') {
+        console.log(`🎯 SBET June 30th Trade: $${entryDay.close.toFixed(2)} → $${exitDay.close.toFixed(2)} = ${finalReturn.toFixed(1)}% (${strategyType})`);
       }
+      
     }
   });
   
@@ -535,10 +488,6 @@ async function runEnhancedAnalysis(apiKey) {
 }
 
 exports.handler = async (event, context) => {
-  console.log('=== ENHANCED PIPELINE FUNCTION START ===');
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('Event received');
-  
   // Set function timeout warning
   context.callbackWaitsForEmptyEventLoop = false;
   
@@ -567,11 +516,8 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    console.log('Enhanced Pipeline: Function invoked');
-    console.log('Event method:', event.httpMethod);
-    console.log('Event headers:', JSON.stringify(event.headers, null, 2));
     console.log('Enhanced Pipeline: Starting live market analysis...');
-    console.log(`Analyzing FULL universe of ${ANALYSIS_TICKERS.length} tickers with smart caching...`);
+    console.log(`Analyzing ${ANALYSIS_TICKERS.length} tickers with smart caching...`);
     
     const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
     if (!POLYGON_API_KEY) {
@@ -595,11 +541,7 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('=== ENHANCED PIPELINE ERROR ===');
-    console.error('Error message:', error.message);
-    console.error('Error name:', error.name);
-    console.error('Stack trace:', error.stack);
-    console.error('Event that caused error:', JSON.stringify(event, null, 2));
+    console.error('Enhanced Pipeline Error:', error.message);
     
     // Return a valid JSON response even on error
     return {
