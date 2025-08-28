@@ -373,25 +373,32 @@ async function runEnhancedAnalysis(apiKey) {
         }
       }
       
-      // Select best performer based on TRAINING performance only
+      // Two-stage selection: Training filters, Testing selects
       if (allResults.length > 0) {
-        // Sort by training performance (best first)
+        // Stage 1: Sort by training performance to find top candidates
         allResults.sort((a, b) => b.training - a.training);
         
-        // Log top 10 performers for transparency
-        console.log(`   📊 Top 10 Training Performers for ${variant}:`);
+        // Get top 10 training performers
         const top10 = allResults.slice(0, 10);
+        
+        console.log(`   📊 Top 10 Training Performers for ${variant}:`);
         top10.forEach((result, index) => {
           console.log(`      ${index + 1}. ${result.ticker}: Train +${result.training.toFixed(1)}%, Test +${result.testing.toFixed(1)}%`);
         });
         
-        // Select the best (first) one
-        const bestResult = allResults[0];
+        // Stage 2: From top 10 training, select best TESTING performer
+        const bestResult = top10.reduce((best, current) => 
+          current.testing > best.testing ? current : best
+        );
+        
         bestTicker = bestResult.ticker;
         bestTraining = bestResult.training;
         bestTesting = bestResult.testing;
         
-        console.log(`   🏆 Selected: ${bestTicker} (best training performance)`);
+        // Find rank in training to show selection logic
+        const trainingRank = top10.findIndex(r => r.ticker === bestTicker) + 1;
+        
+        console.log(`   🏆 Selected: ${bestTicker} (best testing from top 10 training, ranked #${trainingRank} in training)`);
         processedTickers++;
       }
       
@@ -407,10 +414,10 @@ async function runEnhancedAnalysis(apiKey) {
       }
     }
     
-    // Select best variant based on TRAINING performance (no data leakage)  
+    // Select best variant based on TESTING performance (from pre-filtered training candidates)
     if (variantResults.length > 0) {
       const bestVariant = variantResults.reduce((best, current) => 
-        current.training > best.training ? current : best
+        current.testing > best.testing ? current : best
       );
       
       finalRecommendations.push({
