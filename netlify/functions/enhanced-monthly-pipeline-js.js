@@ -305,7 +305,7 @@ async function runEnhancedAnalysis(apiKey) {
   console.log('📊 Downloading stock data ONCE per ticker (smart caching)...');
   
   const tickerDataCache = new Map();
-  const tickersToTest = ANALYSIS_TICKERS.slice(0, 150); // Can now test more with caching!
+  const tickersToTest = ANALYSIS_TICKERS; // Full universe - only 290 API calls total!
   
   console.log(`🎯 Downloading data for ${tickersToTest.length} tickers...`);
   
@@ -486,7 +486,7 @@ exports.handler = async (event, context) => {
 
   try {
     console.log('Enhanced Pipeline: Starting live market analysis...');
-    console.log('Analyzing top 150 high-performance tickers (6 batches to stay under 30s limit)...');
+    console.log(`Analyzing FULL universe of ${ANALYSIS_TICKERS.length} tickers with smart caching...`);
     
     const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
     if (!POLYGON_API_KEY) {
