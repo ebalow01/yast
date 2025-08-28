@@ -65,6 +65,25 @@ async function fetchTickerData(ticker, apiKey) {
     console.log(`📊 Fetching ${ticker} data from ${startDate} to ${endDate}...`);
     console.log(`🌐 API URL: https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${startDate}/${endDate}?adjusted=true&sort=asc&apiKey=***`);
     const data = await httpsGet(url);
+    
+    // Debug: Check if June 30, 2025 data exists
+    if (ticker === 'SBET' && data.results) {
+      const june30_2025 = data.results.find(bar => {
+        const date = new Date(bar.t);
+        return date.getFullYear() === 2025 && date.getMonth() === 5 && date.getDate() === 30;
+      });
+      if (june30_2025) {
+        console.log(`✅ SBET has June 30, 2025 data: $${june30_2025.c}`);
+      } else {
+        console.log(`❌ SBET missing June 30, 2025 data`);
+        // Show what dates we DO have around June 30
+        const juneDates = data.results.filter(bar => {
+          const date = new Date(bar.t);
+          return date.getFullYear() === 2025 && date.getMonth() === 5 && date.getDate() >= 25;
+        });
+        console.log(`June 2025 dates available: ${juneDates.map(d => new Date(d.t).toISOString().slice(0,10)).join(', ')}`);
+      }
+    }
     await delay(200); // Reduced delay for faster processing
     
     if (data.results && data.results.length > 100) { // Need sufficient data
