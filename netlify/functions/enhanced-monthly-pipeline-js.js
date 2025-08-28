@@ -182,6 +182,13 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
     months[monthKey].push({ ...day, index, rsi: rsiData[index] || null });
   });
   
+  // Create full dataset with RSI for cross-month lookups
+  const fullDataWithRsi = data.map((day, index) => ({
+    ...day,
+    index,
+    rsi: rsiData[index] || null
+  }));
+  
   Object.entries(months).forEach(([monthKey, monthData]) => {
     if (monthData.length < 15) return; // Need enough trading days
     
@@ -212,7 +219,11 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
     
     // Find closest trading days to target Mondays
     const entryDay = findClosestTradingDay(monthData, entryMonday);
-    const exitDay = findClosestTradingDay(monthData, exitMonday);
+    
+    // For LAST→1ST, exit day might be in next month, so search full dataset
+    const exitDay = strategyType.includes('LAST→1ST') ? 
+      findClosestTradingDay(fullDataWithRsi, exitMonday) : 
+      findClosestTradingDay(monthData, exitMonday);
     
     
     if (entryDay && exitDay && entryDay.date < exitDay.date) {
@@ -263,9 +274,12 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
         exitPrice: exitDay.close
       });
       
-      // Debug: Log ALL SBET trades
+      // Debug: Log ALL SBET trades with Monday targets
       if (data.some && data.some(d => d.close > 8 && d.close < 30)) { // SBET price range filter
         console.log(`📈 SBET Trade: ${entryDay.date.toISOString().slice(0,10)} $${entryDay.close.toFixed(2)} → ${exitDay.date.toISOString().slice(0,10)} $${exitDay.close.toFixed(2)} = ${finalReturn.toFixed(1)}% (${strategyType})`);
+        if (strategyType.includes('LAST→1ST')) {
+          console.log(`   Target: ${entryMonday.toISOString().slice(0,10)} → ${exitMonday.toISOString().slice(0,10)}`);
+        }
       }
       
     }
