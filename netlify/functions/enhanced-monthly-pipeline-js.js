@@ -206,11 +206,20 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
       exitMonday = getNthMondayOfMonth(nextYear, nextMonth + 1, 1);
     }
     
-    if (!entryMonday || !exitMonday) return;
+    if (!entryMonday || !exitMonday) {
+      // Debug: Log why trade was skipped
+      console.log(`Skipped ${monthKey}: Entry ${entryMonday ? entryMonday.toISOString().slice(0,10) : 'null'}, Exit ${exitMonday ? exitMonday.toISOString().slice(0,10) : 'null'}`);
+      return;
+    }
     
     // Find closest trading days to target Mondays
     const entryDay = findClosestTradingDay(monthData, entryMonday);
     const exitDay = findClosestTradingDay(monthData, exitMonday);
+    
+    // Debug: Log calculated Mondays
+    if (monthKey.includes('2024-5') || monthKey.includes('2024-6')) { // June 2024
+      console.log(`${monthKey} Strategy ${strategyType}: Entry ${entryMonday.toISOString().slice(0,10)} → Exit ${exitMonday.toISOString().slice(0,10)}`);
+    }
     
     if (entryDay && exitDay && entryDay.date < exitDay.date) {
       // Basic strategy return
@@ -485,6 +494,10 @@ async function runEnhancedAnalysis(apiKey) {
 }
 
 exports.handler = async (event, context) => {
+  console.log('=== ENHANCED PIPELINE FUNCTION START ===');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Event received');
+  
   // Set function timeout warning
   context.callbackWaitsForEmptyEventLoop = false;
   
@@ -513,6 +526,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    console.log('Enhanced Pipeline: Function invoked');
+    console.log('Event method:', event.httpMethod);
+    console.log('Event headers:', JSON.stringify(event.headers, null, 2));
     console.log('Enhanced Pipeline: Starting live market analysis...');
     console.log(`Analyzing FULL universe of ${ANALYSIS_TICKERS.length} tickers with smart caching...`);
     
@@ -538,8 +554,11 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('Enhanced Pipeline Error:', error);
+    console.error('=== ENHANCED PIPELINE ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error name:', error.name);
     console.error('Stack trace:', error.stack);
+    console.error('Event that caused error:', JSON.stringify(event, null, 2));
     
     // Return a valid JSON response even on error
     return {
@@ -551,6 +570,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         error: 'Enhanced Pipeline execution failed',
         details: error.message,
+        errorName: error.name,
         recommendations: [],
         summary: {
           combinedReturn: '0%',
