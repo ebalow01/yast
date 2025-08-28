@@ -245,6 +245,15 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
     // Debug: Log calculated Mondays
     if (monthKey.includes('2025-5') || monthKey.includes('2025-6')) { // June 2025
       console.log(`${monthKey} Strategy ${strategyType}: Entry ${entryMonday.toISOString().slice(0,10)} → Exit ${exitMonday.toISOString().slice(0,10)}`);
+      console.log(`   Found entry day: ${entryDay ? entryDay.date.toISOString().slice(0,10) : 'null'}`);
+      console.log(`   Found exit day: ${exitDay ? exitDay.date.toISOString().slice(0,10) : 'null'}`);
+      
+      if (entryMonday.toISOString().slice(0,10) === '2025-06-30') {
+        console.log(`🔍 June 30th trade attempt - Entry found: ${entryDay ? 'YES' : 'NO'}, Exit found: ${exitDay ? 'YES' : 'NO'}`);
+        if (entryDay && exitDay) {
+          console.log(`   Entry < Exit? ${entryDay.date < exitDay.date}`);
+        }
+      }
     }
     
     if (entryDay && exitDay && entryDay.date < exitDay.date) {
