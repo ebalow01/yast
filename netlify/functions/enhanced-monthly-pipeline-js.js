@@ -259,6 +259,11 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
         entryPrice: entryDay.close,
         exitPrice: exitDay.close
       });
+      
+      // Debug logging for specific ticker
+      if (data[0] && data[0].date && data[0].date.getFullYear && monthData.some(d => d.close > 15 && d.close < 25)) {
+        console.log(`Trade: ${entryDay.date.toISOString().slice(0,10)} $${entryDay.close.toFixed(2)} → ${exitDay.date.toISOString().slice(0,10)} $${exitDay.close.toFixed(2)} = ${finalReturn.toFixed(1)}%`);
+      }
     }
   });
   
