@@ -262,9 +262,9 @@ function calculateStrategyReturns(data, strategyType, rsiData) {
         exitPrice: exitDay.close
       });
       
-      // Debug: Log SBET June 30th trades specifically
-      if (data[0] && entryDay.date.toISOString().slice(0,10) === '2025-06-30') {
-        console.log(`🎯 SBET June 30th Trade: $${entryDay.close.toFixed(2)} → $${exitDay.close.toFixed(2)} = ${finalReturn.toFixed(1)}% (${strategyType})`);
+      // Debug: Log ALL SBET trades
+      if (data.some && data.some(d => d.close > 8 && d.close < 30)) { // SBET price range filter
+        console.log(`📈 SBET Trade: ${entryDay.date.toISOString().slice(0,10)} $${entryDay.close.toFixed(2)} → ${exitDay.date.toISOString().slice(0,10)} $${exitDay.close.toFixed(2)} = ${finalReturn.toFixed(1)}% (${strategyType})`);
       }
       
     }
