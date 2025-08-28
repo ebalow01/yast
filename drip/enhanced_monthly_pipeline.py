@@ -192,9 +192,20 @@ def analyze_enhanced_strategies(df, strategy_type, train_months, test_months):
                     sell_date = sell_date_dt.date()
                     thursday_date = get_thursday_of_week(buy_date_dt).date()
                     
-                    # Find closest trading data
+                    # Find closest trading data - use next available day if exact date missing
                     buy_data = df[df['date'].dt.date >= buy_date].head(1)
                     sell_data = df[df['date'].dt.date >= sell_date].head(1)
+                    
+                    # If no data found within 5 days, skip this trade
+                    if len(buy_data) > 0:
+                        actual_buy_date = buy_data.iloc[0]['date'].date()
+                        if (actual_buy_date - buy_date).days > 5:
+                            continue
+                    
+                    if len(sell_data) > 0:
+                        actual_sell_date = sell_data.iloc[0]['date'].date() 
+                        if (actual_sell_date - sell_date).days > 5:
+                            continue
                     thursday_data = df[df['date'].dt.date >= thursday_date].head(1)
                     
                     if len(buy_data) > 0 and len(sell_data) > 0:
@@ -531,7 +542,7 @@ def enhanced_monthly_pipeline():
     print(f"{'Strategy':<15} {'Best Variant':<18} {'Ticker':<8} {'Training':<10} {'Testing':<10}")
     print("-" * 90)
     
-    combined_testing_return = 1.0
+    testing_returns = []
     
     for strategy, rec in all_recommendations.items():
         strategy_formatted = strategy.replace('_to_', '→').upper()
@@ -541,12 +552,14 @@ def enhanced_monthly_pipeline():
         print(f"{strategy_formatted:<15} {variant_name:<18} {data['ticker']:<8} "
               f"{data['training_return']:+8.1f}% {data['testing_return']:+8.1f}%")
         
-        combined_testing_return *= (1 + data['testing_return'] / 100)
+        testing_returns.append(data['testing_return'])
     
-    combined_testing_return = (combined_testing_return - 1) * 100
+    # Calculate average testing return instead of compound
+    average_testing_return = sum(testing_returns) / len(testing_returns) if testing_returns else 0
     
     print(f"\n🎯 ENHANCED PIPELINE SUMMARY:")
-    print(f"   Combined Testing Return: {combined_testing_return:+.1f}%")
+    print(f"   Average Testing Return: {average_testing_return:+.1f}%")
+    print(f"   Individual Returns: {' | '.join([f'{r:+.1f}%' for r in testing_returns])}")
     print(f"   Strategy Variants Tested: {len(variants)} per strategy")
     print(f"   Enhanced Features: RSI Filter, Double Down, Stop Loss")
     print(f"   Price Filter: All tickers > $5")

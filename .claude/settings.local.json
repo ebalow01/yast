@@ -27,8 +27,17 @@
       "Bash(git rm:*)",
       "Bash(git filter-branch:*)",
       "Bash(npm run:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(findstr:*)",
+      "Bash(sed:*)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(del nul)",
+      "Bash(awk:*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\c\\Users\\ebalo\\new_dashboard\\yast"
+    ]
   }
 }

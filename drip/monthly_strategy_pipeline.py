@@ -183,9 +183,20 @@ def analyze_strategy_performance(df, strategy_type, train_months, test_months):
                     buy_date = buy_date_dt.date()
                     sell_date = sell_date_dt.date()
                     
-                    # Find closest trading data
+                    # Find closest trading data - use next available day if exact date missing
                     buy_data = df[df['date'].dt.date >= buy_date].head(1)
                     sell_data = df[df['date'].dt.date >= sell_date].head(1)
+                    
+                    # If no data found within 5 days, skip this trade
+                    if len(buy_data) > 0:
+                        actual_buy_date = buy_data.iloc[0]['date'].date()
+                        if (actual_buy_date - buy_date).days > 5:
+                            continue
+                    
+                    if len(sell_data) > 0:
+                        actual_sell_date = sell_data.iloc[0]['date'].date() 
+                        if (actual_sell_date - sell_date).days > 5:
+                            continue
                     
                     if len(buy_data) > 0 and len(sell_data) > 0:
                         buy_row = buy_data.iloc[0]
@@ -485,7 +496,7 @@ def monthly_strategy_pipeline():
     print(f"\n📊 COMBINED PIPELINE PERFORMANCE:")
     print("=" * 50)
     
-    combined_testing_return = 1.0
+    testing_returns = []
     
     print(f"{'Strategy':<15} {'Ticker':<8} {'Training':<10} {'Testing':<10} {'Price'}")
     print("-" * 65)
@@ -496,12 +507,14 @@ def monthly_strategy_pipeline():
               f"{data['training_return']:+8.1f}% {data['testing_return']:+8.1f}% "
               f"${data['current_price']:<6.2f}")
         
-        combined_testing_return *= (1 + data['testing_return'] / 100)
+        testing_returns.append(data['testing_return'])
     
-    combined_testing_return = (combined_testing_return - 1) * 100
+    # Calculate average testing return instead of compound
+    average_testing_return = sum(testing_returns) / len(testing_returns) if testing_returns else 0
     
     print(f"\n🎯 PIPELINE SUMMARY:")
-    print(f"   Combined Testing Return: {combined_testing_return:+.1f}%")
+    print(f"   Average Testing Return: {average_testing_return:+.1f}%")
+    print(f"   Individual Returns: {' | '.join([f'{r:+.1f}%' for r in testing_returns])}")
     print(f"   Methodology: Top 10 training → Best testing")
     print(f"   Price Filter: All tickers > $5")
     print(f"   Data Period: 7 months (4 train + 3 test)")
