@@ -202,16 +202,6 @@ async function fetchTickerData(ticker, apiKey) {
         if (medianDividend && medianHistorical && medianHistorical > 0) {
           const erosionRate = ((medianDividend - medianHistorical) / medianHistorical);
           divErosion = erosionRate * 100; // Convert to percentage (no multiplication by 4)
-          
-          // Debug logging for QDTY
-          if (ticker === 'QDTY') {
-            console.log(`QDTY Dividend Erosion Debug:`);
-            console.log(`  Recent median dividend: $${medianDividend}`);
-            console.log(`  Historical median dividend: $${medianHistorical}`);
-            console.log(`  Erosion calculation: (${medianDividend} - ${medianHistorical}) / ${medianHistorical} * 100 = ${divErosion.toFixed(2)}%`);
-          }
-        } else if (ticker === 'QDTY') {
-          console.log(`QDTY Dividend Erosion Debug: Missing dividend data. Recent: $${medianDividend}, Historical: $${medianHistorical}`);
         }
       }
     }
@@ -234,15 +224,6 @@ async function fetchTickerData(ticker, apiKey) {
     if (currentPrice && twelveWeeksAgoPrice && twelveWeeksAgoPrice > 0) {
       // (current price - 12 weeks ago price) / 12 weeks ago price
       navPerformance = ((currentPrice - twelveWeeksAgoPrice) / twelveWeeksAgoPrice) * 100; // As percentage (12-week change)
-      
-      // Debug logging for QDTY
-      if (ticker === 'QDTY') {
-        console.log(`QDTY NAV Debug: Current price: $${currentPrice}, 12-weeks ago price: $${twelveWeeksAgoPrice}`);
-        console.log(`QDTY NAV Calculation: (${currentPrice} - ${twelveWeeksAgoPrice}) / ${twelveWeeksAgoPrice} * 100 = ${navPerformance.toFixed(2)}%`);
-        console.log(`QDTY Date range for 12-week lookup: ${eightyEightDaysAgo} to ${eightyDaysAgo}`);
-      }
-    } else if (ticker === 'QDTY') {
-      console.log(`QDTY NAV Debug: Missing price data. Current: $${currentPrice}, 12-weeks ago: $${twelveWeeksAgoPrice}`);
     }
     
     // Calculate 14-day volatility (standard deviation of daily returns)
@@ -293,8 +274,8 @@ async function fetchTickerData(ticker, apiKey) {
       dividendCount: lastDividends.length
     };
     
-    // Add debug info for NVDW, YETH, HOOW, PLTW, and QDTY
-    if (ticker === 'NVDW' || ticker === 'YETH' || ticker === 'HOOW' || ticker === 'PLTW' || ticker === 'QDTY') {
+    // Add debug info for NVDW, YETH, HOOW, and PLTW
+    if (ticker === 'NVDW' || ticker === 'YETH' || ticker === 'HOOW' || ticker === 'PLTW') {
       result.debug = {
         totalDividends: dividendData.results ? dividendData.results.length : 0,
         consistentDividendsCount: consistentDividends ? consistentDividends.length : 0,
@@ -304,19 +285,6 @@ async function fetchTickerData(ticker, apiKey) {
         selectionMethod: frequencyChangeIndex > 0 && frequencyChangeIndex >= 6 ? 'pre-change' :
                         consistentDividends && consistentDividends.length >= 13 ? 'standard' : 'fallback'
       };
-      
-      // Add NAV calculation debug for QDTY specifically
-      if (ticker === 'QDTY') {
-        result.navDebug = {
-          currentPrice: currentPrice,
-          twelveWeeksAgoPrice: twelveWeeksAgoPrice,
-          navCalculation: twelveWeeksAgoPrice ? `(${currentPrice} - ${twelveWeeksAgoPrice}) / ${twelveWeeksAgoPrice} * 100 = ${navPerformance?.toFixed(2)}%` : 'No 12-week price data',
-          priceChangeRaw: currentPrice && twelveWeeksAgoPrice ? currentPrice - twelveWeeksAgoPrice : null,
-          priceChangePercent: navPerformance,
-          twelveWeeksAgoUrl: `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${eightyEightDaysAgo}/${eightyDaysAgo}?adjusted=true&sort=desc&limit=1`,
-          dateRange: `${eightyEightDaysAgo} to ${eightyDaysAgo}`
-        };
-      }
     }
     
     return result;
