@@ -251,10 +251,16 @@ async function fetchTickerData(ticker, apiKey) {
       }
     }
     
+    // Calculate adjusted dividend yield (apply erosion multiplicatively)
+    let adjustedYield = forwardYield;
+    if (forwardYield != null && divErosion != null) {
+      adjustedYield = forwardYield * (1 + divErosion / 100);
+    }
+    
     // Calculate Sharpe Ratio (assuming 2% risk-free rate annually)
     let sharpeRatio = null;
-    if (forwardYield != null && navPerformance != null && divErosion != null && volatility14Day != null && volatility14Day > 0) {
-      const totalReturn = forwardYield + navPerformance + divErosion; // Complete total return including dividend erosion
+    if (adjustedYield != null && navPerformance != null && volatility14Day != null && volatility14Day > 0) {
+      const totalReturn = adjustedYield + navPerformance; // Total return = adjusted yield + NAV performance
       const riskFreeRate = 2; // 2% risk-free rate
       sharpeRatio = (totalReturn - riskFreeRate) / volatility14Day;
     }
@@ -266,6 +272,7 @@ async function fetchTickerData(ticker, apiKey) {
       medianHistorical: medianHistorical,
       divErosion: divErosion,
       forwardYield: forwardYield,
+      adjustedYield: adjustedYield,
       navPerformance: navPerformance,
       volatility14Day: volatility14Day,
       sharpeRatio: sharpeRatio,

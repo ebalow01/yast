@@ -2125,7 +2125,9 @@ export default function DividendAnalysisDashboard() {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
       const divErosion = polygonData[item.ticker]?.divErosion || 0;
-      const totalReturn = forwardYield + navPerformance + divErosion;
+      // Use adjusted yield (multiplicative erosion) or fall back to additive if not available
+      const adjustedYield = polygonData[item.ticker]?.adjustedYield ?? (forwardYield * (1 + divErosion / 100));
+      const totalReturn = adjustedYield + navPerformance;
       const volatility = polygonData[item.ticker]?.volatility14Day || 20; // Default 20% if missing
       const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
       
@@ -3441,7 +3443,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <Tooltip title="Total expected return - sum of forward yield + NAV performance (12-week) + dividend variation (12-week)">
+                                <Tooltip title="Total expected return - sum of dividend-erosion-adjusted forward yield + NAV performance (12-week)">
                                   <TableSortLabel
                                     active={sortField === 'totalReturn'}
                                     direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
@@ -3544,7 +3546,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     const navPerf = polygonData[item.ticker]?.navPerformance;
                                     const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                     if (fwdYield != null && navPerf != null) {
-                                      return `${(fwdYield + navPerf + divErosion).toFixed(1)}%`;
+                                      const adjustedYield = fwdYield * (1 + divErosion / 100);
+                                      return `${(adjustedYield + navPerf).toFixed(1)}%`;
                                     }
                                     return '-';
                                   })()}
@@ -3808,7 +3811,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         const navPerf = polygonData[item.ticker]?.navPerformance;
                                         const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                         if (fwdYield != null && navPerf != null) {
-                                          return `${(fwdYield + navPerf + divErosion).toFixed(1)}%`;
+                                          const adjustedYield = fwdYield * (1 + divErosion / 100);
+                                          return `${(adjustedYield + navPerf).toFixed(1)}%`;
                                         }
                                         return '-';
                                       })()}
@@ -3982,7 +3986,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       const navPerf = polygonData[item.ticker]?.navPerformance;
                                       const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                       if (fwdYield != null && navPerf != null) {
-                                        return `${(fwdYield + navPerf + divErosion).toFixed(1)}%`;
+                                        const adjustedYield = fwdYield * (1 + divErosion / 100);
+                                        return `${(adjustedYield + navPerf).toFixed(1)}%`;
                                       }
                                       return '-';
                                     })()}
