@@ -597,7 +597,7 @@ function calculateMPTAllocation(allData: DividendData[], aiOutlooks?: Record<str
     }
   }
   
-  // Filter out NAV death spirals (NAV performance worse than -50%)
+  // Filter out NAV death spirals (NAV performance worse than -50% over 12 weeks)
   const preNavCount = allETFs.length;
   const navDeathSpirals: string[] = [];
   
@@ -2088,7 +2088,7 @@ export default function DividendAnalysisDashboard() {
       return true; // Include tickers without AI analysis
     });
     
-    // Filter out NAV death spirals (NAV performance worse than -50%)
+    // Filter out NAV death spirals (NAV performance worse than -50% over 12 weeks)
     const navDeathSpirals: string[] = [];
     const nonDeathSpiralTickers = nonBearishTickers.filter(item => {
       const polygonNavData = polygonData?.[item.ticker];
@@ -3441,7 +3441,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <Tooltip title="Total expected return - sum of forward yield + NAV performance + dividend variation">
+                                <Tooltip title="Total expected return - sum of forward yield + NAV performance (12-week) + dividend variation (12-week)">
                                   <TableSortLabel
                                     active={sortField === 'totalReturn'}
                                     direction={sortField === 'totalReturn' ? sortDirection : 'asc'}

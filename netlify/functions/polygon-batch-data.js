@@ -54,13 +54,13 @@ async function fetchTickerData(ticker, apiKey) {
       }
     }
     
-    // Fetch stock price from 30 days ago for NAV calculation
+    // Fetch stock price from 12 weeks (84 days) ago for NAV calculation
     // Use a range to handle weekends/holidays
-    const thirtyFiveDaysAgo = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const twentyEightDaysAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const eightyEightDaysAgo = new Date(Date.now() - 88 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const eightyDaysAgo = new Date(Date.now() - 80 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
-    const monthAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${thirtyFiveDaysAgo}/${twentyEightDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
-    const monthAgoData = await httpsGet(monthAgoUrl);
+    const twelveWeeksAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${eightyEightDaysAgo}/${eightyDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
+    const twelveWeeksAgoData = await httpsGet(twelveWeeksAgoUrl);
     await delay(100); // Rate limiting
     
     // Fetch 14-day historical data for volatility calculation
@@ -206,10 +206,10 @@ async function fetchTickerData(ticker, apiKey) {
       }
     }
     
-    // Get the month ago price
-    let monthAgoPrice = null;
-    if (monthAgoData.results && monthAgoData.results.length > 0) {
-      monthAgoPrice = monthAgoData.results[0].c; // closing price from ~30 days ago
+    // Get the 12 weeks ago price
+    let twelveWeeksAgoPrice = null;
+    if (twelveWeeksAgoData.results && twelveWeeksAgoData.results.length > 0) {
+      twelveWeeksAgoPrice = twelveWeeksAgoData.results[0].c; // closing price from ~84 days ago
     }
     
     // Calculate forward yield (annualized)
@@ -219,11 +219,11 @@ async function fetchTickerData(ticker, apiKey) {
       forwardYield = (medianDividend * 52 / currentPrice) * 100; // As percentage
     }
     
-    // Calculate NAV (monthly price performance)
+    // Calculate NAV (12-week price performance - matching dividend erosion period)
     let navPerformance = null;
-    if (currentPrice && monthAgoPrice && monthAgoPrice > 0) {
-      // (current price - month ago price) / month ago price
-      navPerformance = ((currentPrice - monthAgoPrice) / monthAgoPrice) * 100; // As percentage (actual monthly change)
+    if (currentPrice && twelveWeeksAgoPrice && twelveWeeksAgoPrice > 0) {
+      // (current price - 12 weeks ago price) / 12 weeks ago price
+      navPerformance = ((currentPrice - twelveWeeksAgoPrice) / twelveWeeksAgoPrice) * 100; // As percentage (12-week change)
     }
     
     // Calculate 14-day volatility (standard deviation of daily returns)
