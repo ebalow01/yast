@@ -201,7 +201,16 @@ async function fetchTickerData(ticker, apiKey) {
         // Calculate dividend erosion (difference percentage)
         if (medianDividend && medianHistorical && medianHistorical > 0) {
           const erosionRate = ((medianDividend - medianHistorical) / medianHistorical);
-          divErosion = erosionRate * 100; // Convert to percentage (no multiplication by 4)
+          let rawErosion = erosionRate * 100; // Convert to percentage
+          
+          // Cap dividend erosion/appreciation at ±30% to avoid unrealistic projections
+          // Original purpose: identify gradual decline, not capture massive one-time adjustments
+          divErosion = Math.max(-30, Math.min(30, rawErosion));
+          
+          // Log when we cap the value
+          if (Math.abs(rawErosion) > 30) {
+            console.log(`${ticker}: Capped dividend change from ${rawErosion.toFixed(1)}% to ${divErosion.toFixed(1)}%`);
+          }
         }
       }
     }
