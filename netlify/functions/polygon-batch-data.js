@@ -203,13 +203,14 @@ async function fetchTickerData(ticker, apiKey) {
           const erosionRate = ((medianDividend - medianHistorical) / medianHistorical);
           let rawErosion = erosionRate * 100; // Convert to percentage
           
-          // Cap dividend erosion/appreciation at ±30% to avoid unrealistic projections
+          // Cap dividend appreciation at +30% to avoid unrealistic projections
+          // BUT allow full dividend declines - that's what we want to detect!
           // Original purpose: identify gradual decline, not capture massive one-time adjustments
-          divErosion = Math.max(-30, Math.min(30, rawErosion));
-          
-          // Log when we cap the value
-          if (Math.abs(rawErosion) > 30) {
-            console.log(`${ticker}: Capped dividend change from ${rawErosion.toFixed(1)}% to ${divErosion.toFixed(1)}%`);
+          if (rawErosion > 30) {
+            divErosion = 30;
+            console.log(`${ticker}: Capped dividend appreciation from ${rawErosion.toFixed(1)}% to ${divErosion.toFixed(1)}%`);
+          } else {
+            divErosion = rawErosion; // Keep all declines and reasonable increases
           }
         }
       }
