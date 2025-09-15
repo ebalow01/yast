@@ -2125,9 +2125,9 @@ export default function DividendAnalysisDashboard() {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
       const divErosion = polygonData[item.ticker]?.divErosion || 0;
-      // Use adjusted yield (multiplicative erosion) or fall back to additive if not available
-      const adjustedYield = polygonData[item.ticker]?.adjustedYield ?? (forwardYield * (1 + divErosion / 100));
-      const totalReturn = adjustedYield + navPerformance;
+      // Use 12-week scaled dividend return or calculate it
+      const dividendReturn12Week = polygonData[item.ticker]?.dividendReturn12Week ?? (forwardYield * (12/52));
+      const totalReturn = dividendReturn12Week + navPerformance + divErosion;
       const volatility = polygonData[item.ticker]?.volatility14Day || 20; // Default 20% if missing
       const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
       
@@ -3443,7 +3443,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <Tooltip title="Total expected return - sum of dividend-erosion-adjusted forward yield + NAV performance (12-week)">
+                                <Tooltip title="Total 12-week expected return - sum of dividend return (12-week) + NAV performance (12-week) + dividend variation (12-week)">
                                   <TableSortLabel
                                     active={sortField === 'totalReturn'}
                                     direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
@@ -3546,8 +3546,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     const navPerf = polygonData[item.ticker]?.navPerformance;
                                     const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                     if (fwdYield != null && navPerf != null) {
-                                      const adjustedYield = fwdYield * (1 + divErosion / 100);
-                                      return `${(adjustedYield + navPerf).toFixed(1)}%`;
+                                      const dividendReturn12Week = fwdYield * (12/52);
+                                      return `${(dividendReturn12Week + navPerf + divErosion).toFixed(1)}%`;
                                     }
                                     return '-';
                                   })()}
@@ -3811,8 +3811,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         const navPerf = polygonData[item.ticker]?.navPerformance;
                                         const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                         if (fwdYield != null && navPerf != null) {
-                                          const adjustedYield = fwdYield * (1 + divErosion / 100);
-                                          return `${(adjustedYield + navPerf).toFixed(1)}%`;
+                                          const dividendReturn12Week = fwdYield * (12/52);
+                                          return `${(dividendReturn12Week + navPerf + divErosion).toFixed(1)}%`;
                                         }
                                         return '-';
                                       })()}
@@ -3986,8 +3986,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       const navPerf = polygonData[item.ticker]?.navPerformance;
                                       const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                       if (fwdYield != null && navPerf != null) {
-                                        const adjustedYield = fwdYield * (1 + divErosion / 100);
-                                        return `${(adjustedYield + navPerf).toFixed(1)}%`;
+                                        const dividendReturn12Week = fwdYield * (12/52);
+                                        return `${(dividendReturn12Week + navPerf + divErosion).toFixed(1)}%`;
                                       }
                                       return '-';
                                     })()}
