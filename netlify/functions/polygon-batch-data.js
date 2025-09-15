@@ -281,8 +281,8 @@ async function fetchTickerData(ticker, apiKey) {
       dividendCount: lastDividends.length
     };
     
-    // Add debug info for NVDW, YETH, HOOW, and PLTW
-    if (ticker === 'NVDW' || ticker === 'YETH' || ticker === 'HOOW' || ticker === 'PLTW') {
+    // Add debug info for NVDW, YETH, HOOW, PLTW, and RDTY
+    if (ticker === 'NVDW' || ticker === 'YETH' || ticker === 'HOOW' || ticker === 'PLTW' || ticker === 'RDTY') {
       result.debug = {
         totalDividends: dividendData.results ? dividendData.results.length : 0,
         consistentDividendsCount: consistentDividends ? consistentDividends.length : 0,
@@ -292,6 +292,19 @@ async function fetchTickerData(ticker, apiKey) {
         selectionMethod: frequencyChangeIndex > 0 && frequencyChangeIndex >= 6 ? 'pre-change' :
                         consistentDividends && consistentDividends.length >= 13 ? 'standard' : 'fallback'
       };
+    }
+    
+    // Additional RDTY debugging
+    if (ticker === 'RDTY') {
+      console.log(`RDTY Debug Summary:`);
+      console.log(`  Current Price: $${currentPrice}`);
+      console.log(`  12-Week Ago Price: $${twelveWeeksAgoPrice}`);
+      console.log(`  NAV Performance: ${navPerformance?.toFixed(2)}%`);
+      console.log(`  Median Recent Dividend: $${medianDividend}`);
+      console.log(`  Median Historical Dividend: $${medianHistorical}`);
+      console.log(`  Dividend Erosion: ${divErosion?.toFixed(2)}%`);
+      console.log(`  Forward Yield: ${forwardYield?.toFixed(2)}%`);
+      console.log(`  Dividend Return 12-Week: ${dividendReturn12Week?.toFixed(2)}%`);
     }
     
     return result;
