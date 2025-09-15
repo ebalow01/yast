@@ -1,5 +1,0 @@
-strategy,recommended_ticker,training_return,testing_return,current_price,testing_win_rate,training_win_rate,training_rank_in_top10,selection_method
-1ST→2ND,HL,38.68865901852578,39.03827554340329,8.03,66.66666666666666,80.0,6,Top 10 training → Best testing
-2ND→3RD,RGTI,165.20425339860716,40.765999863917536,15.39,100.0,60.0,2,Top 10 training → Best testing
-3RD→4TH,TSLL,75.90803340807928,14.41214073094963,13.5,66.66666666666666,60.0,1,Top 10 training → Best testing
-LAST→1ST,TSLQ,86.71287559317429,25.18171860997711,13.78,100.0,100.0,3,Top 10 training → Best testing

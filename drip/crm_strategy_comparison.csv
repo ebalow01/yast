@@ -1,5 +1,0 @@
-strategy,total_return,trade_count,win_rate,avg_return_per_trade,description
-Simple,47.13408491213078,43,53.48837209302325,0.9713212365604253,"Buy every 3rd Monday, sell every 4th Monday"
-RSI Filter,51.93455235256119,41,53.65853658536586,1.0943873550789742,Skip buys if RSI > 70
-Relaxed RSI,47.13408491213078,43,53.48837209302325,0.9713212365604253,"Buy if RSI 20-80, focus on RSI < 60"
-Double Down,49.35147756736136,43,53.48837209302325,1.006587055861491,Double position if RSI < 30

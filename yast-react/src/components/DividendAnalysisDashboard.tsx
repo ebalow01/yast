@@ -3419,13 +3419,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <Tooltip title="Net Asset Value annual performance - how much the ETF's underlying assets have gained/lost in value">
+                                <Tooltip title="Net Asset Value 12-week performance - how much the ETF's underlying assets have gained/lost in value over 12 weeks">
                                   <TableSortLabel
                                     active={sortField === 'nav'}
                                     direction={sortField === 'nav' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('nav')}
                                   >
-                                    <Box>NAV<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>ann</span></Box>
+                                    <Box>NAV<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>12wk</span></Box>
                                   </TableSortLabel>
                                 </Tooltip>
                               </TableCell>

@@ -339,6 +339,10 @@ def process_single_ticker_enhanced(args):
     
     # Download data
     df = download_ticker_data(ticker, api_key, months_back=8)
+    
+    # Add 1-second delay per worker to respect rate limits
+    time.sleep(1)
+    
     if df is None:
         return None
     
@@ -406,18 +410,40 @@ def enhanced_monthly_pipeline():
         print("❌ POLYGON_API_KEY not found in environment")
         return
     
-    # Load top volume tickers
+    # Load ticker universe
     try:
         print("📥 Loading ticker universe...")
         
-        # Use existing ticker summary if available
-        if os.path.exists('top_300_tickers_summary.csv'):
-            ticker_df = pd.read_csv('top_300_tickers_summary.csv')
-            tickers = ticker_df['ticker'].tolist()
-            print(f"✅ Loaded {len(tickers)} tickers from existing summary")
-        else:
-            print("❌ No ticker summary found. Please run basic pipeline first.")
+        # Check for combined file first, then fallback to original
+        ticker_file_paths = [
+            'combined_525_tickers_20250903_0747.csv',  # New combined file
+            'top_300_tickers_summary.csv',              # Original file
+            'combined_*_tickers_*.csv'                   # Any combined file pattern
+        ]
+        
+        ticker_df = None
+        for pattern in ticker_file_paths:
+            if '*' in pattern:
+                # Handle glob patterns
+                import glob
+                files = glob.glob(pattern)
+                if files:
+                    # Use most recent file
+                    latest_file = max(files, key=os.path.getmtime)
+                    ticker_df = pd.read_csv(latest_file)
+                    print(f"✅ Loaded {len(ticker_df)} tickers from {latest_file}")
+                    break
+            elif os.path.exists(pattern):
+                ticker_df = pd.read_csv(pattern)
+                print(f"✅ Loaded {len(ticker_df)} tickers from {pattern}")
+                break
+        
+        if ticker_df is None:
+            print("❌ No ticker file found. Please run ticker collection first.")
             return
+        
+        tickers = ticker_df['ticker'].tolist()
+        print(f"🎯 Using {len(tickers)} tickers for strategy analysis")
             
     except Exception as e:
         print(f"❌ Error loading tickers: {e}")
@@ -447,9 +473,6 @@ def enhanced_monthly_pipeline():
                         print(f"✅ Processed {successful_count} tickers...")
             except Exception as e:
                 print(f"❌ {ticker}: {e}")
-            
-            # Rate limiting (100 requests per second limit)
-            time.sleep(0.01)
     
     print(f"✅ Successfully analyzed {len(all_results)} tickers")
     

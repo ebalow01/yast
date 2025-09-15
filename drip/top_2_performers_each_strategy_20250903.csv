@@ -1,0 +1,9 @@
+ticker,strategy,variant,variant_name,training_return,testing_return,current_price
+ARRY,1st_to_2nd,basic,Basic Strategy,16.879575632847256,58.44636003466634,7.4201
+ARRY,1st_to_2nd,rsi_filter,RSI Filter (≤70),17.497986085931117,58.44636003466634,7.4201
+OPAD,2nd_to_3rd,double_down,Double Down (Thu),8.972870674817624,86.92815719223074,5.13
+FL,2nd_to_3rd,basic,Basic Strategy,-4.56841353036782,79.47044914301968,23.96
+SBET,3rd_to_4th,double_down,Double Down (Thu),-35.67374247041931,847.9840839491159,25.8182
+SBET,3rd_to_4th,stop_loss,Stop Loss (Thu),-37.87516311673327,802.5210086626187,25.8182
+BMNR,last_to_1st,basic,Basic Strategy,-20.158468974432864,182.75104295963888,42.47
+BMNR,last_to_1st,double_down,Double Down (Thu),-2.524561223831534,182.75104295963888,42.47

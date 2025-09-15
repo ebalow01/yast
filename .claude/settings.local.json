@@ -33,7 +33,8 @@
       "Bash(timeout:*)",
       "Bash(curl:*)",
       "Bash(del nul)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(cat:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
