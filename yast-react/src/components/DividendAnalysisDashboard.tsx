@@ -2295,14 +2295,18 @@ export default function DividendAnalysisDashboard() {
           bValue = polygonData[b.ticker]?.divErosion || 0;
           break;
         case 'totalReturn':
-          const aFwd = polygonData[a.ticker]?.forwardYield || 0;
+          // Use 12-week dividend return to match our updated calculation
+          const aForwardYield = polygonData[a.ticker]?.forwardYield || 0;
+          const aDividendReturn12Week = polygonData[a.ticker]?.dividendReturn12Week ?? (aForwardYield * (12/52));
           const aNav = polygonData[a.ticker]?.navPerformance || 0;
           const aDivErosion = polygonData[a.ticker]?.divErosion || 0;
-          aValue = aFwd + aNav + aDivErosion;
-          const bFwd = polygonData[b.ticker]?.forwardYield || 0;
+          aValue = aDividendReturn12Week + aNav + aDivErosion;
+          
+          const bForwardYield = polygonData[b.ticker]?.forwardYield || 0;
+          const bDividendReturn12Week = polygonData[b.ticker]?.dividendReturn12Week ?? (bForwardYield * (12/52));
           const bNav = polygonData[b.ticker]?.navPerformance || 0;
           const bDivErosion = polygonData[b.ticker]?.divErosion || 0;
-          bValue = bFwd + bNav + bDivErosion;
+          bValue = bDividendReturn12Week + bNav + bDivErosion;
           break;
         case 'volatility':
           aValue = polygonData[a.ticker]?.volatility14Day || 0;
