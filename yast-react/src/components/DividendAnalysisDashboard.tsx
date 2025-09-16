@@ -1969,14 +1969,10 @@ export default function DividendAnalysisDashboard() {
 
   // Modern Portfolio Theory allocation calculation
   const calculateMPTAllocations = (assets) => {
-    // Ensure Cash gets minimum 5% allocation as specified
-    const minCashAllocation = 5;
+    // No longer reserving cash allocation - users can manage cash themselves
     
     // Calculate risk-adjusted scores for all assets
     const assetsWithScores = assets.map(asset => {
-      if (asset.ticker === 'CASH') {
-        return { ...asset, riskAdjustedScore: 0.5 }; // Moderate score for cash
-      }
       
       const sharpe = asset.sharpeRatio || 0;
       const totalReturn = asset.calculatedTotalReturn || 0;
@@ -1988,26 +1984,21 @@ export default function DividendAnalysisDashboard() {
       return { ...asset, riskAdjustedScore };
     });
     
-    // Calculate total score (excluding cash for proportional allocation)
-    const nonCashAssets = assetsWithScores.filter(a => a.ticker !== 'CASH');
-    const totalScore = nonCashAssets.reduce((sum, asset) => sum + Math.max(0, asset.riskAdjustedScore), 0);
+    // Calculate total score for all assets
+    const totalScore = assetsWithScores.reduce((sum, asset) => sum + Math.max(0, asset.riskAdjustedScore), 0);
     
-    // Allocate remaining 95% proportionally among non-cash assets
-    const remainingAllocation = 100 - minCashAllocation;
+    // Allocate 100% among assets
+    const totalAllocation = 100;
     
     // First pass: calculate raw allocations
     let rawAllocations = assetsWithScores.map(asset => {
-      if (asset.ticker === 'CASH') {
-        return { ...asset, rawAllocation: minCashAllocation };
-      }
-      
       if (totalScore === 0) {
         // Equal weight if no valid scores
-        return { ...asset, rawAllocation: remainingAllocation / nonCashAssets.length };
+        return { ...asset, rawAllocation: totalAllocation / assetsWithScores.length };
       }
       
       const proportionalWeight = Math.max(0, asset.riskAdjustedScore) / totalScore;
-      const allocation = proportionalWeight * remainingAllocation;
+      const allocation = proportionalWeight * totalAllocation;
       
       return { ...asset, rawAllocation: allocation };
     });
@@ -2027,7 +2018,7 @@ export default function DividendAnalysisDashboard() {
       if (difference > 0) {
         // Need to add percentage - find best performer with room to grow
         const eligibleToIncrease = roundedAllocations
-          .filter(asset => asset.mptAllocation < 15 && asset.ticker !== 'CASH')
+          .filter(asset => asset.mptAllocation < 15)
           .sort((a, b) => (b.rawAllocation || 0) - (a.rawAllocation || 0));
           
         if (eligibleToIncrease.length > 0) {
@@ -2164,19 +2155,7 @@ export default function DividendAnalysisDashboard() {
     console.log('Top 5 by total return:', top5.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
     console.log('Additional bullish tickers:', additionalBullishTickers.map(item => item.ticker));
     
-    // Add Cash as final item with 4% forward yield (minimum 5%)
-    const cashEntry = {
-      ticker: 'CASH',
-      calculatedTotalReturn: 4,
-      volatility: 0.1, // Very low volatility for cash
-      sharpeRatio: 2.0, // (4% - 2% risk free) / 0.1% volatility = high Sharpe
-      exDivDay: '',
-      bestReturn: 0.04,
-      bestStrategy: 'Hold',
-      riskVolatility: 0.001
-    };
-    
-    finalOptimal.push(cashEntry);
+    // Remove CASH from optimal portfolio display - users can manage cash allocation themselves
     
     // Calculate MPT-based allocation percentages
     const portfolioWithAllocations = calculateMPTAllocations(finalOptimal);
