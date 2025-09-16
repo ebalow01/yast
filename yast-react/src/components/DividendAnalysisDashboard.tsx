@@ -3447,13 +3447,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <Tooltip title="Total 12-week expected return - sum of dividend return (12-week) + NAV performance (12-week) + dividend variation (12-week)">
+                                <Tooltip title="12-week expected return - sum of dividend return (12-week) + NAV performance (12-week) + dividend variation (12-week)">
                                   <TableSortLabel
                                     active={sortField === 'totalReturn'}
                                     direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('totalReturn')}
                                   >
-                                    <Box>Tot<br/>Ret</Box>
+                                    <Box>12wk<br/>Ret</Box>
                                   </TableSortLabel>
                                 </Tooltip>
                               </TableCell>
@@ -3725,7 +3725,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
                                       onClick={() => handleSort('totalReturn')}
                                     >
-                                      Total Return
+                                      12wk Ret
                                     </TableSortLabel>
                                   </TableCell>
                                   <TableCell rowSpan={2}>
@@ -3961,7 +3961,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     direction={sortField === 'totalReturn' ? sortDirection : 'desc'}
                                     onClick={() => handleSort('totalReturn')}
                                   >
-                                    <Box>Total<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>return</span></Box>
+                                    <Box>12wk<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>return</span></Box>
                                   </TableSortLabel>
                                 </TableCell>
                                 <TableCell>AI Sentiment</TableCell>
@@ -4185,7 +4185,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('totalReturn')}
                                   >
-                                    Total Return
+                                    12wk Ret
                                   </TableSortLabel>
                                 </TableCell>
                                 <TableCell>
