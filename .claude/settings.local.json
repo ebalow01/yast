@@ -34,7 +34,8 @@
       "Bash(curl:*)",
       "Bash(del nul)",
       "Bash(awk:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(dir netlify\\functions\\*pipeline*:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
