@@ -2304,6 +2304,11 @@ export default function DividendAnalysisDashboard() {
     return sortTableData(portfolio.holdings, sortField, sortDirection);
   }, [portfolio.holdings, sortField, sortDirection, polygonData, aiOutlooks]);
 
+  // Helper function to create Yahoo Finance link
+  const getYahooFinanceUrl = (ticker: string) => {
+    return `https://finance.yahoo.com/quote/${ticker}`;
+  };
+
   // Helper function to format dividend day
   const formatDivDay = (exDivDay: string) => {
     if (!exDivDay) return '';
@@ -3438,7 +3443,23 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           <TableBody>
                             {sortedOptimalData.map((item, index) => (
                               <TableRow key={index}>
-                                <TableCell>{item.ticker}</TableCell>
+                                <TableCell>
+                                  <a 
+                                    href={getYahooFinanceUrl(item.ticker)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      color: '#00D4FF',
+                                      textDecoration: 'none',
+                                      fontWeight: 600,
+                                      '&:hover': {
+                                        textDecoration: 'underline'
+                                      }
+                                    }}
+                                  >
+                                    {item.ticker}
+                                  </a>
+                                </TableCell>
                                 <TableCell>
                                   {item.ticker === 'CASH' ? '$1.00' : `$${polygonData[item.ticker]?.price?.toFixed(2) || '-'}`}
                                 </TableCell>
@@ -3712,7 +3733,23 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               <TableBody>
                                 {sortedExcludedData.map((item, index) => (
                                   <TableRow key={index}>
-                                    <TableCell>{item.ticker}</TableCell>
+                                    <TableCell>
+                                  <a 
+                                    href={getYahooFinanceUrl(item.ticker)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      color: '#00D4FF',
+                                      textDecoration: 'none',
+                                      fontWeight: 600,
+                                      '&:hover': {
+                                        textDecoration: 'underline'
+                                      }
+                                    }}
+                                  >
+                                    {item.ticker}
+                                  </a>
+                                </TableCell>
                                     <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
                                     <TableCell>
                                       <Box>
@@ -3902,7 +3939,23 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             <TableBody>
                               {sortedBullishExcludedData.map((item, index) => (
                                 <TableRow key={index}>
-                                  <TableCell>{item.ticker}</TableCell>
+                                  <TableCell>
+                                  <a 
+                                    href={getYahooFinanceUrl(item.ticker)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      color: '#00D4FF',
+                                      textDecoration: 'none',
+                                      fontWeight: 600,
+                                      '&:hover': {
+                                        textDecoration: 'underline'
+                                      }
+                                    }}
+                                  >
+                                    {item.ticker}
+                                  </a>
+                                </TableCell>
                                   <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
                                   <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(1) || '-'}%</TableCell>
                                   <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
@@ -4155,9 +4208,22 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   <TableCell>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                       <MonetizationOn sx={{ color: '#00D4FF', fontSize: 20 }} />
-                                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                        {holding.ticker}
-                                      </Typography>
+                                      <a 
+                                        href={getYahooFinanceUrl(holding.ticker)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          color: '#00D4FF',
+                                          textDecoration: 'none',
+                                          fontWeight: 600
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                        onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                                      >
+                                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                          {holding.ticker}
+                                        </Typography>
+                                      </a>
                                     </Box>
                                   </TableCell>
                                   <TableCell>${polygonData[holding.ticker]?.price?.toFixed(2) || '-'}</TableCell>
