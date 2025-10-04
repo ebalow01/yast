@@ -203,11 +203,11 @@ async function fetchTickerData(ticker, apiKey) {
           const erosionRate = ((medianDividend - medianHistorical) / medianHistorical);
           let rawErosion = erosionRate * 100; // Convert to percentage
           
-          // Cap dividend appreciation at +30% to avoid unrealistic projections
+          // Cap dividend appreciation at +20% to avoid unrealistic projections
           // BUT allow full dividend declines - that's what we want to detect!
           // Original purpose: identify gradual decline, not capture massive one-time adjustments
-          if (rawErosion > 30) {
-            divErosion = 30;
+          if (rawErosion > 20) {
+            divErosion = 20;
             console.log(`${ticker}: Capped dividend appreciation from ${rawErosion.toFixed(1)}% to ${divErosion.toFixed(1)}%`);
           } else {
             divErosion = rawErosion; // Keep all declines and reasonable increases
@@ -233,7 +233,18 @@ async function fetchTickerData(ticker, apiKey) {
     let navPerformance = null;
     if (currentPrice && twelveWeeksAgoPrice && twelveWeeksAgoPrice > 0) {
       // (current price - 12 weeks ago price) / 12 weeks ago price
-      navPerformance = ((currentPrice - twelveWeeksAgoPrice) / twelveWeeksAgoPrice) * 100; // As percentage (12-week change)
+      let rawNavPerformance = ((currentPrice - twelveWeeksAgoPrice) / twelveWeeksAgoPrice) * 100; // As percentage (12-week change)
+
+      // Cap NAV variance at ±20% to prevent death spirals from distorting calculations
+      if (rawNavPerformance > 20) {
+        navPerformance = 20;
+        console.log(`${ticker}: Capped NAV performance from ${rawNavPerformance.toFixed(1)}% to ${navPerformance.toFixed(1)}%`);
+      } else if (rawNavPerformance < -20) {
+        navPerformance = -20;
+        console.log(`${ticker}: Capped NAV performance from ${rawNavPerformance.toFixed(1)}% to ${navPerformance.toFixed(1)}%`);
+      } else {
+        navPerformance = rawNavPerformance;
+      }
     }
     
     // Calculate 14-day volatility (standard deviation of daily returns)
