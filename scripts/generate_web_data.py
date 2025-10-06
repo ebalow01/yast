@@ -20,6 +20,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from multi_ticker_orchestrator import main as run_analysis
 from multi_ticker_data_processor import TICKER_CONFIGS
 
+# Log ticker count at startup
+print(f"\n{'='*80}")
+print(f"TICKER CONFIG LOADED: {len(TICKER_CONFIGS)} tickers")
+print(f"Tickers: {', '.join(sorted(TICKER_CONFIGS.keys()))}")
+print(f"{'='*80}\n")
+
 def convert_numpy_types(obj):
     """Convert numpy types to JSON serializable types"""
     if isinstance(obj, np.integer):
@@ -109,7 +115,14 @@ def create_fallback_data(web_data_dir):
         performance_data.append(ticker_info)
     
     # Save performance data
-    with open(os.path.join(web_data_dir, 'performance_data.json'), 'w') as f:
+    perf_file_path = os.path.join(web_data_dir, 'performance_data.json')
+    print(f"\n{'='*80}")
+    print(f"SAVING PERFORMANCE DATA (FALLBACK MODE):")
+    print(f"  File: {perf_file_path}")
+    print(f"  Total entries: {len(performance_data)}")
+    print(f"  Expected: {len(TICKER_CONFIGS)}")
+    print(f"{'='*80}\n")
+    with open(perf_file_path, 'w') as f:
         json.dump(performance_data, f, indent=2, default=convert_numpy_types)
     
     # Generate metadata
@@ -347,9 +360,17 @@ def process_analysis_data(web_data_dir):
     # Save ticker configs
     with open(os.path.join(web_data_dir, 'ticker_configs.json'), 'w') as f:
         json.dump(ticker_configs, f, indent=2, default=convert_numpy_types)
-    
+
     # Save performance data
-    with open(os.path.join(web_data_dir, 'performance_data.json'), 'w') as f:
+    perf_file_path = os.path.join(web_data_dir, 'performance_data.json')
+    print(f"\n{'='*80}")
+    print(f"SAVING PERFORMANCE DATA (LIVE MODE):")
+    print(f"  File: {perf_file_path}")
+    print(f"  Total entries: {len(analysis_data)}")
+    print(f"  Expected: {len(TICKER_CONFIGS)}")
+    print(f"  Tickers: {', '.join(sorted([d['ticker'] for d in analysis_data]))}")
+    print(f"{'='*80}\n")
+    with open(perf_file_path, 'w') as f:
         json.dump(analysis_data, f, indent=2, default=convert_numpy_types)
     
     # Generate metadata
@@ -446,7 +467,12 @@ def generate_web_data():
                 print(f"Performance data file exists: {perf_file}")
                 with open(perf_file, 'r') as f:
                     data = json.load(f)
-                    print(f"Performance data has {len(data)} entries")
+                    print(f"\n{'='*80}")
+                    print(f"PERFORMANCE DATA FILE CHECK:")
+                    print(f"  Total entries: {len(data)}")
+                    print(f"  Expected: {len(TICKER_CONFIGS)}")
+                    print(f"  Tickers in file: {', '.join(sorted([d['ticker'] for d in data]))}")
+                    print(f"{'='*80}\n")
                     if data:
                         print(f"First entry risk level: {data[0].get('riskLevel', 'NOT SET')}")
             else:
