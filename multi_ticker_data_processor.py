@@ -26,7 +26,7 @@ TICKER_CONFIGS = {
     },
     'LFGY': {
         'start_date': '2025-01-23',
-        'name': 'Lifegoal Longevity & Demographic Trends ETF'
+        'name': 'YieldMax Crypto Industry & Tech Portfolio Option Income ETF'
     },
     'GPTY': {
         'start_date': 'auto_detect',
@@ -187,6 +187,70 @@ TICKER_CONFIGS = {
     'WEEK': {
         'start_date': 'auto_detect',
         'name': 'Roundhill Weekly T-Bill ETF'
+    },
+    'MSTW': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill MSTR WeeklyPay ETF'
+    },
+    'AVGW': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill AVGO WeeklyPay ETF'
+    },
+    'GOOW': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill GOOGL WeeklyPay ETF'
+    },
+    'AMDW': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill AMD WeeklyPay ETF'
+    },
+    'MSFW': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill MSFT WeeklyPay ETF'
+    },
+    'WPAY': {
+        'start_date': 'auto_detect',
+        'name': 'Roundhill WeeklyPay Universe ETF'
+    },
+    'COYY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBOOST COIN ETF'
+    },
+    'AMYY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBOOST AMD ETF'
+    },
+    'AZYY': {
+        'start_date': 'auto_detect',
+        'name': 'GraniteShares YieldBoost AMZN ETF'
+    },
+    'HIMY': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Leveraged Long Income HIMS ETF'
+    },
+    'SMCC': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Leveraged Long + Income SMCI ETF'
+    },
+    'PLT': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Leveraged Long Income PLTR ETF'
+    },
+    'HOOI': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Leveraged Long Income HOOD ETF'
+    },
+    'AMDU': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Leveraged Long + Income AMD ETF'
+    },
+    'SLTY': {
+        'start_date': 'auto_detect',
+        'name': 'YieldMax Ultra Short Option Income Strategy ETF'
+    },
+    'QLDY': {
+        'start_date': 'auto_detect',
+        'name': 'Defiance Nasdaq 100 LightningSpread Income ETF'
     }
 }
 
