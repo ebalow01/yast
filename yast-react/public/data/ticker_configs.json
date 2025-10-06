@@ -12,7 +12,7 @@
     "start_date": "2024-09-19"
   },
   "LFGY": {
-    "name": "Lifegoal Longevity & Demographic Trends ETF",
+    "name": "YieldMax Crypto Industry & Tech Portfolio Option Income ETF",
     "start_date": "2025-01-23"
   },
   "GPTY": {
@@ -173,6 +173,70 @@
   },
   "WEEK": {
     "name": "Roundhill Weekly T-Bill ETF",
+    "start_date": "auto_detect"
+  },
+  "MSTW": {
+    "name": "Roundhill MSTR WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "AVGW": {
+    "name": "Roundhill AVGO WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "GOOW": {
+    "name": "Roundhill GOOGL WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "AMDW": {
+    "name": "Roundhill AMD WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "MSFW": {
+    "name": "Roundhill MSFT WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "WPAY": {
+    "name": "Roundhill WeeklyPay Universe ETF",
+    "start_date": "auto_detect"
+  },
+  "COYY": {
+    "name": "GraniteShares YieldBOOST COIN ETF",
+    "start_date": "auto_detect"
+  },
+  "AMYY": {
+    "name": "GraniteShares YieldBOOST AMD ETF",
+    "start_date": "auto_detect"
+  },
+  "AZYY": {
+    "name": "GraniteShares YieldBoost AMZN ETF",
+    "start_date": "auto_detect"
+  },
+  "HIMY": {
+    "name": "Defiance Leveraged Long Income HIMS ETF",
+    "start_date": "auto_detect"
+  },
+  "SMCC": {
+    "name": "Defiance Leveraged Long + Income SMCI ETF",
+    "start_date": "auto_detect"
+  },
+  "PLT": {
+    "name": "Defiance Leveraged Long Income PLTR ETF",
+    "start_date": "auto_detect"
+  },
+  "HOOI": {
+    "name": "Defiance Leveraged Long Income HOOD ETF",
+    "start_date": "auto_detect"
+  },
+  "AMDU": {
+    "name": "Defiance Leveraged Long + Income AMD ETF",
+    "start_date": "auto_detect"
+  },
+  "SLTY": {
+    "name": "YieldMax Ultra Short Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "QLDY": {
+    "name": "Defiance Nasdaq 100 LightningSpread Income ETF",
     "start_date": "auto_detect"
   }
 }
