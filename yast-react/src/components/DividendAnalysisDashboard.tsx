@@ -2075,8 +2075,23 @@ export default function DividendAnalysisDashboard() {
       console.log(`💸 Excluded ${divDeathSpirals.length} dividend death spirals (< -40%):`, divDeathSpirals);
     }
     
-    // Calculate total return for each ticker and sort by it (back to original approach)
-    const tickersWithTotalReturn = nonDivDeathSpiralTickers.map(item => {
+    // Filter out tickers without 12-week NAV performance data (less than 12 weeks old)
+    const tickersWithNavData: string[] = [];
+    const tickersWithComplete12WeekData = nonDivDeathSpiralTickers.filter(item => {
+      const navPerformance = polygonData[item.ticker]?.navPerformance;
+      if (navPerformance == null) {
+        tickersWithNavData.push(item.ticker);
+        return false; // Exclude tickers without 12-week data
+      }
+      return true;
+    });
+
+    if (tickersWithNavData.length > 0) {
+      console.log(`📅 Excluded ${tickersWithNavData.length} tickers without 12-week NAV data (< 12 weeks old):`, tickersWithNavData);
+    }
+
+    // Calculate total return for each ticker and sort by it
+    const tickersWithTotalReturn = tickersWithComplete12WeekData.map(item => {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
       const divErosion = polygonData[item.ticker]?.divErosion || 0;
@@ -2085,7 +2100,7 @@ export default function DividendAnalysisDashboard() {
       const totalReturn = dividendReturn12Week + navPerformance + divErosion;
       const volatility = polygonData[item.ticker]?.volatility14Day || 20; // Default 20% if missing
       const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
-      
+
       return {
         ...item,
         calculatedTotalReturn: totalReturn,
@@ -2093,16 +2108,16 @@ export default function DividendAnalysisDashboard() {
         sharpeRatio: sharpeRatio
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
-    
-    // Take top 5 by total return (regardless of AI sentiment, but not bearish or death spirals)
-    const top5 = tickersWithTotalReturn.slice(0, 5);
-    const top5Tickers = top5.map(item => item.ticker);
-    
-    // Find additional bullish tickers not already in top 5
+
+    // Include all tickers with 12wk return above 20%
+    const highReturnTickers = tickersWithTotalReturn.filter(item => item.calculatedTotalReturn > 20);
+    const highReturnTickerNames = highReturnTickers.map(item => item.ticker);
+
+    // Find additional bullish tickers not already in high return list
     const additionalBullishTickers = tickersWithTotalReturn.filter(item => {
-      // Skip if already in top 5
-      if (top5Tickers.includes(item.ticker)) return false;
-      
+      // Skip if already in high return list
+      if (highReturnTickerNames.includes(item.ticker)) return false;
+
       // Only include if explicitly bullish
       if (aiOutlooks[item.ticker]?.fullAnalysis) {
         const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
@@ -2111,12 +2126,12 @@ export default function DividendAnalysisDashboard() {
       }
       return false;
     });
-    
-    // Combine top 5 + additional bullish tickers
-    const finalOptimal = [...top5, ...additionalBullishTickers];
-    
-    console.log(`📈 Optimal portfolio: Top 5 by total return (any sentiment) + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
-    console.log('Top 5 by total return:', top5.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
+
+    // Combine high return tickers (>20%) + additional bullish tickers
+    const finalOptimal = [...highReturnTickers, ...additionalBullishTickers];
+
+    console.log(`📈 Optimal portfolio: ${highReturnTickers.length} tickers with >20% 12wk return + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
+    console.log('High return tickers (>20%):', highReturnTickers.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
     console.log('Additional bullish tickers:', additionalBullishTickers.map(item => item.ticker));
     
     // Remove CASH from optimal portfolio display - users can manage cash allocation themselves
