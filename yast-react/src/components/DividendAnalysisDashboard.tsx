@@ -2109,8 +2109,8 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
-    // Include all tickers with 12wk return above 20%
-    const highReturnTickers = tickersWithTotalReturn.filter(item => item.calculatedTotalReturn > 20);
+    // Include all tickers with 12wk return above 30%
+    const highReturnTickers = tickersWithTotalReturn.filter(item => item.calculatedTotalReturn > 30);
     const highReturnTickerNames = highReturnTickers.map(item => item.ticker);
 
     // Find additional bullish tickers not already in high return list
@@ -2127,11 +2127,11 @@ export default function DividendAnalysisDashboard() {
       return false;
     });
 
-    // Combine high return tickers (>20%) + additional bullish tickers
+    // Combine high return tickers (>30%) + additional bullish tickers
     const finalOptimal = [...highReturnTickers, ...additionalBullishTickers];
 
-    console.log(`📈 Optimal portfolio: ${highReturnTickers.length} tickers with >20% 12wk return + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
-    console.log('High return tickers (>20%):', highReturnTickers.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
+    console.log(`📈 Optimal portfolio: ${highReturnTickers.length} tickers with >30% 12wk return + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
+    console.log('High return tickers (>30%):', highReturnTickers.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
     console.log('Additional bullish tickers:', additionalBullishTickers.map(item => item.ticker));
     
     // Remove CASH from optimal portfolio display - users can manage cash allocation themselves
