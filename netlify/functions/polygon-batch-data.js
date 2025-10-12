@@ -86,11 +86,11 @@ async function fetchTickerData(ticker, apiKey) {
     if (dividendData.results && dividendData.results.length > 0) {
       // Filter dividends sequentially and find frequency change point
       
-      // Debug logging for NVDW and GOOW
-      if (ticker === 'NVDW' || ticker === 'GOOW') {
-        console.log(`${ticker} Debug: Found ${dividendData.results.length} dividends`);
+      // Debug logging for NVDW
+      if (ticker === 'NVDW') {
+        console.log(`NVDW Debug: Found ${dividendData.results.length} dividends`);
         dividendData.results.slice(0, 15).forEach((div, idx) => {
-          console.log(`${ticker} Div ${idx}: ${div.ex_dividend_date} - $${div.cash_amount}`);
+          console.log(`NVDW Div ${idx}: ${div.ex_dividend_date} - $${div.cash_amount}`);
         });
       }
       
@@ -107,8 +107,8 @@ async function fetchTickerData(ticker, apiKey) {
           const currDate = new Date(dividend.ex_dividend_date);
           const daysDiff = Math.abs(prevDate - currDate) / (24 * 60 * 60 * 1000);
           
-          if (ticker === 'NVDW' || ticker === 'GOOW') {
-            console.log(`${ticker} Gap check ${i}: ${daysDiff.toFixed(1)} days between ${prevDate.toISOString().split('T')[0]} and ${currDate.toISOString().split('T')[0]}`);
+          if (ticker === 'NVDW') {
+            console.log(`NVDW Gap check ${i}: ${daysDiff.toFixed(1)} days between ${prevDate.toISOString().split('T')[0]} and ${currDate.toISOString().split('T')[0]}`);
           }
           
           if (daysDiff <= 10) {
@@ -116,8 +116,8 @@ async function fetchTickerData(ticker, apiKey) {
           } else {
             // Found frequency change - record position and continue with all remaining dividends
             frequencyChangeIndex = consistentDividends.length;
-            if (ticker === 'NVDW' || ticker === 'GOOW') {
-              console.log(`${ticker}: Frequency change detected at position ${frequencyChangeIndex}`);
+            if (ticker === 'NVDW') {
+              console.log(`NVDW: Frequency change detected at position ${frequencyChangeIndex}`);
             }
             // Add all remaining dividends for historical analysis
             for (let j = i; j < dividendData.results.length; j++) {
@@ -146,8 +146,8 @@ async function fetchTickerData(ticker, apiKey) {
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
-        if (ticker === 'NVDW' || ticker === 'GOOW') {
-          console.log(`${ticker}: Using pre-change dividends ${endIdx}-${frequencyChangeIndex-1}: [${historicalDividends.join(', ')}]`);
+        if (ticker === 'NVDW') {
+          console.log(`NVDW: Using pre-change dividends ${endIdx}-${frequencyChangeIndex-1}: [${historicalDividends.join(', ')}]`);
         }
       } else if (consistentDividends.length >= 12) {
         // No frequency change detected, use standard positions 9-11 (or available positions)
@@ -158,8 +158,8 @@ async function fetchTickerData(ticker, apiKey) {
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
-        if (ticker === 'NVDW' || ticker === 'GOOW') {
-          console.log(`${ticker}: Using positions ${startPos}-${endPos-1}: [${historicalDividends.join(', ')}]`);
+        if (ticker === 'NVDW') {
+          console.log(`NVDW: Using positions ${startPos}-${endPos-1}: [${historicalDividends.join(', ')}]`);
         }
       } else {
         // Less than 12 dividends available, use last 3 for historical comparison
@@ -168,13 +168,13 @@ async function fetchTickerData(ticker, apiKey) {
           .map(d => d.cash_amount)
           .filter(d => d > 0)
           .sort((a, b) => a - b);
-        if (ticker === 'NVDW' || ticker === 'GOOW') {
-          console.log(`${ticker}: Using fallback last 3: [${historicalDividends.join(', ')}]`);
+        if (ticker === 'NVDW') {
+          console.log(`NVDW: Using fallback last 3: [${historicalDividends.join(', ')}]`);
         }
       }
 
-      if (ticker === 'NVDW' || ticker === 'GOOW') {
-        console.log(`${ticker}: Total consistent dividends: ${consistentDividends.length}, Recent: [${lastDividends.join(', ')}], Historical: [${historicalDividends.join(', ')}]`);
+      if (ticker === 'NVDW') {
+        console.log(`NVDW: Total consistent dividends: ${consistentDividends.length}, Recent: [${lastDividends.join(', ')}], Historical: [${historicalDividends.join(', ')}]`);
       }
       
       // Calculate median for last 3 dividends
@@ -302,8 +302,8 @@ async function fetchTickerData(ticker, apiKey) {
       dividendCount: lastDividends.length
     };
     
-    // Add debug info for NVDW, YETH, HOOW, PLTW, RDTY, and GOOW
-    if (ticker === 'NVDW' || ticker === 'YETH' || ticker === 'HOOW' || ticker === 'PLTW' || ticker === 'RDTY' || ticker === 'GOOW') {
+    // Add debug info for NVDW, YETH, HOOW, PLTW, and RDTY
+    if (ticker === 'NVDW' || ticker === 'YETH' || ticker === 'HOOW' || ticker === 'PLTW' || ticker === 'RDTY') {
       result.debug = {
         totalDividends: dividendData.results ? dividendData.results.length : 0,
         consistentDividendsCount: consistentDividends ? consistentDividends.length : 0,
@@ -318,19 +318,6 @@ async function fetchTickerData(ticker, apiKey) {
     // Additional RDTY debugging
     if (ticker === 'RDTY') {
       console.log(`RDTY Debug Summary:`);
-      console.log(`  Current Price: $${currentPrice}`);
-      console.log(`  12-Week Ago Price: $${twelveWeeksAgoPrice}`);
-      console.log(`  NAV Performance: ${navPerformance?.toFixed(2)}%`);
-      console.log(`  Median Recent Dividend: $${medianDividend}`);
-      console.log(`  Median Historical Dividend: $${medianHistorical}`);
-      console.log(`  Dividend Erosion: ${divErosion?.toFixed(2)}%`);
-      console.log(`  Forward Yield: ${forwardYield?.toFixed(2)}%`);
-      console.log(`  Dividend Return 12-Week: ${dividendReturn12Week?.toFixed(2)}%`);
-    }
-
-    // Additional GOOW debugging
-    if (ticker === 'GOOW') {
-      console.log(`GOOW Debug Summary:`);
       console.log(`  Current Price: $${currentPrice}`);
       console.log(`  12-Week Ago Price: $${twelveWeeksAgoPrice}`);
       console.log(`  NAV Performance: ${navPerformance?.toFixed(2)}%`);
