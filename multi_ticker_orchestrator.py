@@ -339,8 +339,8 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
         print(f"   Warning: Could not download SPY data: {e}")
         spy_data = {'return': 11.51, 'volatility': 20.6, 'trading_days': 249}
     
-    # Calculate median dividends for all tickers
-    print("   - Calculating median dividend amounts...")
+    # Calculate median dividends for all tickers (median of last 3)
+    print("   - Calculating median dividend amounts (last 3)...")
     median_dividends = {}
     for ticker in all_results.keys():
         div_file = f'data/{ticker}_dividends.csv'
@@ -351,7 +351,10 @@ def create_comprehensive_sorted_table(all_results, comparison_data):
                     dividends = df['Dividends'].dropna()
                     dividends = dividends[dividends > 0]
                     if len(dividends) > 0:
-                        median_dividends[ticker] = dividends.median()
+                        # Get the last 3 dividends and calculate median
+                        last_3 = dividends.tail(3)
+                        median_dividends[ticker] = last_3.median()
+                        print(f"      {ticker}: Last 3 dividends = {list(last_3)}, median = {last_3.median():.3f}")
             except:
                 pass
         if ticker not in median_dividends:
