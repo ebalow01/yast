@@ -1527,7 +1527,7 @@ export default function DividendAnalysisDashboard() {
     loadData();
   }, []);
 
-  // Load Polygon data asynchronously after main data loads
+  // Load yfinance dividend data asynchronously after main data loads
   useEffect(() => {
     const loadPolygonData = async () => {
       if (data.length > 0 && !loading) {
@@ -1535,7 +1535,7 @@ export default function DividendAnalysisDashboard() {
         setPolygonLoading(true);
         try {
           // Fetching market data asynchronously
-          const polygonResponse = await fetch('/.netlify/functions/polygon-batch-data', {
+          const polygonResponse = await fetch('/.netlify/functions/yfinance-batch-data', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1547,7 +1547,7 @@ export default function DividendAnalysisDashboard() {
             const polygonResults = await polygonResponse.json();
             console.log(`Market data loaded for ${Object.keys(polygonResults).length} tickers`);
             console.log('Tickers requested:', tickers);
-            console.log('Polygon response keys:', Object.keys(polygonResults));
+            console.log('yfinance response keys:', Object.keys(polygonResults));
             
             // Log NVDW data if available
             if (polygonResults.NVDW) {
@@ -1579,10 +1579,10 @@ export default function DividendAnalysisDashboard() {
             
             setPolygonData(polygonResults);
           } else {
-            console.error('Failed to fetch Polygon data:', polygonResponse.statusText);
+            console.error('Failed to fetch yfinance data:', polygonResponse.statusText);
           }
         } catch (error) {
-          console.error('Error fetching Polygon data:', error);
+          console.error('Error fetching yfinance data:', error);
         } finally {
           setPolygonLoading(false);
         }
