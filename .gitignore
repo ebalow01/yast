@@ -85,3 +85,4 @@ multi_ticker_analysis_*.txt
 diagnostic_script.py
 run_diagnostics.bat
 btcusd_1-min_data.csv
+get_dividends.py
