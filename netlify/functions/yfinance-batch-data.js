@@ -18,12 +18,19 @@ exports.handler = async function(event, context) {
     };
   }
 
+  console.log('yfinance-batch-data function invoked');
+  console.log('Request method:', event.httpMethod);
+  console.log('Request body:', event.body);
+
   try {
     // Parse request body
     const body = JSON.parse(event.body || '{}');
     const tickers = body.tickers || [];
 
+    console.log('Parsed tickers:', tickers);
+
     if (!tickers || tickers.length === 0) {
+      console.log('No tickers provided in request');
       return {
         statusCode: 400,
         headers,
@@ -38,23 +45,41 @@ exports.handler = async function(event, context) {
 
     for (const ticker of tickers) {
       try {
-        console.log(`Fetching dividends for ${ticker}...`);
+        console.log(`Processing ${ticker}...`);
 
-        // Fetch dividend history
-        // Get the last year of dividends to ensure we have enough data
+        // Fetch dividend history using chart API
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setFullYear(startDate.getFullYear() - 1);
+        startDate.setFullYear(startDate.getFullYear() - 1); // Get 1 year of data
 
-        const queryOptions = {
+        console.log(`Calling yahooFinance.chart for ${ticker}...`);
+
+        const chartResult = await yahooFinance.chart(ticker, {
           period1: startDate,
           period2: endDate,
-          events: 'dividends'
-        };
+          events: 'div'
+        });
 
-        const dividendData = await yahooFinance.historical(ticker, queryOptions);
+        console.log(`Chart result for ${ticker}:`, JSON.stringify({
+          hasEvents: !!chartResult.events,
+          hasDividends: !!(chartResult.events && chartResult.events.dividends)
+        }));
 
-        if (!dividendData || dividendData.length === 0) {
+        // Extract dividend events
+        let dividends = [];
+        if (chartResult.events && chartResult.events.dividends) {
+          // Convert dividends object to array and sort by date
+          dividends = Object.entries(chartResult.events.dividends)
+            .map(([timestamp, divData]) => ({
+              date: new Date(parseInt(timestamp) * 1000),
+              amount: divData.amount
+            }))
+            .sort((a, b) => b.date.getTime() - a.date.getTime());
+        }
+
+        console.log(`Found ${dividends.length} dividends for ${ticker}`);
+
+        if (dividends.length === 0) {
           console.log(`No dividend data found for ${ticker}`);
           results[ticker] = {
             error: 'No dividend data available',
@@ -67,27 +92,9 @@ exports.handler = async function(event, context) {
           continue;
         }
 
-        // Filter only dividend events and sort by date (most recent first)
-        const dividends = dividendData
-          .filter(d => d.dividends !== undefined && d.dividends > 0)
-          .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-        if (dividends.length === 0) {
-          console.log(`No valid dividends found for ${ticker}`);
-          results[ticker] = {
-            error: 'No valid dividend data',
-            medianDividend: 0,
-            lastDividends: [],
-            lastDividendDate: null,
-            lastDividendAmount: 0,
-            totalDividends: 0
-          };
-          continue;
-        }
-
         // Get last 3 dividends for median calculation
         const last3 = dividends.slice(0, Math.min(3, dividends.length));
-        const last3Amounts = last3.map(d => d.dividends);
+        const last3Amounts = last3.map(d => d.amount);
 
         // Calculate median
         let medianDividend;
@@ -104,9 +111,9 @@ exports.handler = async function(event, context) {
         // Get latest dividend info
         const latest = dividends[0];
         const lastDividendDate = latest.date.toISOString().split('T')[0];
-        const lastDividendAmount = latest.dividends;
+        const lastDividendAmount = latest.amount;
 
-        console.log(`${ticker}: Found ${dividends.length} dividends, last 3: [${last3Amounts.join(', ')}], median: ${medianDividend.toFixed(3)}`);
+        console.log(`${ticker}: Last 3 dividends: [${last3Amounts.join(', ')}], median: ${medianDividend.toFixed(3)}`);
 
         results[ticker] = {
           medianDividend: medianDividend,
@@ -117,7 +124,8 @@ exports.handler = async function(event, context) {
         };
 
       } catch (error) {
-        console.error(`Error fetching ${ticker}:`, error.message);
+        console.error(`Error fetching ${ticker}:`, error);
+        console.error(`Error stack for ${ticker}:`, error.stack);
         results[ticker] = {
           error: `Error fetching ${ticker}: ${error.message}`,
           medianDividend: 0,
@@ -129,10 +137,14 @@ exports.handler = async function(event, context) {
       }
 
       // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
     }
 
-    console.log(`Successfully fetched data for ${Object.keys(results).length} tickers`);
+    console.log(`Successfully processed ${Object.keys(results).length} tickers`);
+    console.log('Sample results:', JSON.stringify(Object.keys(results).slice(0, 3).reduce((acc, key) => {
+      acc[key] = results[key];
+      return acc;
+    }, {})));
 
     return {
       statusCode: 200,
@@ -141,7 +153,8 @@ exports.handler = async function(event, context) {
     };
 
   } catch (error) {
-    console.error('Error in yfinance-batch-data:', error);
+    console.error('CRITICAL ERROR in yfinance-batch-data:', error);
+    console.error('Error stack:', error.stack);
     return {
       statusCode: 500,
       headers,
