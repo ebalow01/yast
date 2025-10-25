@@ -1991,12 +1991,13 @@ export default function DividendAnalysisDashboard() {
           bestAsset.mptAllocation += increaseAmount;
           
           // If still short, distribute remaining among other assets
-          const remainingDiff = difference - increaseAmount;
+          let remainingDiff = difference - increaseAmount;
           if (remainingDiff > 0) {
             for (let asset of eligibleToIncrease.slice(1)) {
               if (remainingDiff <= 0) break;
               const canAdd = Math.min(remainingDiff, 15 - asset.mptAllocation);
               asset.mptAllocation += canAdd;
+              remainingDiff -= canAdd; // Update remaining difference
             }
           }
         }
@@ -2012,18 +2013,30 @@ export default function DividendAnalysisDashboard() {
           worstAsset.mptAllocation -= decreaseAmount;
           
           // If still over, distribute remaining reduction among other assets
-          const remainingDiff = Math.abs(difference) - decreaseAmount;
+          let remainingDiff = Math.abs(difference) - decreaseAmount;
           if (remainingDiff > 0) {
             for (let asset of eligibleToDecrease.slice(1)) {
               if (remainingDiff <= 0) break;
               const canReduce = Math.min(remainingDiff, asset.mptAllocation - 5);
               asset.mptAllocation -= canReduce;
+              remainingDiff -= canReduce; // Update remaining difference
             }
           }
         }
       }
     }
-    
+
+    // Final verification: ensure allocations sum to exactly 100%
+    const finalTotal = roundedAllocations.reduce((sum, asset) => sum + asset.mptAllocation, 0);
+    console.log(`MPT Allocation Total: ${finalTotal}% (should be 100%)`);
+
+    if (Math.abs(finalTotal - 100) > 0.1) {
+      console.warn(`⚠️ MPT allocations sum to ${finalTotal}%, not 100%!`);
+      roundedAllocations.forEach(asset => {
+        console.log(`  ${asset.ticker}: ${asset.mptAllocation}%`);
+      });
+    }
+
     return roundedAllocations;
   };
 
