@@ -117,21 +117,29 @@ exports.handler = async function(event, context) {
           medianDividend = sorted[1];
         }
 
-        // Get historical dividends (12-24 weeks ago) for erosion calculation
-        const historicalDividends = dividends.filter(d => {
-          const time = d.date.getTime();
-          return time >= twentyFourWeeksAgo.getTime() && time < twelveWeeksAgo.getTime();
-        });
-
-        const historicalAmounts = historicalDividends.slice(0, Math.min(3, historicalDividends.length)).map(d => d.amount);
+        // Get historical dividends (around ~12 weeks ago = around dividend #12 for weekly)
+        // Use index-based approach: for weekly dividends, dividend at index 12-14 is ~12 weeks ago
         let medianHistorical = null;
-        if (historicalAmounts.length === 1) {
-          medianHistorical = historicalAmounts[0];
-        } else if (historicalAmounts.length === 2) {
-          medianHistorical = (historicalAmounts[0] + historicalAmounts[1]) / 2;
-        } else if (historicalAmounts.length === 3) {
+        if (dividends.length >= 15) {
+          // Take 3 dividends centered around index 12 (dividends 12, 13, 14)
+          const historicalAmounts = [
+            dividends[12].amount,
+            dividends[13].amount,
+            dividends[14].amount
+          ];
           const sorted = [...historicalAmounts].sort((a, b) => a - b);
-          medianHistorical = sorted[1];
+          medianHistorical = sorted[1]; // median
+        } else if (dividends.length >= 12) {
+          // Not enough for full historical window, use what we have
+          const historicalAmounts = dividends.slice(9, 12).map(d => d.amount);
+          if (historicalAmounts.length === 3) {
+            const sorted = [...historicalAmounts].sort((a, b) => a - b);
+            medianHistorical = sorted[1];
+          } else if (historicalAmounts.length === 2) {
+            medianHistorical = (historicalAmounts[0] + historicalAmounts[1]) / 2;
+          } else if (historicalAmounts.length === 1) {
+            medianHistorical = historicalAmounts[0];
+          }
         }
 
         // Calculate dividend erosion
@@ -200,7 +208,15 @@ exports.handler = async function(event, context) {
           sharpeRatio = (totalReturn - riskFreeRate) / volatility14Day;
         }
 
-        console.log(`${ticker}: median=${medianDividend?.toFixed(3)}, yield=${forwardYield?.toFixed(1)}%, nav=${navPerformance?.toFixed(1)}%`);
+        // Get historical dividend amounts for return value
+        let historicalAmounts = [];
+        if (dividends.length >= 15) {
+          historicalAmounts = [dividends[12].amount, dividends[13].amount, dividends[14].amount];
+        } else if (dividends.length >= 12) {
+          historicalAmounts = dividends.slice(9, 12).map(d => d.amount);
+        }
+
+        console.log(`${ticker}: median=${medianDividend?.toFixed(3)}, medianHist=${medianHistorical?.toFixed(3)}, divErosion=${divErosion?.toFixed(1)}%`);
 
         results[ticker] = {
           ticker,
