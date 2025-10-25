@@ -2088,19 +2088,22 @@ export default function DividendAnalysisDashboard() {
       console.log(`💸 Excluded ${divDeathSpirals.length} dividend death spirals (< -40%):`, divDeathSpirals);
     }
     
-    // Filter out tickers without 12-week NAV performance data (less than 12 weeks old)
+    // Filter out tickers without 12-week NAV performance data or dividend history (less than 12 weeks old)
     const tickersWithNavData: string[] = [];
     const tickersWithComplete12WeekData = nonDivDeathSpiralTickers.filter(item => {
       const navPerformance = polygonData[item.ticker]?.navPerformance;
-      if (navPerformance == null) {
+      const divErosion = polygonData[item.ticker]?.divErosion;
+
+      // Exclude if missing NAV data OR dividend erosion data (both indicate < 12 weeks old)
+      if (navPerformance == null || divErosion == null) {
         tickersWithNavData.push(item.ticker);
-        return false; // Exclude tickers without 12-week data
+        return false; // Exclude tickers without complete 12-week data
       }
       return true;
     });
 
     if (tickersWithNavData.length > 0) {
-      console.log(`📅 Excluded ${tickersWithNavData.length} tickers without 12-week NAV data (< 12 weeks old):`, tickersWithNavData);
+      console.log(`📅 Excluded ${tickersWithNavData.length} tickers without complete 12-week data (< 12 weeks old):`, tickersWithNavData);
     }
 
     // Calculate total return for each ticker and sort by it
