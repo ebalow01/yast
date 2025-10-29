@@ -87,10 +87,23 @@ exports.handler = async function(event, context) {
         let dividends = [];
         if (chartData.events && chartData.events.dividends) {
           dividends = Object.entries(chartData.events.dividends)
-            .map(([timestamp, divData]) => ({
-              date: new Date(parseInt(timestamp) * 1000),
-              amount: divData.amount
-            }))
+            .map(([timestamp, divData]) => {
+              // yahoo-finance2 includes date in divData, use it directly if available
+              let date;
+              if (divData.date) {
+                date = new Date(divData.date);
+              } else {
+                // Fallback to parsing timestamp key (Unix time in seconds)
+                const ts = parseInt(timestamp);
+                date = new Date(ts * 1000);
+              }
+
+              return {
+                date: date,
+                amount: divData.amount
+              };
+            })
+            .filter(d => d.date && !isNaN(d.date.getTime())) // Filter out invalid dates
             .sort((a, b) => b.date.getTime() - a.date.getTime());
         }
 
