@@ -94,6 +94,30 @@ exports.handler = async function(event, context) {
             .sort((a, b) => b.date.getTime() - a.date.getTime());
         }
 
+        // Filter out duplicate dividends within 2 days of each other
+        // Some funds erroneously show duplicate dividends 1 day apart (e.g., 10/22 and 10/23)
+        const originalCount = dividends.length;
+        const filteredDividends = [];
+        for (let i = 0; i < dividends.length; i++) {
+          if (i === 0) {
+            // Always keep the first (most recent) dividend
+            filteredDividends.push(dividends[i]);
+          } else {
+            const daysDiff = Math.abs(dividends[i].date.getTime() - filteredDividends[filteredDividends.length - 1].date.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysDiff >= 2) {
+              // Only keep if more than 2 days from the last kept dividend
+              filteredDividends.push(dividends[i]);
+            } else {
+              console.log(`${ticker}: Skipping duplicate dividend on ${dividends[i].date.toISOString().split('T')[0]} (${daysDiff.toFixed(1)} days from previous)`);
+            }
+          }
+        }
+        dividends = filteredDividends;
+
+        if (originalCount !== dividends.length) {
+          console.log(`${ticker}: Filtered ${originalCount - dividends.length} duplicate dividend(s), ${dividends.length} remain`);
+        }
+
         console.log(`${ticker}: Found ${dividends.length} dividends, ${quotes.length} price points`);
 
         if (dividends.length === 0) {
