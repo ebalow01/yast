@@ -86,6 +86,17 @@ exports.handler = async function(event, context) {
         // Extract dividend data
         let dividends = [];
         if (chartData.events && chartData.events.dividends) {
+          // Log the first dividend entry to understand the data structure
+          const firstEntry = Object.entries(chartData.events.dividends)[0];
+          if (firstEntry) {
+            console.log(`${ticker}: First dividend entry:`, JSON.stringify({
+              timestamp: firstEntry[0],
+              divData: firstEntry[1],
+              timestampType: typeof firstEntry[0],
+              divDataKeys: Object.keys(firstEntry[1])
+            }));
+          }
+
           dividends = Object.entries(chartData.events.dividends)
             .map(([timestamp, divData]) => {
               // yahoo-finance2 includes date in divData, use it directly if available
