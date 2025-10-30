@@ -5,14 +5,70 @@ Low volatility strategy focus - identify best stable performers
 
 import pandas as pd
 import numpy as np
+import json
+import os
+from datetime import datetime
 from yast_backtesting.core import (
-    YASTDataManager, 
-    YASTStrategyEngine, 
+    YASTDataManager,
+    YASTStrategyEngine,
     StrategyType,
     YASTPerformanceAnalyzer
 )
 import warnings
 warnings.filterwarnings('ignore')
+
+# Volatility thresholds with hysteresis to prevent flapping
+VOL_ENTRY_THRESHOLD = 0.30  # 30% - threshold to enter (new positions)
+VOL_EXIT_THRESHOLD = 0.25   # 25% - threshold to exit (existing positions)
+POSITION_STATE_FILE = 'data/low_vol_position_state.json'
+
+def load_position_state():
+    """Load the current state of active positions from file."""
+    if not os.path.exists(POSITION_STATE_FILE):
+        return {}
+
+    try:
+        with open(POSITION_STATE_FILE, 'r') as f:
+            state = json.load(f)
+            return state.get('active_positions', {})
+    except Exception as e:
+        print(f"Warning: Could not load position state: {e}")
+        return {}
+
+def save_position_state(active_positions):
+    """Save the current state of active positions to file."""
+    try:
+        os.makedirs(os.path.dirname(POSITION_STATE_FILE), exist_ok=True)
+        state = {
+            'active_positions': active_positions,
+            'last_updated': datetime.now().isoformat()
+        }
+        with open(POSITION_STATE_FILE, 'w') as f:
+            json.dump(state, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save position state: {e}")
+
+def should_include_ticker(ticker, volatility, active_positions):
+    """
+    Determine if a ticker should be included using hysteresis.
+
+    Args:
+        ticker: Ticker symbol
+        volatility: Current volatility (as decimal, e.g., 0.28 for 28%)
+        active_positions: Dict of currently active positions
+
+    Returns:
+        bool: True if ticker should be included
+    """
+    is_active = ticker in active_positions
+
+    if is_active:
+        # For active positions, only exit if volatility rises above exit threshold
+        # This means we stay in until volatility goes ABOVE 25%
+        return volatility <= VOL_EXIT_THRESHOLD
+    else:
+        # For new positions, only enter if volatility is below entry threshold
+        return volatility <= VOL_ENTRY_THRESHOLD
 
 def calculate_risk_adjusted_metrics(data):
     """Calculate comprehensive risk-adjusted performance metrics."""
@@ -69,29 +125,50 @@ def calculate_risk_adjusted_metrics(data):
 
 def analyze_low_volatility_candidates():
     """Identify and analyze the best low-volatility candidates."""
-    
+
     data_manager = YASTDataManager()
     strategy_engine = YASTStrategyEngine()
     performance_analyzer = YASTPerformanceAnalyzer()
-    
+
     all_tickers = data_manager.get_available_tickers()
     candidates = []
-    
+
+    # Load current position state for hysteresis
+    active_positions = load_position_state()
+    new_active_positions = {}
+
     print("Low Volatility Strategy Analysis")
     print("=" * 50)
-    
+    print(f"Entry threshold: {VOL_ENTRY_THRESHOLD*100:.0f}% | Exit threshold: {VOL_EXIT_THRESHOLD*100:.0f}%")
+    print(f"Currently tracking {len(active_positions)} active positions")
+    print("=" * 50)
+
     for ticker in all_tickers:
         try:
             data = data_manager.load_ticker_data(ticker, 'full')
             if data is None or len(data) < 30:
                 continue
-            
+
             # Calculate risk metrics
             risk_metrics = calculate_risk_adjusted_metrics(data)
-            
-            # Only consider low volatility tickers (< 30% annualized)
-            if risk_metrics['volatility'] > 0.30:
+
+            # Apply hysteresis: use different thresholds for entry vs exit
+            if not should_include_ticker(ticker, risk_metrics['volatility'], active_positions):
+                # Log why we're excluding
+                if ticker in active_positions:
+                    print(f"  EXIT {ticker}: volatility {risk_metrics['volatility']*100:.1f}% > {VOL_EXIT_THRESHOLD*100:.0f}% exit threshold")
                 continue
+
+            # If we get here, ticker passes hysteresis check
+            is_new = ticker not in active_positions
+            if is_new:
+                print(f"  ENTRY {ticker}: volatility {risk_metrics['volatility']*100:.1f}% <= {VOL_ENTRY_THRESHOLD*100:.0f}% entry threshold")
+
+            # Mark as active for next run
+            new_active_positions[ticker] = {
+                'volatility': risk_metrics['volatility'],
+                'added_date': active_positions.get(ticker, {}).get('added_date', datetime.now().isoformat())
+            }
             
             # Test custom dividend strategy (safest)
             try:
@@ -119,17 +196,21 @@ def analyze_low_volatility_candidates():
                 
         except Exception as e:
             continue
-    
+
+    # Save updated position state for next run
+    save_position_state(new_active_positions)
+    print(f"\n[OK] Saved state: {len(new_active_positions)} active positions")
+
     if not candidates:
         print("No low volatility candidates found!")
         return None
-    
+
     # Convert to DataFrame and sort by stability score
     df = pd.DataFrame(candidates)
     df = df.sort_values('Stability_Score', ascending=False)
-    
+
     print(f"\nLow Volatility Candidates (Custom Strategy)")
-    print(f"Found {len(df)} tickers with <30% volatility")
+    print(f"Found {len(df)} tickers (with hysteresis: {VOL_EXIT_THRESHOLD*100:.0f}%-{VOL_ENTRY_THRESHOLD*100:.0f}% thresholds)")
     print("=" * 100)
     print(f"{'Ticker':<6} {'Return%':<8} {'Vol%':<6} {'DD%':<7} {'Sharpe':<7} {'Sortino':<8} {'Consist%':<9} {'Stab Score':<10} {'Trades':<7}")
     print("-" * 100)
