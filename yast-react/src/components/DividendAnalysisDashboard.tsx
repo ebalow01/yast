@@ -1359,8 +1359,18 @@ export default function DividendAnalysisDashboard() {
   });
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authPassword, setAuthPassword] = useState('');
-  
-  
+
+  // Position state tracking for return threshold hysteresis (prevents flapping)
+  const [activeHighReturnTickers, setActiveHighReturnTickers] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('activeHighReturnTickers');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch (error) {
+      console.error('Failed to load active high return tickers:', error);
+      return new Set();
+    }
+  });
+
   // Portfolio table sorting state
   const [sortField, setSortField] = useState<string>('totalReturn');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -1600,6 +1610,15 @@ export default function DividendAnalysisDashboard() {
       console.error('Failed to save portfolio to localStorage:', error);
     }
   }, [portfolio]);
+
+  // Save active high return tickers to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('activeHighReturnTickers', JSON.stringify(Array.from(activeHighReturnTickers)));
+    } catch (error) {
+      console.error('Failed to save active high return tickers:', error);
+    }
+  }, [activeHighReturnTickers]);
 
   // Auto-refresh portfolio with AI filtering once data and AI outlooks are loaded
   useEffect(() => {
@@ -2125,8 +2144,42 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
-    // Include all tickers with 12wk return above 30%
-    const highReturnTickers = tickersWithTotalReturn.filter(item => item.calculatedTotalReturn > 30);
+    // Apply hysteresis to prevent flapping around 30% threshold
+    // Entry: 30% (new positions)
+    // Exit: 25% (existing positions must drop below 25% to exit)
+    const ENTRY_THRESHOLD = 30;
+    const EXIT_THRESHOLD = 25;
+
+    const newActiveSet = new Set<string>();
+    const highReturnTickers = tickersWithTotalReturn.filter(item => {
+      const isCurrentlyActive = activeHighReturnTickers.has(item.ticker);
+
+      if (isCurrentlyActive) {
+        // For active positions, only exit if return drops below exit threshold
+        if (item.calculatedTotalReturn >= EXIT_THRESHOLD) {
+          newActiveSet.add(item.ticker);
+          return true;
+        } else {
+          console.log(`📉 EXIT ${item.ticker}: 12wk return ${item.calculatedTotalReturn.toFixed(1)}% < ${EXIT_THRESHOLD}% exit threshold`);
+          return false;
+        }
+      } else {
+        // For new positions, only enter if return meets entry threshold
+        if (item.calculatedTotalReturn >= ENTRY_THRESHOLD) {
+          console.log(`📈 ENTRY ${item.ticker}: 12wk return ${item.calculatedTotalReturn.toFixed(1)}% >= ${ENTRY_THRESHOLD}% entry threshold`);
+          newActiveSet.add(item.ticker);
+          return true;
+        }
+        return false;
+      }
+    });
+
+    // Update active tickers state
+    if (newActiveSet.size !== activeHighReturnTickers.size ||
+        !Array.from(newActiveSet).every(t => activeHighReturnTickers.has(t))) {
+      setActiveHighReturnTickers(newActiveSet);
+    }
+
     const highReturnTickerNames = highReturnTickers.map(item => item.ticker);
 
     // Find additional bullish tickers not already in high return list
@@ -2146,8 +2199,8 @@ export default function DividendAnalysisDashboard() {
     // Combine high return tickers (>30%) + additional bullish tickers
     const finalOptimal = [...highReturnTickers, ...additionalBullishTickers];
 
-    console.log(`📈 Optimal portfolio: ${highReturnTickers.length} tickers with >30% 12wk return + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
-    console.log('High return tickers (>30%):', highReturnTickers.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
+    console.log(`📈 Optimal portfolio: ${highReturnTickers.length} tickers with ≥${ENTRY_THRESHOLD}% 12wk return (hysteresis: ${EXIT_THRESHOLD}%-${ENTRY_THRESHOLD}%) + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
+    console.log(`High return tickers (entry≥${ENTRY_THRESHOLD}%, exit<${EXIT_THRESHOLD}%):`, highReturnTickers.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
     console.log('Additional bullish tickers:', additionalBullishTickers.map(item => item.ticker));
     
     // Remove CASH from optimal portfolio display - users can manage cash allocation themselves
@@ -2155,10 +2208,10 @@ export default function DividendAnalysisDashboard() {
     // Calculate MPT-based allocation percentages
     const portfolioWithAllocations = calculateMPTAllocations(finalOptimal);
     
-    console.log('Optimal portfolio with MPT allocations:', 
+    console.log('Optimal portfolio with MPT allocations:',
                portfolioWithAllocations.map(t => `${t.ticker}: Return ${t.calculatedTotalReturn.toFixed(2)}%, Allocation ${t.mptAllocation.toFixed(1)}%`));
     return portfolioWithAllocations;
-  }, [data, aiOutlooks, polygonData, portfolioUpdateTrigger]);
+  }, [data, aiOutlooks, polygonData, portfolioUpdateTrigger, activeHighReturnTickers]);
 
   // Calculate categorized excluded tickers based on optimal portfolio
   const excludedTickersData = useMemo(() => {
