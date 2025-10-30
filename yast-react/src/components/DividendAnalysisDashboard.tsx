@@ -2145,9 +2145,9 @@ export default function DividendAnalysisDashboard() {
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
     // Apply hysteresis to prevent flapping around 30% threshold
-    // Entry: 30% (new positions)
+    // Entry: 29.5% (new positions) - slightly below 30 to account for rounding
     // Exit: 25% (existing positions must drop below 25% to exit)
-    const ENTRY_THRESHOLD = 30;
+    const ENTRY_THRESHOLD = 29.5;
     const EXIT_THRESHOLD = 25;
 
     const newActiveSet = new Set<string>();
