@@ -47,7 +47,8 @@ import {
   Refresh,
   SmartToy,
   Clear,
-  Analytics
+  Analytics,
+  ContentCopy
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
@@ -1834,6 +1835,19 @@ export default function DividendAnalysisDashboard() {
       return false;
     }
     return true;
+  };
+
+  const handleCopyAiAnalysis = () => {
+    if (aiAnalysisResult) {
+      navigator.clipboard.writeText(aiAnalysisResult).then(() => {
+        setSnackbarMessage('✓ AI analysis copied to clipboard');
+        setShowSnackbar(true);
+      }).catch((err) => {
+        console.error('Failed to copy:', err);
+        setSnackbarMessage('Failed to copy to clipboard');
+        setShowSnackbar(true);
+      });
+    }
   };
 
 
@@ -4554,11 +4568,31 @@ Add Position
             </Typography>
           )}
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2 }}>
-          <Button 
+        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2, gap: 1 }}>
+          <Button
+            onClick={handleCopyAiAnalysis}
+            variant="contained"
+            startIcon={<ContentCopy />}
+            disabled={!aiAnalysisResult}
+            sx={{
+              background: 'linear-gradient(135deg, #00D4FF 0%, #00A8CC 100%)',
+              color: '#000000',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00A8CC 0%, #008BA3 100%)',
+              },
+              '&:disabled': {
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: 'rgba(255, 255, 255, 0.3)'
+              }
+            }}
+          >
+            Copy
+          </Button>
+          <Button
             onClick={() => setShowAiModal(false)}
             variant="outlined"
-            sx={{ 
+            sx={{
               color: '#00D4FF',
               borderColor: '#00D4FF',
               '&:hover': {
