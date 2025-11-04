@@ -2158,11 +2158,11 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
-    // Apply hysteresis to prevent flapping around 30% threshold
-    // Entry: 29.5% (new positions) - slightly below 30 to account for rounding
-    // Exit: 25% (existing positions must drop below 25% to exit)
-    const ENTRY_THRESHOLD = 29.5;
-    const EXIT_THRESHOLD = 25;
+    // Apply hysteresis to prevent flapping around 35% threshold
+    // Entry: 34.5% (new positions) - slightly below 35 to account for rounding
+    // Exit: 30% (existing positions must drop below 30% to exit)
+    const ENTRY_THRESHOLD = 34.5;
+    const EXIT_THRESHOLD = 30;
 
     const newActiveSet = new Set<string>();
     const highReturnTickers = tickersWithTotalReturn.filter(item => {
