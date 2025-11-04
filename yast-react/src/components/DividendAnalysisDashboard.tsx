@@ -2158,8 +2158,8 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
-    // Simple threshold without hysteresis - 34.5% accounts for rounding to 35%
-    const RETURN_THRESHOLD = 34.5;
+    // Simple threshold without hysteresis - 34.95% rounds to 35.0%
+    const RETURN_THRESHOLD = 34.95;
 
     // Filter tickers with return >= threshold (no hysteresis)
     const highReturnTickers = tickersWithTotalReturn.filter(item => {
