@@ -1,0 +1,146 @@
+{
+  "NFLW": {
+    "category": "SMALL_DROP",
+    "confidence": 67.0
+  },
+  "HOOW": {
+    "category": "SMALL_INCREASE",
+    "confidence": 25.4
+  },
+  "TSLY": {
+    "category": "SMALL_DROP",
+    "confidence": 29.7
+  },
+  "TSII": {
+    "category": "BIG_INCREASE",
+    "confidence": 31.1
+  },
+  "TSLW": {
+    "category": "SMALL_DROP",
+    "confidence": 30.4
+  },
+  "NVDY": {
+    "category": "BIG_INCREASE",
+    "confidence": 46.7
+  },
+  "CONY": {
+    "category": "BIG_INCREASE",
+    "confidence": 43.9
+  },
+  "MSTY": {
+    "category": "FLAT",
+    "confidence": 35.3
+  },
+  "GOOY": {
+    "category": "SMALL_DROP",
+    "confidence": 36.1
+  },
+  "AMZY": {
+    "category": "SMALL_DROP",
+    "confidence": 55.4
+  },
+  "APLY": {
+    "category": "BIG_INCREASE",
+    "confidence": 34.6
+  },
+  "METY": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "TSMW": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "AMDY": {
+    "category": "BIG_INCREASE",
+    "confidence": 30.8
+  },
+  "PLTY": {
+    "category": "SMALL_INCREASE",
+    "confidence": 25.6
+  },
+  "SQY": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "ROBY": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "PYPY": {
+    "category": "BIG_INCREASE",
+    "confidence": 39.5
+  },
+  "SHPY": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "MRNY": {
+    "category": "BIG_INCREASE",
+    "confidence": 53.7
+  },
+  "PFEY": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "BABA": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "PLTW": {
+    "category": "SMALL_DROP",
+    "confidence": 25.5
+  },
+  "QQQY": {
+    "category": "FLAT",
+    "confidence": 62.6
+  },
+  "BCCC": {
+    "category": "UNKNOWN",
+    "confidence": 0,
+    "error": "No data available"
+  },
+  "COIW": {
+    "category": "FLAT",
+    "confidence": 37.2
+  },
+  "NVDW": {
+    "category": "BIG_INCREASE",
+    "confidence": 46.2
+  },
+  "METW": {
+    "category": "SMALL_DROP",
+    "confidence": 68.1
+  },
+  "AAPW": {
+    "category": "BIG_INCREASE",
+    "confidence": 34.9
+  },
+  "AMZW": {
+    "category": "SMALL_DROP",
+    "confidence": 55.3
+  },
+  "BRKW": {
+    "category": "FLAT",
+    "confidence": 47.4
+  },
+  "GPTY": {
+    "category": "BIG_INCREASE",
+    "confidence": 58.0
+  },
+  "BLOX": {
+    "category": "BIG_INCREASE",
+    "confidence": 54.6
+  },
+  "CHPY": {
+    "category": "BIG_INCREASE",
+    "confidence": 38.0
+  }
+}
