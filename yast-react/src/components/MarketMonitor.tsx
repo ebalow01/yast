@@ -114,6 +114,22 @@ const MarketMonitor: React.FC = () => {
 
   if (!marketData) return null;
 
+  // Check if we have any valid data
+  const hasAnyData = marketData.fearGreedIndex || marketData.vix || marketData.vooPrice;
+
+  if (!hasAnyData) {
+    return (
+      <Box p={3}>
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Unable to fetch market data. The APIs may be temporarily unavailable.
+        </Alert>
+        <Button variant="contained" onClick={fetchMarketData} startIcon={<Refresh />}>
+          Retry
+        </Button>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       {/* Header */}
@@ -160,181 +176,187 @@ const MarketMonitor: React.FC = () => {
       {/* Market Indicators Grid */}
       <Grid container spacing={3} mb={4}>
         {/* Fear & Greed Index */}
-        <Grid item xs={12} md={4}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card
-              sx={{
-                height: '100%',
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: `2px solid ${getFearGreedColor(marketData.fearGreedIndex.value)}`,
-              }}
+        {marketData.fearGreedIndex && (
+          <Grid item xs={12} md={4}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
             >
-              <CardContent>
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                  <Typography variant="h6" fontWeight="bold">
-                    Fear & Greed Index
+              <Card
+                sx={{
+                  height: '100%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: `2px solid ${getFearGreedColor(marketData.fearGreedIndex.value)}`,
+                }}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <Typography variant="h6" fontWeight="bold">
+                      Fear & Greed Index
+                    </Typography>
+                    {marketData.fearGreedIndex.value <= 40 ? (
+                      <TrendingDown fontSize="large" sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }} />
+                    ) : (
+                      <TrendingUp fontSize="large" sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }} />
+                    )}
+                  </Box>
+
+                  <Box textAlign="center" my={3}>
+                    <Typography
+                      variant="h1"
+                      fontWeight="bold"
+                      sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }}
+                    >
+                      {marketData.fearGreedIndex.value}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      / 100
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={marketData.fearGreedIndex.value}
+                      sx={{
+                        height: 8,
+                        borderRadius: 1,
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: getFearGreedColor(marketData.fearGreedIndex.value)
+                        }
+                      }}
+                    />
+                  </Box>
+
+                  <Box mt={2}>
+                    <Chip
+                      label={marketData.fearGreedIndex.category}
+                      sx={{
+                        backgroundColor: getFearGreedColor(marketData.fearGreedIndex.value),
+                        color: 'white',
+                        fontWeight: 'bold',
+                        width: '100%'
+                      }}
+                    />
+                  </Box>
+
+                  <Typography variant="body2" color="text.secondary" mt={2} textAlign="center">
+                    {marketData.fearGreedIndex.rating}
                   </Typography>
-                  {marketData.fearGreedIndex.value <= 40 ? (
-                    <TrendingDown fontSize="large" sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }} />
-                  ) : (
-                    <TrendingUp fontSize="large" sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }} />
-                  )}
-                </Box>
-
-                <Box textAlign="center" my={3}>
-                  <Typography
-                    variant="h1"
-                    fontWeight="bold"
-                    sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }}
-                  >
-                    {marketData.fearGreedIndex.value}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    / 100
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={marketData.fearGreedIndex.value}
-                    sx={{
-                      height: 8,
-                      borderRadius: 1,
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: getFearGreedColor(marketData.fearGreedIndex.value)
-                      }
-                    }}
-                  />
-                </Box>
-
-                <Box mt={2}>
-                  <Chip
-                    label={marketData.fearGreedIndex.category}
-                    sx={{
-                      backgroundColor: getFearGreedColor(marketData.fearGreedIndex.value),
-                      color: 'white',
-                      fontWeight: 'bold',
-                      width: '100%'
-                    }}
-                  />
-                </Box>
-
-                <Typography variant="body2" color="text.secondary" mt={2} textAlign="center">
-                  {marketData.fearGreedIndex.rating}
-                </Typography>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </Grid>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+        )}
 
         {/* VIX */}
-        <Grid item xs={12} md={4}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <Card
-              sx={{
-                height: '100%',
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: `2px solid ${getVixColor(marketData.vix.value)}`,
-              }}
+        {marketData.vix && (
+          <Grid item xs={12} md={4}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
             >
-              <CardContent>
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                  <Typography variant="h6" fontWeight="bold">
-                    VIX (Volatility)
-                  </Typography>
-                  <ShowChart fontSize="large" sx={{ color: getVixColor(marketData.vix.value) }} />
-                </Box>
+              <Card
+                sx={{
+                  height: '100%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: `2px solid ${getVixColor(marketData.vix.value)}`,
+                }}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <Typography variant="h6" fontWeight="bold">
+                      VIX (Volatility)
+                    </Typography>
+                    <ShowChart fontSize="large" sx={{ color: getVixColor(marketData.vix.value) }} />
+                  </Box>
 
-                <Box textAlign="center" my={3}>
-                  <Typography
-                    variant="h1"
-                    fontWeight="bold"
-                    sx={{ color: getVixColor(marketData.vix.value) }}
-                  >
-                    {marketData.vix.value.toFixed(2)}
-                  </Typography>
-                </Box>
+                  <Box textAlign="center" my={3}>
+                    <Typography
+                      variant="h1"
+                      fontWeight="bold"
+                      sx={{ color: getVixColor(marketData.vix.value) }}
+                    >
+                      {marketData.vix.value.toFixed(2)}
+                    </Typography>
+                  </Box>
 
-                <Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min((marketData.vix.value / 50) * 100, 100)}
-                    sx={{
-                      height: 8,
-                      borderRadius: 1,
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: getVixColor(marketData.vix.value)
-                      }
-                    }}
-                  />
-                </Box>
+                  <Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Math.min((marketData.vix.value / 50) * 100, 100)}
+                      sx={{
+                        height: 8,
+                        borderRadius: 1,
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: getVixColor(marketData.vix.value)
+                        }
+                      }}
+                    />
+                  </Box>
 
-                <Box mt={2}>
-                  <Chip
-                    label={marketData.vix.category}
-                    sx={{
-                      backgroundColor: getVixColor(marketData.vix.value),
-                      color: 'white',
-                      fontWeight: 'bold',
-                      width: '100%'
-                    }}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </Grid>
+                  <Box mt={2}>
+                    <Chip
+                      label={marketData.vix.category}
+                      sx={{
+                        backgroundColor: getVixColor(marketData.vix.value),
+                        color: 'white',
+                        fontWeight: 'bold',
+                        width: '100%'
+                      }}
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+        )}
 
         {/* VOO Price */}
-        <Grid item xs={12} md={4}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <Card
-              sx={{
-                height: '100%',
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '2px solid #00D4FF',
-              }}
+        {marketData.vooPrice && (
+          <Grid item xs={12} md={4}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <CardContent>
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                  <Typography variant="h6" fontWeight="bold">
-                    VOO Price
-                  </Typography>
-                  <AttachMoney fontSize="large" sx={{ color: '#00D4FF' }} />
-                </Box>
+              <Card
+                sx={{
+                  height: '100%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '2px solid #00D4FF',
+                }}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <Typography variant="h6" fontWeight="bold">
+                      VOO Price
+                    </Typography>
+                    <AttachMoney fontSize="large" sx={{ color: '#00D4FF' }} />
+                  </Box>
 
-                <Box textAlign="center" my={3}>
-                  <Typography
-                    variant="h1"
-                    fontWeight="bold"
-                    sx={{ color: '#00D4FF' }}
-                  >
-                    ${marketData.vooPrice.toFixed(2)}
-                  </Typography>
-                </Box>
+                  <Box textAlign="center" my={3}>
+                    <Typography
+                      variant="h1"
+                      fontWeight="bold"
+                      sx={{ color: '#00D4FF' }}
+                    >
+                      ${marketData.vooPrice.toFixed(2)}
+                    </Typography>
+                  </Box>
 
-                <Typography variant="body2" color="text.secondary" textAlign="center" mt={2}>
-                  Current Market Price
-                </Typography>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </Grid>
+                  <Typography variant="body2" color="text.secondary" textAlign="center" mt={2}>
+                    Current Market Price
+                  </Typography>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+        )}
       </Grid>
 
       {/* Strategy Recommendation */}
