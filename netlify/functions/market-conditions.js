@@ -35,7 +35,7 @@ async function getFearGreedIndex() {
 
     const data = await response.json();
 
-    const currentValue = data.fear_and_greed.score;
+    const currentValue = Math.round(data.fear_and_greed.score); // Round to integer
     const rating = data.fear_and_greed.rating;
 
     let category = 'Neutral';
@@ -150,38 +150,43 @@ function getStrategyRecommendation(fearGreed, vix) {
   const fgValue = fearGreed.value;
   const vixValue = vix.value;
 
-  // Extreme Fear + High VIX = Aggressive buying opportunity
+  // Extreme Fear + High VIX = Maximum opportunity (like April 2025)
   if (fgValue <= 25 && vixValue >= 25) {
-    return "🚀 AGGRESSIVE BUY: Extreme fear + elevated volatility = prime opportunity for SPXL/TQQQ";
+    return "🚀 MAXIMUM OPPORTUNITY: Extreme fear + high volatility = Go ALL-IN on SPXL/TQQQ (like April 2025)";
   }
 
-  // Extreme Fear
-  if (fgValue <= 25) {
-    return "📈 BUY: Market fear presents buying opportunity. Consider leveraged positions.";
+  // Extreme Fear alone
+  if (fgValue <= 20) {
+    return "🔥 EXTREME BUY SIGNAL: Historic fear levels. Strong buy opportunity for SPXL/TQQQ positions.";
   }
 
-  // Fear
+  // Fear (21-45)
   if (fgValue <= 45) {
-    return "➕ ACCUMULATE: Moderate fear. Good time to add positions gradually.";
+    if (vixValue >= 20) {
+      return "📈 STRONG BUY: Fear + elevated volatility. Aggressive accumulation of SPXL/TQQQ recommended.";
+    }
+    return "➕ BUY SIGNAL: Market fear. Good entry point for leveraged positions (SPXL/TQQQ).";
   }
 
-  // Extreme Greed + Low VIX = Caution
-  if (fgValue >= 75 && vixValue < 15) {
-    return "⚠️ CAUTION: Extreme greed + low volatility. Consider taking profits or hedging.";
+  // Neutral (46-55)
+  if (fgValue <= 55) {
+    return "➡️ NEUTRAL: Balanced market. Hold current positions, wait for better entry.";
   }
 
-  // Extreme Greed
-  if (fgValue >= 75) {
-    return "💰 TAKE PROFITS: Extreme greed. Consider reducing exposure or securing gains.";
+  // Greed (56-75)
+  if (fgValue <= 75) {
+    if (vixValue < 15) {
+      return "⚠️ TAKE PROFITS: Market greedy + low volatility. Secure gains and build cash position.";
+    }
+    return "😊 HOLD/TRIM: Market greedy. Consider light profit-taking to build cash reserves.";
   }
 
-  // Greed
-  if (fgValue >= 55) {
-    return "😊 HOLD/TRIM: Market greedy. Hold positions but consider light profit-taking.";
+  // Extreme Greed (76+)
+  if (fgValue >= 76) {
+    return "🛑 SELL SIGNAL: Extreme greed. Take profits and move to cash - correction likely incoming.";
   }
 
-  // Neutral
-  return "➡️ NEUTRAL: Market balanced. Maintain current strategy.";
+  return "➡️ HOLD: Monitor market conditions.";
 }
 
 // Check for alerts
