@@ -141,7 +141,7 @@ async function getVOOPrice(apiKey) {
   return null;
 }
 
-// Get strategy recommendation based on market conditions (options-focused)
+// Get strategy recommendation based on market conditions (3-step systematic strategy)
 function getStrategyRecommendation(fearGreed, vix) {
   if (!fearGreed || !vix) {
     return "Insufficient data for recommendation";
@@ -150,67 +150,71 @@ function getStrategyRecommendation(fearGreed, vix) {
   const fgValue = fearGreed.value;
   const vixValue = vix.value;
 
-  // Extreme Fear + High VIX = Aggressive PUT selling opportunity
-  if (fgValue <= 25 && vixValue >= 25) {
-    return "🚀 AGGRESSIVE PUT SELLING: Extreme fear + high volatility = Sell ATM/ITM cash-secured puts on VOO (30-45 DTE). Premium is elevated, great entry prices if assigned.";
-  }
-
-  // Extreme Fear alone
+  // STEP 2: EXTREME FEAR TRIGGER - Forced aggression
   if (fgValue <= 20) {
-    return "🔥 SELL CASH-SECURED PUTS: Historic fear levels. Sell puts 2-5% OTM on VOO (30-45 DTE). High premium + excellent assignment prices.";
+    return "🚨 STEP 2: EXTREME FEAR TRIGGER\n\nMANDATORY ACTIONS (NO CHOICE):\n1. Close ALL covered calls immediately (buy back)\n2. Sell cash-secured puts on VOO:\n   - Strike: 5-10% below current price\n   - DTE: 30-45 days\n   - Premium will be MASSIVE\n3. DO NOT QUESTION IT - System says go aggressive = GO AGGRESSIVE\n\nResult: Either collect huge premium OR get assigned at discount prices for Step 3.";
   }
 
-  // Fear (21-45)
+  // STEP 2 WARNING: Fear approaching extreme levels
+  if (fgValue <= 25) {
+    return "⚠️ APPROACHING EXTREME FEAR (Step 2 Zone)\n\nCurrent: Continue covered calls (Step 1)\nPrepare for Step 2 if F&G drops below 20:\n- Have cash ready for put selling\n- Review current covered calls (may need to close)\n- Monitor VIX - currently at " + vixValue.toFixed(2);
+  }
+
+  // Moderate Fear - transition zone
   if (fgValue <= 45) {
-    if (vixValue >= 20) {
-      return "📈 SELL PUTS: Fear + elevated volatility. Sell cash-secured puts on VOO (1-3% OTM, 30-45 DTE). Good premium, favorable assignment risk.";
-    }
-    return "➕ SELL PUTS/BUY SHARES: Market fear. Sell puts on VOO (2-3% OTM, 30 DTE) or buy shares and prepare covered calls.";
+    return "➕ STEP 1 + OPPORTUNISTIC PUTS\n\nPrimary: Continue covered call cycle (every 2 weeks, 14 DTE)\nOptional: Sell selective cash-secured puts if premium attractive\n- Only if you want more shares\n- 2-3% OTM, 30 DTE\n\nStill in Step 1 territory - monthly income mode.";
   }
 
-  // Neutral (46-55)
-  if (fgValue <= 55) {
-    return "➡️ COVERED CALLS + SELECTIVE PUTS: Balanced market. Sell covered calls on existing shares (1-2% OTM, 30-45 DTE). Only sell puts if IV is attractive.";
+  // STEP 1: MONTHLY INCOME MODE (Normal Market)
+  if (fgValue <= 60) {
+    return "✅ STEP 1: MONTHLY INCOME (AUTOPILOT)\n\nCovered Call Cycle:\n- Frequency: Every 2 weeks\n- Strike: $5 OTM from current price\n- DTE: 14 days\n- This is systematic - no thinking required\n\nStatus: Normal market conditions. Stay in autopilot mode.";
   }
 
-  // Greed (56-75)
+  // Greed - continue Step 1 but watch for reversal
   if (fgValue <= 75) {
-    if (vixValue < 15) {
-      return "⚠️ AGGRESSIVE COVERED CALLS: Market greedy + low volatility. Sell ATM or slightly ITM covered calls (30-45 DTE) to capture premium. Avoid selling puts.";
-    }
-    return "😊 COVERED CALLS: Market greedy. Sell covered calls on VOO (0.5-1% OTM, 30-45 DTE). Consider closing profitable puts early.";
+    return "😊 STEP 1 CONTINUES (Market Greedy)\n\nCovered Call Cycle:\n- Same parameters: $5 OTM, 14 DTE, every 2 weeks\n- Market greedy but not extreme\n- Consider slightly closer strikes (ATM/ITM) for higher premium\n\nWatch for reversal - could drop into Step 2 zone quickly.";
   }
 
-  // Extreme Greed (76+)
+  // STEP 3 CONTEXT: Recovery after assignment (or extreme greed)
   if (fgValue >= 76) {
-    return "🛑 DEFENSIVE OPTIONS: Extreme greed. Sell ITM covered calls to secure profits. Close all short puts. Consider protective puts or reduce exposure.";
+    return "🎯 EXTREME GREED or STEP 3: RECOVERY MODE\n\nIf recently assigned from puts (Step 3):\n- Sell covered calls well above your cost basis\n- Collect premium during entire recovery\n- No rush - let stock recover while earning\n\nIf no assignment:\n- Sell aggressive covered calls (ATM/ITM)\n- Market overheated - secure profits";
   }
 
-  return "➡️ THETA GANG: Sell premium via covered calls and cash-secured puts based on portfolio allocation.";
+  return "➡️ STEP 1: Sell covered calls every 2 weeks ($5 OTM, 14 DTE)";
 }
 
-// Check for alerts (options-focused)
+// Check for alerts (3-step system focused)
 function checkAlerts(fearGreed, vix) {
   const alerts = [];
 
+  // STEP 2 TRIGGER ALERT
   if (fearGreed && fearGreed.value <= 20) {
-    alerts.push("⚡ EXTREME FEAR ALERT: Fear & Greed at " + fearGreed.value + " - PRIME PUT SELLING CONDITIONS! Sell cash-secured puts aggressively.");
+    alerts.push("🚨 STEP 2 TRIGGERED! Fear & Greed at " + fearGreed.value + " - CLOSE ALL COVERED CALLS. SELL CASH-SECURED PUTS 5-10% BELOW. NO CHOICE - GO AGGRESSIVE NOW!");
   }
 
+  // STEP 2 WARNING ALERT
+  if (fearGreed && fearGreed.value > 20 && fearGreed.value <= 25) {
+    alerts.push("⚠️ STEP 2 APPROACHING: Fear & Greed at " + fearGreed.value + " - Prepare cash. Review current calls. Could trigger soon!");
+  }
+
+  // HIGH VIX ALERT (enhanced premium opportunity)
   if (vix && vix.value >= 30) {
-    alerts.push("🌋 HIGH IV ALERT: VIX at " + vix.value.toFixed(2) + " - Options premium ELEVATED. Excellent time to sell puts/calls.");
+    alerts.push("🌋 EXTREME VOLATILITY: VIX at " + vix.value.toFixed(2) + " - Premium is MASSIVE. If Step 2 triggers, assignment prices will be excellent.");
   }
 
+  // COMBO ALERT: Extreme Fear + High VIX
   if (fearGreed && vix && fearGreed.value <= 25 && vix.value >= 25) {
-    alerts.push("💎 MAXIMUM PREMIUM OPPORTUNITY: Fear + High VIX = Sell ATM cash-secured puts for maximum premium + great assignment prices!");
+    alerts.push("💎 MAXIMUM OPPORTUNITY ZONE: Fear + High VIX = This is the April 2025 scenario. Execute Step 2 with confidence!");
   }
 
+  // EXTREME GREED - possible Step 3 scenario or take profits
   if (fearGreed && fearGreed.value >= 80) {
-    alerts.push("🔔 EXTREME GREED ALERT: Market at " + fearGreed.value + " - Close short puts, sell ITM covered calls to lock profits!");
+    alerts.push("🔔 EXTREME GREED: Market at " + fearGreed.value + " - If in Step 3 recovery, keep selling calls. If not assigned, sell aggressive ITM calls!");
   }
 
-  if (vix && vix.value < 12 && fearGreed && fearGreed.value >= 60) {
-    alerts.push("⚠️ LOW IV + GREED: VIX " + vix.value.toFixed(2) + " - Poor premium environment. Consider closing positions or waiting.");
+  // LOW PREMIUM ENVIRONMENT
+  if (vix && vix.value < 12) {
+    alerts.push("💤 LOW VOLATILITY: VIX " + vix.value.toFixed(2) + " - Step 1 premiums lower than usual. Still collect, but don't expect big payouts.");
   }
 
   return alerts;
