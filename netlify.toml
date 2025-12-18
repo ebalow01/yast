@@ -18,6 +18,7 @@
 
 # Function configuration for Netlify Blobs
 [functions]
+  directory = "netlify/functions"
   external_node_modules = ["@netlify/blobs"]
 
 # Daily scheduled function (if using Netlify scheduled functions - requires Pro plan)

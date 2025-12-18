@@ -51,7 +51,8 @@ const MarketMonitor: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/api/market-conditions');
+      // Use Netlify Function endpoint (works in production and local Netlify dev)
+      const response = await fetch('/.netlify/functions/market-conditions');
       const result = await response.json();
 
       if (result.success) {
