@@ -48,10 +48,12 @@ import {
   SmartToy,
   Clear,
   Analytics,
-  ContentCopy
+  ContentCopy,
+  Insights
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
+import MarketMonitor from './MarketMonitor';
 
 export interface DividendData {
   ticker: string;
@@ -3327,7 +3329,18 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           fontSize: 20
                         }
                       }}
-/>
+                    />
+                    <Tab
+                      label="Market Monitor"
+                      icon={<Insights />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
                   </Tabs>
 
                   {/* Tab Panels */}
@@ -4384,6 +4397,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         </TableContainer>
                       )}
 
+                    </Box>
+                  )}
+
+                  {selectedTab === 4 && (
+                    <Box sx={{ p: 3 }}>
+                      <MarketMonitor />
                     </Box>
                   )}
 
