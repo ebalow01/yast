@@ -141,7 +141,7 @@ async function getVOOPrice(apiKey) {
   return null;
 }
 
-// Get strategy recommendation based on market conditions
+// Get strategy recommendation based on market conditions (options-focused)
 function getStrategyRecommendation(fearGreed, vix) {
   if (!fearGreed || !vix) {
     return "Insufficient data for recommendation";
@@ -150,63 +150,67 @@ function getStrategyRecommendation(fearGreed, vix) {
   const fgValue = fearGreed.value;
   const vixValue = vix.value;
 
-  // Extreme Fear + High VIX = Maximum opportunity (like April 2025)
+  // Extreme Fear + High VIX = Aggressive PUT selling opportunity
   if (fgValue <= 25 && vixValue >= 25) {
-    return "🚀 MAXIMUM OPPORTUNITY: Extreme fear + high volatility = Go ALL-IN on SPXL/TQQQ (like April 2025)";
+    return "🚀 AGGRESSIVE PUT SELLING: Extreme fear + high volatility = Sell ATM/ITM cash-secured puts on VOO (30-45 DTE). Premium is elevated, great entry prices if assigned.";
   }
 
   // Extreme Fear alone
   if (fgValue <= 20) {
-    return "🔥 EXTREME BUY SIGNAL: Historic fear levels. Strong buy opportunity for SPXL/TQQQ positions.";
+    return "🔥 SELL CASH-SECURED PUTS: Historic fear levels. Sell puts 2-5% OTM on VOO (30-45 DTE). High premium + excellent assignment prices.";
   }
 
   // Fear (21-45)
   if (fgValue <= 45) {
     if (vixValue >= 20) {
-      return "📈 STRONG BUY: Fear + elevated volatility. Aggressive accumulation of SPXL/TQQQ recommended.";
+      return "📈 SELL PUTS: Fear + elevated volatility. Sell cash-secured puts on VOO (1-3% OTM, 30-45 DTE). Good premium, favorable assignment risk.";
     }
-    return "➕ BUY SIGNAL: Market fear. Good entry point for leveraged positions (SPXL/TQQQ).";
+    return "➕ SELL PUTS/BUY SHARES: Market fear. Sell puts on VOO (2-3% OTM, 30 DTE) or buy shares and prepare covered calls.";
   }
 
   // Neutral (46-55)
   if (fgValue <= 55) {
-    return "➡️ NEUTRAL: Balanced market. Hold current positions, wait for better entry.";
+    return "➡️ COVERED CALLS + SELECTIVE PUTS: Balanced market. Sell covered calls on existing shares (1-2% OTM, 30-45 DTE). Only sell puts if IV is attractive.";
   }
 
   // Greed (56-75)
   if (fgValue <= 75) {
     if (vixValue < 15) {
-      return "⚠️ TAKE PROFITS: Market greedy + low volatility. Secure gains and build cash position.";
+      return "⚠️ AGGRESSIVE COVERED CALLS: Market greedy + low volatility. Sell ATM or slightly ITM covered calls (30-45 DTE) to capture premium. Avoid selling puts.";
     }
-    return "😊 HOLD/TRIM: Market greedy. Consider light profit-taking to build cash reserves.";
+    return "😊 COVERED CALLS: Market greedy. Sell covered calls on VOO (0.5-1% OTM, 30-45 DTE). Consider closing profitable puts early.";
   }
 
   // Extreme Greed (76+)
   if (fgValue >= 76) {
-    return "🛑 SELL SIGNAL: Extreme greed. Take profits and move to cash - correction likely incoming.";
+    return "🛑 DEFENSIVE OPTIONS: Extreme greed. Sell ITM covered calls to secure profits. Close all short puts. Consider protective puts or reduce exposure.";
   }
 
-  return "➡️ HOLD: Monitor market conditions.";
+  return "➡️ THETA GANG: Sell premium via covered calls and cash-secured puts based on portfolio allocation.";
 }
 
-// Check for alerts
+// Check for alerts (options-focused)
 function checkAlerts(fearGreed, vix) {
   const alerts = [];
 
   if (fearGreed && fearGreed.value <= 20) {
-    alerts.push("⚡ EXTREME FEAR ALERT: Fear & Greed at " + fearGreed.value + " - Historical buying opportunity!");
+    alerts.push("⚡ EXTREME FEAR ALERT: Fear & Greed at " + fearGreed.value + " - PRIME PUT SELLING CONDITIONS! Sell cash-secured puts aggressively.");
   }
 
   if (vix && vix.value >= 30) {
-    alerts.push("🌋 HIGH VOLATILITY ALERT: VIX at " + vix.value.toFixed(2) + " - Market turbulence expected");
+    alerts.push("🌋 HIGH IV ALERT: VIX at " + vix.value.toFixed(2) + " - Options premium ELEVATED. Excellent time to sell puts/calls.");
   }
 
   if (fearGreed && vix && fearGreed.value <= 25 && vix.value >= 25) {
-    alerts.push("💎 GOLDEN OPPORTUNITY: Fear + Volatility = Historically strong buy signal");
+    alerts.push("💎 MAXIMUM PREMIUM OPPORTUNITY: Fear + High VIX = Sell ATM cash-secured puts for maximum premium + great assignment prices!");
   }
 
   if (fearGreed && fearGreed.value >= 80) {
-    alerts.push("🔔 EXTREME GREED ALERT: Market may be overheated at " + fearGreed.value);
+    alerts.push("🔔 EXTREME GREED ALERT: Market at " + fearGreed.value + " - Close short puts, sell ITM covered calls to lock profits!");
+  }
+
+  if (vix && vix.value < 12 && fearGreed && fearGreed.value >= 60) {
+    alerts.push("⚠️ LOW IV + GREED: VIX " + vix.value.toFixed(2) + " - Poor premium environment. Consider closing positions or waiting.");
   }
 
   return alerts;
