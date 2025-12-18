@@ -71,6 +71,7 @@ Thumbs.db
 # Project specific
 data/
 !yast-react/public/data/
+!yast-react/src/data/
 results/
 *.log
 output*.txt
