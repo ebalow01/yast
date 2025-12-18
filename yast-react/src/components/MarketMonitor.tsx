@@ -22,6 +22,28 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
+interface Strategy {
+  name: string;
+  successRate: string;
+  requiresCash: boolean;
+  requiresShares: boolean;
+  action: string;
+  strike: string;
+  dte: string;
+  position: string;
+  roll: string;
+  goal: string;
+}
+
+interface Recommendation {
+  zone: string;
+  zoneTitle: string;
+  vixNotice: string | null;
+  primaryStrategies: Strategy[];
+  alternateStrategies: Strategy[];
+  note: string;
+}
+
 interface MarketData {
   fearGreedIndex: {
     value: number;
@@ -35,7 +57,7 @@ interface MarketData {
     emoji: string;
   };
   vooPrice: number;
-  recommendation: string;
+  recommendation: Recommendation;
   alerts: string[];
   timestamp: string;
 }
@@ -45,6 +67,7 @@ const MarketMonitor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('');
+  const [showAlternate, setShowAlternate] = useState(false);
 
   const fetchMarketData = async () => {
     try {
@@ -375,19 +398,178 @@ const MarketMonitor: React.FC = () => {
           <Typography variant="h6" fontWeight="bold" gutterBottom>
             Strategy Recommendation
           </Typography>
+
+          {/* Zone Title */}
           <Typography
-            component="pre"
-            sx={{
-              fontFamily: 'monospace',
-              fontSize: '0.9rem',
-              whiteSpace: 'pre-wrap',
-              color: 'text.primary',
-              lineHeight: 1.6,
-              mt: 2
-            }}
+            variant="h5"
+            fontWeight="bold"
+            sx={{ mt: 2, mb: 2, color: '#00D4FF' }}
           >
-            {marketData.recommendation}
+            {marketData.recommendation.zoneTitle}
           </Typography>
+
+          {/* VIX Notice */}
+          {marketData.recommendation.vixNotice && (
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              {marketData.recommendation.vixNotice}
+            </Alert>
+          )}
+
+          {/* Primary Strategies */}
+          {marketData.recommendation.primaryStrategies.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: '#34C759' }}>
+                Primary Strategies (Use Your VOO Shares)
+              </Typography>
+              {marketData.recommendation.primaryStrategies.map((strategy, index) => (
+                <Paper
+                  key={index}
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    background: 'rgba(52, 199, 89, 0.05)',
+                    border: '1px solid rgba(52, 199, 89, 0.3)'
+                  }}
+                >
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="h6" fontWeight="bold">
+                      STRATEGY {index + 1}: {strategy.name}
+                    </Typography>
+                    <Chip
+                      label={strategy.successRate + ' Success'}
+                      size="small"
+                      sx={{
+                        backgroundColor: '#34C759',
+                        color: 'white',
+                        fontWeight: 'bold'
+                      }}
+                    />
+                  </Box>
+                  <Grid container spacing={2} sx={{ mt: 1 }}>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Action:</Typography>
+                      <Typography variant="body1">{strategy.action}</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Strike:</Typography>
+                      <Typography variant="body1">{strategy.strike}</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">DTE:</Typography>
+                      <Typography variant="body1">{strategy.dte}</Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Position:</Typography>
+                      <Typography variant="body1">{strategy.position}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">Roll:</Typography>
+                      <Typography variant="body1">{strategy.roll}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">Goal:</Typography>
+                      <Typography variant="body1" fontWeight="bold" sx={{ color: '#34C759' }}>
+                        {strategy.goal}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              ))}
+            </Box>
+          )}
+
+          {/* Alternate Strategies Toggle */}
+          {marketData.recommendation.alternateStrategies.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Button
+                variant="outlined"
+                onClick={() => setShowAlternate(!showAlternate)}
+                sx={{
+                  mb: 2,
+                  color: '#FF9500',
+                  borderColor: '#FF9500',
+                  '&:hover': {
+                    borderColor: '#FF9500',
+                    backgroundColor: 'rgba(255, 149, 0, 0.1)'
+                  }
+                }}
+              >
+                {showAlternate ? '▼ Hide' : '▶ Show'} Alternate Strategies (Require Available Cash)
+              </Button>
+
+              {showAlternate && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: '#FF9500' }}>
+                    Alternate Strategies (Require Cash)
+                  </Typography>
+                  {marketData.recommendation.alternateStrategies.map((strategy, index) => (
+                    <Paper
+                      key={index}
+                      sx={{
+                        p: 2,
+                        mb: 2,
+                        background: 'rgba(255, 149, 0, 0.05)',
+                        border: '1px solid rgba(255, 149, 0, 0.3)'
+                      }}
+                    >
+                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Typography variant="h6" fontWeight="bold">
+                          STRATEGY {marketData.recommendation.primaryStrategies.length + index + 1}: {strategy.name}
+                        </Typography>
+                        <Chip
+                          label={strategy.successRate + ' Success'}
+                          size="small"
+                          sx={{
+                            backgroundColor: '#FF9500',
+                            color: 'white',
+                            fontWeight: 'bold'
+                          }}
+                        />
+                      </Box>
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="body2" color="text.secondary">Action:</Typography>
+                          <Typography variant="body1">{strategy.action}</Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="body2" color="text.secondary">Strike:</Typography>
+                          <Typography variant="body1">{strategy.strike}</Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="body2" color="text.secondary">DTE:</Typography>
+                          <Typography variant="body1">{strategy.dte}</Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="body2" color="text.secondary">Position:</Typography>
+                          <Typography variant="body1">{strategy.position}</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography variant="body2" color="text.secondary">Roll:</Typography>
+                          <Typography variant="body1">{strategy.roll}</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography variant="body2" color="text.secondary">Goal:</Typography>
+                          <Typography variant="body1" fontWeight="bold" sx={{ color: '#FF9500' }}>
+                            {strategy.goal}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                </motion.div>
+              )}
+            </Box>
+          )}
+
+          {/* Note */}
+          <Alert severity="info" sx={{ mt: 2 }}>
+            {marketData.recommendation.note}
+          </Alert>
         </Paper>
       </motion.div>
     </Box>

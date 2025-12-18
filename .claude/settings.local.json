@@ -42,7 +42,10 @@
       "Bash(GIT_INDEX_FILE=.git/index.fix git read-tree:*)",
       "Bash(GIT_INDEX_FILE=.git/index.fix git update-index:*)",
       "Bash(GIT_INDEX_FILE=.git/index.fix git add:*)",
-      "Bash(GIT_INDEX_FILE=.git/index.fix git write-tree:*)"
+      "Bash(GIT_INDEX_FILE=.git/index.fix git write-tree:*)",
+      "Bash(npm install:*)",
+      "Bash(git restore:*)",
+      "Read(//c/Users/ebalo/new_dashboard/yast/**)"
     ],
     "deny": [],
     "ask": [],

@@ -142,229 +142,312 @@ async function getVOOPrice(apiKey) {
 }
 
 // Get strategy recommendation based on market conditions (VIX-AWARE framework)
+// Returns structured JSON for UI display with toggle functionality
 function getStrategyRecommendation(fearGreed, vix) {
   if (!fearGreed || !vix) {
-    return "Insufficient data for recommendation";
+    return {
+      zone: 'unknown',
+      zoneTitle: 'Insufficient Data',
+      vixNotice: null,
+      primaryStrategies: [],
+      alternateStrategies: [],
+      note: 'Insufficient data for recommendation'
+    };
   }
 
   const fgValue = fearGreed.value;
   const vixValue = vix.value;
 
   // VIX ADJUSTMENT: VIX drives premium, adjust zone based on actual volatility
-  // If VIX doesn't match typical range for F&G zone, shift strategy accordingly
   let adjustedZone = 'unknown';
 
   if (fgValue <= 25) {
-    // Extreme Fear zone expects VIX 25-40+
-    if (vixValue >= 25) {
-      adjustedZone = 'extreme-fear';  // VIX matches, use extreme fear strategies
-    } else {
-      adjustedZone = 'fear';  // VIX too low, downgrade to fear strategies
-    }
+    adjustedZone = vixValue >= 25 ? 'extreme-fear' : 'fear';
   } else if (fgValue <= 45) {
-    // Fear zone expects VIX 18-25
-    if (vixValue >= 25) {
-      adjustedZone = 'extreme-fear';  // VIX very high, upgrade to extreme fear
-    } else if (vixValue >= 18) {
-      adjustedZone = 'fear';  // VIX matches, use fear strategies
-    } else {
-      adjustedZone = 'neutral';  // VIX too low, downgrade to neutral strategies
-    }
+    if (vixValue >= 25) adjustedZone = 'extreme-fear';
+    else if (vixValue >= 18) adjustedZone = 'fear';
+    else adjustedZone = 'neutral';
   } else if (fgValue <= 55) {
-    // Neutral zone expects VIX 13-18
-    if (vixValue >= 20) {
-      adjustedZone = 'fear';  // VIX elevated, upgrade to fear strategies
-    } else if (vixValue >= 13) {
-      adjustedZone = 'neutral';  // VIX matches, use neutral strategies
-    } else {
-      adjustedZone = 'greed';  // VIX very low, downgrade to greed strategies
-    }
+    if (vixValue >= 20) adjustedZone = 'fear';
+    else if (vixValue >= 13) adjustedZone = 'neutral';
+    else adjustedZone = 'greed';
   } else if (fgValue <= 75) {
-    // Greed zone expects VIX 11-14
-    if (vixValue >= 18) {
-      adjustedZone = 'neutral';  // VIX elevated, upgrade to neutral
-    } else {
-      adjustedZone = 'greed';  // VIX matches, use greed strategies
-    }
+    adjustedZone = vixValue >= 18 ? 'neutral' : 'greed';
   } else {
-    // Extreme Greed zone expects VIX 9-12
-    adjustedZone = 'extreme-greed';  // Always use defensive mode regardless of VIX
+    adjustedZone = 'extreme-greed';
   }
 
-  // Add VIX adjustment notice
-  let vixNotice = '';
+  // VIX adjustment notice
+  let vixNotice = null;
   if (fgValue <= 25 && vixValue < 25) {
-    vixNotice = '\n⚠️ VIX ADJUSTMENT: F&G shows Extreme Fear but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = FEAR zone.\n';
+    vixNotice = '⚠️ VIX ADJUSTMENT: F&G shows Extreme Fear but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = FEAR zone.';
   } else if (fgValue <= 45 && vixValue < 18) {
-    vixNotice = '\n⚠️ VIX ADJUSTMENT: F&G shows Fear but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = NEUTRAL zone.\n';
+    vixNotice = '⚠️ VIX ADJUSTMENT: F&G shows Fear but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = NEUTRAL zone.';
   } else if (fgValue <= 45 && vixValue >= 25) {
-    vixNotice = '\n🔥 VIX UPGRADE: F&G shows Fear but VIX is ELEVATED (' + vixValue.toFixed(1) + '). Premium environment = EXTREME FEAR!\n';
+    vixNotice = '🔥 VIX UPGRADE: F&G shows Fear but VIX is ELEVATED (' + vixValue.toFixed(1) + '). Premium environment = EXTREME FEAR!';
   } else if (fgValue <= 55 && vixValue >= 20) {
-    vixNotice = '\n📈 VIX UPGRADE: F&G shows Neutral but VIX is ELEVATED (' + vixValue.toFixed(1) + '). Premium environment = FEAR zone.\n';
+    vixNotice = '📈 VIX UPGRADE: F&G shows Neutral but VIX is ELEVATED (' + vixValue.toFixed(1) + '). Premium environment = FEAR zone.';
   } else if (fgValue <= 55 && vixValue < 13) {
-    vixNotice = '\n💤 VIX ADJUSTMENT: F&G shows Neutral but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = GREED zone.\n';
+    vixNotice = '💤 VIX ADJUSTMENT: F&G shows Neutral but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = GREED zone.';
   }
-
-  // Now use adjustedZone instead of fgValue for strategy selection
 
   // EXTREME FEAR - Typical VIX: 25-40+
   if (adjustedZone === 'extreme-fear') {
-    return vixNotice + `🚨 EXTREME FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | GO AGGRESSIVE
-
-STRATEGY 1: Deep Discount Put Ladder (75-85% Success)
-├─ Action: Sell cash-secured puts in 3 tranches
-├─ Strikes: 8%, 10%, 12% below current (ladder down)
-├─ DTE: 45-60 days
-├─ Position: Deploy 100% cash (40%/35%/25% split)
-├─ Roll: If untested at 21 DTE + 50% profit → close & resell
-└─ Goal: Massive premium OR generational entry prices
-
-STRATEGY 2: Opportunistic Put Ladder (60-70% Success)
-├─ Action: Multiple strikes for price diversification
-├─ Strikes: 5%, 8%, 12% below current
-├─ DTE: 30-45 days
-├─ Position: Split cash equally across 3 strikes
-├─ Roll: Roll down & out if VOO drops further (collect credit)
-└─ Goal: Average down cost basis, offset 3-6% via premium
-
-STRATEGY 3: Short-DTE Aggressive Puts (80-90% Success)
-├─ Action: Weekly put selling during peak panic
-├─ Strike: 5-7% below current
-├─ DTE: 7-14 days (weekly cycles)
-├─ Position: 30-50% cash, redeploy weekly
-├─ Roll: Take assignment or let expire (no rolls)
-└─ Goal: Rapid premium accumulation (8-15% annualized)
-
-⚠️ MANDATORY: Close ALL covered calls. Deploy cash NOW.
-Premium is 2-4x normal. This is YOUR opportunity.`;
+    return {
+      zone: 'extreme-fear',
+      zoneTitle: `🚨 EXTREME FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | GO AGGRESSIVE`,
+      vixNotice,
+      primaryStrategies: [],
+      alternateStrategies: [
+        {
+          name: 'Deep Discount Put Ladder',
+          successRate: '75-85%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'Sell cash-secured puts in 3 tranches',
+          strike: '8%, 10%, 12% below current (ladder down)',
+          dte: '45-60 days',
+          position: 'Deploy 100% cash (40%/35%/25% split)',
+          roll: 'If untested at 21 DTE + 50% profit → close & resell',
+          goal: 'Massive premium OR generational entry prices'
+        },
+        {
+          name: 'Opportunistic Put Ladder',
+          successRate: '60-70%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'Multiple strikes for price diversification',
+          strike: '5%, 8%, 12% below current',
+          dte: '30-45 days',
+          position: 'Split cash equally across 3 strikes',
+          roll: 'Roll down & out if VOO drops further (collect credit)',
+          goal: 'Average down cost basis, offset 3-6% via premium'
+        },
+        {
+          name: 'Short-DTE Aggressive Puts',
+          successRate: '80-90%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'Weekly put selling during peak panic',
+          strike: '5-7% below current',
+          dte: '7-14 days (weekly cycles)',
+          position: '30-50% cash, redeploy weekly',
+          roll: 'Take assignment or let expire (no rolls)',
+          goal: 'Rapid premium accumulation (8-15% annualized)'
+        }
+      ],
+      note: '⚠️ MANDATORY: Close ALL covered calls. Deploy cash NOW. Premium is 2-4x normal. This is YOUR opportunity.'
+    };
   }
 
   // FEAR - Typical VIX: 18-25
   if (adjustedZone === 'fear') {
-    return vixNotice + `➕ FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | BALANCED AGGRESSION
-
-STRATEGY 1: Balanced Put Selling (70-80% Success)
-├─ Action: Sell cash-secured puts
-├─ Strike: 4-6% below current price
-├─ DTE: 30-45 days
-├─ Position: 60-80% of available cash
-├─ Roll: If tested, roll down $5-10 & out 2-3 weeks (credit)
-└─ Goal: 1.5-2x normal premium with moderate assignment risk
-
-STRATEGY 2: Conservative Covered Calls (55-65% Success)
-├─ Action: Sell covered calls (if holding VOO)
-├─ Strike: 3-4% OTM
-├─ DTE: 21-30 days
-├─ Position: 50% of VOO holdings (keep 50% uncapped)
-├─ Roll: If challenged, roll up & out for credit
-└─ Goal: Capture premium while maintaining upside exposure
-
-STRATEGY 3: Put Wheel Preparation (65-75% Success)
-├─ Action: Sell puts with intention to own
-├─ Strike: 3-5% below current
-├─ DTE: 45-60 days
-├─ Position: 100% of cash earmarked for VOO
-├─ Roll: Take assignment → immediately sell covered calls
-└─ Goal: "Buy VOO with discount coupon" (collect 1.5-2.5%)
-
-💡 Fear often precedes sharp rallies. Position for recovery.`;
+    return {
+      zone: 'fear',
+      zoneTitle: `➕ FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | BALANCED AGGRESSION`,
+      vixNotice,
+      primaryStrategies: [
+        {
+          name: 'Conservative Covered Calls',
+          successRate: '55-65%',
+          requiresCash: false,
+          requiresShares: true,
+          action: 'Sell covered calls (if holding VOO)',
+          strike: '3-4% OTM',
+          dte: '21-30 days',
+          position: '50% of VOO holdings (keep 50% uncapped)',
+          roll: 'If challenged, roll up & out for credit',
+          goal: 'Capture premium while maintaining upside exposure'
+        }
+      ],
+      alternateStrategies: [
+        {
+          name: 'Balanced Put Selling',
+          successRate: '70-80%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'Sell cash-secured puts',
+          strike: '4-6% below current price',
+          dte: '30-45 days',
+          position: '60-80% of available cash',
+          roll: 'If tested, roll down $5-10 & out 2-3 weeks (credit)',
+          goal: '1.5-2x normal premium with moderate assignment risk'
+        },
+        {
+          name: 'Put Wheel Preparation',
+          successRate: '65-75%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'Sell puts with intention to own',
+          strike: '3-5% below current',
+          dte: '45-60 days',
+          position: '100% of cash earmarked for VOO',
+          roll: 'Take assignment → immediately sell covered calls',
+          goal: '"Buy VOO with discount coupon" (collect 1.5-2.5%)'
+        }
+      ],
+      note: '💡 Fear often precedes sharp rallies. Position for recovery.'
+    };
   }
 
   // NEUTRAL - Typical VIX: 13-18
   if (adjustedZone === 'neutral') {
-    return vixNotice + `➡️ NEUTRAL ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | INCOME MODE
-
-STRATEGY 1: Bi-Weekly Covered Calls (70-75% Success)
-├─ Action: Sell covered calls on VOO holdings
-├─ Strike: 2-2.5% OTM ($5 above current)
-├─ DTE: 14-16 days (bi-weekly cycles)
-├─ Position: 75-100% of VOO holdings
-├─ Roll: If within 0.5% of strike at 7 DTE → roll up $5, out 2wks
-└─ Goal: 0.4-0.7% per cycle = 12-18% annualized income
-
-STRATEGY 2: Strategic Put Selling (75-85% Success)
-├─ Action: Sell puts to accumulate additional VOO
-├─ Strike: 2-3% below current
-├─ DTE: 30-45 days
-├─ Position: 40-60% of available cash
-├─ Roll: If untested at 21 DTE + 50% profit → close & resell
-└─ Goal: Accumulate VOO at discount or 3-5% annualized on cash
-
-STRATEGY 3: Simultaneous Calls + Puts (60-70% Success)
-├─ Action: Sell covered calls AND cash-secured puts
-├─ Strike Calls: 3% OTM | Strike Puts: 3% below
-├─ DTE: 30-45 days
-├─ Position: Calls on 100% holdings, puts with 50% cash
-├─ Roll: Manage each leg independently
-└─ Goal: Maximum premium in range-bound market (6% range)
-
-✅ Autopilot mode. Collect steady income from time decay.`;
+    return {
+      zone: 'neutral',
+      zoneTitle: `➡️ NEUTRAL ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | INCOME MODE`,
+      vixNotice,
+      primaryStrategies: [
+        {
+          name: 'Bi-Weekly Covered Calls',
+          successRate: '70-75%',
+          requiresCash: false,
+          requiresShares: true,
+          action: 'Sell covered calls on VOO holdings',
+          strike: '2-2.5% OTM ($5 above current)',
+          dte: '14-16 days (bi-weekly cycles)',
+          position: '75-100% of VOO holdings',
+          roll: 'If within 0.5% of strike at 7 DTE → roll up $5, out 2wks',
+          goal: '0.4-0.7% per cycle = 12-18% annualized income'
+        }
+      ],
+      alternateStrategies: [
+        {
+          name: 'Strategic Put Selling',
+          successRate: '75-85%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'Sell puts to accumulate additional VOO',
+          strike: '2-3% below current',
+          dte: '30-45 days',
+          position: '40-60% of available cash',
+          roll: 'If untested at 21 DTE + 50% profit → close & resell',
+          goal: 'Accumulate VOO at discount or 3-5% annualized on cash'
+        },
+        {
+          name: 'Simultaneous Calls + Puts',
+          successRate: '60-70%',
+          requiresCash: true,
+          requiresShares: true,
+          action: 'Sell covered calls AND cash-secured puts',
+          strike: 'Calls: 3% OTM | Puts: 3% below',
+          dte: '30-45 days',
+          position: 'Calls on 100% holdings, puts with 50% cash',
+          roll: 'Manage each leg independently',
+          goal: 'Maximum premium in range-bound market (6% range)'
+        }
+      ],
+      note: '✅ Autopilot mode. Collect steady income from time decay.'
+    };
   }
 
   // GREED - Typical VIX: 11-14
   if (adjustedZone === 'greed') {
-    return vixNotice + `😊 GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | CAPITAL PRESERVATION
-
-STRATEGY 1: Tight Covered Calls (40-50% Success)
-├─ Action: Sell covered calls to lock gains
-├─ Strike: 1.5-2% OTM
-├─ DTE: 14-21 days
-├─ Position: 100% of VOO holdings
-├─ Roll: If assigned → sell puts 2-3% below assignment price
-└─ Goal: Lock gains (cap upside at 1.5-2%), protect against 5-10% correction
-
-STRATEGY 2: Minimal Put Selling (85-90% Success)
-├─ Action: Sell puts ONLY if holding 100% cash
-├─ Strike: 1-2% below current
-├─ DTE: 14-21 days
-├─ Position: Maximum 30% of available cash
-├─ Roll: Avoid rolls - take assignment if needed
-└─ Goal: Low premiums (0.2-0.4%), only deploy if waiting to add
-
-STRATEGY 3: Weekly Covered Calls (50-60% Success)
-├─ Action: Sell weekly covered calls
-├─ Strike: 1% OTM
-├─ DTE: 5-7 days
-├─ Position: 50% of holdings (keep 50% uncapped)
-├─ Roll: Take assignment on half, keep other half
-└─ Goal: Rapid theta decay while limiting opportunity cost
-
-⚠️ Greed phases end abruptly. Prepare for reversal.`;
+    return {
+      zone: 'greed',
+      zoneTitle: `😊 GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | CAPITAL PRESERVATION`,
+      vixNotice,
+      primaryStrategies: [
+        {
+          name: 'Tight Covered Calls',
+          successRate: '40-50%',
+          requiresCash: false,
+          requiresShares: true,
+          action: 'Sell covered calls to lock gains',
+          strike: '1.5-2% OTM',
+          dte: '14-21 days',
+          position: '100% of VOO holdings',
+          roll: 'If assigned → sell puts 2-3% below assignment price',
+          goal: 'Lock gains (cap upside at 1.5-2%), protect against 5-10% correction'
+        },
+        {
+          name: 'Weekly Covered Calls',
+          successRate: '50-60%',
+          requiresCash: false,
+          requiresShares: true,
+          action: 'Sell weekly covered calls',
+          strike: '1% OTM',
+          dte: '5-7 days',
+          position: '50% of holdings (keep 50% uncapped)',
+          roll: 'Take assignment on half, keep other half',
+          goal: 'Rapid theta decay while limiting opportunity cost'
+        }
+      ],
+      alternateStrategies: [
+        {
+          name: 'Minimal Put Selling',
+          successRate: '85-90%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'Sell puts ONLY if holding 100% cash',
+          strike: '1-2% below current',
+          dte: '14-21 days',
+          position: 'Maximum 30% of available cash',
+          roll: 'Avoid rolls - take assignment if needed',
+          goal: 'Low premiums (0.2-0.4%), only deploy if waiting to add'
+        }
+      ],
+      note: '⚠️ Greed phases end abruptly. Prepare for reversal.'
+    };
   }
 
   // EXTREME GREED - Typical VIX: 9-12
   if (adjustedZone === 'extreme-greed') {
-    return vixNotice + `🛑 EXTREME GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | DEFENSIVE EXIT
-
-STRATEGY 1: Aggressive Covered Calls (30-40% Success)
-├─ Action: Sell covered calls on ALL holdings
-├─ Strike: 0.5-1% OTM
-├─ DTE: 7-14 days
-├─ Position: 100% of VOO holdings
-├─ Roll: DO NOT ROLL - take assignment & move to cash
-└─ Goal: Lock gains. Assignment = successful profit-taking
-
-STRATEGY 2: Zero Put Selling (100% Capital Preservation)
-├─ Action: DO NOT sell puts
-├─ Strike: N/A
-├─ DTE: N/A
-├─ Position: Hold 100% cash in reserve
-├─ Roll: N/A
-└─ Goal: Terrible risk/reward (0.1-0.2% premium). Wait for fear cycle.
-
-STRATEGY 3: ATM/ITM Weekly Calls (15-25% Success - DESIGNED FOR ASSIGNMENT)
-├─ Action: Sell ATM or slightly ITM weekly calls
-├─ Strike: -0.5% to +0.5% from current (ATM)
-├─ DTE: 5-7 days
-├─ Position: 100% of holdings
-├─ Roll: Take assignment immediately - do NOT chase
-└─ Goal: "Sell signal in disguise." Exit near peak.
-
-🚨 Extreme greed precedes corrections 80%+ of time.
-GET OUT. Redeploy when F&G drops below 55.`;
+    return {
+      zone: 'extreme-greed',
+      zoneTitle: `🛑 EXTREME GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | DEFENSIVE EXIT`,
+      vixNotice,
+      primaryStrategies: [
+        {
+          name: 'Aggressive Covered Calls',
+          successRate: '30-40%',
+          requiresCash: false,
+          requiresShares: true,
+          action: 'Sell covered calls on ALL holdings',
+          strike: '0.5-1% OTM',
+          dte: '7-14 days',
+          position: '100% of VOO holdings',
+          roll: 'DO NOT ROLL - take assignment & move to cash',
+          goal: 'Lock gains. Assignment = successful profit-taking'
+        },
+        {
+          name: 'ATM/ITM Weekly Calls',
+          successRate: '15-25%',
+          requiresCash: false,
+          requiresShares: true,
+          action: 'Sell ATM or slightly ITM weekly calls',
+          strike: '-0.5% to +0.5% from current (ATM)',
+          dte: '5-7 days',
+          position: '100% of holdings',
+          roll: 'Take assignment immediately - do NOT chase',
+          goal: '"Sell signal in disguise." Exit near peak.'
+        }
+      ],
+      alternateStrategies: [
+        {
+          name: 'Zero Put Selling',
+          successRate: '100%',
+          requiresCash: true,
+          requiresShares: false,
+          action: 'DO NOT sell puts',
+          strike: 'N/A',
+          dte: 'N/A',
+          position: 'Hold 100% cash in reserve',
+          roll: 'N/A',
+          goal: 'Terrible risk/reward (0.1-0.2% premium). Wait for fear cycle.'
+        }
+      ],
+      note: '🚨 Extreme greed precedes corrections 80%+ of time. GET OUT. Redeploy when F&G drops below 55.'
+    };
   }
 
-  return "➡️ Monitor Fear & Greed Index for strategy selection";
+  return {
+    zone: 'unknown',
+    zoneTitle: 'Monitor Market Conditions',
+    vixNotice: null,
+    primaryStrategies: [],
+    alternateStrategies: [],
+    note: '➡️ Monitor Fear & Greed Index for strategy selection'
+  };
 }
 
 // Check for alerts (3-step system focused)
