@@ -141,7 +141,7 @@ async function getVOOPrice(apiKey) {
   return null;
 }
 
-// Get strategy recommendation based on market conditions (detailed 3-strategy framework)
+// Get strategy recommendation based on market conditions (VIX-AWARE framework)
 function getStrategyRecommendation(fearGreed, vix) {
   if (!fearGreed || !vix) {
     return "Insufficient data for recommendation";
@@ -150,9 +150,66 @@ function getStrategyRecommendation(fearGreed, vix) {
   const fgValue = fearGreed.value;
   const vixValue = vix.value;
 
-  // EXTREME FEAR (F&G 0-25) - Typical VIX: 25-40+
+  // VIX ADJUSTMENT: VIX drives premium, adjust zone based on actual volatility
+  // If VIX doesn't match typical range for F&G zone, shift strategy accordingly
+  let adjustedZone = 'unknown';
+
   if (fgValue <= 25) {
-    return `🚨 EXTREME FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | GO AGGRESSIVE
+    // Extreme Fear zone expects VIX 25-40+
+    if (vixValue >= 25) {
+      adjustedZone = 'extreme-fear';  // VIX matches, use extreme fear strategies
+    } else {
+      adjustedZone = 'fear';  // VIX too low, downgrade to fear strategies
+    }
+  } else if (fgValue <= 45) {
+    // Fear zone expects VIX 18-25
+    if (vixValue >= 25) {
+      adjustedZone = 'extreme-fear';  // VIX very high, upgrade to extreme fear
+    } else if (vixValue >= 18) {
+      adjustedZone = 'fear';  // VIX matches, use fear strategies
+    } else {
+      adjustedZone = 'neutral';  // VIX too low, downgrade to neutral strategies
+    }
+  } else if (fgValue <= 55) {
+    // Neutral zone expects VIX 13-18
+    if (vixValue >= 20) {
+      adjustedZone = 'fear';  // VIX elevated, upgrade to fear strategies
+    } else if (vixValue >= 13) {
+      adjustedZone = 'neutral';  // VIX matches, use neutral strategies
+    } else {
+      adjustedZone = 'greed';  // VIX very low, downgrade to greed strategies
+    }
+  } else if (fgValue <= 75) {
+    // Greed zone expects VIX 11-14
+    if (vixValue >= 18) {
+      adjustedZone = 'neutral';  // VIX elevated, upgrade to neutral
+    } else {
+      adjustedZone = 'greed';  // VIX matches, use greed strategies
+    }
+  } else {
+    // Extreme Greed zone expects VIX 9-12
+    adjustedZone = 'extreme-greed';  // Always use defensive mode regardless of VIX
+  }
+
+  // Add VIX adjustment notice
+  let vixNotice = '';
+  if (fgValue <= 25 && vixValue < 25) {
+    vixNotice = '\n⚠️ VIX ADJUSTMENT: F&G shows Extreme Fear but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = FEAR zone.\n';
+  } else if (fgValue <= 45 && vixValue < 18) {
+    vixNotice = '\n⚠️ VIX ADJUSTMENT: F&G shows Fear but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = NEUTRAL zone.\n';
+  } else if (fgValue <= 45 && vixValue >= 25) {
+    vixNotice = '\n🔥 VIX UPGRADE: F&G shows Fear but VIX is ELEVATED (' + vixValue.toFixed(1) + '). Premium environment = EXTREME FEAR!\n';
+  } else if (fgValue <= 55 && vixValue >= 20) {
+    vixNotice = '\n📈 VIX UPGRADE: F&G shows Neutral but VIX is ELEVATED (' + vixValue.toFixed(1) + '). Premium environment = FEAR zone.\n';
+  } else if (fgValue <= 55 && vixValue < 13) {
+    vixNotice = '\n💤 VIX ADJUSTMENT: F&G shows Neutral but VIX is LOW (' + vixValue.toFixed(1) + '). Premium environment = GREED zone.\n';
+  }
+
+  // Now use adjustedZone instead of fgValue for strategy selection
+
+  // EXTREME FEAR - Typical VIX: 25-40+
+  if (adjustedZone === 'extreme-fear') {
+    return vixNotice + `🚨 EXTREME FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | GO AGGRESSIVE
 
 STRATEGY 1: Deep Discount Put Ladder (75-85% Success)
 ├─ Action: Sell cash-secured puts in 3 tranches
@@ -182,9 +239,9 @@ STRATEGY 3: Short-DTE Aggressive Puts (80-90% Success)
 Premium is 2-4x normal. This is YOUR opportunity.`;
   }
 
-  // FEAR (F&G 26-45) - Typical VIX: 18-25
-  if (fgValue <= 45) {
-    return `➕ FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | BALANCED AGGRESSION
+  // FEAR - Typical VIX: 18-25
+  if (adjustedZone === 'fear') {
+    return vixNotice + `➕ FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | BALANCED AGGRESSION
 
 STRATEGY 1: Balanced Put Selling (70-80% Success)
 ├─ Action: Sell cash-secured puts
@@ -213,9 +270,9 @@ STRATEGY 3: Put Wheel Preparation (65-75% Success)
 💡 Fear often precedes sharp rallies. Position for recovery.`;
   }
 
-  // NEUTRAL (F&G 46-55) - Typical VIX: 13-18
-  if (fgValue <= 55) {
-    return `➡️ NEUTRAL ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | INCOME MODE
+  // NEUTRAL - Typical VIX: 13-18
+  if (adjustedZone === 'neutral') {
+    return vixNotice + `➡️ NEUTRAL ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | INCOME MODE
 
 STRATEGY 1: Bi-Weekly Covered Calls (70-75% Success)
 ├─ Action: Sell covered calls on VOO holdings
@@ -244,9 +301,9 @@ STRATEGY 3: Simultaneous Calls + Puts (60-70% Success)
 ✅ Autopilot mode. Collect steady income from time decay.`;
   }
 
-  // GREED (F&G 56-75) - Typical VIX: 11-14
-  if (fgValue <= 75) {
-    return `😊 GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | CAPITAL PRESERVATION
+  // GREED - Typical VIX: 11-14
+  if (adjustedZone === 'greed') {
+    return vixNotice + `😊 GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | CAPITAL PRESERVATION
 
 STRATEGY 1: Tight Covered Calls (40-50% Success)
 ├─ Action: Sell covered calls to lock gains
@@ -275,9 +332,9 @@ STRATEGY 3: Weekly Covered Calls (50-60% Success)
 ⚠️ Greed phases end abruptly. Prepare for reversal.`;
   }
 
-  // EXTREME GREED (F&G 76-100) - Typical VIX: 9-12
-  if (fgValue >= 76) {
-    return `🛑 EXTREME GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | DEFENSIVE EXIT
+  // EXTREME GREED - Typical VIX: 9-12
+  if (adjustedZone === 'extreme-greed') {
+    return vixNotice + `🛑 EXTREME GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | DEFENSIVE EXIT
 
 STRATEGY 1: Aggressive Covered Calls (30-40% Success)
 ├─ Action: Sell covered calls on ALL holdings
