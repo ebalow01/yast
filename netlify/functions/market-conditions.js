@@ -21,7 +21,18 @@ function getDates() {
 // Fetch CNN Fear & Greed Index
 async function getFearGreedIndex() {
   try {
-    const response = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata');
+    const response = await fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Fear & Greed API error:', response.status, response.statusText);
+      return null;
+    }
+
     const data = await response.json();
 
     const currentValue = data.fear_and_greed.score;
@@ -220,11 +231,18 @@ exports.handler = async (event, context) => {
     const polygonApiKey = process.env.POLYGON_API_KEY;
 
     // Fetch all data in parallel
+    console.log('Fetching market data...');
     const [fearGreed, vix, vooPrice] = await Promise.all([
       getFearGreedIndex(),
       getVIX(polygonApiKey),
       getVOOPrice(polygonApiKey)
     ]);
+
+    console.log('Data fetched:', {
+      fearGreed: fearGreed ? 'OK' : 'NULL',
+      vix: vix ? 'OK' : 'NULL',
+      vooPrice: vooPrice ? 'OK' : 'NULL'
+    });
 
     // Generate recommendation and alerts
     const recommendation = getStrategyRecommendation(fearGreed, vix);
