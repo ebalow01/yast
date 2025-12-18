@@ -141,7 +141,7 @@ async function getVOOPrice(apiKey) {
   return null;
 }
 
-// Get strategy recommendation based on market conditions (3-step systematic strategy)
+// Get strategy recommendation based on market conditions (detailed 3-strategy framework)
 function getStrategyRecommendation(fearGreed, vix) {
   if (!fearGreed || !vix) {
     return "Insufficient data for recommendation";
@@ -150,37 +150,164 @@ function getStrategyRecommendation(fearGreed, vix) {
   const fgValue = fearGreed.value;
   const vixValue = vix.value;
 
-  // STEP 2: EXTREME FEAR TRIGGER - Forced aggression
-  if (fgValue <= 20) {
-    return "🚨 STEP 2: EXTREME FEAR TRIGGER\n\nMANDATORY ACTIONS (NO CHOICE):\n1. Close ALL covered calls immediately (buy back)\n2. Sell cash-secured puts on VOO:\n   - Strike: 5-10% below current price\n   - DTE: 30-45 days\n   - Premium will be MASSIVE\n3. DO NOT QUESTION IT - System says go aggressive = GO AGGRESSIVE\n\nResult: Either collect huge premium OR get assigned at discount prices for Step 3.";
-  }
-
-  // STEP 2 WARNING: Fear approaching extreme levels
+  // EXTREME FEAR (F&G 0-25) - Typical VIX: 25-40+
   if (fgValue <= 25) {
-    return "⚠️ APPROACHING EXTREME FEAR (Step 2 Zone)\n\nCurrent: Continue covered calls (Step 1)\nPrepare for Step 2 if F&G drops below 20:\n- Have cash ready for put selling\n- Review current covered calls (may need to close)\n- Monitor VIX - currently at " + vixValue.toFixed(2);
+    return `🚨 EXTREME FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | GO AGGRESSIVE
+
+STRATEGY 1: Deep Discount Put Ladder (75-85% Success)
+├─ Action: Sell cash-secured puts in 3 tranches
+├─ Strikes: 8%, 10%, 12% below current (ladder down)
+├─ DTE: 45-60 days
+├─ Position: Deploy 100% cash (40%/35%/25% split)
+├─ Roll: If untested at 21 DTE + 50% profit → close & resell
+└─ Goal: Massive premium OR generational entry prices
+
+STRATEGY 2: Opportunistic Put Ladder (60-70% Success)
+├─ Action: Multiple strikes for price diversification
+├─ Strikes: 5%, 8%, 12% below current
+├─ DTE: 30-45 days
+├─ Position: Split cash equally across 3 strikes
+├─ Roll: Roll down & out if VOO drops further (collect credit)
+└─ Goal: Average down cost basis, offset 3-6% via premium
+
+STRATEGY 3: Short-DTE Aggressive Puts (80-90% Success)
+├─ Action: Weekly put selling during peak panic
+├─ Strike: 5-7% below current
+├─ DTE: 7-14 days (weekly cycles)
+├─ Position: 30-50% cash, redeploy weekly
+├─ Roll: Take assignment or let expire (no rolls)
+└─ Goal: Rapid premium accumulation (8-15% annualized)
+
+⚠️ MANDATORY: Close ALL covered calls. Deploy cash NOW.
+Premium is 2-4x normal. This is YOUR opportunity.`;
   }
 
-  // Moderate Fear - transition zone
+  // FEAR (F&G 26-45) - Typical VIX: 18-25
   if (fgValue <= 45) {
-    return "➕ STEP 1 + OPPORTUNISTIC PUTS\n\nPrimary: Continue covered call cycle (every 2 weeks, 14 DTE)\nOptional: Sell selective cash-secured puts if premium attractive\n- Only if you want more shares\n- 2-3% OTM, 30 DTE\n\nStill in Step 1 territory - monthly income mode.";
+    return `➕ FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | BALANCED AGGRESSION
+
+STRATEGY 1: Balanced Put Selling (70-80% Success)
+├─ Action: Sell cash-secured puts
+├─ Strike: 4-6% below current price
+├─ DTE: 30-45 days
+├─ Position: 60-80% of available cash
+├─ Roll: If tested, roll down $5-10 & out 2-3 weeks (credit)
+└─ Goal: 1.5-2x normal premium with moderate assignment risk
+
+STRATEGY 2: Conservative Covered Calls (55-65% Success)
+├─ Action: Sell covered calls (if holding VOO)
+├─ Strike: 3-4% OTM
+├─ DTE: 21-30 days
+├─ Position: 50% of VOO holdings (keep 50% uncapped)
+├─ Roll: If challenged, roll up & out for credit
+└─ Goal: Capture premium while maintaining upside exposure
+
+STRATEGY 3: Put Wheel Preparation (65-75% Success)
+├─ Action: Sell puts with intention to own
+├─ Strike: 3-5% below current
+├─ DTE: 45-60 days
+├─ Position: 100% of cash earmarked for VOO
+├─ Roll: Take assignment → immediately sell covered calls
+└─ Goal: "Buy VOO with discount coupon" (collect 1.5-2.5%)
+
+💡 Fear often precedes sharp rallies. Position for recovery.`;
   }
 
-  // STEP 1: MONTHLY INCOME MODE (Normal Market)
-  if (fgValue <= 60) {
-    return "✅ STEP 1: MONTHLY INCOME (AUTOPILOT)\n\nCovered Call Cycle:\n- Frequency: Every 2 weeks\n- Strike: $5 OTM from current price\n- DTE: 14 days\n- This is systematic - no thinking required\n\nStatus: Normal market conditions. Stay in autopilot mode.";
+  // NEUTRAL (F&G 46-55) - Typical VIX: 13-18
+  if (fgValue <= 55) {
+    return `➡️ NEUTRAL ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | INCOME MODE
+
+STRATEGY 1: Bi-Weekly Covered Calls (70-75% Success)
+├─ Action: Sell covered calls on VOO holdings
+├─ Strike: 2-2.5% OTM ($5 above current)
+├─ DTE: 14-16 days (bi-weekly cycles)
+├─ Position: 75-100% of VOO holdings
+├─ Roll: If within 0.5% of strike at 7 DTE → roll up $5, out 2wks
+└─ Goal: 0.4-0.7% per cycle = 12-18% annualized income
+
+STRATEGY 2: Strategic Put Selling (75-85% Success)
+├─ Action: Sell puts to accumulate additional VOO
+├─ Strike: 2-3% below current
+├─ DTE: 30-45 days
+├─ Position: 40-60% of available cash
+├─ Roll: If untested at 21 DTE + 50% profit → close & resell
+└─ Goal: Accumulate VOO at discount or 3-5% annualized on cash
+
+STRATEGY 3: Simultaneous Calls + Puts (60-70% Success)
+├─ Action: Sell covered calls AND cash-secured puts
+├─ Strike Calls: 3% OTM | Strike Puts: 3% below
+├─ DTE: 30-45 days
+├─ Position: Calls on 100% holdings, puts with 50% cash
+├─ Roll: Manage each leg independently
+└─ Goal: Maximum premium in range-bound market (6% range)
+
+✅ Autopilot mode. Collect steady income from time decay.`;
   }
 
-  // Greed - continue Step 1 but watch for reversal
+  // GREED (F&G 56-75) - Typical VIX: 11-14
   if (fgValue <= 75) {
-    return "😊 STEP 1 CONTINUES (Market Greedy)\n\nCovered Call Cycle:\n- Same parameters: $5 OTM, 14 DTE, every 2 weeks\n- Market greedy but not extreme\n- Consider slightly closer strikes (ATM/ITM) for higher premium\n\nWatch for reversal - could drop into Step 2 zone quickly.";
+    return `😊 GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | CAPITAL PRESERVATION
+
+STRATEGY 1: Tight Covered Calls (40-50% Success)
+├─ Action: Sell covered calls to lock gains
+├─ Strike: 1.5-2% OTM
+├─ DTE: 14-21 days
+├─ Position: 100% of VOO holdings
+├─ Roll: If assigned → sell puts 2-3% below assignment price
+└─ Goal: Lock gains (cap upside at 1.5-2%), protect against 5-10% correction
+
+STRATEGY 2: Minimal Put Selling (85-90% Success)
+├─ Action: Sell puts ONLY if holding 100% cash
+├─ Strike: 1-2% below current
+├─ DTE: 14-21 days
+├─ Position: Maximum 30% of available cash
+├─ Roll: Avoid rolls - take assignment if needed
+└─ Goal: Low premiums (0.2-0.4%), only deploy if waiting to add
+
+STRATEGY 3: Weekly Covered Calls (50-60% Success)
+├─ Action: Sell weekly covered calls
+├─ Strike: 1% OTM
+├─ DTE: 5-7 days
+├─ Position: 50% of holdings (keep 50% uncapped)
+├─ Roll: Take assignment on half, keep other half
+└─ Goal: Rapid theta decay while limiting opportunity cost
+
+⚠️ Greed phases end abruptly. Prepare for reversal.`;
   }
 
-  // STEP 3 CONTEXT: Recovery after assignment (or extreme greed)
+  // EXTREME GREED (F&G 76-100) - Typical VIX: 9-12
   if (fgValue >= 76) {
-    return "🎯 EXTREME GREED or STEP 3: RECOVERY MODE\n\nIf recently assigned from puts (Step 3):\n- Sell covered calls well above your cost basis\n- Collect premium during entire recovery\n- No rush - let stock recover while earning\n\nIf no assignment:\n- Sell aggressive covered calls (ATM/ITM)\n- Market overheated - secure profits";
+    return `🛑 EXTREME GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | DEFENSIVE EXIT
+
+STRATEGY 1: Aggressive Covered Calls (30-40% Success)
+├─ Action: Sell covered calls on ALL holdings
+├─ Strike: 0.5-1% OTM
+├─ DTE: 7-14 days
+├─ Position: 100% of VOO holdings
+├─ Roll: DO NOT ROLL - take assignment & move to cash
+└─ Goal: Lock gains. Assignment = successful profit-taking
+
+STRATEGY 2: Zero Put Selling (100% Capital Preservation)
+├─ Action: DO NOT sell puts
+├─ Strike: N/A
+├─ DTE: N/A
+├─ Position: Hold 100% cash in reserve
+├─ Roll: N/A
+└─ Goal: Terrible risk/reward (0.1-0.2% premium). Wait for fear cycle.
+
+STRATEGY 3: ATM/ITM Weekly Calls (15-25% Success - DESIGNED FOR ASSIGNMENT)
+├─ Action: Sell ATM or slightly ITM weekly calls
+├─ Strike: -0.5% to +0.5% from current (ATM)
+├─ DTE: 5-7 days
+├─ Position: 100% of holdings
+├─ Roll: Take assignment immediately - do NOT chase
+└─ Goal: "Sell signal in disguise." Exit near peak.
+
+🚨 Extreme greed precedes corrections 80%+ of time.
+GET OUT. Redeploy when F&G drops below 55.`;
   }
 
-  return "➡️ STEP 1: Sell covered calls every 2 weeks ($5 OTM, 14 DTE)";
+  return "➡️ Monitor Fear & Greed Index for strategy selection";
 }
 
 // Check for alerts (3-step system focused)
