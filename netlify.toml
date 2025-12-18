@@ -1,6 +1,6 @@
 # Netlify configuration for YieldMax Analysis
 [build]
-  command = "pip install -r requirements.txt && cd yast-react && npm install && npx vite build"
+  command = "pip install -r requirements.txt && cd yast-react && rm -f package-lock.json && npm install && npx vite build"
   publish = "yast-react/dist"
 
 [dev]
