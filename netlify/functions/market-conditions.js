@@ -141,10 +141,69 @@ async function getVOOPrice(apiKey) {
   return null;
 }
 
+// Helper: Round strike to nearest $5 increment
+function roundToStrike(price) {
+  return Math.round(price / 5) * 5;
+}
+
+// Helper: Calculate strike price based on percentage
+function calculateStrike(vooPrice, percentOTM) {
+  const targetPrice = vooPrice * (1 + percentOTM / 100);
+  return roundToStrike(targetPrice);
+}
+
+// Helper: Get next Friday from a given date
+function getNextFriday(date) {
+  const result = new Date(date);
+  const dayOfWeek = result.getDay();
+  const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+  result.setDate(result.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
+  return result;
+}
+
+// Helper: Get expiration date(s) based on DTE range
+function getExpirationDates(minDTE, maxDTE) {
+  const today = new Date();
+  const dates = [];
+
+  // Find all Fridays within the DTE range
+  let currentFriday = getNextFriday(today);
+
+  for (let i = 0; i < 12; i++) { // Check up to 12 weeks
+    const daysUntil = Math.floor((currentFriday - today) / (1000 * 60 * 60 * 24));
+
+    if (daysUntil >= minDTE && daysUntil <= maxDTE) {
+      dates.push(new Date(currentFriday));
+    }
+
+    if (daysUntil > maxDTE) break;
+
+    // Move to next Friday
+    currentFriday.setDate(currentFriday.getDate() + 7);
+  }
+
+  return dates;
+}
+
+// Helper: Format date as MM/DD/YYYY
+function formatDate(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${month}/${day}/${year}`;
+}
+
+// Helper: Format expiration dates for display
+function formatExpirationDates(dates) {
+  if (dates.length === 0) return 'No expiration dates found';
+  if (dates.length === 1) return formatDate(dates[0]);
+  return dates.map(d => formatDate(d)).join(' or ');
+}
+
 // Get strategy recommendation based on market conditions (VIX-AWARE framework)
 // Returns structured JSON for UI display with toggle functionality
-function getStrategyRecommendation(fearGreed, vix) {
-  if (!fearGreed || !vix) {
+function getStrategyRecommendation(fearGreed, vix, vooPrice) {
+  if (!fearGreed || !vix || !vooPrice) {
     return {
       zone: 'unknown',
       zoneTitle: 'Insufficient Data',
@@ -193,6 +252,21 @@ function getStrategyRecommendation(fearGreed, vix) {
 
   // EXTREME FEAR - Typical VIX: 25-40+
   if (adjustedZone === 'extreme-fear') {
+    // Calculate strikes for extreme fear zone (put ladders)
+    const putStrike1_1 = calculateStrike(vooPrice, -8.0);  // 8% below
+    const putStrike1_2 = calculateStrike(vooPrice, -10.0); // 10% below
+    const putStrike1_3 = calculateStrike(vooPrice, -12.0); // 12% below
+    const putStrike2_1 = calculateStrike(vooPrice, -5.0);  // 5% below
+    const putStrike2_2 = calculateStrike(vooPrice, -8.0);  // 8% below
+    const putStrike2_3 = calculateStrike(vooPrice, -12.0); // 12% below
+    const putStrike3Low = calculateStrike(vooPrice, -7.0); // 7% below
+    const putStrike3High = calculateStrike(vooPrice, -5.0); // 5% below
+
+    // Calculate expiration dates
+    const putExpirations1 = getExpirationDates(45, 60);
+    const putExpirations2 = getExpirationDates(30, 45);
+    const putExpirations3 = getExpirationDates(7, 14);
+
     return {
       zone: 'extreme-fear',
       zoneTitle: `🚨 EXTREME FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | GO AGGRESSIVE`,
@@ -205,8 +279,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'Sell cash-secured puts in 3 tranches',
-          strike: '8%, 10%, 12% below current (ladder down)',
-          dte: '45-60 days',
+          strike: `$${putStrike1_1} / $${putStrike1_2} / $${putStrike1_3} (8%/10%/12% below current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(putExpirations1)} (45-60 days)`,
           position: 'Deploy 100% cash (40%/35%/25% split)',
           roll: 'If untested at 21 DTE + 50% profit → close & resell',
           goal: 'Massive premium OR generational entry prices'
@@ -217,8 +291,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'Multiple strikes for price diversification',
-          strike: '5%, 8%, 12% below current',
-          dte: '30-45 days',
+          strike: `$${putStrike2_1} / $${putStrike2_2} / $${putStrike2_3} (5%/8%/12% below current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(putExpirations2)} (30-45 days)`,
           position: 'Split cash equally across 3 strikes',
           roll: 'Roll down & out if VOO drops further (collect credit)',
           goal: 'Average down cost basis, offset 3-6% via premium'
@@ -229,8 +303,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'Weekly put selling during peak panic',
-          strike: '5-7% below current',
-          dte: '7-14 days (weekly cycles)',
+          strike: `$${putStrike3Low}-$${putStrike3High} (5-7% below current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(putExpirations3)} (7-14 days, weekly cycles)`,
           position: '30-50% cash, redeploy weekly',
           roll: 'Take assignment or let expire (no rolls)',
           goal: 'Rapid premium accumulation (8-15% annualized)'
@@ -242,6 +316,19 @@ function getStrategyRecommendation(fearGreed, vix) {
 
   // FEAR - Typical VIX: 18-25
   if (adjustedZone === 'fear') {
+    // Calculate strikes for fear zone
+    const ccStrikeLow = calculateStrike(vooPrice, 3.0);   // 3% OTM
+    const ccStrikeHigh = calculateStrike(vooPrice, 4.0);  // 4% OTM
+    const putStrike1Low = calculateStrike(vooPrice, -6.0); // 6% below
+    const putStrike1High = calculateStrike(vooPrice, -4.0); // 4% below
+    const putStrike2Low = calculateStrike(vooPrice, -5.0); // 5% below
+    const putStrike2High = calculateStrike(vooPrice, -3.0); // 3% below
+
+    // Calculate expiration dates
+    const ccExpirations = getExpirationDates(21, 30);
+    const putExpirations1 = getExpirationDates(30, 45);
+    const putExpirations2 = getExpirationDates(45, 60);
+
     return {
       zone: 'fear',
       zoneTitle: `➕ FEAR ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | BALANCED AGGRESSION`,
@@ -253,8 +340,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: false,
           requiresShares: true,
           action: 'Sell covered calls (if holding VOO)',
-          strike: '3-4% OTM',
-          dte: '21-30 days',
+          strike: `$${ccStrikeLow}-$${ccStrikeHigh} (3-4% OTM from current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(ccExpirations)} (21-30 days)`,
           position: '50% of VOO holdings (keep 50% uncapped)',
           roll: 'If challenged, roll up & out for credit',
           goal: 'Capture premium while maintaining upside exposure'
@@ -267,8 +354,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'Sell cash-secured puts',
-          strike: '4-6% below current price',
-          dte: '30-45 days',
+          strike: `$${putStrike1Low}-$${putStrike1High} (4-6% below current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(putExpirations1)} (30-45 days)`,
           position: '60-80% of available cash',
           roll: 'If tested, roll down $5-10 & out 2-3 weeks (credit)',
           goal: '1.5-2x normal premium with moderate assignment risk'
@@ -279,8 +366,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'Sell puts with intention to own',
-          strike: '3-5% below current',
-          dte: '45-60 days',
+          strike: `$${putStrike2Low}-$${putStrike2High} (3-5% below current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(putExpirations2)} (45-60 days)`,
           position: '100% of cash earmarked for VOO',
           roll: 'Take assignment → immediately sell covered calls',
           goal: '"Buy VOO with discount coupon" (collect 1.5-2.5%)'
@@ -292,6 +379,16 @@ function getStrategyRecommendation(fearGreed, vix) {
 
   // NEUTRAL - Typical VIX: 13-18
   if (adjustedZone === 'neutral') {
+    // Calculate strikes for neutral zone
+    const ccStrikeLow = calculateStrike(vooPrice, 2.0);   // 2% OTM
+    const ccStrikeHigh = calculateStrike(vooPrice, 2.5);  // 2.5% OTM
+    const putStrikeLow = calculateStrike(vooPrice, -3.0);  // 3% below
+    const putStrikeHigh = calculateStrike(vooPrice, -2.0); // 2% below
+
+    // Calculate expiration dates
+    const ccExpirations = getExpirationDates(14, 16);     // Bi-weekly
+    const putExpirations = getExpirationDates(30, 45);    // Monthly
+
     return {
       zone: 'neutral',
       zoneTitle: `➡️ NEUTRAL ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | INCOME MODE`,
@@ -303,8 +400,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: false,
           requiresShares: true,
           action: 'Sell covered calls on VOO holdings',
-          strike: '2-2.5% OTM ($5 above current)',
-          dte: '14-16 days (bi-weekly cycles)',
+          strike: `$${ccStrikeLow}-$${ccStrikeHigh} (2-2.5% OTM from current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(ccExpirations)} (14-16 days)`,
           position: '75-100% of VOO holdings',
           roll: 'If within 0.5% of strike at 7 DTE → roll up $5, out 2wks',
           goal: '0.4-0.7% per cycle = 12-18% annualized income'
@@ -317,8 +414,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'Sell puts to accumulate additional VOO',
-          strike: '2-3% below current',
-          dte: '30-45 days',
+          strike: `$${putStrikeLow}-$${putStrikeHigh} (2-3% below current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(putExpirations)} (30-45 days)`,
           position: '40-60% of available cash',
           roll: 'If untested at 21 DTE + 50% profit → close & resell',
           goal: 'Accumulate VOO at discount or 3-5% annualized on cash'
@@ -329,8 +426,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: true,
           action: 'Sell covered calls AND cash-secured puts',
-          strike: 'Calls: 3% OTM | Puts: 3% below',
-          dte: '30-45 days',
+          strike: `Calls: $${calculateStrike(vooPrice, 3.0)} (3% OTM) | Puts: $${calculateStrike(vooPrice, -3.0)} (3% below)`,
+          dte: `${formatExpirationDates(putExpirations)} (30-45 days)`,
           position: 'Calls on 100% holdings, puts with 50% cash',
           roll: 'Manage each leg independently',
           goal: 'Maximum premium in range-bound market (6% range)'
@@ -342,6 +439,18 @@ function getStrategyRecommendation(fearGreed, vix) {
 
   // GREED - Typical VIX: 11-14
   if (adjustedZone === 'greed') {
+    // Calculate strikes for greed zone
+    const ccStrike1Low = calculateStrike(vooPrice, 1.5);  // 1.5% OTM
+    const ccStrike1High = calculateStrike(vooPrice, 2.0); // 2% OTM
+    const ccStrike2 = calculateStrike(vooPrice, 1.0);     // 1% OTM
+    const putStrikeLow = calculateStrike(vooPrice, -2.0); // 2% below
+    const putStrikeHigh = calculateStrike(vooPrice, -1.0); // 1% below
+
+    // Calculate expiration dates
+    const ccExpirations1 = getExpirationDates(14, 21);
+    const ccExpirations2 = getExpirationDates(5, 7);
+    const putExpirations = getExpirationDates(14, 21);
+
     return {
       zone: 'greed',
       zoneTitle: `😊 GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | CAPITAL PRESERVATION`,
@@ -353,8 +462,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: false,
           requiresShares: true,
           action: 'Sell covered calls to lock gains',
-          strike: '1.5-2% OTM',
-          dte: '14-21 days',
+          strike: `$${ccStrike1Low}-$${ccStrike1High} (1.5-2% OTM from current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(ccExpirations1)} (14-21 days)`,
           position: '100% of VOO holdings',
           roll: 'If assigned → sell puts 2-3% below assignment price',
           goal: 'Lock gains (cap upside at 1.5-2%), protect against 5-10% correction'
@@ -365,8 +474,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: false,
           requiresShares: true,
           action: 'Sell weekly covered calls',
-          strike: '1% OTM',
-          dte: '5-7 days',
+          strike: `$${ccStrike2} (1% OTM from current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(ccExpirations2)} (5-7 days)`,
           position: '50% of holdings (keep 50% uncapped)',
           roll: 'Take assignment on half, keep other half',
           goal: 'Rapid theta decay while limiting opportunity cost'
@@ -379,8 +488,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'Sell puts ONLY if holding 100% cash',
-          strike: '1-2% below current',
-          dte: '14-21 days',
+          strike: `$${putStrikeLow}-$${putStrikeHigh} (1-2% below current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(putExpirations)} (14-21 days)`,
           position: 'Maximum 30% of available cash',
           roll: 'Avoid rolls - take assignment if needed',
           goal: 'Low premiums (0.2-0.4%), only deploy if waiting to add'
@@ -392,6 +501,16 @@ function getStrategyRecommendation(fearGreed, vix) {
 
   // EXTREME GREED - Typical VIX: 9-12
   if (adjustedZone === 'extreme-greed') {
+    // Calculate strikes for extreme greed zone
+    const ccStrike1Low = calculateStrike(vooPrice, 0.5);  // 0.5% OTM
+    const ccStrike1High = calculateStrike(vooPrice, 1.0); // 1% OTM
+    const ccStrike2Low = calculateStrike(vooPrice, -0.5); // 0.5% ITM
+    const ccStrike2High = calculateStrike(vooPrice, 0.5); // 0.5% OTM
+
+    // Calculate expiration dates
+    const ccExpirations1 = getExpirationDates(7, 14);
+    const ccExpirations2 = getExpirationDates(5, 7);
+
     return {
       zone: 'extreme-greed',
       zoneTitle: `🛑 EXTREME GREED ZONE (F&G ${fgValue}) - VIX ${vixValue.toFixed(1)} | DEFENSIVE EXIT`,
@@ -403,8 +522,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: false,
           requiresShares: true,
           action: 'Sell covered calls on ALL holdings',
-          strike: '0.5-1% OTM',
-          dte: '7-14 days',
+          strike: `$${ccStrike1Low}-$${ccStrike1High} (0.5-1% OTM from current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(ccExpirations1)} (7-14 days)`,
           position: '100% of VOO holdings',
           roll: 'DO NOT ROLL - take assignment & move to cash',
           goal: 'Lock gains. Assignment = successful profit-taking'
@@ -415,8 +534,8 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: false,
           requiresShares: true,
           action: 'Sell ATM or slightly ITM weekly calls',
-          strike: '-0.5% to +0.5% from current (ATM)',
-          dte: '5-7 days',
+          strike: `$${ccStrike2Low}-$${ccStrike2High} (ATM from current $${vooPrice.toFixed(2)})`,
+          dte: `${formatExpirationDates(ccExpirations2)} (5-7 days)`,
           position: '100% of holdings',
           roll: 'Take assignment immediately - do NOT chase',
           goal: '"Sell signal in disguise." Exit near peak.'
@@ -429,11 +548,11 @@ function getStrategyRecommendation(fearGreed, vix) {
           requiresCash: true,
           requiresShares: false,
           action: 'DO NOT sell puts',
-          strike: 'N/A',
-          dte: 'N/A',
+          strike: 'N/A - Risk/reward terrible (0.1-0.2% premium)',
+          dte: 'N/A - Wait for fear cycle',
           position: 'Hold 100% cash in reserve',
           roll: 'N/A',
-          goal: 'Terrible risk/reward (0.1-0.2% premium). Wait for fear cycle.'
+          goal: 'Capital preservation. Wait for inevitable correction.'
         }
       ],
       note: '🚨 Extreme greed precedes corrections 80%+ of time. GET OUT. Redeploy when F&G drops below 55.'
@@ -525,7 +644,7 @@ exports.handler = async (event, context) => {
     });
 
     // Generate recommendation and alerts
-    const recommendation = getStrategyRecommendation(fearGreed, vix);
+    const recommendation = getStrategyRecommendation(fearGreed, vix, vooPrice);
     const alerts = checkAlerts(fearGreed, vix);
 
     // Build response
