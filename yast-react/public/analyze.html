@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Technical Analysis</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #f8fafc;
+            font-size: 2rem;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #f8fafc;
+            width: 200px;
+            text-transform: uppercase;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #94a3b8;
+        }
+
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error {
+            background: #7f1d1d;
+            border: 1px solid #dc2626;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+        }
+
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #3b82f6;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .metric {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .metric-value.positive {
+            color: #22c55e;
+        }
+
+        .metric-value.negative {
+            color: #ef4444;
+        }
+
+        .metric-value.neutral {
+            color: #f59e0b;
+        }
+
+        .prompt-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .prompt-header h2 {
+            color: #3b82f6;
+            font-size: 1.3rem;
+        }
+
+        .copy-btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            background: #10b981;
+        }
+
+        .copy-btn:hover {
+            background: #059669;
+        }
+
+        .copy-btn.copied {
+            background: #6b7280;
+        }
+
+        .prompt-text {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            color: #cbd5e1;
+        }
+
+        .indicator-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .indicator-row:last-child {
+            border-bottom: none;
+        }
+
+        .indicator-name {
+            color: #94a3b8;
+        }
+
+        .indicator-value {
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .tag.bullish {
+            background: #166534;
+            color: #86efac;
+        }
+
+        .tag.bearish {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .tag.neutral {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Technical Analysis</h1>
+
+        <form class="search-form" id="searchForm">
+            <input type="text" id="tickerInput" placeholder="Enter ticker..." maxlength="5" required>
+            <button type="submit" id="submitBtn">Analyze</button>
+        </form>
+
+        <div id="loading" class="loading" style="display: none;">
+            Fetching data and calculating indicators
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="results" class="results">
+            <div class="section">
+                <h2>Price Overview</h2>
+                <div class="grid" id="priceGrid"></div>
+            </div>
+
+            <div class="section">
+                <h2>Technical Indicators</h2>
+                <div id="indicators"></div>
+            </div>
+
+            <div class="section">
+                <h2>Support & Resistance</h2>
+                <div class="grid" id="srGrid"></div>
+            </div>
+
+            <div class="section">
+                <h2>Risk Metrics</h2>
+                <div class="grid" id="riskGrid"></div>
+            </div>
+
+            <div class="prompt-section">
+                <div class="prompt-header">
+                    <h2>AI Analysis Prompt</h2>
+                    <button class="copy-btn" id="copyBtn">Copy Prompt</button>
+                </div>
+                <pre class="prompt-text" id="promptText"></pre>
+            </div>
+        </div>
+
+        <footer>
+            <p>Data from <a href="https://polygon.io" target="_blank">Polygon.io</a> | Copy prompt to use with Claude or ChatGPT</p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('searchForm');
+        const tickerInput = document.getElementById('tickerInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const results = document.getElementById('results');
+        const copyBtn = document.getElementById('copyBtn');
+
+        let currentPrompt = '';
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const ticker = tickerInput.value.trim().toUpperCase();
+
+            if (!ticker) return;
+
+            // Reset UI
+            errorDiv.style.display = 'none';
+            results.classList.remove('visible');
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/.netlify/functions/analyze?ticker=${ticker}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch data');
+                }
+
+                renderResults(data);
+                results.classList.add('visible');
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(currentPrompt).then(() => {
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy Prompt';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+
+        function renderResults(data) {
+            const t = data.technical_data;
+            currentPrompt = data.prompt;
+
+            // Price Grid
+            document.getElementById('priceGrid').innerHTML = `
+                <div class="metric">
+                    <div class="metric-label">Current Price</div>
+                    <div class="metric-value">$${t.current_price.toFixed(2)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Daily Change</div>
+                    <div class="metric-value ${t.daily_change >= 0 ? 'positive' : 'negative'}">${t.daily_change >= 0 ? '+' : ''}${t.daily_change.toFixed(2)}%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">2-Day Change</div>
+                    <div class="metric-value ${t.two_day_change >= 0 ? 'positive' : 'negative'}">${t.two_day_change >= 0 ? '+' : ''}${t.two_day_change.toFixed(2)}%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Session Range</div>
+                    <div class="metric-value">$${t.session_low.toFixed(2)} - $${t.session_high.toFixed(2)}</div>
+                </div>
+            `;
+
+            // Indicators
+            const rsiClass = t.rsi < 30 ? 'bullish' : t.rsi > 70 ? 'bearish' : 'neutral';
+            const rsiLabel = t.rsi < 30 ? 'Oversold' : t.rsi > 70 ? 'Overbought' : 'Neutral';
+
+            document.getElementById('indicators').innerHTML = `
+                <div class="indicator-row">
+                    <span class="indicator-name">RSI (14)</span>
+                    <span class="indicator-value">${t.rsi.toFixed(1)}<span class="tag ${rsiClass}">${rsiLabel}</span></span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">SMA 20</span>
+                    <span class="indicator-value">$${t.sma20.toFixed(2)}</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">SMA 50</span>
+                    <span class="indicator-value">$${t.sma50.toFixed(2)}</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">VWAP</span>
+                    <span class="indicator-value">$${t.vwap.toFixed(2)} (${t.vwap_deviation >= 0 ? '+' : ''}${t.vwap_deviation.toFixed(1)}%)</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">MACD</span>
+                    <span class="indicator-value">${t.macd_status}</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">Stochastic</span>
+                    <span class="indicator-value">%K: ${t.stoch_k.toFixed(1)} | ${t.stoch_status}</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">Bollinger Bands</span>
+                    <span class="indicator-value">${t.bb_position}</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">ATR (14)</span>
+                    <span class="indicator-value">${t.atr.toFixed(3)} | ${t.atr_trend}</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">Volume</span>
+                    <span class="indicator-value">${t.volume_ratio.toFixed(2)}x median (${t.volume_status})</span>
+                </div>
+                <div class="indicator-row">
+                    <span class="indicator-name">Pattern Strength</span>
+                    <span class="indicator-value">${t.pattern_strength.toFixed(1)}/10</span>
+                </div>
+            `;
+
+            // Support/Resistance
+            document.getElementById('srGrid').innerHTML = `
+                <div class="metric">
+                    <div class="metric-label">Primary Support</div>
+                    <div class="metric-value positive">$${t.primary_support.toFixed(2)}</div>
+                    <div class="metric-label">${t.support_tests} tests - ${t.support_strength}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Primary Resistance</div>
+                    <div class="metric-value negative">$${t.primary_resistance.toFixed(2)}</div>
+                    <div class="metric-label">${t.resistance_tests} tests - ${t.resistance_strength}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Bollinger Lower</div>
+                    <div class="metric-value">$${t.bb_lower.toFixed(2)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Bollinger Upper</div>
+                    <div class="metric-value">$${t.bb_upper.toFixed(2)}</div>
+                </div>
+            `;
+
+            // Risk Metrics
+            document.getElementById('riskGrid').innerHTML = `
+                <div class="metric">
+                    <div class="metric-label">Value at Risk (95%)</div>
+                    <div class="metric-value">$${t.var_95.toFixed(2)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Max Drawdown</div>
+                    <div class="metric-value negative">${(t.max_drawdown * 100).toFixed(1)}%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Sharpe Ratio</div>
+                    <div class="metric-value">${t.sharpe_ratio.toFixed(2)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Win Rate</div>
+                    <div class="metric-value">${t.win_rate.toFixed(1)}%</div>
+                </div>
+            `;
+
+            // Prompt
+            document.getElementById('promptText').textContent = currentPrompt;
+        }
+    </script>
+</body>
+</html>
