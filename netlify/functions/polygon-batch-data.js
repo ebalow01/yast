@@ -58,16 +58,32 @@ async function fetchTickerData(ticker, apiKey) {
     // Use a range to handle weekends/holidays
     const eightyEightDaysAgo = new Date(Date.now() - 88 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const eightyDaysAgo = new Date(Date.now() - 80 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
-    const twelveWeeksAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${eightyEightDaysAgo}/${eightyDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
-    const twelveWeeksAgoData = await httpsGet(twelveWeeksAgoUrl);
-    await delay(100); // Rate limiting
-    
+
+    let twelveWeeksAgoData = { results: [] };
+    try {
+      const twelveWeeksAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${eightyEightDaysAgo}/${eightyDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
+      twelveWeeksAgoData = await httpsGet(twelveWeeksAgoUrl);
+      await delay(100);
+      if (!twelveWeeksAgoData.results || twelveWeeksAgoData.results.length === 0) {
+        console.log(`${ticker}: No 12-week-ago price data (${eightyEightDaysAgo} to ${eightyDaysAgo}), status: ${twelveWeeksAgoData.status}`);
+      }
+    } catch (error) {
+      console.log(`${ticker}: Error fetching 12-week-ago price: ${error.message}`);
+    }
+
     // Fetch 14-day historical data for volatility calculation
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const volatilityUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${fourteenDaysAgo}/${today}?adjusted=true&sort=asc&apiKey=${apiKey}`;
-    const volatilityData = await httpsGet(volatilityUrl);
-    await delay(100); // Rate limiting
+    let volatilityData = { results: [] };
+    try {
+      const volatilityUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${fourteenDaysAgo}/${today}?adjusted=true&sort=asc&apiKey=${apiKey}`;
+      volatilityData = await httpsGet(volatilityUrl);
+      await delay(100);
+      if (!volatilityData.results || volatilityData.results.length === 0) {
+        console.log(`${ticker}: No volatility data (${fourteenDaysAgo} to ${today}), status: ${volatilityData.status}`);
+      }
+    } catch (error) {
+      console.log(`${ticker}: Error fetching volatility data: ${error.message}`);
+    }
     
     // Fetch dividend data (last 15 dividends to get both recent and historical)
     const dividendUrl = `https://api.polygon.io/v3/reference/dividends?ticker=${ticker}&order=desc&limit=15&apiKey=${apiKey}`;
@@ -311,7 +327,12 @@ async function fetchTickerData(ticker, apiKey) {
         recentDividends: lastDividends,
         historicalDividends: historicalDividends,
         selectionMethod: frequencyChangeIndex > 0 && frequencyChangeIndex >= 6 ? 'pre-change' :
-                        consistentDividends && consistentDividends.length >= 13 ? 'standard' : 'fallback'
+                        consistentDividends && consistentDividends.length >= 13 ? 'standard' : 'fallback',
+        twelveWeekPriceStatus: twelveWeeksAgoData.status || 'unknown',
+        twelveWeekPriceResults: twelveWeeksAgoData.results?.length || 0,
+        volatilityStatus: volatilityData.status || 'unknown',
+        volatilityResults: volatilityData.results?.length || 0,
+        twelveWeeksAgoPrice: twelveWeeksAgoPrice
       };
     }
     
