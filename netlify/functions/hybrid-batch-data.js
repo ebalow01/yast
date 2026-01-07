@@ -20,6 +20,7 @@ function httpsGet(url) {
 }
 
 async function fetchTickerData(ticker, apiKey) {
+  const errors = [];
   try {
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -34,14 +35,19 @@ async function fetchTickerData(ticker, apiKey) {
     // Get current price from Polygon
     try {
       const recentPriceUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${threeDaysAgo}/${today}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
+      console.log(`${ticker}: Fetching price from Polygon...`);
       const priceData = await httpsGet(recentPriceUrl);
       await delay(50);
 
       if (priceData.results && priceData.results.length > 0) {
         currentPrice = priceData.results[0].c;
+        console.log(`${ticker}: Got price $${currentPrice}`);
+      } else {
+        errors.push(`Polygon price: no results (status: ${priceData.status || 'unknown'})`);
       }
     } catch (error) {
-      console.log(`${ticker}: Recent price fetch failed, trying prev day`);
+      errors.push(`Polygon price error: ${error.message}`);
+      console.log(`${ticker}: Recent price fetch failed: ${error.message}`);
     }
 
     // Fallback to previous day
@@ -97,6 +103,7 @@ async function fetchTickerData(ticker, apiKey) {
       const now = new Date();
       const twentyFourWeeksAgo = new Date(now.getTime() - 168 * 24 * 60 * 60 * 1000);
 
+      console.log(`${ticker}: Fetching dividends from Yahoo Finance...`);
       const chartData = await yahooFinance.chart(ticker, {
         period1: twentyFourWeeksAgo,
         period2: now,
@@ -130,6 +137,7 @@ async function fetchTickerData(ticker, apiKey) {
 
       console.log(`${ticker}: Found ${dividends.length} dividends from Yahoo Finance`);
     } catch (error) {
+      errors.push(`Yahoo dividends error: ${error.message}`);
       console.log(`${ticker}: Yahoo Finance dividend fetch failed: ${error.message}`);
     }
 
@@ -256,14 +264,16 @@ async function fetchTickerData(ticker, apiKey) {
       dividendCount: lastDividends.length,
       totalDividends: dividends.length,
       lastDividendDate: dividends.length > 0 ? dividends[0].date.toISOString().split('T')[0] : null,
-      lastDividendAmount: dividends.length > 0 ? dividends[0].amount : null
+      lastDividendAmount: dividends.length > 0 ? dividends[0].amount : null,
+      errors: errors.length > 0 ? errors : undefined
     };
   } catch (error) {
     console.error(`Error fetching data for ${ticker}:`, error.message);
     return {
       ticker,
       price: null,
-      error: error.message
+      error: error.message,
+      errors: errors
     };
   }
 }
