@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "node-fetch": "^2.7.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "yahoo-finance2": "^2.11.3"
   }
 }
