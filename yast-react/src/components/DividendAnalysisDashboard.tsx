@@ -1548,7 +1548,7 @@ export default function DividendAnalysisDashboard() {
         setPolygonLoading(true);
         try {
           // Fetching market data asynchronously
-          const polygonResponse = await fetch('/.netlify/functions/yfinance-batch-data', {
+          const polygonResponse = await fetch('/.netlify/functions/hybrid-batch-data', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
