@@ -330,9 +330,14 @@ async function fetchTickerData(ticker, apiKey) {
                         consistentDividends && consistentDividends.length >= 13 ? 'standard' : 'fallback',
         twelveWeekPriceStatus: twelveWeeksAgoData.status || 'unknown',
         twelveWeekPriceResults: twelveWeeksAgoData.results?.length || 0,
+        twelveWeekPriceError: twelveWeeksAgoData.error || twelveWeeksAgoData.message || null,
         volatilityStatus: volatilityData.status || 'unknown',
         volatilityResults: volatilityData.results?.length || 0,
-        twelveWeeksAgoPrice: twelveWeeksAgoPrice
+        volatilityError: volatilityData.error || volatilityData.message || null,
+        twelveWeeksAgoPrice: twelveWeeksAgoPrice,
+        currentPriceDebug: currentPrice,
+        dividendStatus: dividendData.status || 'unknown',
+        dividendError: dividendData.error || dividendData.message || null
       };
     }
     
