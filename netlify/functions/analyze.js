@@ -65,7 +65,9 @@ function calculateRiskMetrics(results, currentPrice, atr) {
   const meanReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
   const variance = returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / returns.length;
   const stdDev = Math.sqrt(variance);
-  const sharpe_ratio = stdDev > 0 ? meanReturn / stdDev : 0;
+  // Annualize Sharpe ratio: ~26 bars/day * 252 trading days = 6552 bars/year
+  const rawSharpe = stdDev > 0 ? meanReturn / stdDev : 0;
+  const sharpe_ratio = rawSharpe * Math.sqrt(6552);
 
   const positiveReturns = returns.filter(r => r > 0);
   const win_rate = (positiveReturns.length / returns.length) * 100;
@@ -194,11 +196,40 @@ function processTechnicalData(polygonData, ticker) {
   const latest = results[results.length - 1];
   const currentPrice = latest.c;
 
-  const oneDayAgo = results.length >= 26 ? results[results.length - 26] : results[0];
-  const twoDaysAgo = results.length >= 52 ? results[results.length - 52] : results[0];
+  // Find previous day closes by actual date
+  const latestDate = new Date(latest.t);
+  const latestDay = latestDate.toISOString().split('T')[0];
 
-  const daily_change = oneDayAgo ? ((currentPrice - oneDayAgo.c) / oneDayAgo.c) * 100 : 0;
-  const two_day_change = twoDaysAgo ? ((currentPrice - twoDaysAgo.c) / twoDaysAgo.c) * 100 : 0;
+  // Find the last bar of previous trading day and 2 days ago
+  let prevDayClose = null;
+  let twoDaysAgoClose = null;
+  let prevDay = null;
+  let twoDaysAgoDay = null;
+
+  for (let i = results.length - 1; i >= 0; i--) {
+    const barDate = new Date(results[i].t);
+    const barDay = barDate.toISOString().split('T')[0];
+
+    if (barDay !== latestDay && prevDayClose === null) {
+      prevDayClose = results[i].c;
+      prevDay = barDay;
+    } else if (prevDay && barDay !== prevDay && barDay !== latestDay && twoDaysAgoClose === null) {
+      twoDaysAgoClose = results[i].c;
+      twoDaysAgoDay = barDay;
+      break;
+    }
+  }
+
+  // Fallback to position-based if date-based fails
+  if (prevDayClose === null) {
+    prevDayClose = results.length >= 26 ? results[results.length - 26].c : results[0].c;
+  }
+  if (twoDaysAgoClose === null) {
+    twoDaysAgoClose = results.length >= 52 ? results[results.length - 52].c : results[0].c;
+  }
+
+  const daily_change = ((currentPrice - prevDayClose) / prevDayClose) * 100;
+  const two_day_change = ((currentPrice - twoDaysAgoClose) / twoDaysAgoClose) * 100;
 
   // RSI
   let rsi = 50;
@@ -532,8 +563,8 @@ function buildAnalysisPrompt(t) {
 == REAL-TIME MARKET DATA ANALYSIS ==
 Ticker: ${t.ticker}
 Current Price: $${t.current_price.toFixed(2)}
-Daily Change: ${t.daily_change >= 0 ? '+' : ''}${t.daily_change.toFixed(1)}%
-2-Day Performance: ${t.two_day_change >= 0 ? '+' : ''}${t.two_day_change.toFixed(1)}%
+Daily Change: ${t.daily_change >= 0 ? '+' : ''}${t.daily_change.toFixed(2)}%
+2-Day Performance: ${t.two_day_change >= 0 ? '+' : ''}${t.two_day_change.toFixed(2)}%
 
 == TECHNICAL INDICATORS ==
 RSI (14-period): ${t.rsi.toFixed(1)} ${rsiLabel}
