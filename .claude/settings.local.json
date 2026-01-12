@@ -45,7 +45,9 @@
       "Bash(GIT_INDEX_FILE=.git/index.fix git write-tree:*)",
       "Bash(npm install:*)",
       "Bash(git restore:*)",
-      "Read(//c/Users/ebalo/new_dashboard/yast/**)"
+      "Read(//c/Users/ebalo/new_dashboard/yast/**)",
+      "Bash(dir /b \"C:\\\\Users\\\\ebalo\\\\new_dashboard\\\\yast\\\\yast-react\")",
+      "Bash(node --check:*)"
     ],
     "deny": [],
     "ask": [],

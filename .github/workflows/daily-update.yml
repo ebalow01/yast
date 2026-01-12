@@ -86,13 +86,5 @@ jobs:
         git merge data-updates -m "Auto-merge daily data updates $(date +%Y-%m-%d)" || echo "Merge failed"
         git push origin main || echo "Push to main failed"
         
-    - name: Trigger Netlify deploy
-      if: success()
-      continue-on-error: true
-      run: |
-        if [ -n "${{ secrets.NETLIFY_BUILD_HOOK }}" ]; then
-          echo "Triggering Netlify deployment..."
-          curl -X POST -d {} "${{ secrets.NETLIFY_BUILD_HOOK }}" || echo "Netlify trigger failed"
-        else
-          echo "No Netlify build hook configured"
-        fi
+    # Note: Netlify auto-deploys when it detects push to main
+    # No need for explicit webhook trigger (can cause duplicate/conflicting deploys)
