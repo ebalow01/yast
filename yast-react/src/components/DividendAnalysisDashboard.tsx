@@ -2160,36 +2160,22 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
-    // Simple threshold without hysteresis - 34.95% rounds to 35.0%
-    const RETURN_THRESHOLD = 34.95;
+    // Filter criteria: 12-week return > 5% AND positive NAV variance
+    const RETURN_THRESHOLD = 5;
 
-    // Filter tickers with return >= threshold (no hysteresis)
-    const highReturnTickers = tickersWithTotalReturn.filter(item => {
-      return item.calculatedTotalReturn >= RETURN_THRESHOLD;
+    // Filter tickers with return > threshold AND positive NAV performance
+    const qualifiedTickers = tickersWithTotalReturn.filter(item => {
+      const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
+      return item.calculatedTotalReturn > RETURN_THRESHOLD && navPerformance > 0;
     });
 
-    const highReturnTickerNames = highReturnTickers.map(item => item.ticker);
+    const finalOptimal = qualifiedTickers;
 
-    // Find additional bullish tickers not already in high return list
-    const additionalBullishTickers = tickersWithTotalReturn.filter(item => {
-      // Skip if already in high return list
-      if (highReturnTickerNames.includes(item.ticker)) return false;
-
-      // Only include if explicitly bullish
-      if (aiOutlooks[item.ticker]?.fullAnalysis) {
-        const sentiment = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-        const isBullish = sentiment.rating.toLowerCase().includes('bullish');
-        return isBullish;
-      }
-      return false;
-    });
-
-    // Combine high return tickers (>30%) + additional bullish tickers
-    const finalOptimal = [...highReturnTickers, ...additionalBullishTickers];
-
-    console.log(`📈 Optimal portfolio: ${highReturnTickers.length} tickers with ≥${RETURN_THRESHOLD}% 12wk return + ${additionalBullishTickers.length} additional bullish = ${finalOptimal.length} total ETFs`);
-    console.log(`High return tickers (≥${RETURN_THRESHOLD}%):`, highReturnTickers.map(item => `${item.ticker} (${item.calculatedTotalReturn.toFixed(1)}%)`));
-    console.log('Additional bullish tickers:', additionalBullishTickers.map(item => item.ticker));
+    console.log(`📈 Optimal portfolio: ${finalOptimal.length} tickers with >${RETURN_THRESHOLD}% 12wk return AND positive NAV variance`);
+    console.log(`Qualified tickers:`, finalOptimal.map(item => {
+      const navPerf = polygonData[item.ticker]?.navPerformance || 0;
+      return `${item.ticker} (Return: ${item.calculatedTotalReturn.toFixed(1)}%, NAV: ${navPerf.toFixed(1)}%)`;
+    }));
     
     // Remove CASH from optimal portfolio display - users can manage cash allocation themselves
     
@@ -3680,7 +3666,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             Excluded ETFs
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            {excludedTickersData.all?.length || 0} assets excluded from optimal portfolio (NAV death spirals, div death spirals, bearish sentiment, or lower performance)
+                            {excludedTickersData.all?.length || 0} assets excluded from optimal portfolio (requires >5% 12wk return AND positive NAV variance)
                           </Typography>
                         </Box>
                         
@@ -3936,7 +3922,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           AI Bullish Excluded ETFs
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                          {excludedTickersData.bullishExcluded?.length || 0} AI-bullish ETFs excluded from optimal portfolio (not NAV/div death spirals, not bearish sentiment)
+                          {excludedTickersData.bullishExcluded?.length || 0} AI-bullish ETFs excluded from optimal portfolio (did not meet >5% return or positive NAV criteria)
                         </Typography>
                       </Box>
                       
