@@ -3666,7 +3666,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             Excluded ETFs
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                            {excludedTickersData.all?.length || 0} assets excluded from optimal portfolio (requires >5% 12wk return AND positive NAV variance)
+                            {excludedTickersData.all?.length || 0} assets excluded from optimal portfolio (requires &gt;5% 12wk return AND positive NAV variance)
                           </Typography>
                         </Box>
                         
@@ -3922,7 +3922,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           AI Bullish Excluded ETFs
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                          {excludedTickersData.bullishExcluded?.length || 0} AI-bullish ETFs excluded from optimal portfolio (did not meet >5% return or positive NAV criteria)
+                          {excludedTickersData.bullishExcluded?.length || 0} AI-bullish ETFs excluded from optimal portfolio (did not meet &gt;5% return or positive NAV criteria)
                         </Typography>
                       </Box>
                       
