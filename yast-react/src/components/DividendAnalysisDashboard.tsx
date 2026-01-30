@@ -2142,13 +2142,14 @@ export default function DividendAnalysisDashboard() {
     }
 
     // Calculate total return for each ticker and sort by it
+    // Total return = dividend income + price change (NAV). Div erosion excluded since
+    // dividendReturn12Week already reflects the current dividend level.
     const tickersWithTotalReturn = tickersWithComplete12WeekData.map(item => {
       const forwardYield = polygonData[item.ticker]?.forwardYield || 0;
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
-      const divErosion = polygonData[item.ticker]?.divErosion || 0;
       // Use 12-week scaled dividend return or calculate it
       const dividendReturn12Week = polygonData[item.ticker]?.dividendReturn12Week ?? (forwardYield * (12/52));
-      const totalReturn = dividendReturn12Week + navPerformance + divErosion;
+      const totalReturn = dividendReturn12Week + navPerformance;
       const volatility = polygonData[item.ticker]?.volatility14Day || 20; // Default 20% if missing
       const sharpeRatio = polygonData[item.ticker]?.sharpeRatio || 0;
 

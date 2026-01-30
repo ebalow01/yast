@@ -280,8 +280,8 @@ async function fetchTickerData(ticker, apiKey) {
     
     // Calculate Sharpe Ratio (assuming 2% risk-free rate annually)
     let sharpeRatio = null;
-    if (dividendReturn12Week != null && navPerformance != null && divErosion != null && volatility14Day != null && volatility14Day > 0) {
-      const totalReturn = dividendReturn12Week + navPerformance + divErosion; // All components now 12-week aligned
+    if (dividendReturn12Week != null && navPerformance != null && volatility14Day != null && volatility14Day > 0) {
+      const totalReturn = dividendReturn12Week + navPerformance;
       const riskFreeRate = 2; // 2% risk-free rate
       sharpeRatio = (totalReturn - riskFreeRate) / volatility14Day;
     }
