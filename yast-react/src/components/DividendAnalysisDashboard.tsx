@@ -2297,18 +2297,16 @@ export default function DividendAnalysisDashboard() {
           bValue = polygonData[b.ticker]?.divErosion || 0;
           break;
         case 'totalReturn':
-          // Use 12-week dividend return to match our updated calculation
+          // Total return = dividend income + NAV change (no divErosion)
           const aForwardYield = polygonData[a.ticker]?.forwardYield || 0;
           const aDividendReturn12Week = polygonData[a.ticker]?.dividendReturn12Week ?? (aForwardYield * (12/52));
           const aNav = polygonData[a.ticker]?.navPerformance || 0;
-          const aDivErosion = polygonData[a.ticker]?.divErosion || 0;
-          aValue = aDividendReturn12Week + aNav + aDivErosion;
-          
+          aValue = aDividendReturn12Week + aNav;
+
           const bForwardYield = polygonData[b.ticker]?.forwardYield || 0;
           const bDividendReturn12Week = polygonData[b.ticker]?.dividendReturn12Week ?? (bForwardYield * (12/52));
           const bNav = polygonData[b.ticker]?.navPerformance || 0;
-          const bDivErosion = polygonData[b.ticker]?.divErosion || 0;
-          bValue = bDividendReturn12Week + bNav + bDivErosion;
+          bValue = bDividendReturn12Week + bNav;
           break;
         case 'volatility':
           aValue = polygonData[a.ticker]?.volatility14Day || 0;
@@ -3454,7 +3452,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
-                                <Tooltip title="12-week expected return - sum of dividend return (12-week) + NAV performance (12-week) + dividend variation (12-week)">
+                                <Tooltip title="12-week expected return - sum of dividend return (12-week) + NAV performance (12-week)">
                                   <TableSortLabel
                                     active={sortField === 'totalReturn'}
                                     direction={sortField === 'totalReturn' ? sortDirection : 'asc'}
@@ -3574,7 +3572,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                     if (fwdYield != null && navPerf != null) {
                                       const dividendReturn12Week = fwdYield * (12/52);
-                                      return `${(dividendReturn12Week + navPerf + divErosion).toFixed(1)}%`;
+                                      return `${(dividendReturn12Week + navPerf).toFixed(1)}%`;
                                     }
                                     return '-';
                                   })()}
@@ -3855,7 +3853,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                         if (fwdYield != null && navPerf != null) {
                                           const dividendReturn12Week = fwdYield * (12/52);
-                                          return `${(dividendReturn12Week + navPerf + divErosion).toFixed(1)}%`;
+                                          return `${(dividendReturn12Week + navPerf).toFixed(1)}%`;
                                         }
                                         return '-';
                                       })()}
@@ -4046,7 +4044,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       const divErosion = polygonData[item.ticker]?.divErosion || 0;
                                       if (fwdYield != null && navPerf != null) {
                                         const dividendReturn12Week = fwdYield * (12/52);
-                                        return `${(dividendReturn12Week + navPerf + divErosion).toFixed(1)}%`;
+                                        return `${(dividendReturn12Week + navPerf).toFixed(1)}%`;
                                       }
                                       return '-';
                                     })()}
