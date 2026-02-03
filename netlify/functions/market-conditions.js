@@ -162,6 +162,90 @@ async function getSPYPrice(apiKey) {
   return null;
 }
 
+// Find the nearest Mon/Wed/Fri weekly expiration to today + targetDTE
+function getNearestWeeklyExpiration(targetDTE) {
+  const today = new Date();
+  const target = new Date(today);
+  target.setDate(target.getDate() + targetDTE);
+
+  // SPY has Mon(1), Wed(3), Fri(5) weeklies
+  const weeklyDays = [1, 3, 5];
+  let best = null;
+  let bestDiff = Infinity;
+
+  // Check 7 days around the target to find closest Mon/Wed/Fri
+  for (let offset = -3; offset <= 3; offset++) {
+    const candidate = new Date(target);
+    candidate.setDate(candidate.getDate() + offset);
+    if (weeklyDays.includes(candidate.getDay())) {
+      const diff = Math.abs(offset);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = candidate;
+      }
+    }
+  }
+
+  const formatDate = (d) => d.toISOString().split('T')[0];
+  const actualDTE = Math.round((best - today) / (1000 * 60 * 60 * 24));
+
+  return { date: formatDate(best), dte: actualDTE };
+}
+
+// Fetch live SPY option near target delta from Polygon snapshot API
+async function getSPYOptionNearDelta(apiKey, targetDelta, expirationDate) {
+  if (!apiKey) return null;
+
+  try {
+    const url = `https://api.polygon.io/v3/snapshot/options/SPY?expiration_date=${expirationDate}&contract_type=call&limit=250&apiKey=${apiKey}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error('Polygon options API error:', response.status, response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      console.error('No option results returned from Polygon');
+      return null;
+    }
+
+    // Find the call with delta closest to targetDelta
+    let bestMatch = null;
+    let bestDiff = Infinity;
+
+    for (const option of data.results) {
+      const delta = option.greeks?.delta;
+      if (delta == null) continue;
+
+      const diff = Math.abs(delta - targetDelta);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestMatch = option;
+      }
+    }
+
+    if (!bestMatch) return null;
+
+    const bid = bestMatch.last_quote?.bid ?? null;
+    const ask = bestMatch.last_quote?.ask ?? null;
+    const midPrice = (bid != null && ask != null) ? +((bid + ask) / 2).toFixed(2) : null;
+
+    return {
+      strike: bestMatch.details?.strike_price ?? null,
+      delta: bestMatch.greeks?.delta != null ? +bestMatch.greeks.delta.toFixed(3) : null,
+      midPrice,
+      bid,
+      ask
+    };
+  } catch (error) {
+    console.error('Error fetching SPY options:', error);
+    return null;
+  }
+}
+
 // Get the static covered call strategy definition
 function getCoveredCallStrategy() {
   return {
@@ -171,7 +255,6 @@ function getCoveredCallStrategy() {
       sharpe: 1.17,
       sortino: 1.54,
       maxDrawdown: '-16.61%',
-      startingCapital: '$750,000',
       period: 'Feb 2021 - Jan 2026'
     },
     setup: 'Buy as many 100-share lots of SPY as affordable. Sell 0.30 delta calls at 21 DTE against every 100 shares.',
@@ -273,22 +356,41 @@ exports.handler = async (event, context) => {
   try {
     const polygonApiKey = process.env.POLYGON_API_KEY;
 
+    // Calculate nearest weekly expirations for 21 DTE and 30 DTE
+    const newEntryExp = getNearestWeeklyExpiration(21);
+    const rollExp = getNearestWeeklyExpiration(30);
+
     console.log('Fetching market data...');
-    const [fearGreed, vix, vooPrice, spyPrice] = await Promise.all([
+    const [fearGreed, vix, vooPrice, spyPrice, newEntryOption, rollOption] = await Promise.all([
       getFearGreedIndex(),
       getVIX(polygonApiKey),
       getVOOPrice(polygonApiKey),
-      getSPYPrice(polygonApiKey)
+      getSPYPrice(polygonApiKey),
+      getSPYOptionNearDelta(polygonApiKey, 0.30, newEntryExp.date),
+      getSPYOptionNearDelta(polygonApiKey, 0.30, rollExp.date)
     ]);
 
     console.log('Data fetched:', {
       fearGreed: fearGreed ? 'OK' : 'NULL',
       vix: vix ? 'OK' : 'NULL',
       vooPrice: vooPrice ? 'OK' : 'NULL',
-      spyPrice: spyPrice ? 'OK' : 'NULL'
+      spyPrice: spyPrice ? 'OK' : 'NULL',
+      newEntryOption: newEntryOption ? 'OK' : 'NULL',
+      rollOption: rollOption ? 'OK' : 'NULL'
     });
 
     const strategy = getCoveredCallStrategy();
+
+    // Attach live options data (null if API doesn't support it)
+    if (newEntryOption || rollOption) {
+      strategy.liveOptions = {
+        newEntry: newEntryOption ? { ...newEntryOption, expiration: newEntryExp.date, dte: newEntryExp.dte } : null,
+        roll: rollOption ? { ...rollOption, expiration: rollExp.date, dte: rollExp.dte } : null
+      };
+    } else {
+      strategy.liveOptions = null;
+    }
+
     const alerts = checkAlerts(fearGreed, vix);
 
     const responseData = {

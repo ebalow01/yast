@@ -43,8 +43,22 @@ interface StrategyPerformance {
   sharpe: number;
   sortino: number;
   maxDrawdown: string;
-  startingCapital: string;
   period: string;
+}
+
+interface LiveOptionEntry {
+  expiration: string;
+  dte: number;
+  strike: number | null;
+  delta: number | null;
+  midPrice: number | null;
+  bid: number | null;
+  ask: number | null;
+}
+
+interface LiveOptions {
+  newEntry: LiveOptionEntry | null;
+  roll: LiveOptionEntry | null;
 }
 
 interface StrategyParameters {
@@ -64,6 +78,7 @@ interface Strategy {
   rules: StrategyRule[];
   parameters: StrategyParameters;
   designDecisions: string[];
+  liveOptions?: LiveOptions | null;
 }
 
 interface MarketData {
@@ -490,11 +505,6 @@ const MarketMonitor: React.FC = () => {
                 sx={{ backgroundColor: '#FF9500', color: 'white', fontWeight: 'bold' }}
               />
               <Chip
-                label={marketData.strategy.performance.startingCapital}
-                variant="outlined"
-                sx={{ fontWeight: 'bold' }}
-              />
-              <Chip
                 label={marketData.strategy.performance.period}
                 variant="outlined"
                 sx={{ fontWeight: 'bold' }}
@@ -507,6 +517,45 @@ const MarketMonitor: React.FC = () => {
                 {marketData.strategy.setup}
               </Typography>
             </Alert>
+
+            {/* Live Options Data */}
+            {marketData.strategy.liveOptions ? (
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                {[
+                  { label: 'New Entry (21 DTE)', data: marketData.strategy.liveOptions.newEntry },
+                  { label: 'Roll Target (30 DTE)', data: marketData.strategy.liveOptions.roll }
+                ].map(({ label, data }) => (
+                  <Grid item xs={12} sm={6} key={label}>
+                    <Paper sx={{ p: 2, background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" gutterBottom>{label}</Typography>
+                      {data ? (
+                        <Box>
+                          <Typography variant="body2">
+                            Expiration: {new Date(data.expiration + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {' '}({data.dte}d)
+                          </Typography>
+                          {data.strike != null && (
+                            <Typography variant="body2">Strike: ${data.strike}</Typography>
+                          )}
+                          {data.delta != null && (
+                            <Typography variant="body2">Delta: {data.delta.toFixed(3)}</Typography>
+                          )}
+                          {data.midPrice != null && (
+                            <Typography variant="body2">Mid: ${data.midPrice.toFixed(2)}</Typography>
+                          )}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">No data for this expiration</Typography>
+                      )}
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Live option data unavailable
+              </Typography>
+            )}
 
             {/* Daily Checklist - Priority-ordered rules */}
             <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mt: 3 }}>
