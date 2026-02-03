@@ -381,15 +381,27 @@ exports.handler = async (event, context) => {
 
     const strategy = getCoveredCallStrategy();
 
-    // Attach live options data (null if API doesn't support it)
-    if (newEntryOption || rollOption) {
-      strategy.liveOptions = {
-        newEntry: newEntryOption ? { ...newEntryOption, expiration: newEntryExp.date, dte: newEntryExp.dte } : null,
-        roll: rollOption ? { ...rollOption, expiration: rollExp.date, dte: rollExp.dte } : null
-      };
-    } else {
-      strategy.liveOptions = null;
-    }
+    // Always include expiration dates; strike/delta/price are best-effort from API
+    strategy.liveOptions = {
+      newEntry: {
+        expiration: newEntryExp.date,
+        dte: newEntryExp.dte,
+        strike: newEntryOption?.strike ?? null,
+        delta: newEntryOption?.delta ?? null,
+        midPrice: newEntryOption?.midPrice ?? null,
+        bid: newEntryOption?.bid ?? null,
+        ask: newEntryOption?.ask ?? null
+      },
+      roll: {
+        expiration: rollExp.date,
+        dte: rollExp.dte,
+        strike: rollOption?.strike ?? null,
+        delta: rollOption?.delta ?? null,
+        midPrice: rollOption?.midPrice ?? null,
+        bid: rollOption?.bid ?? null,
+        ask: rollOption?.ask ?? null
+      }
+    };
 
     const alerts = checkAlerts(fearGreed, vix);
 
