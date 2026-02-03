@@ -2,8 +2,8 @@
 
 **Mechanical daily-check covered call system on SPY**
 
-Backtest: Feb 2021 - Jan 2026
-Return: +175.18% | Sharpe: 1.17 | Sortino: 1.54 | Max Drawdown: -16.61%
+Backtest: Feb 2021 - Jan 2026 (5 yr)
+Return: +22.4%/yr annualized (+175.18% total) | Sharpe: 1.17 | Sortino: 1.54 | Max Drawdown: -16.61%
 
 ---
 

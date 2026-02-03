@@ -210,12 +210,12 @@ function bsDelta(spotPrice, strike, timeYears, riskFreeRate, iv) {
   return normCDF(d1);
 }
 
-// Fetch live SPY option near target delta from Polygon snapshot API
-async function getSPYOptionFromPolygon(apiKey, targetDelta, expirationDate) {
+// Fetch option near target delta from Polygon snapshot API
+async function getOptionFromPolygon(apiKey, ticker, targetDelta, expirationDate) {
   if (!apiKey) return null;
 
   try {
-    const url = `https://api.polygon.io/v3/snapshot/options/SPY?expiration_date=${expirationDate}&contract_type=call&limit=250&apiKey=${apiKey}`;
+    const url = `https://api.polygon.io/v3/snapshot/options/${ticker}?expiration_date=${expirationDate}&contract_type=call&limit=250&apiKey=${apiKey}`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -260,7 +260,7 @@ async function getSPYOptionFromPolygon(apiKey, targetDelta, expirationDate) {
       source: 'polygon'
     };
   } catch (error) {
-    console.error('Error fetching SPY options from Polygon:', error);
+    console.error(`Error fetching ${ticker} options from Polygon:`, error);
     return null;
   }
 }
@@ -289,32 +289,26 @@ async function getYahooCrumb() {
   }
 }
 
-// Fetch SPY option chain from Yahoo Finance and compute delta via Black-Scholes
-// targetDTE is in days; function finds the closest real Yahoo expiration
-async function getSPYOptionFromYahoo(targetDelta, targetDTE, spotPrice) {
-  if (!spotPrice) return null;
+// Fetch option chain from Yahoo Finance and compute delta via Black-Scholes
+// ticker: e.g. 'SPY' or 'VOO'; targetDTE in days; finds closest real Yahoo expiration
+async function getOptionFromYahoo(ticker, targetDelta, targetDTE, spotPrice, auth) {
+  if (!spotPrice || !auth) return null;
 
   try {
-    const auth = await getYahooCrumb();
-    if (!auth) {
-      console.error('Could not get Yahoo cookie/crumb');
-      return null;
-    }
-
     const yahooHeaders = { 'User-Agent': 'Mozilla/5.0', 'Cookie': auth.cookie };
 
     // First fetch to get available expiration dates
-    const listUrl = `https://query1.finance.yahoo.com/v7/finance/options/SPY?crumb=${encodeURIComponent(auth.crumb)}`;
+    const listUrl = `https://query1.finance.yahoo.com/v7/finance/options/${ticker}?crumb=${encodeURIComponent(auth.crumb)}`;
     const listRes = await fetch(listUrl, { headers: yahooHeaders });
     if (!listRes.ok) {
-      console.error('Yahoo options list error:', listRes.status);
+      console.error(`Yahoo ${ticker} options list error:`, listRes.status);
       return null;
     }
 
     const listData = await listRes.json();
     const expirations = listData?.optionChain?.result?.[0]?.expirationDates;
     if (!expirations || expirations.length === 0) {
-      console.error('No Yahoo expiration dates available');
+      console.error(`No Yahoo expiration dates for ${ticker}`);
       return null;
     }
 
@@ -332,17 +326,17 @@ async function getSPYOptionFromYahoo(targetDelta, targetDTE, spotPrice) {
     }
 
     // Fetch the option chain for that expiration
-    const chainUrl = `https://query1.finance.yahoo.com/v7/finance/options/SPY?date=${bestExp}&crumb=${encodeURIComponent(auth.crumb)}`;
+    const chainUrl = `https://query1.finance.yahoo.com/v7/finance/options/${ticker}?date=${bestExp}&crumb=${encodeURIComponent(auth.crumb)}`;
     const chainRes = await fetch(chainUrl, { headers: yahooHeaders });
     if (!chainRes.ok) {
-      console.error('Yahoo options chain error:', chainRes.status);
+      console.error(`Yahoo ${ticker} options chain error:`, chainRes.status);
       return null;
     }
 
     const chainData = await chainRes.json();
     const calls = chainData?.optionChain?.result?.[0]?.options?.[0]?.calls;
     if (!calls || calls.length === 0) {
-      console.error('No Yahoo calls for expiration', bestExp);
+      console.error(`No Yahoo ${ticker} calls for expiration`, bestExp);
       return null;
     }
 
@@ -390,18 +384,18 @@ async function getSPYOptionFromYahoo(targetDelta, targetDTE, spotPrice) {
       dte: actualDTE
     };
   } catch (error) {
-    console.error('Error fetching SPY options from Yahoo Finance:', error);
+    console.error(`Error fetching ${ticker} options from Yahoo Finance:`, error);
     return null;
   }
 }
 
 // Try Polygon first, then fall back to Yahoo Finance
-async function getSPYOptionNearDelta(apiKey, targetDelta, expirationDate, targetDTE, spotPrice) {
-  const polygonResult = await getSPYOptionFromPolygon(apiKey, targetDelta, expirationDate);
+async function getOptionNearDelta(apiKey, ticker, targetDelta, expirationDate, targetDTE, spotPrice, yahooCrumb) {
+  const polygonResult = await getOptionFromPolygon(apiKey, ticker, targetDelta, expirationDate);
   if (polygonResult) return polygonResult;
 
-  console.log('Polygon options unavailable, falling back to Yahoo Finance');
-  return getSPYOptionFromYahoo(targetDelta, targetDTE, spotPrice);
+  console.log(`Polygon ${ticker} options unavailable, falling back to Yahoo Finance`);
+  return getOptionFromYahoo(ticker, targetDelta, targetDTE, spotPrice, yahooCrumb);
 }
 
 // Get the static covered call strategy definition
@@ -409,11 +403,12 @@ function getCoveredCallStrategy() {
   return {
     name: 'SPY Covered Call Strategy',
     performance: {
-      return: '+175.18%',
+      totalReturn: '+175.18%',
+      annualizedReturn: '+22.4%',
       sharpe: 1.17,
       sortino: 1.54,
       maxDrawdown: '-16.61%',
-      period: 'Feb 2021 - Jan 2026'
+      period: 'Feb 2021 - Jan 2026 (5 yr)'
     },
     setup: 'Buy as many 100-share lots of SPY as affordable. Sell 0.30 delta calls at 21 DTE against every 100 shares.',
     rules: [
@@ -527,10 +522,15 @@ exports.handler = async (event, context) => {
       getSPYPrice(polygonApiKey)
     ]);
 
-    // Fetch options in parallel (Polygon first, Yahoo fallback needs spotPrice)
-    const [newEntryOption, rollOption] = await Promise.all([
-      getSPYOptionNearDelta(polygonApiKey, 0.30, newEntryExp.date, 21, spyPrice),
-      getSPYOptionNearDelta(polygonApiKey, 0.30, rollExp.date, 30, spyPrice)
+    // Get Yahoo crumb once (shared by all Yahoo option fetches)
+    const yahooCrumb = await getYahooCrumb();
+
+    // Fetch SPY and VOO options in parallel (Polygon first, Yahoo fallback)
+    const [spyNewEntry, spyRoll, vooNewEntry, vooRoll] = await Promise.all([
+      getOptionNearDelta(polygonApiKey, 'SPY', 0.30, newEntryExp.date, 21, spyPrice, yahooCrumb),
+      getOptionNearDelta(polygonApiKey, 'SPY', 0.30, rollExp.date, 30, spyPrice, yahooCrumb),
+      getOptionNearDelta(polygonApiKey, 'VOO', 0.30, newEntryExp.date, 21, vooPrice, yahooCrumb),
+      getOptionNearDelta(polygonApiKey, 'VOO', 0.30, rollExp.date, 30, vooPrice, yahooCrumb)
     ]);
 
     console.log('Data fetched:', {
@@ -538,33 +538,35 @@ exports.handler = async (event, context) => {
       vix: vix ? 'OK' : 'NULL',
       vooPrice: vooPrice ? 'OK' : 'NULL',
       spyPrice: spyPrice ? 'OK' : 'NULL',
-      newEntryOption: newEntryOption ? `OK (${newEntryOption.source})` : 'NULL',
-      rollOption: rollOption ? `OK (${rollOption.source})` : 'NULL'
+      spyNewEntry: spyNewEntry ? `OK (${spyNewEntry.source})` : 'NULL',
+      spyRoll: spyRoll ? `OK (${spyRoll.source})` : 'NULL',
+      vooNewEntry: vooNewEntry ? `OK (${vooNewEntry.source})` : 'NULL',
+      vooRoll: vooRoll ? `OK (${vooRoll.source})` : 'NULL'
     });
 
     const strategy = getCoveredCallStrategy();
 
-    // Build liveOptions — Yahoo fallback may override expiration/dte with actual Yahoo dates
+    function buildOptionEntry(option, fallbackExp) {
+      return {
+        expiration: option?.expiration ?? fallbackExp.date,
+        dte: option?.dte ?? fallbackExp.dte,
+        strike: option?.strike ?? null,
+        delta: option?.delta ?? null,
+        midPrice: option?.midPrice ?? null,
+        bid: option?.bid ?? null,
+        ask: option?.ask ?? null,
+        source: option?.source ?? null
+      };
+    }
+
     strategy.liveOptions = {
-      newEntry: {
-        expiration: newEntryOption?.expiration ?? newEntryExp.date,
-        dte: newEntryOption?.dte ?? newEntryExp.dte,
-        strike: newEntryOption?.strike ?? null,
-        delta: newEntryOption?.delta ?? null,
-        midPrice: newEntryOption?.midPrice ?? null,
-        bid: newEntryOption?.bid ?? null,
-        ask: newEntryOption?.ask ?? null,
-        source: newEntryOption?.source ?? null
+      spy: {
+        newEntry: buildOptionEntry(spyNewEntry, newEntryExp),
+        roll: buildOptionEntry(spyRoll, rollExp)
       },
-      roll: {
-        expiration: rollOption?.expiration ?? rollExp.date,
-        dte: rollOption?.dte ?? rollExp.dte,
-        strike: rollOption?.strike ?? null,
-        delta: rollOption?.delta ?? null,
-        midPrice: rollOption?.midPrice ?? null,
-        bid: rollOption?.bid ?? null,
-        ask: rollOption?.ask ?? null,
-        source: rollOption?.source ?? null
+      voo: {
+        newEntry: buildOptionEntry(vooNewEntry, newEntryExp),
+        roll: buildOptionEntry(vooRoll, rollExp)
       }
     };
 
