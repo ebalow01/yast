@@ -192,8 +192,26 @@ function getNearestWeeklyExpiration(targetDTE) {
   return { date: formatDate(best), dte: actualDTE };
 }
 
+// Standard normal CDF approximation (Abramowitz & Stegun)
+function normCDF(x) {
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.SQRT2;
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return 0.5 * (1.0 + sign * y);
+}
+
+// Black-Scholes call delta: N(d1)
+function bsDelta(spotPrice, strike, timeYears, riskFreeRate, iv) {
+  if (timeYears <= 0 || iv <= 0) return null;
+  const d1 = (Math.log(spotPrice / strike) + (riskFreeRate + 0.5 * iv * iv) * timeYears) / (iv * Math.sqrt(timeYears));
+  return normCDF(d1);
+}
+
 // Fetch live SPY option near target delta from Polygon snapshot API
-async function getSPYOptionNearDelta(apiKey, targetDelta, expirationDate) {
+async function getSPYOptionFromPolygon(apiKey, targetDelta, expirationDate) {
   if (!apiKey) return null;
 
   try {
@@ -238,12 +256,94 @@ async function getSPYOptionNearDelta(apiKey, targetDelta, expirationDate) {
       delta: bestMatch.greeks?.delta != null ? +bestMatch.greeks.delta.toFixed(3) : null,
       midPrice,
       bid,
-      ask
+      ask,
+      source: 'polygon'
     };
   } catch (error) {
-    console.error('Error fetching SPY options:', error);
+    console.error('Error fetching SPY options from Polygon:', error);
     return null;
   }
+}
+
+// Fetch SPY option chain from Yahoo Finance and compute delta via Black-Scholes
+async function getSPYOptionFromYahoo(targetDelta, expirationDate, spotPrice) {
+  if (!spotPrice) return null;
+
+  try {
+    // Yahoo expects Unix timestamp for the expiration date param
+    const expUnix = Math.floor(new Date(expirationDate + 'T16:00:00-05:00').getTime() / 1000);
+    const url = `https://query1.finance.yahoo.com/v7/finance/options/SPY?date=${expUnix}`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Yahoo Finance options API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const options = data?.optionChain?.result?.[0]?.options?.[0];
+    if (!options || !options.calls || options.calls.length === 0) {
+      console.error('No Yahoo Finance option chain data');
+      return null;
+    }
+
+    const today = new Date();
+    const expDate = new Date(expirationDate + 'T16:00:00-05:00');
+    const timeYears = (expDate - today) / (365.25 * 24 * 60 * 60 * 1000);
+    const riskFreeRate = 0.045; // approximate current rate
+
+    let bestMatch = null;
+    let bestDiff = Infinity;
+    let bestDelta = null;
+
+    for (const call of options.calls) {
+      const iv = call.impliedVolatility;
+      const strike = call.strike;
+      if (iv == null || strike == null) continue;
+
+      const delta = bsDelta(spotPrice, strike, timeYears, riskFreeRate, iv);
+      if (delta == null) continue;
+
+      const diff = Math.abs(delta - targetDelta);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestMatch = call;
+        bestDelta = delta;
+      }
+    }
+
+    if (!bestMatch) return null;
+
+    const bid = bestMatch.bid ?? null;
+    const ask = bestMatch.ask ?? null;
+    const midPrice = (bid != null && ask != null) ? +((bid + ask) / 2).toFixed(2) : null;
+
+    return {
+      strike: bestMatch.strike ?? null,
+      delta: bestDelta != null ? +bestDelta.toFixed(3) : null,
+      midPrice,
+      bid,
+      ask,
+      source: 'yahoo'
+    };
+  } catch (error) {
+    console.error('Error fetching SPY options from Yahoo Finance:', error);
+    return null;
+  }
+}
+
+// Try Polygon first, then fall back to Yahoo Finance
+async function getSPYOptionNearDelta(apiKey, targetDelta, expirationDate, spotPrice) {
+  const polygonResult = await getSPYOptionFromPolygon(apiKey, targetDelta, expirationDate);
+  if (polygonResult) return polygonResult;
+
+  console.log('Polygon options unavailable, falling back to Yahoo Finance');
+  return getSPYOptionFromYahoo(targetDelta, expirationDate, spotPrice);
 }
 
 // Get the static covered call strategy definition
@@ -360,14 +460,19 @@ exports.handler = async (event, context) => {
     const newEntryExp = getNearestWeeklyExpiration(21);
     const rollExp = getNearestWeeklyExpiration(30);
 
+    // Fetch core market data first (SPY price needed for Yahoo options fallback)
     console.log('Fetching market data...');
-    const [fearGreed, vix, vooPrice, spyPrice, newEntryOption, rollOption] = await Promise.all([
+    const [fearGreed, vix, vooPrice, spyPrice] = await Promise.all([
       getFearGreedIndex(),
       getVIX(polygonApiKey),
       getVOOPrice(polygonApiKey),
-      getSPYPrice(polygonApiKey),
-      getSPYOptionNearDelta(polygonApiKey, 0.30, newEntryExp.date),
-      getSPYOptionNearDelta(polygonApiKey, 0.30, rollExp.date)
+      getSPYPrice(polygonApiKey)
+    ]);
+
+    // Fetch options in parallel (Polygon first, Yahoo fallback needs spotPrice)
+    const [newEntryOption, rollOption] = await Promise.all([
+      getSPYOptionNearDelta(polygonApiKey, 0.30, newEntryExp.date, spyPrice),
+      getSPYOptionNearDelta(polygonApiKey, 0.30, rollExp.date, spyPrice)
     ]);
 
     console.log('Data fetched:', {
@@ -375,8 +480,8 @@ exports.handler = async (event, context) => {
       vix: vix ? 'OK' : 'NULL',
       vooPrice: vooPrice ? 'OK' : 'NULL',
       spyPrice: spyPrice ? 'OK' : 'NULL',
-      newEntryOption: newEntryOption ? 'OK' : 'NULL',
-      rollOption: rollOption ? 'OK' : 'NULL'
+      newEntryOption: newEntryOption ? `OK (${newEntryOption.source})` : 'NULL',
+      rollOption: rollOption ? `OK (${rollOption.source})` : 'NULL'
     });
 
     const strategy = getCoveredCallStrategy();
@@ -390,7 +495,8 @@ exports.handler = async (event, context) => {
         delta: newEntryOption?.delta ?? null,
         midPrice: newEntryOption?.midPrice ?? null,
         bid: newEntryOption?.bid ?? null,
-        ask: newEntryOption?.ask ?? null
+        ask: newEntryOption?.ask ?? null,
+        source: newEntryOption?.source ?? null
       },
       roll: {
         expiration: rollExp.date,
@@ -399,7 +505,8 @@ exports.handler = async (event, context) => {
         delta: rollOption?.delta ?? null,
         midPrice: rollOption?.midPrice ?? null,
         bid: rollOption?.bid ?? null,
-        ask: rollOption?.ask ?? null
+        ask: rollOption?.ask ?? null,
+        source: rollOption?.source ?? null
       }
     };
 

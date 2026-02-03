@@ -54,6 +54,7 @@ interface LiveOptionEntry {
   midPrice: number | null;
   bid: number | null;
   ask: number | null;
+  source?: string;
 }
 
 interface LiveOptions {
