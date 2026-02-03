@@ -10,7 +10,14 @@ import {
   Chip,
   Paper,
   Button,
-  LinearProgress
+  LinearProgress,
+  Collapse,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import {
   TrendingUp,
@@ -18,30 +25,45 @@ import {
   ShowChart,
   AttachMoney,
   Refresh,
-  WarningAmber
+  WarningAmber,
+  ExpandMore,
+  ExpandLess
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
-interface Strategy {
+interface StrategyRule {
+  priority: number;
   name: string;
-  successRate: string;
-  requiresCash: boolean;
-  requiresShares: boolean;
+  trigger: string;
   action: string;
-  strike: string;
-  dte: string;
-  position: string;
-  roll: string;
-  goal: string;
 }
 
-interface Recommendation {
-  zone: string;
-  zoneTitle: string;
-  vixNotice: string | null;
-  primaryStrategies: Strategy[];
-  alternateStrategies: Strategy[];
-  note: string;
+interface StrategyPerformance {
+  return: string;
+  sharpe: number;
+  sortino: number;
+  maxDrawdown: string;
+  startingCapital: string;
+  period: string;
+}
+
+interface StrategyParameters {
+  target_delta: number;
+  target_dte: number;
+  roll_target_dte: number;
+  roll_up_threshold: number;
+  roll_dte_trigger: number;
+  profit_target: number;
+  max_positions: number;
+}
+
+interface Strategy {
+  name: string;
+  performance: StrategyPerformance;
+  setup: string;
+  rules: StrategyRule[];
+  parameters: StrategyParameters;
+  designDecisions: string[];
 }
 
 interface MarketData {
@@ -57,7 +79,8 @@ interface MarketData {
     emoji: string;
   };
   vooPrice: number;
-  recommendation: Recommendation;
+  spyPrice: number;
+  strategy: Strategy;
   alerts: string[];
   timestamp: string;
 }
@@ -67,14 +90,13 @@ const MarketMonitor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('');
-  const [showAlternate, setShowAlternate] = useState(false);
+  const [showDesignDecisions, setShowDesignDecisions] = useState(false);
 
   const fetchMarketData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Use Netlify Function endpoint (works in production and local Netlify dev)
       const response = await fetch('/.netlify/functions/market-conditions');
       const result = await response.json();
 
@@ -94,24 +116,23 @@ const MarketMonitor: React.FC = () => {
 
   useEffect(() => {
     fetchMarketData();
-    // Refresh every 5 minutes
     const interval = setInterval(fetchMarketData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
   const getFearGreedColor = (value: number) => {
-    if (value <= 20) return '#FF3B30'; // Extreme Fear - Red
-    if (value <= 40) return '#FF9500'; // Fear - Orange
-    if (value <= 60) return '#8E8E93'; // Neutral - Gray
-    if (value <= 80) return '#34C759'; // Greed - Green
-    return '#FF3B30'; // Extreme Greed - Red
+    if (value <= 20) return '#FF3B30';
+    if (value <= 40) return '#FF9500';
+    if (value <= 60) return '#8E8E93';
+    if (value <= 80) return '#34C759';
+    return '#FF3B30';
   };
 
   const getVixColor = (value: number) => {
-    if (value < 15) return '#34C759'; // Low
-    if (value < 20) return '#8E8E93'; // Normal
-    if (value < 30) return '#FF9500'; // Elevated
-    return '#FF3B30'; // High
+    if (value < 15) return '#34C759';
+    if (value < 20) return '#8E8E93';
+    if (value < 30) return '#FF9500';
+    return '#FF3B30';
   };
 
   if (loading && !marketData) {
@@ -137,8 +158,7 @@ const MarketMonitor: React.FC = () => {
 
   if (!marketData) return null;
 
-  // Check if we have any valid data
-  const hasAnyData = marketData.fearGreedIndex || marketData.vix || marketData.vooPrice;
+  const hasAnyData = marketData.fearGreedIndex || marketData.vix || marketData.vooPrice || marketData.spyPrice;
 
   if (!hasAnyData) {
     return (
@@ -152,6 +172,23 @@ const MarketMonitor: React.FC = () => {
       </Box>
     );
   }
+
+  const parameterLabels: Record<string, string> = {
+    target_delta: 'Target Delta',
+    target_dte: 'Target DTE (new)',
+    roll_target_dte: 'Roll Target DTE',
+    roll_up_threshold: 'Roll-Up Threshold',
+    roll_dte_trigger: 'Roll DTE Trigger',
+    profit_target: 'Profit Target',
+    max_positions: 'Max Positions'
+  };
+
+  const formatParamValue = (key: string, value: number): string => {
+    if (key === 'roll_up_threshold' || key === 'profit_target') return `${(value * 100).toFixed(0)}%`;
+    if (key === 'target_dte' || key === 'roll_target_dte' || key === 'roll_dte_trigger') return `${value} days`;
+    if (key === 'max_positions') return `${value}`;
+    return `${value}`;
+  };
 
   return (
     <Box>
@@ -196,11 +233,11 @@ const MarketMonitor: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Market Indicators Grid */}
+      {/* Market Indicators Grid - 4 columns */}
       <Grid container spacing={3} mb={4}>
         {/* Fear & Greed Index */}
         {marketData.fearGreedIndex && (
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -216,7 +253,7 @@ const MarketMonitor: React.FC = () => {
                 <CardContent>
                   <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                     <Typography variant="h6" fontWeight="bold">
-                      Fear & Greed Index
+                      Fear & Greed
                     </Typography>
                     {marketData.fearGreedIndex.value <= 40 ? (
                       <TrendingDown fontSize="large" sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }} />
@@ -225,9 +262,9 @@ const MarketMonitor: React.FC = () => {
                     )}
                   </Box>
 
-                  <Box textAlign="center" my={3}>
+                  <Box textAlign="center" my={2}>
                     <Typography
-                      variant="h1"
+                      variant="h2"
                       fontWeight="bold"
                       sx={{ color: getFearGreedColor(marketData.fearGreedIndex.value) }}
                     >
@@ -238,20 +275,18 @@ const MarketMonitor: React.FC = () => {
                     </Typography>
                   </Box>
 
-                  <Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={marketData.fearGreedIndex.value}
-                      sx={{
-                        height: 8,
-                        borderRadius: 1,
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        '& .MuiLinearProgress-bar': {
-                          backgroundColor: getFearGreedColor(marketData.fearGreedIndex.value)
-                        }
-                      }}
-                    />
-                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={marketData.fearGreedIndex.value}
+                    sx={{
+                      height: 8,
+                      borderRadius: 1,
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: getFearGreedColor(marketData.fearGreedIndex.value)
+                      }
+                    }}
+                  />
 
                   <Box mt={2}>
                     <Chip
@@ -264,10 +299,6 @@ const MarketMonitor: React.FC = () => {
                       }}
                     />
                   </Box>
-
-                  <Typography variant="body2" color="text.secondary" mt={2} textAlign="center">
-                    {marketData.fearGreedIndex.rating}
-                  </Typography>
                 </CardContent>
               </Card>
             </motion.div>
@@ -276,7 +307,7 @@ const MarketMonitor: React.FC = () => {
 
         {/* VIX */}
         {marketData.vix && (
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -292,14 +323,14 @@ const MarketMonitor: React.FC = () => {
                 <CardContent>
                   <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                     <Typography variant="h6" fontWeight="bold">
-                      VIX (Volatility)
+                      VIX
                     </Typography>
                     <ShowChart fontSize="large" sx={{ color: getVixColor(marketData.vix.value) }} />
                   </Box>
 
-                  <Box textAlign="center" my={3}>
+                  <Box textAlign="center" my={2}>
                     <Typography
-                      variant="h1"
+                      variant="h2"
                       fontWeight="bold"
                       sx={{ color: getVixColor(marketData.vix.value) }}
                     >
@@ -307,20 +338,18 @@ const MarketMonitor: React.FC = () => {
                     </Typography>
                   </Box>
 
-                  <Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={Math.min((marketData.vix.value / 50) * 100, 100)}
-                      sx={{
-                        height: 8,
-                        borderRadius: 1,
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        '& .MuiLinearProgress-bar': {
-                          backgroundColor: getVixColor(marketData.vix.value)
-                        }
-                      }}
-                    />
-                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min((marketData.vix.value / 50) * 100, 100)}
+                    sx={{
+                      height: 8,
+                      borderRadius: 1,
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: getVixColor(marketData.vix.value)
+                      }
+                    }}
+                  />
 
                   <Box mt={2}>
                     <Chip
@@ -341,7 +370,7 @@ const MarketMonitor: React.FC = () => {
 
         {/* VOO Price */}
         {marketData.vooPrice && (
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -357,14 +386,14 @@ const MarketMonitor: React.FC = () => {
                 <CardContent>
                   <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                     <Typography variant="h6" fontWeight="bold">
-                      VOO Price
+                      VOO
                     </Typography>
                     <AttachMoney fontSize="large" sx={{ color: '#00D4FF' }} />
                   </Box>
 
-                  <Box textAlign="center" my={3}>
+                  <Box textAlign="center" my={2}>
                     <Typography
-                      variant="h1"
+                      variant="h2"
                       fontWeight="bold"
                       sx={{ color: '#00D4FF' }}
                     >
@@ -373,7 +402,49 @@ const MarketMonitor: React.FC = () => {
                   </Box>
 
                   <Typography variant="body2" color="text.secondary" textAlign="center" mt={2}>
-                    Current Market Price
+                    S&P 500 (Vanguard)
+                  </Typography>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+        )}
+
+        {/* SPY Price */}
+        {marketData.spyPrice && (
+          <Grid item xs={12} sm={6} md={3}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+            >
+              <Card
+                sx={{
+                  height: '100%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '2px solid #AF52DE',
+                }}
+              >
+                <CardContent>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <Typography variant="h6" fontWeight="bold">
+                      SPY
+                    </Typography>
+                    <AttachMoney fontSize="large" sx={{ color: '#AF52DE' }} />
+                  </Box>
+
+                  <Box textAlign="center" my={2}>
+                    <Typography
+                      variant="h2"
+                      fontWeight="bold"
+                      sx={{ color: '#AF52DE' }}
+                    >
+                      ${marketData.spyPrice.toFixed(2)}
+                    </Typography>
+                  </Box>
+
+                  <Typography variant="body2" color="text.secondary" textAlign="center" mt={2}>
+                    S&P 500 (SPDR)
                   </Typography>
                 </CardContent>
               </Card>
@@ -382,196 +453,149 @@ const MarketMonitor: React.FC = () => {
         )}
       </Grid>
 
-      {/* Strategy Recommendation */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-      >
-        <Paper
-          sx={{
-            p: 3,
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)'
-          }}
+      {/* Covered Call Strategy Section */}
+      {marketData.strategy && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
         >
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Strategy Recommendation
-          </Typography>
-
-          {/* Zone Title */}
-          <Typography
-            variant="h5"
-            fontWeight="bold"
-            sx={{ mt: 2, mb: 2, color: '#00D4FF' }}
+          <Paper
+            sx={{
+              p: 3,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}
           >
-            {marketData.recommendation.zoneTitle}
-          </Typography>
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              {marketData.strategy.name}
+            </Typography>
 
-          {/* VIX Notice */}
-          {marketData.recommendation.vixNotice && (
-            <Alert severity="warning" sx={{ mb: 3 }}>
-              {marketData.recommendation.vixNotice}
-            </Alert>
-          )}
+            {/* Performance Banner */}
+            <Box display="flex" flexWrap="wrap" gap={1.5} mb={3}>
+              <Chip
+                label={`Return: ${marketData.strategy.performance.return}`}
+                sx={{ backgroundColor: '#34C759', color: 'white', fontWeight: 'bold' }}
+              />
+              <Chip
+                label={`Sharpe: ${marketData.strategy.performance.sharpe}`}
+                sx={{ backgroundColor: '#007AFF', color: 'white', fontWeight: 'bold' }}
+              />
+              <Chip
+                label={`Sortino: ${marketData.strategy.performance.sortino}`}
+                sx={{ backgroundColor: '#5856D6', color: 'white', fontWeight: 'bold' }}
+              />
+              <Chip
+                label={`Max DD: ${marketData.strategy.performance.maxDrawdown}`}
+                sx={{ backgroundColor: '#FF9500', color: 'white', fontWeight: 'bold' }}
+              />
+              <Chip
+                label={marketData.strategy.performance.startingCapital}
+                variant="outlined"
+                sx={{ fontWeight: 'bold' }}
+              />
+              <Chip
+                label={marketData.strategy.performance.period}
+                variant="outlined"
+                sx={{ fontWeight: 'bold' }}
+              />
+            </Box>
 
-          {/* Primary Strategies */}
-          {marketData.recommendation.primaryStrategies.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: '#34C759' }}>
-                Primary Strategies (Use Your VOO Shares)
+            {/* Strategy Setup */}
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Typography variant="body1" fontWeight="bold">
+                {marketData.strategy.setup}
               </Typography>
-              {marketData.recommendation.primaryStrategies.map((strategy, index) => (
+            </Alert>
+
+            {/* Daily Checklist - Priority-ordered rules */}
+            <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mt: 3 }}>
+              Daily Management Checklist
+            </Typography>
+            <Box sx={{ mb: 3 }}>
+              {marketData.strategy.rules.map((rule) => (
                 <Paper
-                  key={index}
+                  key={rule.priority}
                   sx={{
                     p: 2,
-                    mb: 2,
-                    background: 'rgba(52, 199, 89, 0.05)',
-                    border: '1px solid rgba(52, 199, 89, 0.3)'
+                    mb: 1.5,
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography variant="h6" fontWeight="bold">
-                      STRATEGY {index + 1}: {strategy.name}
-                    </Typography>
+                  <Box display="flex" alignItems="center" gap={1.5} mb={1}>
                     <Chip
-                      label={strategy.successRate + ' Success'}
+                      label={`#${rule.priority}`}
                       size="small"
                       sx={{
-                        backgroundColor: '#34C759',
+                        backgroundColor: '#007AFF',
                         color: 'white',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        minWidth: 36
                       }}
                     />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {rule.name}
+                    </Typography>
                   </Box>
-                  <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">Trigger:</Typography>
+                      <Typography variant="body2">{rule.trigger}</Typography>
+                    </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="body2" color="text.secondary">Action:</Typography>
-                      <Typography variant="body1">{strategy.action}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2" color="text.secondary">Strike:</Typography>
-                      <Typography variant="body1">{strategy.strike}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2" color="text.secondary">DTE:</Typography>
-                      <Typography variant="body1">{strategy.dte}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="body2" color="text.secondary">Position:</Typography>
-                      <Typography variant="body1">{strategy.position}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2" color="text.secondary">Roll:</Typography>
-                      <Typography variant="body1">{strategy.roll}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2" color="text.secondary">Goal:</Typography>
-                      <Typography variant="body1" fontWeight="bold" sx={{ color: '#34C759' }}>
-                        {strategy.goal}
-                      </Typography>
+                      <Typography variant="body2">{rule.action}</Typography>
                     </Grid>
                   </Grid>
                 </Paper>
               ))}
             </Box>
-          )}
 
-          {/* Alternate Strategies Toggle */}
-          {marketData.recommendation.alternateStrategies.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Button
-                variant="outlined"
-                onClick={() => setShowAlternate(!showAlternate)}
-                sx={{
-                  mb: 2,
-                  color: '#FF9500',
-                  borderColor: '#FF9500',
-                  '&:hover': {
-                    borderColor: '#FF9500',
-                    backgroundColor: 'rgba(255, 149, 0, 0.1)'
-                  }
-                }}
-              >
-                {showAlternate ? '▼ Hide' : '▶ Show'} Alternate Strategies (Require Available Cash)
-              </Button>
-
-              {showAlternate && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: '#FF9500' }}>
-                    Alternate Strategies (Require Cash)
-                  </Typography>
-                  {marketData.recommendation.alternateStrategies.map((strategy, index) => (
-                    <Paper
-                      key={index}
-                      sx={{
-                        p: 2,
-                        mb: 2,
-                        background: 'rgba(255, 149, 0, 0.05)',
-                        border: '1px solid rgba(255, 149, 0, 0.3)'
-                      }}
-                    >
-                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="h6" fontWeight="bold">
-                          STRATEGY {marketData.recommendation.primaryStrategies.length + index + 1}: {strategy.name}
-                        </Typography>
-                        <Chip
-                          label={strategy.successRate + ' Success'}
-                          size="small"
-                          sx={{
-                            backgroundColor: '#FF9500',
-                            color: 'white',
-                            fontWeight: 'bold'
-                          }}
-                        />
-                      </Box>
-                      <Grid container spacing={2} sx={{ mt: 1 }}>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="text.secondary">Action:</Typography>
-                          <Typography variant="body1">{strategy.action}</Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="text.secondary">Strike:</Typography>
-                          <Typography variant="body1">{strategy.strike}</Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="text.secondary">DTE:</Typography>
-                          <Typography variant="body1">{strategy.dte}</Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="text.secondary">Position:</Typography>
-                          <Typography variant="body1">{strategy.position}</Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Typography variant="body2" color="text.secondary">Roll:</Typography>
-                          <Typography variant="body1">{strategy.roll}</Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Typography variant="body2" color="text.secondary">Goal:</Typography>
-                          <Typography variant="body1" fontWeight="bold" sx={{ color: '#FF9500' }}>
-                            {strategy.goal}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </Paper>
+            {/* Parameters Table */}
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Strategy Parameters
+            </Typography>
+            <TableContainer component={Paper} sx={{ mb: 3, background: 'rgba(255, 255, 255, 0.02)' }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Parameter</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Value</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(marketData.strategy.parameters).map(([key, value]) => (
+                    <TableRow key={key}>
+                      <TableCell>{parameterLabels[key] || key}</TableCell>
+                      <TableCell>{formatParamValue(key, value)}</TableCell>
+                    </TableRow>
                   ))}
-                </motion.div>
-              )}
-            </Box>
-          )}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          {/* Note */}
-          <Alert severity="info" sx={{ mt: 2 }}>
-            {marketData.recommendation.note}
-          </Alert>
-        </Paper>
-      </motion.div>
+            {/* Design Decisions - Collapsible */}
+            <Button
+              variant="outlined"
+              onClick={() => setShowDesignDecisions(!showDesignDecisions)}
+              endIcon={showDesignDecisions ? <ExpandLess /> : <ExpandMore />}
+              sx={{ mb: 1 }}
+            >
+              Design Decisions
+            </Button>
+            <Collapse in={showDesignDecisions}>
+              <Paper sx={{ p: 2, background: 'rgba(255, 255, 255, 0.02)' }}>
+                {marketData.strategy.designDecisions.map((decision, index) => (
+                  <Typography key={index} variant="body2" sx={{ mb: 1 }}>
+                    • {decision}
+                  </Typography>
+                ))}
+              </Paper>
+            </Collapse>
+          </Paper>
+        </motion.div>
+      )}
     </Box>
   );
 };
