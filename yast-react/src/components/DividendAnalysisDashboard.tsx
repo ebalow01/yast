@@ -2349,20 +2349,12 @@ export default function DividendAnalysisDashboard() {
   }, [optimalPortfolioData, sortField, sortDirection, polygonData, aiOutlooks]);
 
   const sortedExcludedData = useMemo(() => {
-    // Filter out tickers with no recent price (invalid/delisted symbols)
-    // Only apply filter if polygonData has loaded (has at least one entry)
-    const hasPolygonData = Object.keys(polygonData).length > 0;
-    const validExcluded = hasPolygonData
-      ? excludedTickersData.all.filter(item => polygonData[item.ticker]?.price != null)
-      : excludedTickersData.all;
-    return sortTableData(validExcluded, sortField, sortDirection);
+    return sortTableData(excludedTickersData.all, sortField, sortDirection);
   }, [excludedTickersData, sortField, sortDirection, polygonData, aiOutlooks]);
 
   const sortedBullishExcludedData = useMemo(() => {
-    const hasPolygonData = Object.keys(polygonData).length > 0;
     const bullishExcludedETFs = data.filter(item =>
-      excludedTickersData.bullishExcluded.includes(item.ticker) &&
-      (!hasPolygonData || polygonData[item.ticker]?.price != null)
+      excludedTickersData.bullishExcluded.includes(item.ticker)
     );
     return sortTableData(bullishExcludedETFs, sortField, sortDirection);
   }, [excludedTickersData, data, sortField, sortDirection, polygonData, aiOutlooks]);
