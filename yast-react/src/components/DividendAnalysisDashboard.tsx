@@ -2157,8 +2157,8 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
-    // Filter criteria: 12-week return > 5% AND positive NAV variance
-    const RETURN_THRESHOLD = 5;
+    // Filter criteria: 12-week return > 20% AND positive NAV variance
+    const RETURN_THRESHOLD = 20;
 
     // Filter tickers with return > threshold AND positive NAV performance
     const qualifiedTickers = tickersWithTotalReturn.filter(item => {
