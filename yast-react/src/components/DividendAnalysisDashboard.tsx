@@ -2157,21 +2157,23 @@ export default function DividendAnalysisDashboard() {
       };
     }).sort((a, b) => b.calculatedTotalReturn - a.calculatedTotalReturn);
 
-    // Filter criteria: 12-week return > 20% AND positive NAV variance
+    // Filter criteria: 12-week return > 20% AND positive NAV variance AND Sharpe >= 0.5
     const RETURN_THRESHOLD = 20;
+    const SHARPE_THRESHOLD = 0.5;
 
-    // Filter tickers with return > threshold AND positive NAV performance
+    // Filter tickers with return > threshold AND positive NAV performance AND Sharpe >= threshold
     const qualifiedTickers = tickersWithTotalReturn.filter(item => {
       const navPerformance = polygonData[item.ticker]?.navPerformance || 0;
-      return item.calculatedTotalReturn > RETURN_THRESHOLD && navPerformance > 0;
+      const sharpeRatio = item.sharpeRatio || 0;
+      return item.calculatedTotalReturn > RETURN_THRESHOLD && navPerformance > 0 && sharpeRatio >= SHARPE_THRESHOLD;
     });
 
     const finalOptimal = qualifiedTickers;
 
-    console.log(`📈 Optimal portfolio: ${finalOptimal.length} tickers with >${RETURN_THRESHOLD}% 12wk return AND positive NAV variance`);
+    console.log(`📈 Optimal portfolio: ${finalOptimal.length} tickers with >${RETURN_THRESHOLD}% 12wk return, positive NAV, Sharpe >=${SHARPE_THRESHOLD}`);
     console.log(`Qualified tickers:`, finalOptimal.map(item => {
       const navPerf = polygonData[item.ticker]?.navPerformance || 0;
-      return `${item.ticker} (Return: ${item.calculatedTotalReturn.toFixed(1)}%, NAV: ${navPerf.toFixed(1)}%)`;
+      return `${item.ticker} (Return: ${item.calculatedTotalReturn.toFixed(1)}%, NAV: ${navPerf.toFixed(1)}%, Sharpe: ${item.sharpeRatio.toFixed(2)})`;
     }));
     
     // Remove CASH from optimal portfolio display - users can manage cash allocation themselves
