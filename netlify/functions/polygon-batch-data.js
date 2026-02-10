@@ -33,7 +33,7 @@ async function fetchTickerData(ticker, apiKey) {
     
     try {
       priceData = await httpsGet(recentPriceUrl);
-      await delay(100); // Rate limiting
+      await delay(25); // Rate limiting
       
       // If we got recent data, use the most recent closing price
       if (priceData.results && priceData.results.length > 0) {
@@ -47,7 +47,7 @@ async function fetchTickerData(ticker, apiKey) {
     if (!currentPrice) {
       const prevDayUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${apiKey}`;
       priceData = await httpsGet(prevDayUrl);
-      await delay(100); // Rate limiting
+      await delay(25); // Rate limiting
       
       if (priceData.results && priceData.results.length > 0) {
         currentPrice = priceData.results[0].c;
@@ -61,18 +61,18 @@ async function fetchTickerData(ticker, apiKey) {
 
     const twelveWeeksAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${eightyEightDaysAgo}/${eightyDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
     const twelveWeeksAgoData = await httpsGet(twelveWeeksAgoUrl);
-    await delay(100); // Rate limiting
+    await delay(25); // Rate limiting
 
     // Fetch 14-day historical data for volatility calculation
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const volatilityUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${fourteenDaysAgo}/${today}?adjusted=true&sort=asc&apiKey=${apiKey}`;
     const volatilityData = await httpsGet(volatilityUrl);
-    await delay(100); // Rate limiting
+    await delay(25); // Rate limiting
     
     // Fetch dividend data (last 15 dividends to get both recent and historical)
     const dividendUrl = `https://api.polygon.io/v3/reference/dividends?ticker=${ticker}&order=desc&limit=15&apiKey=${apiKey}`;
     const dividendData = await httpsGet(dividendUrl);
-    await delay(100); // Rate limiting
+    await delay(25); // Rate limiting
     
     // Calculate median of last 3 dividends and historical 3 dividends (10-12 weeks ago)
     let medianDividend = null;
@@ -387,23 +387,24 @@ exports.handler = async (event, context) => {
 
   try {
     console.log(`Fetching batch data for ${tickers.length} tickers`);
-    
+
     // Process tickers in batches to avoid rate limiting
+    // Increased batch size and reduced delays to stay under Netlify's 26s timeout
     const results = {};
-    const batchSize = 5;
-    
+    const batchSize = 15;
+
     for (let i = 0; i < tickers.length; i += batchSize) {
       const batch = tickers.slice(i, i + batchSize);
       const batchPromises = batch.map(ticker => fetchTickerData(ticker, POLYGON_API_KEY));
       const batchResults = await Promise.all(batchPromises);
-      
+
       for (const result of batchResults) {
         results[result.ticker] = result;
       }
-      
+
       // Add delay between batches
       if (i + batchSize < tickers.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
     
