@@ -1545,6 +1545,7 @@ export default function DividendAnalysisDashboard() {
     const loadPolygonData = async () => {
       if (data.length > 0 && !loading) {
         const tickers = data.map(item => item.ticker);
+        console.log(`[Polygon] Starting fetch for ${tickers.length} tickers`);
         setPolygonLoading(true);
         try {
           // Fetching market data asynchronously
@@ -1555,47 +1556,42 @@ export default function DividendAnalysisDashboard() {
             },
             body: JSON.stringify({ tickers })
           });
-          
+
+          console.log(`[Polygon] Response status: ${polygonResponse.status}, ok: ${polygonResponse.ok}`);
+
           if (polygonResponse.ok) {
-            const polygonResults = await polygonResponse.json();
-            console.log(`Market data loaded for ${Object.keys(polygonResults).length} tickers`);
-            console.log('Tickers requested:', tickers);
-            console.log('yfinance response keys:', Object.keys(polygonResults));
-            
-            // Log NVDW data if available
-            if (polygonResults.NVDW) {
-              console.log('NVDW Full Data:', polygonResults.NVDW);
-            } else {
-              console.log('NVDW not found in response');
+            const responseText = await polygonResponse.text();
+            console.log(`[Polygon] Response length: ${responseText.length} chars`);
+
+            if (!responseText || responseText.length === 0) {
+              console.error('[Polygon] Empty response body');
+              return;
             }
-            
-            // Log YETH data if available
-            if (polygonResults.YETH) {
-              console.log('YETH Full Data:', polygonResults.YETH);
-            } else {
-              console.log('YETH not found in response');
+
+            let polygonResults;
+            try {
+              polygonResults = JSON.parse(responseText);
+            } catch (parseError) {
+              console.error('[Polygon] JSON parse error:', parseError);
+              console.error('[Polygon] Response text preview:', responseText.substring(0, 500));
+              return;
             }
-            
-            // Log HOOW data if available
-            if (polygonResults.HOOW) {
-              console.log('HOOW Full Data:', polygonResults.HOOW);
-            } else {
-              console.log('HOOW not found in response');
+
+            console.log(`[Polygon] Market data loaded for ${Object.keys(polygonResults).length} tickers`);
+
+            // Check for error response
+            if (polygonResults.error) {
+              console.error('[Polygon] API returned error:', polygonResults.error);
+              return;
             }
-            
-            // Log PLTW data if available
-            if (polygonResults.PLTW) {
-              console.log('PLTW Full Data:', polygonResults.PLTW);
-            } else {
-              console.log('PLTW not found in response');
-            }
-            
+
             setPolygonData(polygonResults);
           } else {
-            console.error('Failed to fetch yfinance data:', polygonResponse.statusText);
+            const errorText = await polygonResponse.text();
+            console.error(`[Polygon] Failed - Status: ${polygonResponse.status}, StatusText: "${polygonResponse.statusText}", Body: ${errorText.substring(0, 500)}`);
           }
         } catch (error) {
-          console.error('Error fetching yfinance data:', error);
+          console.error('[Polygon] Fetch error:', error);
         } finally {
           setPolygonLoading(false);
         }
