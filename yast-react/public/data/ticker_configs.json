@@ -238,5 +238,349 @@
   "QLDY": {
     "name": "Defiance Nasdaq 100 LightningSpread Income ETF",
     "start_date": "auto_detect"
+  },
+  "ABNY": {
+    "name": "YieldMax ABNB Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "AIYY": {
+    "name": "YieldMax AI Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "AMDY": {
+    "name": "YieldMax AMD Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "AMZY": {
+    "name": "YieldMax AMZN Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "APLY": {
+    "name": "YieldMax AAPL Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "ARMW": {
+    "name": "Roundhill ARM WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "BABO": {
+    "name": "YieldMax BABA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "BABW": {
+    "name": "Roundhill BABA WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "BBYY": {
+    "name": "GraniteShares YieldBOOST BABA ETF",
+    "start_date": "auto_detect"
+  },
+  "BITK": {
+    "name": "Tuttle Capital Bitcoin 0DTE Covered Call ETF",
+    "start_date": "auto_detect"
+  },
+  "BRKC": {
+    "name": "YieldMax BRK.B Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "CONY": {
+    "name": "YieldMax COIN Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "COSW": {
+    "name": "Roundhill COST WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "CRCO": {
+    "name": "YieldMax CRCL Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "CRSH": {
+    "name": "YieldMax Short TSLA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "CVNY": {
+    "name": "YieldMax CVNA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "CWII": {
+    "name": "REX CRWV Growth & Income ETF",
+    "start_date": "auto_detect"
+  },
+  "DIPS": {
+    "name": "YieldMax Short NVDA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "DISO": {
+    "name": "YieldMax DIS Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "DRAY": {
+    "name": "YieldMax DKNG Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "FBY": {
+    "name": "YieldMax META Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "FBYY": {
+    "name": "GraniteShares YieldBOOST META ETF",
+    "start_date": "auto_detect"
+  },
+  "FEAT": {
+    "name": "YieldMax Dorsey Wright Featured 5 Income ETF",
+    "start_date": "auto_detect"
+  },
+  "FIAT": {
+    "name": "YieldMax Short COIN Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "FIVY": {
+    "name": "YieldMax Dorsey Wright Hybrid 5 Income ETF",
+    "start_date": "auto_detect"
+  },
+  "GDXW": {
+    "name": "Roundhill Gold Miners WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "GDXY": {
+    "name": "YieldMax Gold Miners Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "GIAX": {
+    "name": "Nicholas Global Equity and Income ETF",
+    "start_date": "auto_detect"
+  },
+  "GLDW": {
+    "name": "Roundhill Gold WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "GMEY": {
+    "name": "YieldMax GME Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "GOOY": {
+    "name": "YieldMax GOOGL Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "HIYY": {
+    "name": "YieldMax HIMS Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "HMYY": {
+    "name": "GraniteShares YieldBOOST HIMS ETF",
+    "start_date": "auto_detect"
+  },
+  "HOII": {
+    "name": "REX HOOD Growth & Income ETF",
+    "start_date": "auto_detect"
+  },
+  "HOOY": {
+    "name": "YieldMax HOOD Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "HOYY": {
+    "name": "GraniteShares YieldBOOST HOOD ETF",
+    "start_date": "auto_detect"
+  },
+  "IOYY": {
+    "name": "GraniteShares YieldBOOST IONQ ETF",
+    "start_date": "auto_detect"
+  },
+  "JMMF": {
+    "name": "JPMorgan 100% U.S. Treasury Securities Money Market ETF",
+    "start_date": "auto_detect"
+  },
+  "JPMO": {
+    "name": "YieldMax JPM Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "KYLD": {
+    "name": "Kurv High Income ETF",
+    "start_date": "auto_detect"
+  },
+  "LLII": {
+    "name": "REX LLY Growth & Income ETF",
+    "start_date": "auto_detect"
+  },
+  "MAAY": {
+    "name": "GraniteShares YieldBOOST MARA ETF",
+    "start_date": "auto_detect"
+  },
+  "MAGO": {
+    "name": "Tuttle Capital Magnificent 7 Income Blast ETF",
+    "start_date": "auto_detect"
+  },
+  "MARO": {
+    "name": "YieldMax MARA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "MEMY": {
+    "name": "Tuttle Capital Meme Stock Income Blast ETF",
+    "start_date": "auto_detect"
+  },
+  "MRNY": {
+    "name": "YieldMax MRNA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "MSFO": {
+    "name": "YieldMax MSFT Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "MSST": {
+    "name": "YieldMax MSTR Performance & Distribution Target 25 ETF",
+    "start_date": "auto_detect"
+  },
+  "MSTK": {
+    "name": "Tuttle Capital MSTR 0DTE Covered Call ETF",
+    "start_date": "auto_detect"
+  },
+  "MSTY": {
+    "name": "YieldMax MSTR Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "MTYY": {
+    "name": "GraniteShares YieldBOOST MSTR ETF",
+    "start_date": "auto_detect"
+  },
+  "NFLY": {
+    "name": "YieldMax NFLX Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "NUGY": {
+    "name": "GraniteShares YieldBOOST Gold Miners ETF",
+    "start_date": "auto_detect"
+  },
+  "NVDY": {
+    "name": "YieldMax NVDA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "NVIT": {
+    "name": "YieldMax NVDA Performance & Distribution Target 25 ETF",
+    "start_date": "auto_detect"
+  },
+  "OARK": {
+    "name": "YieldMax Innovation Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "PLTI": {
+    "name": "REX PLTR Growth & Income ETF",
+    "start_date": "auto_detect"
+  },
+  "PLTY": {
+    "name": "YieldMax PLTR Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "PLYY": {
+    "name": "GraniteShares YieldBOOST PLTR ETF",
+    "start_date": "auto_detect"
+  },
+  "PYPY": {
+    "name": "YieldMax PYPL Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "QBY": {
+    "name": "GraniteShares YieldBOOST QBTS ETF",
+    "start_date": "auto_detect"
+  },
+  "RBLY": {
+    "name": "YieldMax RBLX Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "RDYY": {
+    "name": "YieldMax RDDT Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "RGYY": {
+    "name": "GraniteShares YieldBOOST RGTI ETF",
+    "start_date": "auto_detect"
+  },
+  "RTYY": {
+    "name": "GraniteShares YieldBOOST RIOT ETF",
+    "start_date": "auto_detect"
+  },
+  "SEMY": {
+    "name": "GraniteShares YieldBOOST Semiconductor ETF",
+    "start_date": "auto_detect"
+  },
+  "SMCY": {
+    "name": "YieldMax SMCI Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "SMYY": {
+    "name": "GraniteShares YieldBOOST SMCI ETF",
+    "start_date": "auto_detect"
+  },
+  "SNOY": {
+    "name": "YieldMax SNOW Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "TDAX": {
+    "name": "TDAQ Lift ETF",
+    "start_date": "auto_detect"
+  },
+  "TEST": {
+    "name": "Weekly Dividend ETF",
+    "start_date": "auto_detect"
+  },
+  "TSLY": {
+    "name": "YieldMax TSLA Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "TSMY": {
+    "name": "YieldMax TSM Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "TSYW": {
+    "name": "Roundhill Treasury Bond WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "UBEW": {
+    "name": "Roundhill UBER WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "ULTI": {
+    "name": "REX Ultra Short Income ETF",
+    "start_date": "auto_detect"
+  },
+  "UNHW": {
+    "name": "Roundhill UNH WeeklyPay ETF",
+    "start_date": "auto_detect"
+  },
+  "WMTI": {
+    "name": "REX WMT Growth & Income ETF",
+    "start_date": "auto_detect"
+  },
+  "WNTR": {
+    "name": "YieldMax MSTR Short Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "XOMO": {
+    "name": "YieldMax XOM Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "XYZY": {
+    "name": "YieldMax XYZ Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "YBIT": {
+    "name": "YieldMax Bitcoin Option Income Strategy ETF",
+    "start_date": "auto_detect"
+  },
+  "YBMN": {
+    "name": "Defiance BMNR Option Income ETF",
+    "start_date": "auto_detect"
+  },
+  "YBST": {
+    "name": "GraniteShares YieldBOOST Single Stock Universe ETF",
+    "start_date": "auto_detect"
+  },
+  "YBTY": {
+    "name": "GraniteShares YieldBOOST TopYielders ETF",
+    "start_date": "auto_detect"
+  },
+  "YQQQ": {
+    "name": "YieldMax Short N100 Option Income Strategy ETF",
+    "start_date": "auto_detect"
   }
 }
