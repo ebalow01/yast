@@ -1548,48 +1548,57 @@ export default function DividendAnalysisDashboard() {
         console.log(`[Polygon] Starting fetch for ${tickers.length} tickers`);
         setPolygonLoading(true);
         try {
-          // Fetching market data asynchronously
-          const polygonResponse = await fetch('/.netlify/functions/polygon-batch-data', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ tickers })
-          });
-
-          console.log(`[Polygon] Response status: ${polygonResponse.status}, ok: ${polygonResponse.ok}`);
-
-          if (polygonResponse.ok) {
-            const responseText = await polygonResponse.text();
-            console.log(`[Polygon] Response length: ${responseText.length} chars`);
-
-            if (!responseText || responseText.length === 0) {
-              console.error('[Polygon] Empty response body');
-              return;
-            }
-
-            let polygonResults;
-            try {
-              polygonResults = JSON.parse(responseText);
-            } catch (parseError) {
-              console.error('[Polygon] JSON parse error:', parseError);
-              console.error('[Polygon] Response text preview:', responseText.substring(0, 500));
-              return;
-            }
-
-            console.log(`[Polygon] Market data loaded for ${Object.keys(polygonResults).length} tickers`);
-
-            // Check for error response
-            if (polygonResults.error) {
-              console.error('[Polygon] API returned error:', polygonResults.error);
-              return;
-            }
-
-            setPolygonData(polygonResults);
-          } else {
-            const errorText = await polygonResponse.text();
-            console.error(`[Polygon] Failed - Status: ${polygonResponse.status}, StatusText: "${polygonResponse.statusText}", Body: ${errorText.substring(0, 500)}`);
+          // Split tickers into chunks to avoid Netlify function timeout (26s limit)
+          const CHUNK_SIZE = 50;
+          const chunks: string[][] = [];
+          for (let i = 0; i < tickers.length; i += CHUNK_SIZE) {
+            chunks.push(tickers.slice(i, i + CHUNK_SIZE));
           }
+          console.log(`[Polygon] Splitting into ${chunks.length} chunks of ~${CHUNK_SIZE}`);
+
+          // Fetch all chunks in parallel
+          const chunkPromises = chunks.map((chunk, idx) =>
+            fetch('/.netlify/functions/polygon-batch-data', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tickers: chunk })
+            }).then(async (res) => {
+              if (!res.ok) {
+                const errText = await res.text();
+                console.error(`[Polygon] Chunk ${idx} failed - Status: ${res.status}, Body: ${errText.substring(0, 200)}`);
+                return {};
+              }
+              const text = await res.text();
+              if (!text || text.length === 0) {
+                console.error(`[Polygon] Chunk ${idx} empty response`);
+                return {};
+              }
+              try {
+                const parsed = JSON.parse(text);
+                if (parsed.error) {
+                  console.error(`[Polygon] Chunk ${idx} API error:`, parsed.error);
+                  return {};
+                }
+                console.log(`[Polygon] Chunk ${idx}: ${Object.keys(parsed).length} tickers loaded`);
+                return parsed;
+              } catch (e) {
+                console.error(`[Polygon] Chunk ${idx} parse error:`, e);
+                return {};
+              }
+            }).catch((err) => {
+              console.error(`[Polygon] Chunk ${idx} fetch error:`, err);
+              return {};
+            })
+          );
+
+          const chunkResults = await Promise.all(chunkPromises);
+          const mergedResults: any = {};
+          for (const chunk of chunkResults) {
+            Object.assign(mergedResults, chunk);
+          }
+
+          console.log(`[Polygon] Total market data loaded for ${Object.keys(mergedResults).length} tickers`);
+          setPolygonData(mergedResults);
         } catch (error) {
           console.error('[Polygon] Fetch error:', error);
         } finally {
