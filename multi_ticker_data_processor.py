@@ -224,26 +224,12 @@ TICKER_CONFIGS = {
         'start_date': 'auto_detect',
         'name': 'GraniteShares YieldBoost AMZN ETF'
     },
-    'HIMY': {
-        'start_date': 'auto_detect',
-        'name': 'Defiance Leveraged Long Income HIMS ETF'
-    },
-    'SMCC': {
-        'start_date': 'auto_detect',
-        'name': 'Defiance Leveraged Long + Income SMCI ETF'
-    },
-    'PLT': {
-        'start_date': 'auto_detect',
-        'name': 'Defiance Leveraged Long Income PLTR ETF'
-    },
-    'HOOI': {
-        'start_date': 'auto_detect',
-        'name': 'Defiance Leveraged Long Income HOOD ETF'
-    },
-    'AMDU': {
-        'start_date': 'auto_detect',
-        'name': 'Defiance Leveraged Long + Income AMD ETF'
-    },
+    # REMOVED - No dividends since 2026-01-21 (stale weekly payers):
+    # HIMY (Defiance Leveraged Long Income HIMS ETF)
+    # SMCC (Defiance Leveraged Long + Income SMCI ETF)
+    # PLT (Defiance Leveraged Long Income PLTR ETF)
+    # HOOI (Defiance Leveraged Long Income HOOD ETF)
+    # AMDU (Defiance Leveraged Long + Income AMD ETF)
     'SLTY': {
         'start_date': 'auto_detect',
         'name': 'YieldMax Ultra Short Option Income Strategy ETF'
