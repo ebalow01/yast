@@ -211,26 +211,6 @@
     "name": "GraniteShares YieldBoost AMZN ETF",
     "start_date": "auto_detect"
   },
-  "HIMY": {
-    "name": "Defiance Leveraged Long Income HIMS ETF",
-    "start_date": "auto_detect"
-  },
-  "SMCC": {
-    "name": "Defiance Leveraged Long + Income SMCI ETF",
-    "start_date": "auto_detect"
-  },
-  "PLT": {
-    "name": "Defiance Leveraged Long Income PLTR ETF",
-    "start_date": "auto_detect"
-  },
-  "HOOI": {
-    "name": "Defiance Leveraged Long Income HOOD ETF",
-    "start_date": "auto_detect"
-  },
-  "AMDU": {
-    "name": "Defiance Leveraged Long + Income AMD ETF",
-    "start_date": "auto_detect"
-  },
   "SLTY": {
     "name": "YieldMax Ultra Short Option Income Strategy ETF",
     "start_date": "auto_detect"
