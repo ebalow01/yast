@@ -1549,7 +1549,7 @@ export default function DividendAnalysisDashboard() {
         setPolygonLoading(true);
         try {
           // Split tickers into chunks to avoid Netlify function timeout (26s limit)
-          const CHUNK_SIZE = 50;
+          const CHUNK_SIZE = 20;
           const chunks: string[][] = [];
           for (let i = 0; i < tickers.length; i += CHUNK_SIZE) {
             chunks.push(tickers.slice(i, i + CHUNK_SIZE));

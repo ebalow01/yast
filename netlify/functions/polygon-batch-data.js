@@ -54,25 +54,20 @@ async function fetchTickerData(ticker, apiKey) {
       }
     }
     
-    // Fetch stock price from 12 weeks (84 days) ago for NAV calculation
-    // Use a range to handle weekends/holidays
+    // Fetch remaining data in parallel to speed up processing
     const eightyEightDaysAgo = new Date(Date.now() - 88 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const eightyDaysAgo = new Date(Date.now() - 80 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const twelveWeeksAgoUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${eightyEightDaysAgo}/${eightyDaysAgo}?adjusted=true&sort=desc&limit=1&apiKey=${apiKey}`;
-    const twelveWeeksAgoData = await httpsGet(twelveWeeksAgoUrl);
-    await delay(25); // Rate limiting
-
-    // Fetch 14-day historical data for volatility calculation
-    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const volatilityUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${fourteenDaysAgo}/${today}?adjusted=true&sort=asc&apiKey=${apiKey}`;
-    const volatilityData = await httpsGet(volatilityUrl);
-    await delay(25); // Rate limiting
-    
-    // Fetch dividend data (last 15 dividends to get both recent and historical)
     const dividendUrl = `https://api.polygon.io/v3/reference/dividends?ticker=${ticker}&order=desc&limit=15&apiKey=${apiKey}`;
-    const dividendData = await httpsGet(dividendUrl);
-    await delay(25); // Rate limiting
+
+    const [twelveWeeksAgoData, volatilityData, dividendData] = await Promise.all([
+      httpsGet(twelveWeeksAgoUrl),
+      httpsGet(volatilityUrl),
+      httpsGet(dividendUrl)
+    ]);
     
     // Calculate median of last 3 dividends and historical 3 dividends (10-12 weeks ago)
     let medianDividend = null;
