@@ -1320,6 +1320,7 @@ export default function DividendAnalysisDashboard() {
   const [loading, setLoading] = useState(true);
   const [polygonData, setPolygonData] = useState<any>({});
   const [polygonLoading, setPolygonLoading] = useState(false);
+  const [polygonProgress, setPolygonProgress] = useState({ loaded: 0, total: 0 });
   
   // Portfolio Management State with localStorage persistence
   const [portfolio, setPortfolio] = useState<UserPortfolio>(() => {
@@ -1547,6 +1548,7 @@ export default function DividendAnalysisDashboard() {
         const tickers = data.map(item => item.ticker);
         console.log(`[Polygon] Starting fetch for ${tickers.length} tickers`);
         setPolygonLoading(true);
+        setPolygonProgress({ loaded: 0, total: tickers.length });
         try {
           // TCP-style adaptive chunking: start with initial chunk size,
           // halve on failure, retry only the missing tickers
@@ -1607,6 +1609,7 @@ export default function DividendAnalysisDashboard() {
             Object.assign(mergedResults, result.succeeded);
             failedTickers.push(...result.failedTickers);
           }
+          setPolygonProgress({ loaded: Object.keys(mergedResults).length, total: tickers.length });
 
           // Retry loop: halve chunk size each round, retry only failed tickers
           let retryRound = 0;
@@ -1629,6 +1632,7 @@ export default function DividendAnalysisDashboard() {
               Object.assign(mergedResults, result.succeeded);
               failedTickers.push(...result.failedTickers);
             }
+            setPolygonProgress({ loaded: Object.keys(mergedResults).length, total: tickers.length });
           }
 
           if (failedTickers.length > 0) {
@@ -3384,7 +3388,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             Optimal Portfolio Allocation
                             {polygonLoading && (
                               <Chip
-                                label="Loading live data..."
+                                label={`Loading live data... ${polygonProgress.loaded}/${polygonProgress.total}`}
                                 size="small"
                                 sx={{ ml: 2, backgroundColor: 'rgba(0, 212, 255, 0.2)', color: '#00D4FF' }}
                               />
