@@ -1548,56 +1548,94 @@ export default function DividendAnalysisDashboard() {
         console.log(`[Polygon] Starting fetch for ${tickers.length} tickers`);
         setPolygonLoading(true);
         try {
-          // Split tickers into chunks to avoid Netlify function timeout (26s limit)
-          const CHUNK_SIZE = 20;
-          const chunks: string[][] = [];
-          for (let i = 0; i < tickers.length; i += CHUNK_SIZE) {
-            chunks.push(tickers.slice(i, i + CHUNK_SIZE));
-          }
-          console.log(`[Polygon] Splitting into ${chunks.length} chunks of ~${CHUNK_SIZE}`);
+          // TCP-style adaptive chunking: start with initial chunk size,
+          // halve on failure, retry only the missing tickers
+          const INITIAL_CHUNK_SIZE = 20;
+          const MIN_CHUNK_SIZE = 3;
+          const MAX_RETRIES = 4;
+          const mergedResults: any = {};
 
-          // Fetch all chunks in parallel
-          const chunkPromises = chunks.map((chunk, idx) =>
-            fetch('/.netlify/functions/polygon-batch-data', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tickers: chunk })
-            }).then(async (res) => {
+          // Helper: fetch a single chunk, return { succeeded, failed }
+          const fetchChunk = async (chunkTickers: string[], label: string): Promise<{ succeeded: Record<string, any>; failedTickers: string[] }> => {
+            try {
+              const res = await fetch('/.netlify/functions/polygon-batch-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tickers: chunkTickers })
+              });
               if (!res.ok) {
                 const errText = await res.text();
-                console.error(`[Polygon] Chunk ${idx} failed - Status: ${res.status}, Body: ${errText.substring(0, 200)}`);
-                return {};
+                console.error(`[Polygon] ${label} failed - Status: ${res.status}, Body: ${errText.substring(0, 200)}`);
+                return { succeeded: {}, failedTickers: chunkTickers };
               }
               const text = await res.text();
               if (!text || text.length === 0) {
-                console.error(`[Polygon] Chunk ${idx} empty response`);
-                return {};
+                console.error(`[Polygon] ${label} empty response`);
+                return { succeeded: {}, failedTickers: chunkTickers };
               }
-              try {
-                const parsed = JSON.parse(text);
-                if (parsed.error) {
-                  console.error(`[Polygon] Chunk ${idx} API error:`, parsed.error);
-                  return {};
-                }
-                console.log(`[Polygon] Chunk ${idx}: ${Object.keys(parsed).length} tickers loaded`);
-                return parsed;
-              } catch (e) {
-                console.error(`[Polygon] Chunk ${idx} parse error:`, e);
-                return {};
+              const parsed = JSON.parse(text);
+              if (parsed.error) {
+                console.error(`[Polygon] ${label} API error:`, parsed.error);
+                return { succeeded: {}, failedTickers: chunkTickers };
               }
-            }).catch((err) => {
-              console.error(`[Polygon] Chunk ${idx} fetch error:`, err);
-              return {};
-            })
+              // Identify which tickers we got vs missed
+              const gotTickers = Object.keys(parsed);
+              const missed = chunkTickers.filter(t => !parsed[t]);
+              console.log(`[Polygon] ${label}: ${gotTickers.length}/${chunkTickers.length} tickers loaded${missed.length > 0 ? `, missed: ${missed.join(',')}` : ''}`);
+              return { succeeded: parsed, failedTickers: missed };
+            } catch (err) {
+              console.error(`[Polygon] ${label} fetch error:`, err);
+              return { succeeded: {}, failedTickers: chunkTickers };
+            }
+          };
+
+          // Initial pass: split all tickers into chunks and fetch in parallel
+          let chunkSize = INITIAL_CHUNK_SIZE;
+          const initialChunks: string[][] = [];
+          for (let i = 0; i < tickers.length; i += chunkSize) {
+            initialChunks.push(tickers.slice(i, i + chunkSize));
+          }
+          console.log(`[Polygon] Initial: ${initialChunks.length} chunks of ~${chunkSize}`);
+
+          const initialResults = await Promise.all(
+            initialChunks.map((chunk, idx) => fetchChunk(chunk, `Chunk ${idx}`))
           );
 
-          const chunkResults = await Promise.all(chunkPromises);
-          const mergedResults: any = {};
-          for (const chunk of chunkResults) {
-            Object.assign(mergedResults, chunk);
+          // Merge successes, collect all failures
+          let failedTickers: string[] = [];
+          for (const result of initialResults) {
+            Object.assign(mergedResults, result.succeeded);
+            failedTickers.push(...result.failedTickers);
           }
 
-          console.log(`[Polygon] Total market data loaded for ${Object.keys(mergedResults).length} tickers`);
+          // Retry loop: halve chunk size each round, retry only failed tickers
+          let retryRound = 0;
+          while (failedTickers.length > 0 && retryRound < MAX_RETRIES) {
+            retryRound++;
+            chunkSize = Math.max(MIN_CHUNK_SIZE, Math.floor(chunkSize / 2));
+            console.log(`[Polygon] Retry ${retryRound}: ${failedTickers.length} tickers remaining, chunk size ${chunkSize}`);
+
+            const retryChunks: string[][] = [];
+            for (let i = 0; i < failedTickers.length; i += chunkSize) {
+              retryChunks.push(failedTickers.slice(i, i + chunkSize));
+            }
+
+            const retryResults = await Promise.all(
+              retryChunks.map((chunk, idx) => fetchChunk(chunk, `Retry${retryRound}-${idx}`))
+            );
+
+            failedTickers = [];
+            for (const result of retryResults) {
+              Object.assign(mergedResults, result.succeeded);
+              failedTickers.push(...result.failedTickers);
+            }
+          }
+
+          if (failedTickers.length > 0) {
+            console.warn(`[Polygon] Could not load ${failedTickers.length} tickers after ${MAX_RETRIES} retries: ${failedTickers.join(',')}`);
+          }
+
+          console.log(`[Polygon] Total market data loaded for ${Object.keys(mergedResults).length}/${tickers.length} tickers`);
           setPolygonData(mergedResults);
         } catch (error) {
           console.error('[Polygon] Fetch error:', error);
