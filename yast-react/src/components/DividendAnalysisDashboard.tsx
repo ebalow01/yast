@@ -2210,7 +2210,7 @@ export default function DividendAnalysisDashboard() {
 
     // Filter criteria: 12-week return > 20% AND positive NAV variance AND Sharpe >= 0.5
     const RETURN_THRESHOLD = 20;
-    const SHARPE_THRESHOLD = 0.5;
+    const SHARPE_THRESHOLD = 0.4;
 
     // Filter tickers with return > threshold AND positive NAV performance AND Sharpe >= threshold
     const qualifiedTickers = tickersWithTotalReturn.filter(item => {
