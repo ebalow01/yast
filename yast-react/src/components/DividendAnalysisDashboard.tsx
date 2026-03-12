@@ -4645,7 +4645,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       {earlySignalData && earlySignalData.nearMisses && earlySignalData.nearMisses.length > 0 && (
                         <>
                           <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255, 255, 255, 0.6)' }}>
-                            Near Misses ({earlySignalData.nearMisses.length} ETFs meeting 5-6 of 7 criteria)
+                            Near Misses ({earlySignalData.nearMisses.length} ETFs meeting 6-7 of 8 criteria)
                           </Typography>
                           <TableContainer component={Paper} sx={{
                             background: 'rgba(255, 255, 255, 0.03)',
@@ -4683,11 +4683,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     <TableCell align="right">{miss.pctOfHigh?.toFixed(0)}%</TableCell>
                                     <TableCell align="center">
                                       <Chip
-                                        label={`${miss.criteriaMet}/7`}
+                                        label={`${miss.criteriaMet}/8`}
                                         size="small"
                                         sx={{
-                                          backgroundColor: miss.criteriaMet === 6 ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                                          color: miss.criteriaMet === 6 ? '#FF9500' : 'rgba(255, 255, 255, 0.6)',
+                                          backgroundColor: miss.criteriaMet === 7 ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                                          color: miss.criteriaMet === 7 ? '#FF9500' : 'rgba(255, 255, 255, 0.6)',
                                           fontWeight: 600,
                                         }}
                                       />

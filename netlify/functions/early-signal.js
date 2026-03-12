@@ -39,6 +39,7 @@ const CRITERIA = {
   DIV_STABILIZATION_CV: 0.30,
   MAX_VOLATILITY: 35.0,
   MIN_PRICE: 10.0,
+  MIN_EST_YIELD: 30.0,
 };
 
 async function analyzeTickerProfile1(ticker, apiKey) {
@@ -158,11 +159,6 @@ async function analyzeTickerProfile1(ticker, apiKey) {
       enoughDivs: { passed: enoughDivs, detail: `${numDivs} divs` },
     };
 
-    const criteriaMet = Object.values(criteria).filter(c => c.passed).length;
-    const failed = Object.entries(criteria)
-      .filter(([, c]) => !c.passed)
-      .map(([key, c]) => c.detail);
-
     // Estimate yield from last 4 weekly dividends
     let estYield = 0;
     let avgWeeklyDiv = 0;
@@ -170,6 +166,15 @@ async function analyzeTickerProfile1(ticker, apiKey) {
       avgWeeklyDiv = divAmounts.slice(0, 4).reduce((s, v) => s + v, 0) / 4;
       estYield = (avgWeeklyDiv * 52 / currentPrice) * 100;
     }
+
+    const yieldOk = estYield >= CRITERIA.MIN_EST_YIELD;
+    criteria.yieldOk = { passed: yieldOk, detail: `yield ${estYield.toFixed(1)}%` };
+
+    const criteriaMet = Object.values(criteria).filter(c => c.passed).length;
+    const totalCriteria = Object.keys(criteria).length; // Now 8
+    const failed = Object.entries(criteria)
+      .filter(([, c]) => !c.passed)
+      .map(([key, c]) => c.detail);
 
     return {
       ticker,
@@ -184,8 +189,8 @@ async function analyzeTickerProfile1(ticker, apiKey) {
       estYield,
       avgWeeklyDiv,
       criteriaMet,
-      isSignal: criteriaMet === 7,
-      isNearMiss: criteriaMet >= 5 && criteriaMet < 7,
+      isSignal: criteriaMet === totalCriteria,
+      isNearMiss: criteriaMet >= totalCriteria - 2 && criteriaMet < totalCriteria,
       failed,
     };
   } catch (error) {

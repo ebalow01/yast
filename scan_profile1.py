@@ -58,6 +58,7 @@ MIN_DIVS = 6
 DIV_STABILIZATION_CV = 0.30
 MAX_VOLATILITY = 35.0
 MIN_PRICE = 10.0
+MIN_EST_YIELD = 30.0
 
 print(f"\nCriteria:")
 print(f"  NAV decline: {NAV_DECLINE_MAX}% to {NAV_DECLINE_MIN}%")
@@ -67,6 +68,7 @@ print(f"  Last 4 divs CV < {DIV_STABILIZATION_CV*100:.0f}%")
 print(f"  Price < {PRICE_BELOW_HIGH_PCT*100:.0f}% of 12-week high")
 print(f"  Annualized volatility < {MAX_VOLATILITY:.0f}%")
 print(f"  Price >= ${MIN_PRICE:.0f}")
+print(f"  Estimated yield >= {MIN_EST_YIELD:.0f}%")
 print(f"\nLooking back from {TODAY.strftime('%Y-%m-%d')} to {TWELVE_WEEKS_AGO.strftime('%Y-%m-%d')}")
 print("=" * 90)
 
@@ -175,14 +177,15 @@ def analyze_ticker(ticker):
     price_below = pct_of_high < PRICE_BELOW_HIGH_PCT
     enough_divs = num_divs >= MIN_DIVS
 
-    criteria_met = sum([nav_in_range, decelerating, has_big_cut, divs_stabilized, price_below, vol_ok, enough_divs])
-
     # Estimate yield
     est_yield = 0
     avg_weekly_div = 0
     if num_divs >= 4:
         avg_weekly_div = sum(div_amounts[:4]) / 4
         est_yield = (avg_weekly_div * 52 / current_price) * 100
+
+    yield_ok = est_yield >= MIN_EST_YIELD
+    criteria_met = sum([nav_in_range, decelerating, has_big_cut, divs_stabilized, price_below, vol_ok, enough_divs, yield_ok])
 
     # Build failed criteria list
     failed = []
@@ -193,6 +196,7 @@ def analyze_ticker(ticker):
     if not price_below: failed.append(f"price@{pct_of_high*100:.0f}%high")
     if not vol_ok: failed.append(f"vol={volatility:.0f}%")
     if not enough_divs: failed.append(f"only {num_divs} divs")
+    if not yield_ok: failed.append(f"yield={est_yield:.0f}%")
 
     return {
         'ticker': ticker,
@@ -226,9 +230,9 @@ for i, ticker in enumerate(tickers):
         errors += 1
         continue
 
-    if result['criteria_met'] == 7:
+    if result['criteria_met'] == 8:
         signals.append(result)
-    elif result['criteria_met'] >= 5:
+    elif result['criteria_met'] >= 6:
         near_misses.append(result)
 
     # Rate limit: Polygon free tier = 5 calls/min, paid = much higher
@@ -255,7 +259,7 @@ if signals:
               f"${s['avg_weekly_div']:>.4f}")
 
     print(f"\n  Total signals: {len(signals)}")
-    print(f"\n  Reminder: Backtested win rate 72%, avg return +22.8%, median +25.8%")
+    print(f"\n  Reminder: Backtested win rate 73%, avg return +5.5%, median +10.8%")
     print(f"  These tickers show the beaten-down-stabilization pattern that historically")
     print(f"  precedes appearing in the optimal portfolio within 12 weeks.")
 else:
@@ -264,13 +268,13 @@ else:
 if near_misses:
     near_misses.sort(key=lambda x: -x['criteria_met'])
     print(f"\n{'='*90}")
-    print(f"NEAR MISSES ({len(near_misses)} tickers meeting 5-6 of 7 criteria)")
+    print(f"NEAR MISSES ({len(near_misses)} tickers meeting 6-7 of 8 criteria)")
     print(f"{'='*90}")
     print(f"\n{'Ticker':<8} {'Price':>8} {'NAV%':>8} {'Vol%':>7} {'%High':>7} {'Met':>4} Failed criteria")
     print("-" * 90)
     for s in near_misses:
         print(f"{s['ticker']:<8} ${s['price']:>6.2f} {s['nav_change']:>+7.1f} {s['volatility']:>6.1f} "
-              f"{s['pct_of_high']:>6.0f}% {s['criteria_met']:>3}/7  {s['failed']}")
+              f"{s['pct_of_high']:>6.0f}% {s['criteria_met']:>3}/8  {s['failed']}")
 else:
     print(f"\n  No near misses either.")
 
