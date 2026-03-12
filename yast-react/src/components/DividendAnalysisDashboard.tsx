@@ -49,7 +49,8 @@ import {
   Clear,
   Analytics,
   ContentCopy,
-  Insights
+  Insights,
+  TrackChanges
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
@@ -1375,10 +1376,44 @@ export default function DividendAnalysisDashboard() {
     }
   });
 
+  // Early Signal (Profile 1) state
+  const [earlySignalData, setEarlySignalData] = useState<any>(null);
+  const [earlySignalLoading, setEarlySignalLoading] = useState(false);
+  const [earlySignalLoaded, setEarlySignalLoaded] = useState(false);
+
   // Portfolio table sorting state
   const [sortField, setSortField] = useState<string>('totalReturn');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
+
+  // Fetch early signal data when tab is selected (lazy load)
+  useEffect(() => {
+    if (selectedTab === 5 && !earlySignalLoaded && !earlySignalLoading && data.length > 0) {
+      const fetchEarlySignals = async () => {
+        setEarlySignalLoading(true);
+        try {
+          const tickers = data.map(item => item.ticker).filter(t => t !== 'CASH');
+          const response = await fetch('/.netlify/functions/early-signal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tickers })
+          });
+          if (response.ok) {
+            const result = await response.json();
+            setEarlySignalData(result);
+            setEarlySignalLoaded(true);
+          } else {
+            console.error('Early signal fetch failed:', response.status);
+          }
+        } catch (error) {
+          console.error('Early signal fetch error:', error);
+        } finally {
+          setEarlySignalLoading(false);
+        }
+      };
+      fetchEarlySignals();
+    }
+  }, [selectedTab, earlySignalLoaded, earlySignalLoading, data]);
 
   // Accessibility helpers - Pattern-based indicators for colorblind users
   const getPerformanceIcon = (value: number, type: 'return' | 'risk' = 'return') => {
@@ -3377,6 +3412,17 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         }
                       }}
                     />
+                    <Tab
+                      label={`Early Signal${earlySignalData?.signals ? ` (${earlySignalData.signals.length})` : ''}`}
+                      icon={<TrackChanges />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
                   </Tabs>
 
                   {/* Tab Panels */}
@@ -4439,6 +4485,229 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                   {selectedTab === 4 && (
                     <Box sx={{ p: 3 }}>
                       <MarketMonitor />
+                    </Box>
+                  )}
+
+                  {selectedTab === 5 && (
+                    <Box sx={{ p: 3 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Box>
+                          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
+                            Early Signal — Recovery Candidates
+                            {earlySignalLoading && (
+                              <Chip
+                                label="Scanning..."
+                                size="small"
+                                sx={{ ml: 2, backgroundColor: 'rgba(255, 149, 0, 0.2)', color: '#FF9500' }}
+                              />
+                            )}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', mt: 0.5, display: 'block' }}>
+                            Beaten-down ETFs showing stabilization — historically 72% become profitable within 12 weeks (avg +22.8% return with dividend reinvestment)
+                          </Typography>
+                        </Box>
+                        <Button
+                          variant="outlined"
+                          startIcon={earlySignalLoading ? <CircularProgress size={16} /> : <Refresh />}
+                          onClick={() => {
+                            setEarlySignalLoaded(false);
+                          }}
+                          disabled={earlySignalLoading}
+                          sx={{
+                            color: '#FF9500',
+                            borderColor: '#FF9500',
+                            '&:hover': {
+                              borderColor: '#CC7700',
+                              backgroundColor: 'rgba(255, 149, 0, 0.1)'
+                            },
+                            '&:disabled': {
+                              borderColor: 'rgba(255, 255, 255, 0.3)',
+                              color: 'rgba(255, 255, 255, 0.3)'
+                            }
+                          }}
+                        >
+                          {earlySignalLoading ? 'Scanning...' : 'Rescan'}
+                        </Button>
+                      </Box>
+
+                      {earlySignalLoading && !earlySignalData && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                          <CircularProgress sx={{ color: '#FF9500' }} />
+                        </Box>
+                      )}
+
+                      {earlySignalData && earlySignalData.signals.length > 0 && (
+                        <>
+                          <Typography variant="subtitle2" sx={{ mb: 1, color: '#FF9500' }}>
+                            Buy Candidates ({earlySignalData.signals.length})
+                          </Typography>
+                          <TableContainer component={Paper} sx={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            mb: 4
+                          }}>
+                            <Table size="small" sx={{ minWidth: 900 }}>
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>ETF</TableCell>
+                                  <TableCell align="right">Price</TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="NAV change over the trailing 12 weeks">
+                                      <span>NAV 12wk</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="NAV change in first 6 weeks — should be more negative (the drop)">
+                                      <span>1st Half</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="NAV change in last 6 weeks — should be less negative (the stabilization)">
+                                      <span>2nd Half</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="Annualized volatility over 12 weeks">
+                                      <span>Vol</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="Current price as percentage of 12-week high — lower means more beaten down">
+                                      <span>% of High</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="Coefficient of variation of last 4 dividends — lower means more stable">
+                                      <span>Div CV</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="Estimated annualized yield based on last 4 weekly dividends">
+                                      <span>Est Yield</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="Average weekly dividend from last 4 payments">
+                                      <span>Avg Div</span>
+                                    </Tooltip>
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {earlySignalData.signals.map((signal: any) => (
+                                  <TableRow key={signal.ticker} hover>
+                                    <TableCell>
+                                      <a
+                                        href={getYahooFinanceUrl(signal.ticker)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ color: '#FF9500', textDecoration: 'none', fontWeight: 600 }}
+                                      >
+                                        {signal.ticker}
+                                      </a>
+                                    </TableCell>
+                                    <TableCell align="right">${signal.price?.toFixed(2)}</TableCell>
+                                    <TableCell align="right" sx={{ color: signal.navChange > 0 ? '#34C759' : '#FF3B30' }}>
+                                      {signal.navChange?.toFixed(1)}%
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ color: '#FF3B30' }}>
+                                      {signal.fhNav?.toFixed(1)}%
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ color: signal.shNav > signal.fhNav ? '#34C759' : '#FF3B30' }}>
+                                      {signal.shNav?.toFixed(1)}%
+                                    </TableCell>
+                                    <TableCell align="right">{signal.volatility?.toFixed(1)}%</TableCell>
+                                    <TableCell align="right">{signal.pctOfHigh?.toFixed(0)}%</TableCell>
+                                    <TableCell align="right">{signal.last4Cv?.toFixed(0)}%</TableCell>
+                                    <TableCell align="right" sx={{ color: '#34C759' }}>
+                                      {signal.estYield?.toFixed(1)}%
+                                    </TableCell>
+                                    <TableCell align="right">${signal.avgWeeklyDiv?.toFixed(4)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </>
+                      )}
+
+                      {earlySignalData && earlySignalData.signals.length === 0 && !earlySignalLoading && (
+                        <Box sx={{ textAlign: 'center', py: 4, mb: 4 }}>
+                          <TrackChanges sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
+                          <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            No early signals detected
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                            No ETFs currently match all Profile 1 criteria. Check back after market conditions shift.
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {earlySignalData && earlySignalData.nearMisses && earlySignalData.nearMisses.length > 0 && (
+                        <>
+                          <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255, 255, 255, 0.6)' }}>
+                            Near Misses ({earlySignalData.nearMisses.length} ETFs meeting 5-6 of 7 criteria)
+                          </Typography>
+                          <TableContainer component={Paper} sx={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                          }}>
+                            <Table size="small" sx={{ minWidth: 800 }}>
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>ETF</TableCell>
+                                  <TableCell align="right">Price</TableCell>
+                                  <TableCell align="right">NAV 12wk</TableCell>
+                                  <TableCell align="right">Vol</TableCell>
+                                  <TableCell align="right">% of High</TableCell>
+                                  <TableCell align="center">Score</TableCell>
+                                  <TableCell>Failed Criteria</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {earlySignalData.nearMisses.map((miss: any) => (
+                                  <TableRow key={miss.ticker} hover sx={{ opacity: 0.7 }}>
+                                    <TableCell>
+                                      <a
+                                        href={getYahooFinanceUrl(miss.ticker)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ color: '#00D4FF', textDecoration: 'none', fontWeight: 600 }}
+                                      >
+                                        {miss.ticker}
+                                      </a>
+                                    </TableCell>
+                                    <TableCell align="right">${miss.price?.toFixed(2)}</TableCell>
+                                    <TableCell align="right" sx={{ color: miss.navChange > 0 ? '#34C759' : '#FF3B30' }}>
+                                      {miss.navChange?.toFixed(1)}%
+                                    </TableCell>
+                                    <TableCell align="right">{miss.volatility?.toFixed(1)}%</TableCell>
+                                    <TableCell align="right">{miss.pctOfHigh?.toFixed(0)}%</TableCell>
+                                    <TableCell align="center">
+                                      <Chip
+                                        label={`${miss.criteriaMet}/7`}
+                                        size="small"
+                                        sx={{
+                                          backgroundColor: miss.criteriaMet === 6 ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                                          color: miss.criteriaMet === 6 ? '#FF9500' : 'rgba(255, 255, 255, 0.6)',
+                                          fontWeight: 600,
+                                        }}
+                                      />
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                      {miss.failed?.join(', ')}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </>
+                      )}
+
+                      {earlySignalData && (
+                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.4)', mt: 2, display: 'block' }}>
+                          Scanned {earlySignalData.totalScanned} tickers at {new Date(earlySignalData.scannedAt).toLocaleString()}
+                        </Typography>
+                      )}
                     </Box>
                   )}
 
