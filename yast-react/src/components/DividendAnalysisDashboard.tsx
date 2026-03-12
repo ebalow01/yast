@@ -4503,7 +4503,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             )}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', mt: 0.5, display: 'block' }}>
-                            Beaten-down ETFs showing stabilization — historically 72% become profitable within 12 weeks (avg +22.8% return with dividend reinvestment)
+                            Beaten-down ETFs showing stabilization — backtested 67% win rate, +7.8% median return over 12-week holds with dividend reinvestment
                           </Typography>
                         </Box>
                         <Button

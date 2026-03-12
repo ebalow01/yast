@@ -32,12 +32,12 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const CRITERIA = {
   NAV_DECLINE_MIN: -2.0,
-  NAV_DECLINE_MAX: -20.0,
+  NAV_DECLINE_MAX: -15.0,
   DIV_CUT_THRESHOLD: -0.30,
   PRICE_BELOW_HIGH_PCT: 0.92,
   MIN_DIVS: 6,
   DIV_STABILIZATION_CV: 0.30,
-  MAX_VOLATILITY: 50.0,
+  MAX_VOLATILITY: 35.0,
   MIN_PRICE: 10.0,
 };
 
