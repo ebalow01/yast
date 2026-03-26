@@ -268,7 +268,7 @@ const MarketMonitor: React.FC = () => {
               <Card
                 sx={{
                   height: '100%',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  bgcolor: 'background.paper',
                   border: `2px solid ${getFearGreedColor(marketData.fearGreedIndex.value)}`,
                 }}
               >
@@ -303,7 +303,7 @@ const MarketMonitor: React.FC = () => {
                     sx={{
                       height: 8,
                       borderRadius: 1,
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      bgcolor: 'action.selected',
                       '& .MuiLinearProgress-bar': {
                         backgroundColor: getFearGreedColor(marketData.fearGreedIndex.value)
                       }
@@ -338,7 +338,7 @@ const MarketMonitor: React.FC = () => {
               <Card
                 sx={{
                   height: '100%',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  bgcolor: 'background.paper',
                   border: `2px solid ${getVixColor(marketData.vix.value)}`,
                 }}
               >
@@ -366,7 +366,7 @@ const MarketMonitor: React.FC = () => {
                     sx={{
                       height: 8,
                       borderRadius: 1,
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      bgcolor: 'action.selected',
                       '& .MuiLinearProgress-bar': {
                         backgroundColor: getVixColor(marketData.vix.value)
                       }
@@ -401,7 +401,7 @@ const MarketMonitor: React.FC = () => {
               <Card
                 sx={{
                   height: '100%',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  bgcolor: 'background.paper',
                   border: '2px solid #00D4FF',
                 }}
               >
@@ -443,7 +443,7 @@ const MarketMonitor: React.FC = () => {
               <Card
                 sx={{
                   height: '100%',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  bgcolor: 'background.paper',
                   border: '2px solid #AF52DE',
                 }}
               >
@@ -485,8 +485,8 @@ const MarketMonitor: React.FC = () => {
           <Paper
             sx={{
               p: 3,
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)'
+              bgcolor: 'background.paper',
+              border: 1, borderColor: 'divider'
             }}
           >
             <Typography variant="h5" fontWeight="bold" gutterBottom>
@@ -535,7 +535,7 @@ const MarketMonitor: React.FC = () => {
                   { label: 'New Entry (21 DTE)', spyData: marketData.strategy.liveOptions.spy.newEntry, vooData: marketData.strategy.liveOptions.voo.newEntry },
                   { label: 'Roll Target (30 DTE)', spyData: marketData.strategy.liveOptions.spy.roll, vooData: marketData.strategy.liveOptions.voo.roll }
                 ].map(({ label, spyData, vooData }) => (
-                  <Paper key={label} sx={{ p: 2, mb: 1.5, background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <Paper key={label} sx={{ p: 2, mb: 1.5, bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}>
                     <Typography variant="subtitle2" fontWeight="bold" gutterBottom>{label}</Typography>
                     <Grid container spacing={2}>
                       {[
@@ -585,8 +585,8 @@ const MarketMonitor: React.FC = () => {
                   sx={{
                     p: 2,
                     mb: 1.5,
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                    bgcolor: 'background.paper',
+                    border: 1, borderColor: 'divider'
                   }}
                 >
                   <Box display="flex" alignItems="center" gap={1.5} mb={1}>
@@ -622,7 +622,7 @@ const MarketMonitor: React.FC = () => {
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               Strategy Parameters
             </Typography>
-            <TableContainer component={Paper} sx={{ mb: 3, background: 'rgba(255, 255, 255, 0.02)' }}>
+            <TableContainer component={Paper} sx={{ mb: 3, bgcolor: 'background.paper' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -651,7 +651,7 @@ const MarketMonitor: React.FC = () => {
               Design Decisions
             </Button>
             <Collapse in={showDesignDecisions}>
-              <Paper sx={{ p: 2, background: 'rgba(255, 255, 255, 0.02)' }}>
+              <Paper sx={{ p: 2, bgcolor: 'background.paper' }}>
                 {marketData.strategy.designDecisions.map((decision, index) => (
                   <Typography key={index} variant="body2" sx={{ mb: 1 }}>
                     • {decision}

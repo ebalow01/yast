@@ -31,7 +31,8 @@ import {
   Alert,
   Snackbar,
   TableSortLabel,
-  Tooltip
+  Tooltip,
+  useMediaQuery
 } from '@mui/material';
 import {
   TrendingUp,
@@ -113,9 +114,12 @@ const getCookie = (name: string): string | null => {
 
 
 // Accessible 2025 Design System - Semantic Colors + Patterns
-const theme = createTheme({
+// Theme factory: creates dark or light theme based on system preference
+const createAppTheme = (mode: 'dark' | 'light') => {
+  const isDark = mode === 'dark';
+  return createTheme({
   palette: {
-    mode: 'dark',
+    mode,
     primary: {
       main: '#00D4FF', // Reserved for primary actions & selected states only
       light: '#64E3FF',
@@ -148,14 +152,15 @@ const theme = createTheme({
       dark: '#0056CC'
     },
     background: {
-      default: '#0A0A0A', // Single solid background - no competing gradients
-      paper: 'rgba(255, 255, 255, 0.03)' // Reduced transparency for better readability
+      default: isDark ? '#0A0A0A' : '#F5F5F7',
+      paper: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'
     },
     text: {
-      primary: '#FFFFFF',
-      secondary: 'rgba(255, 255, 255, 0.8)' // Improved contrast
+      primary: isDark ? '#FFFFFF' : '#1D1D1F',
+      secondary: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+      disabled: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
     },
-    divider: 'rgba(255, 255, 255, 0.12)' // Better visibility
+    divider: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'
   },
   breakpoints: {
     values: {
@@ -172,7 +177,7 @@ const theme = createTheme({
       fontWeight: 800,
       fontSize: '3.5rem',
       letterSpacing: '-0.04em',
-      color: '#FFFFFF' // Solid color for better readability
+      color: isDark ? '#FFFFFF' : '#1D1D1F'
     },
     h2: {
       fontWeight: 700,
@@ -235,9 +240,9 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          backgroundColor: 'rgba(255, 255, 255, 0.02)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+          backdropFilter: isDark ? 'blur(20px)' : 'none',
+          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
           borderRadius: 16
         }
       }
@@ -245,9 +250,9 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          background: 'rgba(255, 255, 255, 0.02)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
+          backdropFilter: isDark ? 'blur(20px)' : 'none',
+          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
           borderRadius: 20,
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'relative',
@@ -259,13 +264,17 @@ const theme = createTheme({
             left: 0,
             right: 0,
             height: 1,
-            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+            background: isDark
+              ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)'
+              : 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent)',
             opacity: 0,
             transition: 'opacity 0.3s ease'
           },
           '&:hover': {
             transform: 'translateY(-4px)',
-            boxShadow: '0 20px 40px rgba(0, 212, 255, 0.15), 0 0 0 1px rgba(0, 212, 255, 0.1)',
+            boxShadow: isDark
+              ? '0 20px 40px rgba(0, 212, 255, 0.15), 0 0 0 1px rgba(0, 212, 255, 0.1)'
+              : '0 20px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 212, 255, 0.15)',
             border: '1px solid rgba(0, 212, 255, 0.2)',
             '&::before': {
               opacity: 1
@@ -277,10 +286,10 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          background: 'rgba(255, 255, 255, 0.03)',
+          background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
+          boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)'
         }
       }
     },
@@ -328,9 +337,9 @@ const theme = createTheme({
     MuiTableContainer: {
       styleOverrides: {
         root: {
-          background: 'rgba(255, 255, 255, 0.02)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
+          backdropFilter: isDark ? 'blur(20px)' : 'none',
+          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
           borderRadius: 16,
           overflowX: 'auto',
           overflowY: 'visible',
@@ -339,14 +348,14 @@ const theme = createTheme({
             borderRadius: 12,
             margin: '0 -8px', // Extend to screen edges on mobile
             border: 'none',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.01)',
           },
           '&::-webkit-scrollbar': {
             width: 8,
             height: 8
           },
           '&::-webkit-scrollbar-track': {
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
             borderRadius: 4
           },
           '&::-webkit-scrollbar-thumb': {
@@ -387,7 +396,7 @@ const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+          borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)'}`,
           padding: '16px 12px',
           fontSize: '0.875rem',
           // Mobile-specific adjustments
@@ -399,7 +408,7 @@ const theme = createTheme({
               paddingLeft: '16px',
               position: 'sticky',
               left: 0,
-              backgroundColor: 'rgba(10, 10, 10, 0.95)',
+              backgroundColor: isDark ? 'rgba(10, 10, 10, 0.95)' : 'rgba(245, 245, 247, 0.95)',
               zIndex: 1,
             },
           },
@@ -414,7 +423,7 @@ const theme = createTheme({
             '&:first-of-type': {
               position: 'sticky',
               left: 0,
-              backgroundColor: 'rgba(0, 212, 255, 0.12)',
+              backgroundColor: isDark ? 'rgba(0, 212, 255, 0.12)' : 'rgba(0, 212, 255, 0.08)',
               zIndex: 2,
             },
           },
@@ -438,11 +447,12 @@ const theme = createTheme({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          background: 'rgba(0, 0, 0, 0.9)',
+          background: isDark ? 'rgba(0, 0, 0, 0.9)' : 'rgba(50, 50, 50, 0.95)',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
           borderRadius: 8,
-          fontSize: '0.75rem'
+          fontSize: '0.75rem',
+          color: '#FFFFFF'
         }
       }
     },
@@ -453,11 +463,11 @@ const theme = createTheme({
           WebkitTextSizeAdjust: '100%',
           // Prevent horizontal scrolling and fix background
           overflowX: 'hidden',
-          backgroundColor: '#0A0A0A !important',
+          backgroundColor: `${isDark ? '#0A0A0A' : '#F5F5F7'} !important`,
         },
         body: {
           // Lock background color to prevent changes on scroll
-          backgroundColor: '#0A0A0A !important',
+          backgroundColor: `${isDark ? '#0A0A0A' : '#F5F5F7'} !important`,
           backgroundAttachment: 'fixed',
           overflowX: 'hidden',
           // Prevent bounce scrolling on iOS that can cause background color changes
@@ -471,14 +481,14 @@ const theme = createTheme({
           WebkitTapHighlightColor: 'transparent',
         },
         '#root': {
-          backgroundColor: '#0A0A0A !important',
+          backgroundColor: `${isDark ? '#0A0A0A' : '#F5F5F7'} !important`,
           minHeight: '100vh',
           overflowX: 'hidden',
         },
         // Ensure all scrollable containers maintain background
         '*': {
           scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(0, 212, 255, 0.4) rgba(255, 255, 255, 0.05)',
+          scrollbarColor: isDark ? 'rgba(0, 212, 255, 0.4) rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05)',
         },
         // Fix for webkit scrollbars
         '*::-webkit-scrollbar': {
@@ -486,14 +496,14 @@ const theme = createTheme({
           height: '8px',
         },
         '*::-webkit-scrollbar-track': {
-          background: 'rgba(255, 255, 255, 0.05)',
+          background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
           borderRadius: '4px',
         },
         '*::-webkit-scrollbar-thumb': {
-          background: 'rgba(0, 212, 255, 0.4)',
+          background: isDark ? 'rgba(0, 212, 255, 0.4)' : 'rgba(0, 0, 0, 0.2)',
           borderRadius: '4px',
           '&:hover': {
-            background: 'rgba(0, 212, 255, 0.6)',
+            background: isDark ? 'rgba(0, 212, 255, 0.6)' : 'rgba(0, 0, 0, 0.35)',
           },
         },
       }
@@ -535,6 +545,7 @@ const theme = createTheme({
     },
   }
 });
+};
 
 // MPT Calculation Functions
 interface Asset {
@@ -1316,6 +1327,9 @@ const generateRealisticPrice = (ticker: string, forwardYield: number, medianDivi
 };
 
 export default function DividendAnalysisDashboard() {
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const theme = useMemo(() => createAppTheme(prefersDarkMode ? 'dark' : 'light'), [prefersDarkMode]);
+
   const [selectedTab, setSelectedTab] = useState(0);
   const [data, setData] = useState<DividendData[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
@@ -3187,7 +3201,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
     } else if (sentiment.toLowerCase().includes('bearish')) {
       return <TrendingDown sx={{ color: '#FF3B30', fontSize: 18 }} />;
     }
-    return <TrendingFlat sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 18 }} />;
+    return <TrendingFlat sx={{ color: 'text.disabled', fontSize: 18 }} />;
   };
 
   // Portfolio Management Functions
@@ -3306,11 +3320,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
-          <AppBar position="static" elevation={0} sx={{ 
-            background: 'rgba(255, 255, 255, 0.03)',
+          <AppBar position="static" elevation={0} sx={(t) => ({
+            background: t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.9)',
             backdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
+            borderBottom: `1px solid ${t.palette.divider}`
+          })}>
             <Toolbar sx={{ minHeight: 80, px: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                 <motion.div
@@ -3339,13 +3353,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     component="div" 
                     sx={{ 
                       fontWeight: 800,
-                      color: '#FFFFFF',
+                      color: 'text.primary',
                       letterSpacing: '-0.02em'
                     }}
                   >
                     High Income ETFs - Enhanced Analysis
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     AI-Powered Dividend Capture & Risk Analysis
                   </Typography>
                 </Box>
@@ -3369,17 +3383,17 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               <Box sx={{ flexGrow: 1 }}>
 
                 {/* Main Dashboard Tabs */}
-                <Paper 
+                <Paper
                   elevation={3}
-                  sx={{ 
-                    width: '100%', 
+                  sx={(t) => ({
+                    width: '100%',
                     mb: 4,
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: t.palette.background.paper,
+                    backdropFilter: t.palette.mode === 'dark' ? 'blur(20px)' : 'none',
+                    border: `1px solid ${t.palette.divider}`,
                     borderRadius: 4,
                     overflow: 'hidden'
-                  }}
+                  })}
                 >
                   <Tabs
                     value={selectedTab}
@@ -3387,15 +3401,15 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     indicatorColor="primary"
                     textColor="primary"
                     variant="fullWidth"
-                    sx={{ 
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                      background: 'rgba(255, 255, 255, 0.01)',
+                    sx={(t) => ({
+                      borderBottom: `1px solid ${t.palette.divider}`,
+                      background: t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.01)',
                       '& .MuiTabs-indicator': {
                         background: 'linear-gradient(90deg, #00D4FF, #6C63FF)',
                         height: 3,
                         borderRadius: '3px 3px 0 0'
                       }
-                    }}
+                    })}
                   >
                     <Tab
                       label={`Optimal Portfolio`}
@@ -3499,8 +3513,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               backgroundColor: 'rgba(0, 212, 255, 0.1)'
                             },
                             '&:disabled': {
-                              borderColor: 'rgba(255, 255, 255, 0.3)',
-                              color: 'rgba(255, 255, 255, 0.3)'
+                              borderColor: 'divider',
+                              color: 'text.disabled'
                             }
                           }}
                         >
@@ -3509,7 +3523,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       </Box>
                       
                       <TableContainer component={Paper} sx={{ 
-                        background: 'rgba(255, 255, 255, 0.05)',
+                        bgcolor: 'action.hover',
                         maxWidth: '100%',
                         overflowX: 'auto'
                       }}>
@@ -3676,7 +3690,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       {item.exDivDay && (
                                         <Box sx={{ 
                                           fontSize: '0.7rem', 
-                                          color: 'rgba(255, 255, 255, 0.6)',
+                                          color: 'text.disabled',
                                           fontWeight: 500,
                                           lineHeight: 1
                                         }}>
@@ -3801,31 +3815,31 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           <Typography variant="h6">
                             Excluded ETFs
                           </Typography>
-                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                             {excludedTickersData.all?.length || 0} assets excluded from optimal portfolio (requires &gt;5% 12wk return AND positive NAV variance)
                           </Typography>
                         </Box>
                         
                         {excludedData.length === 0 ? (
                           <Card sx={{ 
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            bgcolor: 'action.hover',
+                            border: 1, borderColor: 'divider',
                             textAlign: 'center',
                             py: 4
                           }}>
                             <CardContent>
-                              <Security sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
-                              <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                              <Security sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+                              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
                                 No Excluded ETFs
                               </Typography>
-                              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                                 All available ETFs are included in the optimal portfolio
                               </Typography>
                             </CardContent>
                           </Card>
                         ) : (
                           <TableContainer component={Paper} sx={{ 
-                            background: 'rgba(255, 255, 255, 0.05)',
+                            bgcolor: 'action.hover',
                             maxWidth: '100%',
                             overflowX: 'auto'
                           }}>
@@ -3962,7 +3976,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         {item.exDivDay && (
                                           <Box sx={{ 
                                             fontSize: '0.7rem', 
-                                            color: 'rgba(255, 255, 255, 0.6)',
+                                            color: 'text.disabled',
                                             fontWeight: 500,
                                             lineHeight: 1
                                           }}>
@@ -4071,8 +4085,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 backgroundColor: 'rgba(0, 212, 255, 0.1)'
                               },
                               '&:disabled': {
-                                borderColor: 'rgba(255, 255, 255, 0.3)',
-                                color: 'rgba(255, 255, 255, 0.3)'
+                                borderColor: 'divider',
+                                color: 'text.disabled'
                               }
                             }}
                           >
@@ -4091,8 +4105,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                 backgroundColor: 'rgba(255, 149, 0, 0.1)'
                               },
                               '&:disabled': {
-                                borderColor: 'rgba(255, 255, 255, 0.3)',
-                                color: 'rgba(255, 255, 255, 0.3)'
+                                borderColor: 'divider',
+                                color: 'text.disabled'
                               }
                             }}
                           >
@@ -4116,17 +4130,17 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
                       {portfolio.holdings.length === 0 ? (
                         <Card sx={{ 
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          bgcolor: 'action.hover',
+                          border: 1, borderColor: 'divider',
                           textAlign: 'center',
                           py: 4
                         }}>
                           <CardContent>
-                            <BusinessCenter sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
+                            <BusinessCenter sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
                             <Typography variant="h6" sx={{ mb: 1 }}>
                               No positions yet
                             </Typography>
-                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 2 }}>
+                            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                               Start building your portfolio by adding your first position
                             </Typography>
                             <Button
@@ -4148,7 +4162,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         </Card>
                       ) : (
                         <TableContainer component={Paper} sx={{ 
-                          background: 'rgba(255, 255, 255, 0.05)',
+                          bgcolor: 'action.hover',
                           maxWidth: '100%',
                           overflowX: 'auto'
                         }}>
@@ -4275,7 +4289,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       {data.find(d => d.ticker === holding.ticker)?.exDivDay && (
                                         <Box sx={{ 
                                           fontSize: '0.7rem', 
-                                          color: 'rgba(255, 255, 255, 0.6)',
+                                          color: 'text.disabled',
                                           fontWeight: 500,
                                           lineHeight: 1
                                         }}>
@@ -4379,7 +4393,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               />
                             )}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', mt: 0.5, display: 'block' }}>
+                          <Typography variant="caption" sx={{ color: 'text.disabled', mt: 0.5, display: 'block' }}>
                             Beaten-down ETFs showing stabilization — backtested 67% win rate, +7.8% median return over 12-week holds with dividend reinvestment
                           </Typography>
                         </Box>
@@ -4398,8 +4412,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               backgroundColor: 'rgba(255, 149, 0, 0.1)'
                             },
                             '&:disabled': {
-                              borderColor: 'rgba(255, 255, 255, 0.3)',
-                              color: 'rgba(255, 255, 255, 0.3)'
+                              borderColor: 'divider',
+                              color: 'text.disabled'
                             }
                           }}
                         >
@@ -4419,7 +4433,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             Buy Candidates ({earlySignalData.signals.length})
                           </Typography>
                           <TableContainer component={Paper} sx={{
-                            background: 'rgba(255, 255, 255, 0.05)',
+                            bgcolor: 'action.hover',
                             mb: 4
                           }}>
                             <Table size="small" sx={{ minWidth: 900 }}>
@@ -4509,11 +4523,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
                       {earlySignalData && earlySignalData.signals.length === 0 && !earlySignalLoading && (
                         <Box sx={{ textAlign: 'center', py: 4, mb: 4 }}>
-                          <TrackChanges sx={{ fontSize: 48, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
-                          <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          <TrackChanges sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+                          <Typography variant="h6" sx={{ color: 'text.secondary' }}>
                             No early signals detected
                           </Typography>
-                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                          <Typography variant="body2" sx={{ color: 'text.disabled' }}>
                             No ETFs currently match all Profile 1 criteria. Check back after market conditions shift.
                           </Typography>
                         </Box>
@@ -4521,11 +4535,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
                       {earlySignalData && earlySignalData.nearMisses && earlySignalData.nearMisses.length > 0 && (
                         <>
-                          <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255, 255, 255, 0.6)' }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.disabled' }}>
                             Near Misses ({earlySignalData.nearMisses.length} ETFs meeting 6-7 of 8 criteria)
                           </Typography>
                           <TableContainer component={Paper} sx={{
-                            background: 'rgba(255, 255, 255, 0.03)',
+                            bgcolor: 'background.paper',
                           }}>
                             <Table size="small" sx={{ minWidth: 800 }}>
                               <TableHead>
@@ -4563,13 +4577,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         label={`${miss.criteriaMet}/8`}
                                         size="small"
                                         sx={{
-                                          backgroundColor: miss.criteriaMet === 7 ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                                          color: miss.criteriaMet === 7 ? '#FF9500' : 'rgba(255, 255, 255, 0.6)',
+                                          backgroundColor: miss.criteriaMet === 7 ? 'rgba(255, 149, 0, 0.2)' : 'action.selected',
+                                          color: miss.criteriaMet === 7 ? '#FF9500' : 'text.disabled',
                                           fontWeight: 600,
                                         }}
                                       />
                                     </TableCell>
-                                    <TableCell sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.75rem' }}>
+                                    <TableCell sx={{ color: 'text.disabled', fontSize: '0.75rem' }}>
                                       {miss.failed?.join(', ')}
                                     </TableCell>
                                   </TableRow>
@@ -4581,7 +4595,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       )}
 
                       {earlySignalData && (
-                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.4)', mt: 2, display: 'block' }}>
+                        <Typography variant="caption" sx={{ color: 'text.disabled', mt: 2, display: 'block' }}>
                           Scanned {earlySignalData.totalScanned} tickers at {new Date(earlySignalData.scannedAt).toLocaleString()}
                         </Typography>
                       )}
@@ -4606,33 +4620,22 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         const estShares = estPremium && spxl ? Math.round(estPremium / spxl) : null;
                         const currentMode = vix ? (vix > 20 ? 'LPRS' : vix >= 15 ? 'Gray Zone' : 'CC Income') : null;
                         const modeColor = currentMode === 'LPRS' ? '#FF3B30' : currentMode === 'Gray Zone' ? '#FF9500' : '#34C759';
-                        const modeGlow = currentMode === 'LPRS' ? 'rgba(255,59,48,0.15)' : currentMode === 'Gray Zone' ? 'rgba(255,149,0,0.15)' : 'rgba(52,199,89,0.15)';
                         const loading = !vix && !spy;
 
                         return (
                           <>
-                            {/* Hero header with active mode indicator */}
-                            <Box sx={{
-                              mb: 3, p: 3, borderRadius: 2,
-                              background: `linear-gradient(135deg, ${modeGlow} 0%, rgba(0,0,0,0) 60%)`,
-                              borderLeft: `3px solid ${modeColor}`,
-                              position: 'relative', overflow: 'hidden'
-                            }}>
-                              <Box sx={{ position: 'absolute', top: 12, right: 16, opacity: 0.08, fontSize: '5rem', fontWeight: 900, lineHeight: 1, color: modeColor, userSelect: 'none' }}>
-                                {currentMode === 'LPRS' ? 'SELL' : currentMode === 'Gray Zone' ? 'HOLD' : 'EARN'}
-                              </Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, position: 'relative' }}>
+                            {/* Header */}
+                            <Box sx={{ mb: 3 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                                 <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>LPRS</Typography>
                                 {currentMode && (
                                   <Chip label={currentMode} size="small" sx={{
-                                    backgroundColor: `${modeColor}22`, color: modeColor, fontWeight: 800,
+                                    backgroundColor: `${modeColor}22`, color: modeColor, fontWeight: 700,
                                     border: `1px solid ${modeColor}55`, fontSize: '0.75rem',
-                                    animation: currentMode === 'LPRS' ? 'pulse 2s infinite' : 'none',
-                                    '@keyframes pulse': { '0%,100%': { boxShadow: `0 0 0 0 ${modeColor}44` }, '50%': { boxShadow: `0 0 8px 2px ${modeColor}22` } }
                                   }} />
                                 )}
                               </Box>
-                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)', position: 'relative', maxWidth: 600 }}>
+                              <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 600 }}>
                                 Leveraged Premium Reinvestment — sell ATM LEAPS on SPY (1 lot), deploy premium into SPXL, harvest 3x leverage to structurally cover roll costs
                               </Typography>
                             </Box>
@@ -4649,68 +4652,59 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               ].map((item, i) => (
                                 <Box key={i} sx={{
                                   textAlign: 'center', py: 2, px: 1, borderRadius: 1.5,
-                                  background: `linear-gradient(180deg, ${item.color}0A 0%, ${item.color}03 100%)`,
-                                  border: `1px solid ${item.color}20`,
-                                  transition: 'border-color 0.2s', '&:hover': { borderColor: `${item.color}55` }
+                                  border: 1, borderColor: 'divider',
                                 }}>
-                                  <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', mb: 0.5 }}>{item.label}</Typography>
+                                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.disabled', mb: 0.5 }}>{item.label}</Typography>
                                   <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: item.color, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>{item.value}</Typography>
-                                  {item.sub && <Typography sx={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', mt: 0.5 }}>{item.sub}</Typography>}
+                                  {item.sub && <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled', mt: 0.5 }}>{item.sub}</Typography>}
                                 </Box>
                               ))}
                             </Box>
 
-                            {/* VIX Mode Triggers — compact horizontal */}
+                            {/* VIX Mode Triggers */}
                             <Box sx={{ mb: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                               {[
                                 { vix: '>20', mode: 'LPRS', action: 'Sell ATM 1yr LEAPS on SPY, deploy into SPXL', color: '#FF3B30', active: vix && vix > 20 },
                                 { vix: '15-20', mode: 'Gray Zone', action: 'Hold current mode, no switch', color: '#FF9500', active: vix && vix >= 15 && vix <= 20 },
                                 { vix: '<15', mode: 'CC Income', action: 'Short-dated OTM covered calls on SPY', color: '#34C759', active: vix && vix < 15 },
                               ].map((m, i) => (
-                                <Box key={i} sx={{
+                                <Box key={i} sx={(t) => ({
                                   flex: '1 1 200px', p: 2, borderRadius: 1.5,
-                                  background: m.active ? `${m.color}12` : 'rgba(255,255,255,0.02)',
-                                  border: `1px solid ${m.active ? m.color + '55' : 'rgba(255,255,255,0.06)'}`,
+                                  border: `1px solid ${m.active ? m.color : t.palette.divider}`,
                                   opacity: m.active ? 1 : 0.5,
-                                  transition: 'all 0.3s ease',
-                                }}>
+                                })}>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                    <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: m.color, fontFamily: 'monospace' }}>VIX {m.vix}</Typography>
+                                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: m.color, fontFamily: 'monospace' }}>VIX {m.vix}</Typography>
                                     <Chip label={m.mode} size="small" sx={{
                                       height: 20, fontSize: '0.65rem', fontWeight: 700,
                                       backgroundColor: `${m.color}20`, color: m.color,
-                                      border: m.active ? `1px solid ${m.color}` : 'none',
                                     }} />
                                   </Box>
-                                  <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.3 }}>{m.action}</Typography>
+                                  <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary', lineHeight: 1.4 }}>{m.action}</Typography>
                                 </Box>
                               ))}
                             </Box>
 
-                            {/* Rules — two column */}
+                            {/* Rules */}
                             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
                               {[
-                                { title: 'Core Rules', color: '#FF9500', icon: '!', rules: [
+                                { title: 'Core Rules', color: '#FF9500', rules: [
                                   'Never sell SPXL to fund SPY repurchase shortfalls',
                                   'Annual 80/20 rebalance only when SPY is called away',
                                   'Buy back open positions before switching modes',
                                   'Roll only for credit, never pay a debit',
                                 ]},
-                                { title: 'Rolling Rules', color: '#34C759', icon: '~', rules: [
+                                { title: 'Rolling Rules', color: '#34C759', rules: [
                                   'Roll up $10, out 6 months, targeting 1% credit',
                                   'SPXL gains structurally cover roll costs via 3x leverage',
                                 ]},
                               ].map((section, i) => (
-                                <Box key={i} sx={{
-                                  p: 2.5, borderRadius: 1.5,
-                                  background: `${section.color}06`,
-                                  border: `1px solid ${section.color}18`,
-                                }}>
-                                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: section.color, mb: 1.5 }}>{section.title}</Typography>
+                                <Box key={i} sx={{ p: 2.5, borderRadius: 1.5, border: 1, borderColor: 'divider' }}>
+                                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: section.color, mb: 1.5 }}>{section.title}</Typography>
                                   {section.rules.map((rule, j) => (
                                     <Box key={j} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'flex-start' }}>
-                                      <Typography sx={{ fontSize: '0.7rem', color: section.color, fontFamily: 'monospace', fontWeight: 700, mt: '1px', flexShrink: 0 }}>{section.icon}</Typography>
-                                      <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>{rule}</Typography>
+                                      <Typography sx={{ fontSize: '0.75rem', color: section.color, fontWeight: 700, mt: '1px', flexShrink: 0 }}>-</Typography>
+                                      <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', lineHeight: 1.4 }}>{rule}</Typography>
                                     </Box>
                                   ))}
                                 </Box>
@@ -4718,41 +4712,38 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             </Box>
 
                             {/* SPXL Trigger Table */}
-                            <Box sx={{
-                              mb: 3, borderRadius: 1.5, overflow: 'hidden',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                            }}>
-                              <Box sx={{ px: 2.5, py: 1.5, background: 'rgba(255,149,0,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#FF9500' }}>SPXL Buy Triggers</Typography>
+                            <Box sx={{ mb: 3, borderRadius: 1.5, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
+                              <Box sx={{ px: 2.5, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+                                <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#FF9500' }}>SPXL Buy Triggers</Typography>
                               </Box>
                               <TableContainer>
-                                <Table size="small" sx={{ '& .MuiTableCell-root': { borderColor: 'rgba(255,255,255,0.04)', py: 1.2 } }}>
+                                <Table size="small" sx={{ '& .MuiTableCell-root': { borderColor: 'divider', py: 1.2 } }}>
                                   <TableHead>
                                     <TableRow>
-                                      <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Scenario</TableCell>
-                                      <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>SPXL</TableCell>
-                                      <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Action</TableCell>
-                                      <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Qty</TableCell>
+                                      <TableCell sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Scenario</TableCell>
+                                      <TableCell sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>SPXL</TableCell>
+                                      <TableCell sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Action</TableCell>
+                                      <TableCell sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Qty</TableCell>
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
                                     {[
                                       { scenario: `SPY weak <$${spyWeak ?? '...'}`, spxl: `~$${spxlDown3 ?? '...'}`, action: 'Buy', actionColor: '#34C759', qty: '10', bg: 'rgba(52,199,89,0.04)' },
                                       { scenario: `SPY flat $${spyWeak ?? '...'}-${spyStrong ?? '...'}`, spxl: spxl ? `~$${spxl.toFixed(0)}` : '...', action: 'Wait AH', actionColor: '#FF9500', qty: '5', bg: 'transparent' },
-                                      { scenario: `SPY strong >$${spyStrong ?? '...'}`, spxl: `~$${spxlUp3 ?? '...'}`, action: 'Skip', actionColor: 'rgba(255,255,255,0.35)', qty: '0', bg: 'transparent' },
+                                      { scenario: `SPY strong >$${spyStrong ?? '...'}`, spxl: `~$${spxlUp3 ?? '...'}`, action: 'Skip', actionColor: '#8E8E93', qty: '0', bg: 'transparent' },
                                       { scenario: 'Geopolitical shock AH', spxl: `~$${spxlDown8 ?? '...'}`, action: 'Buy Aggressively', actionColor: '#FF3B30', qty: '15-20', bg: 'rgba(255,59,48,0.04)' },
-                                      { scenario: 'Geopolitical positive AH', spxl: `~$${spxlUp5 ?? '...'}`, action: 'Skip', actionColor: 'rgba(255,255,255,0.35)', qty: '0', bg: 'transparent' },
+                                      { scenario: 'Geopolitical positive AH', spxl: `~$${spxlUp5 ?? '...'}`, action: 'Skip', actionColor: '#8E8E93', qty: '0', bg: 'transparent' },
                                     ].map((row, i) => (
                                       <TableRow key={i} sx={{ background: row.bg, '&:last-child td': { border: 0 } }}>
-                                        <TableCell sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem' }}>{row.scenario}</TableCell>
-                                        <TableCell sx={{ color: 'rgba(255,255,255,0.75)', fontFamily: 'monospace', fontSize: '0.82rem' }}>{row.spxl}</TableCell>
+                                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>{row.scenario}</TableCell>
+                                        <TableCell sx={{ color: 'text.secondary', fontFamily: 'monospace', fontSize: '0.82rem' }}>{row.spxl}</TableCell>
                                         <TableCell>
                                           <Chip label={row.action} size="small" sx={{
                                             height: 22, fontSize: '0.68rem', fontWeight: 700,
                                             backgroundColor: `${row.actionColor}18`, color: row.actionColor,
                                           }} />
                                         </TableCell>
-                                        <TableCell sx={{ color: 'rgba(255,255,255,0.75)', fontFamily: 'monospace', fontWeight: 600, fontSize: '0.82rem' }}>{row.qty}</TableCell>
+                                        <TableCell sx={{ color: 'text.secondary', fontFamily: 'monospace', fontWeight: 600, fontSize: '0.82rem' }}>{row.qty}</TableCell>
                                       </TableRow>
                                     ))}
                                   </TableBody>
@@ -4763,20 +4754,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             {/* Sell Trigger */}
                             <Box sx={{
                               p: 2.5, borderRadius: 1.5,
-                              background: 'linear-gradient(135deg, rgba(255,59,48,0.08) 0%, rgba(255,59,48,0.02) 100%)',
-                              border: '1px solid rgba(255,59,48,0.18)',
+                              border: '1px solid rgba(255,59,48,0.3)',
                               display: 'flex', alignItems: 'center', gap: 2,
                             }}>
-                              <Box sx={{
-                                width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                                background: 'rgba(255,59,48,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                border: '1px solid rgba(255,59,48,0.3)',
-                              }}>
-                                <TrendingDown sx={{ fontSize: 18, color: '#FF3B30' }} />
-                              </Box>
+                              <TrendingDown sx={{ fontSize: 22, color: '#FF3B30', flexShrink: 0 }} />
                               <Box>
-                                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#FF3B30', mb: 0.3 }}>Sell Trigger</Typography>
-                                <Typography sx={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)' }}>
+                                <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#FF3B30', mb: 0.3 }}>Sell Trigger</Typography>
+                                <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>
                                   SPXL bounces to <span style={{ color: '#FF3B30', fontWeight: 700, fontFamily: 'monospace' }}>${spxlUp8 ?? '...'}-${spxlUp10 ?? '...'}</span> — trim existing position, lock in swing gains
                                 </Typography>
                               </Box>
@@ -4810,7 +4794,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               </Typography>
               <Typography variant="caption" sx={{
                 fontSize: '0.7rem',
-                color: 'rgba(255, 255, 255, 0.7)',
+                color: 'text.secondary',
                 lineHeight: 1.4,
                 display: 'block'
               }}>
@@ -4834,9 +4818,9 @@ Focus on actionable insights from the visual chart patterns and price action.`;
         fullWidth
         PaperProps={{
           sx: {
-            background: 'rgba(255, 255, 255, 0.1)',
+            bgcolor: 'background.default',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
+            border: 1, borderColor: 'divider'
           }
         }}
       >
@@ -4862,7 +4846,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
               setShowAddDialog(false);
               setNewTicker('');
             }}
-            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+            sx={{ color: 'text.secondary' }}
           >
             Cancel
           </Button>
@@ -4901,15 +4885,15 @@ Add Position
         fullWidth
         PaperProps={{
           sx: {
-            background: 'rgba(255, 255, 255, 0.1)',
+            bgcolor: 'background.default',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            border: 1, borderColor: 'divider',
             maxHeight: '80vh'
           }
         }}
       >
-        <DialogTitle sx={{ 
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        <DialogTitle sx={{
+          borderBottom: 1, borderColor: 'divider',
           display: 'flex',
           alignItems: 'center',
           gap: 1
@@ -4924,11 +4908,11 @@ Add Position
               fontSize: '0.9rem',
               lineHeight: 1.6,
               whiteSpace: 'pre-wrap',
-              color: 'rgba(255, 255, 255, 0.9)',
-              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              color: 'text.primary',
+              bgcolor: 'action.hover',
               padding: 2,
               borderRadius: 1,
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              border: 1, borderColor: 'divider',
               maxHeight: '60vh',
               overflow: 'auto'
             }}>
@@ -4940,7 +4924,7 @@ Add Position
             </Typography>
           )}
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', p: 2, gap: 1 }}>
+        <DialogActions sx={{ borderTop: 1, borderColor: 'divider', p: 2, gap: 1 }}>
           <Button
             onClick={handleCopyAiAnalysis}
             variant="contained"
@@ -4954,8 +4938,8 @@ Add Position
                 background: 'linear-gradient(135deg, #00A8CC 0%, #008BA3 100%)',
               },
               '&:disabled': {
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: 'rgba(255, 255, 255, 0.3)'
+                bgcolor: 'action.selected',
+                color: 'text.disabled'
               }
             }}
           >
@@ -4986,7 +4970,7 @@ Add Position
         fullWidth
         PaperProps={{
           sx: {
-            background: 'rgba(0, 0, 0, 0.9)',
+            bgcolor: 'background.default',
             backdropFilter: 'blur(20px)',
             border: '1px solid rgba(255, 149, 0, 0.3)',
             borderRadius: 3
@@ -5003,7 +4987,7 @@ Add Position
           🔒 AI Authentication Required
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
-          <Typography variant="body2" sx={{ mb: 3, color: 'rgba(255, 255, 255, 0.8)' }}>
+          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
             AI analysis features require authentication to manage API costs. Please enter the password to continue.
           </Typography>
           <TextField
@@ -5045,11 +5029,11 @@ Add Position
             }}
             variant="outlined"
             sx={{ 
-              color: 'rgba(255, 255, 255, 0.7)',
-              borderColor: 'rgba(255, 255, 255, 0.3)',
+              color: 'text.secondary',
+              borderColor: 'divider',
               '&:hover': {
-                borderColor: 'rgba(255, 255, 255, 0.5)',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                borderColor: 'divider',
+                backgroundColor: 'action.hover'
               }
             }}
           >
@@ -5093,11 +5077,12 @@ Add Position
           bottom: 0,
           left: 0,
           right: 0,
-          background: 'rgba(0, 0, 0, 0.95)',
+          bgcolor: 'background.default',
           backdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderTop: 1, borderColor: 'divider',
           p: 2,
           zIndex: 1001,
+          boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.15)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -5106,14 +5091,14 @@ Add Position
         }}>
           <Box sx={{ flex: 1, minWidth: 200 }}>
             <Typography variant="body2" sx={{ 
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: 'text.primary',
               fontSize: '0.875rem',
               mb: 0.5
             }}>
               🍪 We use cookies for analytics and to improve your experience
             </Typography>
             <Typography variant="caption" sx={{ 
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'text.secondary',
               fontSize: '0.75rem'
             }}>
               By continuing to use this site, you consent to our use of cookies.
