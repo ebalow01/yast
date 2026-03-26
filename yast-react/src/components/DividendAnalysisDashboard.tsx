@@ -4676,6 +4676,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         const spxlDown5 = spxl ? (spxl * 0.92).toFixed(0) : null;
                         const spxlUp3 = spxl ? (spxl * 1.03).toFixed(0) : null;
                         const spxlUp5 = spxl ? (spxl * 1.05).toFixed(0) : null;
+                        const spxlUp8 = spxl ? (spxl * 1.08).toFixed(0) : null;
+                        const spxlUp10 = spxl ? (spxl * 1.10).toFixed(0) : null;
                         // Estimated ATM LEAPS premium (~9-10% of SPY price for 1yr)
                         const estPremium = spy ? Math.round(spy * 0.095 * 100) : null;
                         const estShares = estPremium && spxl ? Math.round(estPremium / spxl) : null;
@@ -4779,7 +4781,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               <CardContent>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF3B30', mb: 1 }}>Sell Trigger</Typography>
                                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                                  SPXL bounces to ~${spxlUp3 ?? '...'}-{spxlUp5 ?? '...'} → trim position, reduce exposure, lock in swing gains
+                                  SPXL bounces to ~${spxlUp8 ?? '...'}-{spxlUp10 ?? '...'} → trim position, reduce exposure, lock in swing gains
                                 </Typography>
                               </CardContent>
                             </Card>
