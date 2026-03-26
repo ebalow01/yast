@@ -50,7 +50,8 @@ import {
   Analytics,
   ContentCopy,
   Insights,
-  TrackChanges
+  TrackChanges,
+  AccountBalance
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { dividendData, analysisMetadata, type Asset as DividendAsset } from '../data/dividendData';
@@ -3412,6 +3413,17 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         }
                       }}
                     />
+                    <Tab
+                      label="LPRS"
+                      icon={<AccountBalance />}
+                      iconPosition="start"
+                      sx={{
+                        minHeight: 72,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 20
+                        }
+                      }}
+                    />
                   </Tabs>
 
                   {/* Tab Panels */}
@@ -4534,6 +4546,183 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           Scanned {earlySignalData.totalScanned} tickers at {new Date(earlySignalData.scannedAt).toLocaleString()}
                         </Typography>
                       )}
+                    </Box>
+                  )}
+
+                  {selectedTab === 5 && (
+                    <Box sx={{ p: 3 }}>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6">LPRS — Leveraged Premium Reinvestment Strategy</Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 0.5 }}>
+                          Sell ATM LEAPS on VOO, deploy premium into SPXL, harvest 3x leverage to cover roll costs
+                        </Typography>
+                      </Box>
+
+                      {/* Mode Triggers */}
+                      <Card sx={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.2)', mb: 3 }}>
+                        <CardContent>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00D4FF', mb: 2 }}>Mode Triggers</Typography>
+                          <TableContainer>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>VIX</TableCell>
+                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Mode</TableCell>
+                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Action</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#FF3B30', fontWeight: 700 }}>&gt;20</TableCell>
+                                  <TableCell>
+                                    <Chip label="LPRS" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>Sell ATM 1-year LEAPS on VOO, deploy premium into SPXL</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#FF9500', fontWeight: 700 }}>15–20</TableCell>
+                                  <TableCell>
+                                    <Chip label="Gray Zone" size="small" sx={{ backgroundColor: 'rgba(255, 149, 0, 0.2)', color: '#FF9500', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>Hold current mode, no switch</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#34C759', fontWeight: 700 }}>&lt;15</TableCell>
+                                  <TableCell>
+                                    <Chip label="CC Income" size="small" sx={{ backgroundColor: 'rgba(52, 199, 89, 0.2)', color: '#34C759', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>Short-dated OTM covered calls ~$1K/week</TableCell>
+                                </TableRow>
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </CardContent>
+                      </Card>
+
+                      {/* Core Rules & Rolling Rules side by side */}
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
+                        <Card sx={{ background: 'rgba(255, 149, 0, 0.05)', border: '1px solid rgba(255, 149, 0, 0.2)' }}>
+                          <CardContent>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF9500', mb: 2 }}>Core Rules</Typography>
+                            <Box component="ul" sx={{ pl: 2, m: 0, '& li': { color: 'rgba(255,255,255,0.8)', mb: 1, fontSize: '0.875rem' } }}>
+                              <li>Never sell SPXL to fund VOO repurchase shortfalls</li>
+                              <li>Annual 80/20 rebalance only when VOO is called away</li>
+                              <li>Buy back open positions before switching modes</li>
+                              <li>Roll only for credit, never pay a debit</li>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                        <Card sx={{ background: 'rgba(52, 199, 89, 0.05)', border: '1px solid rgba(52, 199, 89, 0.2)' }}>
+                          <CardContent>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#34C759', mb: 2 }}>Rolling Rules (ITM LEAPS)</Typography>
+                            <Box component="ul" sx={{ pl: 2, m: 0, '& li': { color: 'rgba(255,255,255,0.8)', mb: 1, fontSize: '0.875rem' } }}>
+                              <li>Roll up $10, out 6 months, targeting 1% credit</li>
+                              <li>SPXL gains structurally cover roll costs due to 3x leverage</li>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Box>
+
+                      {/* Current Status */}
+                      <Card sx={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.2)', mb: 3 }}>
+                        <CardContent>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00D4FF', mb: 2 }}>Current Status</Typography>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(255, 59, 48, 0.1)', borderRadius: 1 }}>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>VIX</Typography>
+                              <Typography variant="h5" sx={{ color: '#FF3B30', fontWeight: 700 }}>27.5</Typography>
+                              <Chip label="LPRS Mode" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontSize: '0.7rem', mt: 0.5 }} />
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(0, 212, 255, 0.1)', borderRadius: 1 }}>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>VOO LEAPS</Typography>
+                              <Typography variant="h6" sx={{ color: '#00D4FF', fontWeight: 700 }}>Jan 15 2027</Typography>
+                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>$600 strike · ~$54K premium</Typography>
+                              <Typography variant="caption" sx={{ color: '#FF9500' }}>VOO $601 = $1 ITM</Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(52, 199, 89, 0.1)', borderRadius: 1 }}>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPXL Position</Typography>
+                              <Typography variant="h6" sx={{ color: '#34C759', fontWeight: 700 }}>550 shares</Typography>
+                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>$190.72 avg</Typography>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>Swing trading volatility</Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(255, 149, 0, 0.1)', borderRadius: 1 }}>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>Cash Dry Powder</Typography>
+                              <Typography variant="h5" sx={{ color: '#FF9500', fontWeight: 700 }}>$84K</Typography>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+
+                      {/* SPXL Trigger Table */}
+                      <Card sx={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', mb: 3 }}>
+                        <CardContent>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF9500', mb: 2 }}>SPXL Trigger Table</Typography>
+                          <TableContainer>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Scenario</TableCell>
+                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>SPXL Price</TableCell>
+                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Action</TableCell>
+                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Shares</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#FF3B30' }}>VOO closes weak &lt;$603</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$188</TableCell>
+                                  <TableCell>
+                                    <Chip label="Buy" size="small" sx={{ backgroundColor: 'rgba(52, 199, 89, 0.2)', color: '#34C759', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>50</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#FF9500' }}>VOO closes flat $603-607</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$192</TableCell>
+                                  <TableCell>
+                                    <Chip label="Wait AH" size="small" sx={{ backgroundColor: 'rgba(255, 149, 0, 0.2)', color: '#FF9500', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>50</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#34C759' }}>VOO closes strong &gt;$608</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$197</TableCell>
+                                  <TableCell>
+                                    <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>0</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#FF3B30' }}>Iran hostile AH</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$182-185</TableCell>
+                                  <TableCell>
+                                    <Chip label="Buy Aggressively" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>150-200</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                  <TableCell sx={{ color: '#34C759' }}>Iran positive AH</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$200+</TableCell>
+                                  <TableCell>
+                                    <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
+                                  </TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>0</TableCell>
+                                </TableRow>
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </CardContent>
+                      </Card>
+
+                      {/* Sell Trigger */}
+                      <Card sx={{ background: 'rgba(255, 59, 48, 0.05)', border: '1px solid rgba(255, 59, 48, 0.2)' }}>
+                        <CardContent>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF3B30', mb: 1 }}>Sell Trigger</Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                            Bounce to $195-197 → sell 100 shares → back to 450, reduce exposure
+                          </Typography>
+                        </CardContent>
+                      </Card>
                     </Box>
                   )}
 
