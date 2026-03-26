@@ -1382,10 +1382,49 @@ export default function DividendAnalysisDashboard() {
   const [earlySignalLoading, setEarlySignalLoading] = useState(false);
   const [earlySignalLoaded, setEarlySignalLoaded] = useState(false);
 
+  // LPRS tab state
+  const [lprsData, setLprsData] = useState<{ spyPrice: number | null; spxlPrice: number | null; vix: number | null; vixCategory: string | null }>({ spyPrice: null, spxlPrice: null, vix: null, vixCategory: null });
+  const [lprsLoaded, setLprsLoaded] = useState(false);
+
   // Portfolio table sorting state
   const [sortField, setSortField] = useState<string>('totalReturn');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
+  // Fetch LPRS data when tab is selected (lazy load)
+  useEffect(() => {
+    if (selectedTab === 5 && !lprsLoaded) {
+      const fetchLprsData = async () => {
+        try {
+          const response = await fetch('/.netlify/functions/market-conditions');
+          const result = await response.json();
+          if (result.success) {
+            setLprsData({
+              spyPrice: result.data.spyPrice || null,
+              spxlPrice: null, // fetch separately
+              vix: result.data.vix?.value || null,
+              vixCategory: result.data.vix?.category || null
+            });
+          }
+          // Fetch SPXL price from polygon-batch-data
+          const spxlRes = await fetch('/.netlify/functions/polygon-batch-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tickers: ['SPXL'] })
+          });
+          if (spxlRes.ok) {
+            const spxlResult = await spxlRes.json();
+            if (spxlResult.SPXL?.price) {
+              setLprsData(prev => ({ ...prev, spxlPrice: spxlResult.SPXL.price }));
+            }
+          }
+          setLprsLoaded(true);
+        } catch (error) {
+          console.error('LPRS data fetch error:', error);
+        }
+      };
+      fetchLprsData();
+    }
+  }, [selectedTab, lprsLoaded]);
 
   // Fetch early signal data when tab is selected (lazy load)
   useEffect(() => {
@@ -4623,100 +4662,130 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         </Card>
                       </Box>
 
-                      {/* Strategy Example */}
-                      <Card sx={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.2)', mb: 3 }}>
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00D4FF', mb: 2 }}>Strategy Example (1 Lot = 100 Shares SPY)</Typography>
-                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
-                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(0, 212, 255, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPY LEAPS</Typography>
-                              <Typography variant="body1" sx={{ color: '#00D4FF', fontWeight: 700 }}>1 ATM Contract</Typography>
-                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>~$560 strike · 1yr expiry</Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(52, 199, 89, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>Premium Collected</Typography>
-                              <Typography variant="body1" sx={{ color: '#34C759', fontWeight: 700 }}>~$5,000–$5,500</Typography>
-                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Deploy into SPXL</Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(255, 149, 0, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPXL Shares</Typography>
-                              <Typography variant="body1" sx={{ color: '#FF9500', fontWeight: 700 }}>~28 shares</Typography>
-                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>At ~$190/share</Typography>
-                            </Box>
-                          </Box>
-                        </CardContent>
-                      </Card>
+                      {/* Live Market Data & Strategy Example */}
+                      {(() => {
+                        const spy = lprsData.spyPrice;
+                        const spxl = lprsData.spxlPrice;
+                        const vix = lprsData.vix;
+                        const vixCat = lprsData.vixCategory;
+                        // Derive trigger levels from live SPY price
+                        const spyWeak = spy ? Math.round(spy * 0.99) : null;
+                        const spyStrong = spy ? Math.round(spy * 1.01) : null;
+                        // SPXL approximate levels (3x leveraged relationship)
+                        const spxlDown3 = spxl ? (spxl * 0.97).toFixed(0) : null;
+                        const spxlDown5 = spxl ? (spxl * 0.92).toFixed(0) : null;
+                        const spxlUp3 = spxl ? (spxl * 1.03).toFixed(0) : null;
+                        const spxlUp5 = spxl ? (spxl * 1.05).toFixed(0) : null;
+                        // Estimated ATM LEAPS premium (~9-10% of SPY price for 1yr)
+                        const estPremium = spy ? Math.round(spy * 0.095 * 100) : null;
+                        const estShares = estPremium && spxl ? Math.round(estPremium / spxl) : null;
+                        // Determine current mode from VIX
+                        const currentMode = vix ? (vix > 20 ? 'LPRS' : vix >= 15 ? 'Gray Zone' : 'CC Income') : null;
+                        const modeColor = currentMode === 'LPRS' ? '#FF3B30' : currentMode === 'Gray Zone' ? '#FF9500' : '#34C759';
 
-                      {/* SPXL Trigger Table */}
-                      <Card sx={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', mb: 3 }}>
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF9500', mb: 2 }}>SPXL Trigger Table</Typography>
-                          <TableContainer>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Scenario</TableCell>
-                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>SPXL Price</TableCell>
-                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Action</TableCell>
-                                  <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Shares</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                <TableRow>
-                                  <TableCell sx={{ color: '#FF3B30' }}>SPY closes weak &lt;$555</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$185</TableCell>
-                                  <TableCell>
-                                    <Chip label="Buy" size="small" sx={{ backgroundColor: 'rgba(52, 199, 89, 0.2)', color: '#34C759', fontWeight: 700 }} />
-                                  </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>10</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                  <TableCell sx={{ color: '#FF9500' }}>SPY closes flat $555-565</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$190</TableCell>
-                                  <TableCell>
-                                    <Chip label="Wait AH" size="small" sx={{ backgroundColor: 'rgba(255, 149, 0, 0.2)', color: '#FF9500', fontWeight: 700 }} />
-                                  </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>5</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                  <TableCell sx={{ color: '#34C759' }}>SPY closes strong &gt;$565</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$195</TableCell>
-                                  <TableCell>
-                                    <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
-                                  </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>0</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                  <TableCell sx={{ color: '#FF3B30' }}>Geopolitical shock AH</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$175-180</TableCell>
-                                  <TableCell>
-                                    <Chip label="Buy Aggressively" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontWeight: 700 }} />
-                                  </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>15-20</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                  <TableCell sx={{ color: '#34C759' }}>Geopolitical positive AH</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$200+</TableCell>
-                                  <TableCell>
-                                    <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
-                                  </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>0</TableCell>
-                                </TableRow>
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        </CardContent>
-                      </Card>
+                        return (
+                          <>
+                            <Card sx={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.2)', mb: 3 }}>
+                              <CardContent>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00D4FF', mb: 2 }}>Live Market Data</Typography>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                                  <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(255, 59, 48, 0.1)', borderRadius: 1 }}>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>VIX</Typography>
+                                    <Typography variant="h5" sx={{ color: modeColor, fontWeight: 700 }}>{vix?.toFixed(1) ?? '...'}</Typography>
+                                    {currentMode && <Chip label={`${currentMode} Mode`} size="small" sx={{ backgroundColor: `${modeColor}33`, color: modeColor, fontSize: '0.7rem', mt: 0.5 }} />}
+                                  </Box>
+                                  <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(0, 212, 255, 0.1)', borderRadius: 1 }}>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPY Price</Typography>
+                                    <Typography variant="h5" sx={{ color: '#00D4FF', fontWeight: 700 }}>{spy ? `$${spy.toFixed(2)}` : '...'}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>ATM LEAPS strike</Typography>
+                                  </Box>
+                                  <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(52, 199, 89, 0.1)', borderRadius: 1 }}>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPXL Price</Typography>
+                                    <Typography variant="h5" sx={{ color: '#34C759', fontWeight: 700 }}>{spxl ? `$${spxl.toFixed(2)}` : '...'}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>3x leveraged S&P 500</Typography>
+                                  </Box>
+                                  <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(255, 149, 0, 0.1)', borderRadius: 1 }}>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>Est. Premium (1 Lot)</Typography>
+                                    <Typography variant="h5" sx={{ color: '#FF9500', fontWeight: 700 }}>{estPremium ? `~$${estPremium.toLocaleString()}` : '...'}</Typography>
+                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>{estShares ? `≈ ${estShares} SPXL shares` : ''}</Typography>
+                                  </Box>
+                                </Box>
+                              </CardContent>
+                            </Card>
 
-                      {/* Sell Trigger */}
-                      <Card sx={{ background: 'rgba(255, 59, 48, 0.05)', border: '1px solid rgba(255, 59, 48, 0.2)' }}>
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF3B30', mb: 1 }}>Sell Trigger</Typography>
-                          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                            SPXL bounces to ~$195-200 → trim position, reduce exposure, lock in swing gains
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                            {/* SPXL Trigger Table */}
+                            <Card sx={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', mb: 3 }}>
+                              <CardContent>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF9500', mb: 2 }}>SPXL Trigger Table</Typography>
+                                <TableContainer>
+                                  <Table size="small">
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Scenario</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>SPXL Price</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Action</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Shares</TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      <TableRow>
+                                        <TableCell sx={{ color: '#FF3B30' }}>SPY closes weak &lt;${spyWeak ?? '...'}</TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~${spxlDown3 ?? '...'}</TableCell>
+                                        <TableCell>
+                                          <Chip label="Buy" size="small" sx={{ backgroundColor: 'rgba(52, 199, 89, 0.2)', color: '#34C759', fontWeight: 700 }} />
+                                        </TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>10</TableCell>
+                                      </TableRow>
+                                      <TableRow>
+                                        <TableCell sx={{ color: '#FF9500' }}>SPY closes flat ${spyWeak ?? '...'}-{spyStrong ?? '...'}</TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>${spxl ? `~$${spxl.toFixed(0)}` : '...'}</TableCell>
+                                        <TableCell>
+                                          <Chip label="Wait AH" size="small" sx={{ backgroundColor: 'rgba(255, 149, 0, 0.2)', color: '#FF9500', fontWeight: 700 }} />
+                                        </TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>5</TableCell>
+                                      </TableRow>
+                                      <TableRow>
+                                        <TableCell sx={{ color: '#34C759' }}>SPY closes strong &gt;${spyStrong ?? '...'}</TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~${spxlUp3 ?? '...'}</TableCell>
+                                        <TableCell>
+                                          <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
+                                        </TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>0</TableCell>
+                                      </TableRow>
+                                      <TableRow>
+                                        <TableCell sx={{ color: '#FF3B30' }}>Geopolitical shock AH</TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~${spxlDown5 ?? '...'}</TableCell>
+                                        <TableCell>
+                                          <Chip label="Buy Aggressively" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontWeight: 700 }} />
+                                        </TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>15-20</TableCell>
+                                      </TableRow>
+                                      <TableRow>
+                                        <TableCell sx={{ color: '#34C759' }}>Geopolitical positive AH</TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~${spxlUp5 ?? '...'}</TableCell>
+                                        <TableCell>
+                                          <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
+                                        </TableCell>
+                                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>0</TableCell>
+                                      </TableRow>
+                                    </TableBody>
+                                  </Table>
+                                </TableContainer>
+                              </CardContent>
+                            </Card>
+
+                            {/* Sell Trigger */}
+                            <Card sx={{ background: 'rgba(255, 59, 48, 0.05)', border: '1px solid rgba(255, 59, 48, 0.2)' }}>
+                              <CardContent>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF3B30', mb: 1 }}>Sell Trigger</Typography>
+                                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                                  SPXL bounces to ~${spxlUp3 ?? '...'}-{spxlUp5 ?? '...'} → trim position, reduce exposure, lock in swing gains
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </>
+                        );
+                      })()}
                     </Box>
                   )}
 
