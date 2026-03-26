@@ -121,10 +121,10 @@ const createAppTheme = (mode: 'dark' | 'light') => {
   palette: {
     mode,
     primary: {
-      main: '#00D4FF', // Reserved for primary actions & selected states only
+      main: isDark ? '#00D4FF' : '#0095CC', // Darker cyan for light mode readability
       light: '#64E3FF',
-      dark: '#0095CC',
-      contrastText: '#000000'
+      dark: '#0077A3',
+      contrastText: isDark ? '#000000' : '#FFFFFF'
     },
     secondary: {
       main: '#8E8E93', // Neutral gray for secondary elements
@@ -132,19 +132,19 @@ const createAppTheme = (mode: 'dark' | 'light') => {
       dark: '#636366'
     },
     success: {
-      main: '#34C759', // Clear positive outcomes only
+      main: isDark ? '#34C759' : '#1B8F35',
       light: '#69F0AE',
       dark: '#28A745'
     },
     warning: {
-      main: '#FF9500', // Caution/moderate risk
+      main: isDark ? '#FF9500' : '#CC7700',
       light: '#FFB74D',
       dark: '#E6840E'
     },
     error: {
-      main: '#FF3B30', // Clear negative outcomes only
+      main: isDark ? '#FF3B30' : '#D70015',
       light: '#FF7D99',
-      dark: '#D70015'
+      dark: '#C40012'
     },
     info: {
       main: '#007AFF', // Informational content
@@ -152,15 +152,15 @@ const createAppTheme = (mode: 'dark' | 'light') => {
       dark: '#0056CC'
     },
     background: {
-      default: isDark ? '#0A0A0A' : '#F5F5F7',
-      paper: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'
+      default: isDark ? '#0A0A0A' : '#F2F2F7',
+      paper: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF'
     },
     text: {
-      primary: isDark ? '#FFFFFF' : '#1D1D1F',
-      secondary: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
-      disabled: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+      primary: isDark ? '#FFFFFF' : '#1A1A1A',
+      secondary: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.65)',
+      disabled: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
     },
-    divider: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'
+    divider: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)'
   },
   breakpoints: {
     values: {
@@ -240,10 +240,11 @@ const createAppTheme = (mode: 'dark' | 'light') => {
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
           backdropFilter: isDark ? 'blur(20px)' : 'none',
-          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
-          borderRadius: 16
+          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'}`,
+          borderRadius: 16,
+          ...(isDark ? {} : { boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06)' })
         }
       }
     },
@@ -297,7 +298,7 @@ const createAppTheme = (mode: 'dark' | 'light') => {
       styleOverrides: {
         root: {
           '& .MuiTabs-indicator': {
-            background: 'linear-gradient(90deg, #00D4FF, #6C63FF)',
+            background: isDark ? 'linear-gradient(90deg, #00D4FF, #6C63FF)' : 'linear-gradient(90deg, #0095CC, #5A52D5)',
             height: 3,
             borderRadius: '3px 3px 0 0'
           }
@@ -325,11 +326,11 @@ const createAppTheme = (mode: 'dark' | 'light') => {
             padding: '8px 12px',
           },
           '&:hover': {
-            color: '#00D4FF',
-            backgroundColor: 'rgba(0, 212, 255, 0.05)'
+            color: isDark ? '#00D4FF' : '#0077A3',
+            backgroundColor: isDark ? 'rgba(0, 212, 255, 0.05)' : 'rgba(0, 149, 204, 0.06)'
           },
           '&.Mui-selected': {
-            color: '#00D4FF'
+            color: isDark ? '#00D4FF' : '#0077A3'
           }
         }
       }
@@ -337,7 +338,7 @@ const createAppTheme = (mode: 'dark' | 'light') => {
     MuiTableContainer: {
       styleOverrides: {
         root: {
-          background: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
+          background: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
           backdropFilter: isDark ? 'blur(20px)' : 'none',
           border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
           borderRadius: 16,
@@ -348,7 +349,7 @@ const createAppTheme = (mode: 'dark' | 'light') => {
             borderRadius: 12,
             margin: '0 -8px', // Extend to screen edges on mobile
             border: 'none',
-            background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.01)',
+            background: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
           },
           '&::-webkit-scrollbar': {
             width: 8,
@@ -372,12 +373,13 @@ const createAppTheme = (mode: 'dark' | 'light') => {
       styleOverrides: {
         root: {
           '& .MuiTableCell-head': {
-            background: 'rgba(0, 212, 255, 0.08)',
+            background: isDark ? 'rgba(0, 212, 255, 0.08)' : '#F0F4F8',
             fontWeight: 700,
             fontSize: '0.875rem',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            borderBottom: '2px solid rgba(0, 212, 255, 0.2)'
+            color: isDark ? undefined : '#3A4A5C',
+            borderBottom: isDark ? '2px solid rgba(0, 212, 255, 0.2)' : '2px solid rgba(0, 100, 150, 0.15)'
           }
         }
       }
@@ -408,7 +410,7 @@ const createAppTheme = (mode: 'dark' | 'light') => {
               paddingLeft: '16px',
               position: 'sticky',
               left: 0,
-              backgroundColor: isDark ? 'rgba(10, 10, 10, 0.95)' : 'rgba(245, 245, 247, 0.95)',
+              backgroundColor: isDark ? 'rgba(10, 10, 10, 0.95)' : 'rgba(255, 255, 255, 0.98)',
               zIndex: 1,
             },
           },
@@ -423,7 +425,7 @@ const createAppTheme = (mode: 'dark' | 'light') => {
             '&:first-of-type': {
               position: 'sticky',
               left: 0,
-              backgroundColor: isDark ? 'rgba(0, 212, 255, 0.12)' : 'rgba(0, 212, 255, 0.08)',
+              backgroundColor: isDark ? 'rgba(0, 212, 255, 0.12)' : '#E8EFF5',
               zIndex: 2,
             },
           },
@@ -463,11 +465,11 @@ const createAppTheme = (mode: 'dark' | 'light') => {
           WebkitTextSizeAdjust: '100%',
           // Prevent horizontal scrolling and fix background
           overflowX: 'hidden',
-          backgroundColor: `${isDark ? '#0A0A0A' : '#F5F5F7'} !important`,
+          backgroundColor: `${isDark ? '#0A0A0A' : '#F2F2F7'} !important`,
         },
         body: {
           // Lock background color to prevent changes on scroll
-          backgroundColor: `${isDark ? '#0A0A0A' : '#F5F5F7'} !important`,
+          backgroundColor: `${isDark ? '#0A0A0A' : '#F2F2F7'} !important`,
           backgroundAttachment: 'fixed',
           overflowX: 'hidden',
           // Prevent bounce scrolling on iOS that can cause background color changes
@@ -481,7 +483,7 @@ const createAppTheme = (mode: 'dark' | 'light') => {
           WebkitTapHighlightColor: 'transparent',
         },
         '#root': {
-          backgroundColor: `${isDark ? '#0A0A0A' : '#F5F5F7'} !important`,
+          backgroundColor: `${isDark ? '#0A0A0A' : '#F2F2F7'} !important`,
           minHeight: '100vh',
           overflowX: 'hidden',
         },
