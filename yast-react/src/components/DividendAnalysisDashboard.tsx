@@ -1388,7 +1388,7 @@ export default function DividendAnalysisDashboard() {
 
   // Fetch early signal data when tab is selected (lazy load)
   useEffect(() => {
-    if (selectedTab === 5 && !earlySignalLoaded && !earlySignalLoading && data.length > 0) {
+    if (selectedTab === 4 && !earlySignalLoaded && !earlySignalLoading && data.length > 0) {
       const fetchEarlySignals = async () => {
         setEarlySignalLoading(true);
         try {
@@ -3380,17 +3380,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       }}
                     />
                     <Tab
-                      label={`AI Bullish Excluded (${excludedTickersData.bullishExcluded?.length || 0})`}
-                      icon={<TrendingUp />}
-                      iconPosition="start"
-                      sx={{
-                        minHeight: 72,
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 20
-                        }
-                      }}
-                    />
-                    <Tab
                       label={`My Portfolio (${portfolio.holdings.length})`}
                       icon={<BusinessCenter />}
                       iconPosition="start"
@@ -4013,169 +4002,6 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
                   {selectedTab === 2 && (
                     <Box sx={{ p: 3 }}>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant="h6">
-                          AI Bullish Excluded ETFs
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                          {excludedTickersData.bullishExcluded?.length || 0} AI-bullish ETFs excluded from optimal portfolio (did not meet &gt;5% return or positive NAV criteria)
-                        </Typography>
-                      </Box>
-                      
-                      {sortedBullishExcludedData.length === 0 ? (
-                        <Card sx={{
-                          background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%)',
-                          border: '1px solid rgba(76, 175, 80, 0.2)',
-                          textAlign: 'center',
-                          py: 4
-                        }}>
-                          <CardContent>
-                            <TrendingUp sx={{ fontSize: 48, color: 'rgba(76, 175, 80, 0.6)', mb: 2 }} />
-                            <Typography variant="h6" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
-                              No AI Bullish Excluded ETFs
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                              All bullish ETFs are either included in the optimal portfolio or excluded for other reasons
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      ) : (
-                        <TableContainer component={Paper} sx={{ backgroundColor: '#1e1e1e', mt: 2 }}>
-                          <Table>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>
-                                  <TableSortLabel
-                                    active={sortField === 'ticker'}
-                                    direction={sortField === 'ticker' ? sortDirection : 'asc'}
-                                    onClick={() => handleSort('ticker')}
-                                  >
-                                    Ticker
-                                  </TableSortLabel>
-                                </TableCell>
-                                <TableCell>
-                                  <TableSortLabel
-                                    active={sortField === 'price'}
-                                    direction={sortField === 'price' ? sortDirection : 'asc'}
-                                    onClick={() => handleSort('price')}
-                                  >
-                                    Price
-                                  </TableSortLabel>
-                                </TableCell>
-                                <TableCell>
-                                  <TableSortLabel
-                                    active={sortField === 'forwardYield'}
-                                    direction={sortField === 'forwardYield' ? sortDirection : 'desc'}
-                                    onClick={() => handleSort('forwardYield')}
-                                  >
-                                    Yield
-                                  </TableSortLabel>
-                                </TableCell>
-                                <TableCell>
-                                  <TableSortLabel
-                                    active={sortField === 'navPerformance'}
-                                    direction={sortField === 'navPerformance' ? sortDirection : 'desc'}
-                                    onClick={() => handleSort('navPerformance')}
-                                  >
-                                    <Box>NAV<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>perf</span></Box>
-                                  </TableSortLabel>
-                                </TableCell>
-                                <TableCell>
-                                  <TableSortLabel
-                                    active={sortField === 'divErosion'}
-                                    direction={sortField === 'divErosion' ? sortDirection : 'asc'}
-                                    onClick={() => handleSort('divErosion')}
-                                  >
-                                    <Box>Div<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>var</span></Box>
-                                  </TableSortLabel>
-                                </TableCell>
-                                <TableCell>
-                                  <TableSortLabel
-                                    active={sortField === 'totalReturn'}
-                                    direction={sortField === 'totalReturn' ? sortDirection : 'desc'}
-                                    onClick={() => handleSort('totalReturn')}
-                                  >
-                                    <Box>12wk<br/><span style={{ fontSize: '0.7rem', opacity: 0.6 }}>return</span></Box>
-                                  </TableSortLabel>
-                                </TableCell>
-                                <TableCell>AI Sentiment</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {sortedBullishExcludedData.map((item, index) => (
-                                <TableRow key={index}>
-                                  <TableCell>
-                                  <a 
-                                    href={getYahooFinanceUrl(item.ticker)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                      color: '#00D4FF',
-                                      textDecoration: 'none',
-                                      fontWeight: 600,
-                                      '&:hover': {
-                                        textDecoration: 'underline'
-                                      }
-                                    }}
-                                  >
-                                    {item.ticker}
-                                  </a>
-                                </TableCell>
-                                  <TableCell>${polygonData[item.ticker]?.price?.toFixed(2) || '-'}</TableCell>
-                                  <TableCell>{polygonData[item.ticker]?.forwardYield?.toFixed(1) || '-'}%</TableCell>
-                                  <TableCell>{polygonData[item.ticker]?.navPerformance?.toFixed(1) || '-'}%</TableCell>
-                                  <TableCell>
-                                    {(() => {
-                                      const divErosion = polygonData[item.ticker]?.divErosion;
-                                      if (divErosion != null) {
-                                        const color = divErosion >= 0 ? '#34C759' : '#FF3B30';
-                                        return <span style={{ color }}>{divErosion >= 0 ? '+' : ''}{divErosion.toFixed(1)}%</span>;
-                                      }
-                                      return '-';
-                                    })()}
-                                  </TableCell>
-                                  <TableCell>
-                                    {(() => {
-                                      const fwdYield = polygonData[item.ticker]?.forwardYield;
-                                      const navPerf = polygonData[item.ticker]?.navPerformance;
-                                      const divErosion = polygonData[item.ticker]?.divErosion || 0;
-                                      if (fwdYield != null && navPerf != null) {
-                                        const dividendReturn12Week = fwdYield * (12/52);
-                                        return `${(dividendReturn12Week + navPerf).toFixed(1)}%`;
-                                      }
-                                      return '-';
-                                    })()}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Box>
-                                      {aiOutlooks[item.ticker] && (() => {
-                                        const rating = extractSentimentRating(aiOutlooks[item.ticker].fullAnalysis);
-                                        return (
-                                          <Chip
-                                            label={rating.rating}
-                                            size="small"
-                                            sx={{
-                                              backgroundColor: rating.color,
-                                              color: '#000',
-                                              fontWeight: 'bold',
-                                              fontSize: '0.7rem'
-                                            }}
-                                          />
-                                        );
-                                      })()}
-                                    </Box>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      )}
-                    </Box>
-                  )}
-
-                  {selectedTab === 3 && (
-                    <Box sx={{ p: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Typography variant="h6">
                           My Portfolio ({portfolio.holdings.length} positions)
@@ -4482,13 +4308,13 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     </Box>
                   )}
 
-                  {selectedTab === 4 && (
+                  {selectedTab === 3 && (
                     <Box sx={{ p: 3 }}>
                       <MarketMonitor />
                     </Box>
                   )}
 
-                  {selectedTab === 5 && (
+                  {selectedTab === 4 && (
                     <Box sx={{ p: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Box>
