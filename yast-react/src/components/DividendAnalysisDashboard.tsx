@@ -4554,7 +4554,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                       <Box sx={{ mb: 3 }}>
                         <Typography variant="h6">LPRS — Leveraged Premium Reinvestment Strategy</Typography>
                         <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 0.5 }}>
-                          Sell ATM LEAPS on VOO, deploy premium into SPXL, harvest 3x leverage to cover roll costs
+                          Sell ATM LEAPS on SPY (1 contract = 100 shares), deploy premium into SPXL, harvest 3x leverage to cover roll costs
                         </Typography>
                       </Box>
 
@@ -4577,7 +4577,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   <TableCell>
                                     <Chip label="LPRS" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontWeight: 700 }} />
                                   </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>Sell ATM 1-year LEAPS on VOO, deploy premium into SPXL</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>Sell ATM 1-year LEAPS on SPY, deploy premium into SPXL</TableCell>
                                 </TableRow>
                                 <TableRow>
                                   <TableCell sx={{ color: '#FF9500', fontWeight: 700 }}>15–20</TableCell>
@@ -4591,7 +4591,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   <TableCell>
                                     <Chip label="CC Income" size="small" sx={{ backgroundColor: 'rgba(52, 199, 89, 0.2)', color: '#34C759', fontWeight: 700 }} />
                                   </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>Short-dated OTM covered calls ~$1K/week</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>Short-dated OTM covered calls on SPY</TableCell>
                                 </TableRow>
                               </TableBody>
                             </Table>
@@ -4605,8 +4605,8 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                           <CardContent>
                             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF9500', mb: 2 }}>Core Rules</Typography>
                             <Box component="ul" sx={{ pl: 2, m: 0, '& li': { color: 'rgba(255,255,255,0.8)', mb: 1, fontSize: '0.875rem' } }}>
-                              <li>Never sell SPXL to fund VOO repurchase shortfalls</li>
-                              <li>Annual 80/20 rebalance only when VOO is called away</li>
+                              <li>Never sell SPXL to fund SPY repurchase shortfalls</li>
+                              <li>Annual 80/20 rebalance only when SPY is called away</li>
                               <li>Buy back open positions before switching modes</li>
                               <li>Roll only for credit, never pay a debit</li>
                             </Box>
@@ -4623,31 +4623,25 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         </Card>
                       </Box>
 
-                      {/* Current Status */}
+                      {/* Strategy Example */}
                       <Card sx={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.2)', mb: 3 }}>
                         <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00D4FF', mb: 2 }}>Current Status</Typography>
-                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
-                            <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(255, 59, 48, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>VIX</Typography>
-                              <Typography variant="h5" sx={{ color: '#FF3B30', fontWeight: 700 }}>27.5</Typography>
-                              <Chip label="LPRS Mode" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontSize: '0.7rem', mt: 0.5 }} />
-                            </Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#00D4FF', mb: 2 }}>Strategy Example (1 Lot = 100 Shares SPY)</Typography>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
                             <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(0, 212, 255, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>VOO LEAPS</Typography>
-                              <Typography variant="h6" sx={{ color: '#00D4FF', fontWeight: 700 }}>Jan 15 2027</Typography>
-                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>$600 strike · ~$54K premium</Typography>
-                              <Typography variant="caption" sx={{ color: '#FF9500' }}>VOO $601 = $1 ITM</Typography>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPY LEAPS</Typography>
+                              <Typography variant="body1" sx={{ color: '#00D4FF', fontWeight: 700 }}>1 ATM Contract</Typography>
+                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>~$560 strike · 1yr expiry</Typography>
                             </Box>
                             <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(52, 199, 89, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPXL Position</Typography>
-                              <Typography variant="h6" sx={{ color: '#34C759', fontWeight: 700 }}>550 shares</Typography>
-                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>$190.72 avg</Typography>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>Swing trading volatility</Typography>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>Premium Collected</Typography>
+                              <Typography variant="body1" sx={{ color: '#34C759', fontWeight: 700 }}>~$5,000–$5,500</Typography>
+                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Deploy into SPXL</Typography>
                             </Box>
                             <Box sx={{ textAlign: 'center', p: 1.5, background: 'rgba(255, 149, 0, 0.1)', borderRadius: 1 }}>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>Cash Dry Powder</Typography>
-                              <Typography variant="h5" sx={{ color: '#FF9500', fontWeight: 700 }}>$84K</Typography>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>SPXL Shares</Typography>
+                              <Typography variant="body1" sx={{ color: '#FF9500', fontWeight: 700 }}>~28 shares</Typography>
+                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>At ~$190/share</Typography>
                             </Box>
                           </Box>
                         </CardContent>
@@ -4669,39 +4663,39 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                               </TableHead>
                               <TableBody>
                                 <TableRow>
-                                  <TableCell sx={{ color: '#FF3B30' }}>VOO closes weak &lt;$603</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$188</TableCell>
+                                  <TableCell sx={{ color: '#FF3B30' }}>SPY closes weak &lt;$555</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$185</TableCell>
                                   <TableCell>
                                     <Chip label="Buy" size="small" sx={{ backgroundColor: 'rgba(52, 199, 89, 0.2)', color: '#34C759', fontWeight: 700 }} />
                                   </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>50</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>10</TableCell>
                                 </TableRow>
                                 <TableRow>
-                                  <TableCell sx={{ color: '#FF9500' }}>VOO closes flat $603-607</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$192</TableCell>
+                                  <TableCell sx={{ color: '#FF9500' }}>SPY closes flat $555-565</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$190</TableCell>
                                   <TableCell>
                                     <Chip label="Wait AH" size="small" sx={{ backgroundColor: 'rgba(255, 149, 0, 0.2)', color: '#FF9500', fontWeight: 700 }} />
                                   </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>50</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>5</TableCell>
                                 </TableRow>
                                 <TableRow>
-                                  <TableCell sx={{ color: '#34C759' }}>VOO closes strong &gt;$608</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$197</TableCell>
+                                  <TableCell sx={{ color: '#34C759' }}>SPY closes strong &gt;$565</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$195</TableCell>
                                   <TableCell>
                                     <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
                                   </TableCell>
                                   <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>0</TableCell>
                                 </TableRow>
                                 <TableRow>
-                                  <TableCell sx={{ color: '#FF3B30' }}>Iran hostile AH</TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$182-185</TableCell>
+                                  <TableCell sx={{ color: '#FF3B30' }}>Geopolitical shock AH</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$175-180</TableCell>
                                   <TableCell>
                                     <Chip label="Buy Aggressively" size="small" sx={{ backgroundColor: 'rgba(255, 59, 48, 0.2)', color: '#FF3B30', fontWeight: 700 }} />
                                   </TableCell>
-                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>150-200</TableCell>
+                                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>15-20</TableCell>
                                 </TableRow>
                                 <TableRow>
-                                  <TableCell sx={{ color: '#34C759' }}>Iran positive AH</TableCell>
+                                  <TableCell sx={{ color: '#34C759' }}>Geopolitical positive AH</TableCell>
                                   <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>~$200+</TableCell>
                                   <TableCell>
                                     <Chip label="Skip" size="small" sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }} />
@@ -4719,7 +4713,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         <CardContent>
                           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#FF3B30', mb: 1 }}>Sell Trigger</Typography>
                           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                            Bounce to $195-197 → sell 100 shares → back to 450, reduce exposure
+                            SPXL bounces to ~$195-200 → trim position, reduce exposure, lock in swing gains
                           </Typography>
                         </CardContent>
                       </Card>
