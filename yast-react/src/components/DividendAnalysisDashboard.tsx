@@ -4679,17 +4679,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             {/* Today's Action — the hero element */}
                             {actionSummary && (
                               <Box sx={(t) => ({
-                                p: 2, mb: 3, borderRadius: 1.5,
-                                border: `1.5px solid ${modeColor}40`,
-                                background: t.palette.mode === 'dark' ? `${modeColor}0A` : `${modeColor}06`,
+                                p: 2, pl: 2.5, mb: 3, borderRadius: 1,
+                                borderLeft: `4px solid ${modeColor}`,
+                                background: t.palette.mode === 'dark' ? `${modeColor}0C` : `${modeColor}08`,
                                 display: 'flex', alignItems: 'center', gap: 1.5,
                               })}>
                                 <Box sx={{
-                                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                                  width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
                                   backgroundColor: modeColor,
-                                  boxShadow: `0 0 6px ${modeColor}60`,
+                                  boxShadow: `0 0 8px ${modeColor}80`,
+                                  animation: 'lprs-pulse 2s ease-in-out infinite',
+                                  '@keyframes lprs-pulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.5 } },
                                 }} />
-                                <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: 'text.primary', fontFamily: mono }}>
+                                <Typography sx={{ fontSize: '0.92rem', fontWeight: 700, color: 'text.primary', fontFamily: mono }}>
                                   {actionSummary}
                                 </Typography>
                               </Box>
@@ -4699,11 +4701,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             <Box sx={{ mb: 3 }}>
                               <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.disabled', mb: 1 }}>SPXL Triggers</Typography>
                               <TableContainer sx={{ borderRadius: 1 }}>
-                                <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1.2, px: 1.5 } }}>
+                                <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1.4, px: 2 } }}>
                                   <TableHead>
                                     <TableRow>
                                       {['Scenario', 'SPXL', 'Action', 'Qty'].map(h => (
-                                        <TableCell key={h} sx={{ fontWeight: 700, color: 'text.disabled', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: 2, borderColor: 'divider' }}>{h}</TableCell>
+                                        <TableCell key={h} sx={{ fontWeight: 600, color: 'text.disabled', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: 2, borderColor: 'divider' }}>{h}</TableCell>
                                       ))}
                                     </TableRow>
                                   </TableHead>
@@ -4720,43 +4722,50 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                         <TableRow key={row.idx} sx={(t) => ({
                                           '&:last-child td': { border: 0 },
                                           ...(isActive ? {
-                                            background: t.palette.mode === 'dark' ? `${row.actionColor}12` : `${row.actionColor}08`,
-                                            '& td': { fontWeight: 700 },
+                                            background: t.palette.mode === 'dark' ? `${row.actionColor}1A` : `${row.actionColor}0D`,
+                                            borderLeft: `3px solid ${row.actionColor}`,
                                           } : {}),
                                         })}>
-                                          <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                                          <TableCell sx={{ color: isActive ? 'text.primary' : 'text.secondary', fontSize: '0.88rem', fontWeight: isActive ? 700 : 400 }}>
                                             {isActive && <span style={{ marginRight: 6 }}>&#9654;</span>}
                                             {row.scenario}
                                           </TableCell>
-                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.primary', fontWeight: 600 }}>{row.spxl}</TableCell>
+                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.9rem', color: 'text.primary', fontWeight: 600 }}>{row.spxl}</TableCell>
                                           <TableCell>
                                             <Chip label={row.action} size="small" sx={{
-                                              height: 22, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.03em',
-                                              backgroundColor: `${row.actionColor}18`, color: row.actionColor,
-                                              border: isActive ? `1px solid ${row.actionColor}` : 'none',
+                                              height: 24, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.03em',
+                                              backgroundColor: `${row.actionColor}20`, color: row.actionColor,
+                                              border: isActive ? `1.5px solid ${row.actionColor}` : 'none',
                                             }} />
                                           </TableCell>
-                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.primary', fontWeight: 600 }}>{row.qty}</TableCell>
+                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.95rem', color: 'text.primary', fontWeight: 700 }}>{row.qty}</TableCell>
                                         </TableRow>
                                       );
                                     })}
-                                    {/* Sell trigger as last row */}
-                                    <TableRow sx={(t) => ({ background: t.palette.mode === 'dark' ? 'rgba(255,59,48,0.06)' : 'rgba(255,59,48,0.03)' })}>
-                                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>SPXL bounce +8-10%</TableCell>
-                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.primary', fontWeight: 600 }}>${spxlUp8 ?? '...'}-{spxlUp10 ?? '...'}</TableCell>
+                                    {/* Sell trigger as last row — full red tint */}
+                                    <TableRow sx={(t) => ({
+                                      background: t.palette.mode === 'dark' ? 'rgba(255,59,48,0.10)' : 'rgba(255,59,48,0.05)',
+                                      borderLeft: '3px solid #FF3B30',
+                                    })}>
+                                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.88rem' }}>SPXL bounce +8-10%</TableCell>
+                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.9rem', color: 'text.primary', fontWeight: 600 }}>${spxlUp8 ?? '...'}-{spxlUp10 ?? '...'}</TableCell>
                                       <TableCell>
-                                        <Chip label="TRIM" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 800, backgroundColor: 'rgba(255,59,48,0.18)', color: '#FF3B30' }} />
+                                        <Chip label="TRIM" size="small" sx={{ height: 24, fontSize: '0.7rem', fontWeight: 800, backgroundColor: 'rgba(255,59,48,0.22)', color: '#FF3B30', border: '1px solid rgba(255,59,48,0.4)' }} />
                                       </TableCell>
-                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.secondary' }}>Reduce</TableCell>
+                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.95rem', color: '#FF3B30', fontWeight: 700 }}>Reduce</TableCell>
                                     </TableRow>
                                   </TableBody>
                                 </Table>
                               </TableContainer>
                             </Box>
 
-                            {/* Strategy Reference — collapsed section below */}
-                            <Box sx={{ mt: 1, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                              <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.disabled', mb: 1.5 }}>Strategy Reference</Typography>
+                            {/* Strategy Reference — visually demoted section */}
+                            <Box sx={(t) => ({
+                              mt: 3, pt: 2.5, px: 2.5, pb: 2, borderRadius: 1.5,
+                              background: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                              border: `1px solid ${t.palette.divider}`,
+                            })}>
+                              <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'text.disabled', mb: 1.5 }}>Strategy Reference</Typography>
 
                               {/* Mode triggers — compact inline */}
                               <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
