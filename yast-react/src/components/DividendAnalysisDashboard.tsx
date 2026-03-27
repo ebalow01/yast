@@ -4724,9 +4724,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                           ...(isActive ? {
                                             background: t.palette.mode === 'dark' ? `${row.actionColor}1A` : `${row.actionColor}0D`,
                                             borderLeft: `3px solid ${row.actionColor}`,
-                                          } : {}),
+                                          } : {
+                                            '&:hover': { background: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' },
+                                          }),
                                         })}>
-                                          <TableCell sx={{ color: isActive ? 'text.primary' : 'text.secondary', fontSize: '0.88rem', fontWeight: isActive ? 700 : 400 }}>
+                                          <TableCell sx={{ color: isActive ? 'text.primary' : 'text.primary', fontSize: '0.88rem', fontWeight: isActive ? 700 : 500 }}>
                                             {isActive && <span style={{ marginRight: 6 }}>&#9654;</span>}
                                             {row.scenario}
                                           </TableCell>
@@ -4761,7 +4763,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
 
                             {/* Strategy Reference — visually demoted section */}
                             <Box sx={(t) => ({
-                              mt: 3, pt: 2.5, px: 2.5, pb: 2, borderRadius: 1.5,
+                              mt: 4, pt: 2.5, px: 2.5, pb: 2, borderRadius: 1.5,
                               background: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                               border: `1px solid ${t.palette.divider}`,
                             })}>
@@ -4791,7 +4793,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     'Buy back positions before switching modes',
                                     'Roll only for credit, never pay a debit',
                                   ].map((rule, j) => (
-                                    <Typography key={j} sx={{ fontSize: '0.73rem', color: 'text.disabled', lineHeight: 1.5, pl: 1.25, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#FF9500' } }}>{rule}</Typography>
+                                    <Typography key={j} sx={{ fontSize: '0.76rem', color: 'text.secondary', lineHeight: 1.6, pl: 1.25, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#FF9500' } }}>{rule}</Typography>
                                   ))}
                                 </Box>
                                 <Box>
@@ -4800,7 +4802,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                     'Roll up $10, out 6mo, targeting 1% credit',
                                     'SPXL 3x leverage covers roll costs structurally',
                                   ].map((rule, j) => (
-                                    <Typography key={j} sx={{ fontSize: '0.73rem', color: 'text.disabled', lineHeight: 1.5, pl: 1.25, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#34C759' } }}>{rule}</Typography>
+                                    <Typography key={j} sx={{ fontSize: '0.76rem', color: 'text.secondary', lineHeight: 1.6, pl: 1.25, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#34C759' } }}>{rule}</Typography>
                                   ))}
                                 </Box>
                               </Box>
