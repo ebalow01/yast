@@ -4698,10 +4698,10 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             )}
 
                             {/* SPXL Trigger Table — the decision center, now FIRST */}
-                            <Box sx={{ mb: 3, mx: { xs: -1, md: 0 } }}>
-                              <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.disabled', mb: 1, px: { xs: 1, md: 0 } }}>SPXL Triggers</Typography>
-                              <TableContainer sx={{ borderRadius: 1 }}>
-                                <Table size="small" sx={{ minWidth: 360, '& .MuiTableCell-root': { py: { xs: 1, md: 1.4 }, px: { xs: 0.75, md: 2 } } }}>
+                            <Box sx={{ mb: 3, mx: { xs: -2, md: 0 } }}>
+                              <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.disabled', mb: 1, px: { xs: 2, md: 0 } }}>SPXL Triggers</Typography>
+                              <TableContainer sx={{ borderRadius: { xs: 0, md: 1 }, overflowX: 'auto' }}>
+                                <Table size="small" sx={{ minWidth: 400, '& .MuiTableCell-root': { py: { xs: 1, md: 1.4 }, px: { xs: 1, md: 2 } } }}>
                                   <TableHead>
                                     <TableRow>
                                       {['Scenario', 'SPXL', 'Action', 'Qty'].map(h => (
