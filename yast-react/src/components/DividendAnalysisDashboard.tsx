@@ -3397,15 +3397,59 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     overflow: 'hidden'
                   })}
                 >
+                  {/* Mobile: horizontal scrolling pill bar */}
+                  <Box sx={(t) => ({
+                    display: { xs: 'flex', md: 'none' },
+                    gap: 0.75, px: 1.5, py: 1.5,
+                    overflowX: 'auto', overflowY: 'hidden',
+                    borderBottom: `1px solid ${t.palette.divider}`,
+                    WebkitOverflowScrolling: 'touch',
+                    scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
+                  })}>
+                    {[
+                      { label: 'Portfolio', icon: <Stars sx={{ fontSize: 16 }} /> },
+                      { label: 'Excluded', icon: <Security sx={{ fontSize: 16 }} /> },
+                      { label: `Holdings (${portfolio.holdings.length})`, icon: <BusinessCenter sx={{ fontSize: 16 }} /> },
+                      { label: 'Monitor', icon: <Insights sx={{ fontSize: 16 }} /> },
+                      { label: `Signal${earlySignalData?.signals ? ` (${earlySignalData.signals.length})` : ''}`, icon: <TrackChanges sx={{ fontSize: 16 }} /> },
+                      { label: 'LPRS', icon: <AccountBalance sx={{ fontSize: 16 }} /> },
+                    ].map((tab, i) => (
+                      <Chip
+                        key={i}
+                        icon={tab.icon}
+                        label={tab.label}
+                        onClick={() => setSelectedTab(i)}
+                        sx={(t) => ({
+                          flexShrink: 0, height: 36, borderRadius: '18px',
+                          fontSize: '0.78rem', fontWeight: selectedTab === i ? 700 : 500,
+                          cursor: 'pointer', transition: 'all 0.2s ease',
+                          ...(selectedTab === i ? {
+                            backgroundColor: t.palette.mode === 'dark' ? '#00D4FF' : '#0095CC',
+                            color: '#FFFFFF',
+                            '& .MuiChip-icon': { color: '#FFFFFF' },
+                            boxShadow: t.palette.mode === 'dark' ? '0 2px 8px rgba(0,212,255,0.3)' : '0 2px 8px rgba(0,149,204,0.25)',
+                          } : {
+                            backgroundColor: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                            color: 'text.secondary',
+                            '& .MuiChip-icon': { color: 'inherit' },
+                            '&:hover': {
+                              backgroundColor: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                            },
+                          }),
+                        })}
+                      />
+                    ))}
+                  </Box>
+
+                  {/* Desktop: standard MUI Tabs */}
                   <Tabs
                     value={selectedTab}
                     onChange={(event, newValue) => setSelectedTab(newValue)}
                     indicatorColor="primary"
                     textColor="primary"
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    allowScrollButtonsMobile
+                    variant="fullWidth"
                     sx={(t) => ({
+                      display: { xs: 'none', md: 'flex' },
                       borderBottom: `1px solid ${t.palette.divider}`,
                       background: t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.01)',
                       '& .MuiTabs-indicator': {
@@ -3413,76 +3457,43 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         height: 3,
                         borderRadius: '3px 3px 0 0'
                       },
-                      '& .MuiTabs-scrollButtons': {
-                        '&.Mui-disabled': { opacity: 0.3 },
-                      },
                     })}
                   >
                     <Tab
-                      label={`Optimal Portfolio`}
+                      label="Optimal Portfolio"
                       icon={<Stars />}
                       iconPosition="start"
-                      sx={{
-                        minHeight: 72,
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 20
-                        }
-                      }}
+                      sx={{ minHeight: 72, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                     />
                     <Tab
                       label="Excluded ETFs"
                       icon={<Security />}
                       iconPosition="start"
-                      sx={{
-                        minHeight: 72,
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 20
-                        }
-                      }}
+                      sx={{ minHeight: 72, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                     />
                     <Tab
                       label={`My Portfolio (${portfolio.holdings.length})`}
                       icon={<BusinessCenter />}
                       iconPosition="start"
-                      sx={{
-                        minHeight: 72,
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 20
-                        }
-                      }}
+                      sx={{ minHeight: 72, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                     />
                     <Tab
                       label="Market Monitor"
                       icon={<Insights />}
                       iconPosition="start"
-                      sx={{
-                        minHeight: 72,
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 20
-                        }
-                      }}
+                      sx={{ minHeight: 72, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                     />
                     <Tab
                       label={`Early Signal${earlySignalData?.signals ? ` (${earlySignalData.signals.length})` : ''}`}
                       icon={<TrackChanges />}
                       iconPosition="start"
-                      sx={{
-                        minHeight: 72,
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 20
-                        }
-                      }}
+                      sx={{ minHeight: 72, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                     />
                     <Tab
                       label="LPRS"
                       icon={<AccountBalance />}
                       iconPosition="start"
-                      sx={{
-                        minHeight: 72,
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 20
-                        }
-                      }}
+                      sx={{ minHeight: 72, '& .MuiSvgIcon-root': { fontSize: 20 } }}
                     />
                   </Tabs>
 
