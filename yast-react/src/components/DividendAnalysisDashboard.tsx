@@ -3402,15 +3402,20 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                     onChange={(event, newValue) => setSelectedTab(newValue)}
                     indicatorColor="primary"
                     textColor="primary"
-                    variant="fullWidth"
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
                     sx={(t) => ({
                       borderBottom: `1px solid ${t.palette.divider}`,
                       background: t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.01)',
                       '& .MuiTabs-indicator': {
-                        background: 'linear-gradient(90deg, #00D4FF, #6C63FF)',
+                        background: t.palette.mode === 'dark' ? 'linear-gradient(90deg, #00D4FF, #6C63FF)' : 'linear-gradient(90deg, #0095CC, #5A52D5)',
                         height: 3,
                         borderRadius: '3px 3px 0 0'
-                      }
+                      },
+                      '& .MuiTabs-scrollButtons': {
+                        '&.Mui-disabled': { opacity: 0.3 },
+                      },
                     })}
                   >
                     <Tab
