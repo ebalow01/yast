@@ -4622,109 +4622,84 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                         const estShares = estPremium && spxl ? Math.round(estPremium / spxl) : null;
                         const currentMode = vix ? (vix > 20 ? 'LPRS' : vix >= 15 ? 'Gray Zone' : 'CC Income') : null;
                         const modeColor = currentMode === 'LPRS' ? '#FF3B30' : currentMode === 'Gray Zone' ? '#FF9500' : '#34C759';
+                        // Determine which trigger row is active based on SPY price
+                        const activeRow = spy ? (spy < (spyWeak ?? 0) ? 0 : spy > (spyStrong ?? Infinity) ? 2 : 1) : -1;
+                        // Today's action summary
+                        const actionSummary = spy && spyWeak && spyStrong
+                          ? (spy < spyWeak ? `SPY weak at $${spy.toFixed(0)} — BUY 10 SPXL at ~$${spxlDown3}`
+                            : spy > spyStrong ? `SPY strong at $${spy.toFixed(0)} — SKIP, no SPXL buy`
+                            : `SPY flat at $${spy.toFixed(0)} — WAIT for AH, buy 5 if flat close`)
+                          : null;
 
-                        const sectionLabel = (text: string, color?: string) => (
-                          <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: color || 'text.disabled', mb: 1.5 }}>{text}</Typography>
-                        );
+                        const mono = '"SF Mono", "Fira Code", "Cascadia Code", monospace';
 
                         return (
                           <>
-                            {/* Hero: Mode + Live Prices in one block */}
-                            <Box sx={(t) => ({
-                              mb: 4, p: 3, borderRadius: 2,
-                              border: `1px solid ${modeColor}30`,
-                              background: t.palette.mode === 'dark' ? `${modeColor}08` : `${modeColor}04`,
-                            })}>
-                              {/* Top row: title + mode badge */}
-                              <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 0.5 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
-                                  <Typography sx={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'text.primary' }}>LPRS</Typography>
-                                  <Typography sx={{ fontSize: '0.8rem', color: 'text.disabled' }}>Leveraged Premium Reinvestment</Typography>
+                            {/* Header bar: title + mode + live prices */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
+                                <Typography sx={{ fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'text.primary' }}>LPRS</Typography>
+                                <Typography sx={{ fontSize: '0.75rem', color: 'text.disabled', display: { xs: 'none', md: 'inline' } }}>Leveraged Premium Reinvestment</Typography>
+                              </Box>
+                              {currentMode && (
+                                <Chip label={currentMode} size="small" sx={{
+                                  fontWeight: 800, fontSize: '0.65rem', letterSpacing: '0.06em',
+                                  backgroundColor: `${modeColor}18`, color: modeColor,
+                                  border: `1.5px solid ${modeColor}`,
+                                  borderRadius: '4px', height: 22,
+                                }} />
+                              )}
+                            </Box>
+
+                            {/* Live data strip — tight horizontal row */}
+                            <Box sx={{ display: 'flex', gap: { xs: 1.5, md: 3 }, mb: 2, flexWrap: 'wrap', alignItems: 'baseline' }}>
+                              {[
+                                { label: 'VIX', value: vix?.toFixed(1) ?? '--', color: modeColor },
+                                { label: 'SPY', value: spy ? `$${spy.toFixed(2)}` : '--', color: 'text.primary' },
+                                { label: 'SPXL', value: spxl ? `$${spxl.toFixed(2)}` : '--', color: 'text.primary' },
+                              ].map((item, i) => (
+                                <Box key={i} sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                                  <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.disabled' }}>{item.label}</Typography>
+                                  <Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: item.color, fontFamily: mono, fontVariantNumeric: 'tabular-nums' }}>{item.value}</Typography>
                                 </Box>
-                                {currentMode && (
-                                  <Chip label={`${currentMode} MODE`} size="small" sx={{
-                                    fontWeight: 800, fontSize: '0.65rem', letterSpacing: '0.06em',
-                                    backgroundColor: `${modeColor}18`, color: modeColor,
-                                    border: `1.5px solid ${modeColor}`,
-                                    borderRadius: '4px', height: 24,
-                                  }} />
-                                )}
-                              </Box>
-                              <Typography sx={{ fontSize: '0.78rem', color: 'text.disabled', mb: 3, maxWidth: 520 }}>
-                                Sell ATM LEAPS on SPY (1 lot), deploy premium into SPXL, harvest 3x leverage to cover roll costs
-                              </Typography>
-
-                              {/* Price ticker strip */}
-                              <Box sx={{ display: 'flex', gap: { xs: 2, md: 4 }, flexWrap: 'wrap' }}>
+                              ))}
+                              <Box sx={{ borderLeft: 1, borderColor: 'divider', pl: { xs: 1.5, md: 3 }, display: 'flex', gap: { xs: 1.5, md: 3 }, alignItems: 'baseline' }}>
                                 {[
-                                  { label: 'VIX', value: vix?.toFixed(1) ?? '--', color: modeColor },
-                                  { label: 'SPY', value: spy ? `$${spy.toFixed(2)}` : '--', color: 'text.primary' },
-                                  { label: 'SPXL', value: spxl ? `$${spxl.toFixed(2)}` : '--', color: 'text.primary' },
-                                  { label: 'Premium', value: estPremium ? `$${estPremium.toLocaleString()}` : '--', color: '#FF9500' },
-                                  { label: 'SPXL Shares', value: estShares ? `${estShares}` : '--', color: '#34C759' },
+                                  { label: 'Est. Premium', value: estPremium ? `$${estPremium.toLocaleString()}` : '--' },
+                                  { label: 'SPXL Buyable', value: estShares ? `${estShares} shares` : '--' },
                                 ].map((item, i) => (
-                                  <Box key={i}>
-                                    <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'text.disabled', mb: 0.25 }}>{item.label}</Typography>
-                                    <Typography sx={{ fontSize: '1.15rem', fontWeight: 700, color: item.color, fontFamily: '"SF Mono", "Fira Code", "Cascadia Code", monospace', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{item.value}</Typography>
+                                  <Box key={i} sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                                    <Typography sx={{ fontSize: '0.55rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.disabled' }}>{item.label}</Typography>
+                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'text.secondary', fontFamily: mono }}>{item.value}</Typography>
                                   </Box>
                                 ))}
                               </Box>
                             </Box>
 
-                            {/* Mode triggers — horizontal strip */}
-                            <Box sx={{ mb: 3 }}>
-                              {sectionLabel('Mode Triggers')}
-                              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-                                {[
-                                  { vix: '>20', mode: 'LPRS', desc: 'Sell ATM 1yr LEAPS, deploy into SPXL', color: '#FF3B30', active: vix && vix > 20 },
-                                  { vix: '15-20', mode: 'Gray Zone', desc: 'Hold current mode, no switch', color: '#FF9500', active: vix && vix >= 15 && vix <= 20 },
-                                  { vix: '<15', mode: 'CC Income', desc: 'OTM covered calls on SPY', color: '#34C759', active: vix && vix < 15 },
-                                ].map((m, i) => (
-                                  <Box key={i} sx={(t) => ({
-                                    p: 1.5, borderRadius: 1,
-                                    border: m.active ? `1.5px solid ${m.color}` : `1px solid ${t.palette.divider}`,
-                                    opacity: m.active ? 1 : 0.4,
-                                    background: m.active ? (t.palette.mode === 'dark' ? `${m.color}0C` : `${m.color}06`) : 'transparent',
-                                  })}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
-                                      <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: m.color, fontFamily: 'monospace' }}>VIX {m.vix}</Typography>
-                                      <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: m.color, opacity: 0.7 }}>{m.mode}</Typography>
-                                    </Box>
-                                    <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary', lineHeight: 1.3 }}>{m.desc}</Typography>
-                                  </Box>
-                                ))}
+                            {/* Today's Action — the hero element */}
+                            {actionSummary && (
+                              <Box sx={(t) => ({
+                                p: 2, mb: 3, borderRadius: 1.5,
+                                border: `1.5px solid ${modeColor}40`,
+                                background: t.palette.mode === 'dark' ? `${modeColor}0A` : `${modeColor}06`,
+                                display: 'flex', alignItems: 'center', gap: 1.5,
+                              })}>
+                                <Box sx={{
+                                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                                  backgroundColor: modeColor,
+                                  boxShadow: `0 0 6px ${modeColor}60`,
+                                }} />
+                                <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: 'text.primary', fontFamily: mono }}>
+                                  {actionSummary}
+                                </Typography>
                               </Box>
-                            </Box>
+                            )}
 
-                            {/* Rules — compact two-column */}
-                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr 2fr' }, gap: 2, mb: 3 }}>
-                              <Box>
-                                {sectionLabel('Core Rules', '#FF9500')}
-                                {[
-                                  'Never sell SPXL to fund SPY repurchase shortfalls',
-                                  'Annual 80/20 rebalance only when SPY is called away',
-                                  'Buy back open positions before switching modes',
-                                  'Roll only for credit, never pay a debit',
-                                ].map((rule, j) => (
-                                  <Typography key={j} sx={{ fontSize: '0.8rem', color: 'text.secondary', lineHeight: 1.6, pl: 1.5, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#FF9500', fontWeight: 700 } }}>{rule}</Typography>
-                                ))}
-                              </Box>
-                              <Box>
-                                {sectionLabel('Rolling Rules', '#34C759')}
-                                {[
-                                  'Roll up $10, out 6 months, targeting 1% credit',
-                                  'SPXL gains structurally cover roll costs via 3x leverage',
-                                ].map((rule, j) => (
-                                  <Typography key={j} sx={{ fontSize: '0.8rem', color: 'text.secondary', lineHeight: 1.6, pl: 1.5, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#34C759', fontWeight: 700 } }}>{rule}</Typography>
-                                ))}
-                              </Box>
-                            </Box>
-
-                            {/* SPXL Trigger Table */}
+                            {/* SPXL Trigger Table — the decision center, now FIRST */}
                             <Box sx={{ mb: 3 }}>
-                              {sectionLabel('SPXL Buy Triggers', '#FF9500')}
+                              <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.disabled', mb: 1 }}>SPXL Triggers</Typography>
                               <TableContainer sx={{ borderRadius: 1 }}>
-                                <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1.1, px: 1.5 } }}>
+                                <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1.2, px: 1.5 } }}>
                                   <TableHead>
                                     <TableRow>
                                       {['Scenario', 'SPXL', 'Action', 'Qty'].map(h => (
@@ -4734,38 +4709,92 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   </TableHead>
                                   <TableBody>
                                     {[
-                                      { scenario: `SPY weak <$${spyWeak ?? '...'}`, spxl: `~$${spxlDown3 ?? '...'}`, action: 'BUY', actionColor: '#34C759', qty: '10' },
-                                      { scenario: `SPY flat $${spyWeak ?? '...'}-${spyStrong ?? '...'}`, spxl: spxl ? `~$${spxl.toFixed(0)}` : '...', action: 'WAIT AH', actionColor: '#FF9500', qty: '5' },
-                                      { scenario: `SPY strong >$${spyStrong ?? '...'}`, spxl: `~$${spxlUp3 ?? '...'}`, action: 'SKIP', actionColor: '#8E8E93', qty: '0' },
-                                      { scenario: 'Geopolitical shock AH', spxl: `~$${spxlDown8 ?? '...'}`, action: 'BUY AGGR', actionColor: '#FF3B30', qty: '15-20' },
-                                      { scenario: 'Geopolitical positive AH', spxl: `~$${spxlUp5 ?? '...'}`, action: 'SKIP', actionColor: '#8E8E93', qty: '0' },
-                                    ].map((row, i) => (
-                                      <TableRow key={i} sx={{ '&:last-child td': { border: 0 } }}>
-                                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>{row.scenario}</TableCell>
-                                        <TableCell sx={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: '0.8rem', color: 'text.primary', fontWeight: 600 }}>{row.spxl}</TableCell>
-                                        <TableCell>
-                                          <Typography sx={{ fontSize: '0.68rem', fontWeight: 800, color: row.actionColor, letterSpacing: '0.04em' }}>{row.action}</Typography>
-                                        </TableCell>
-                                        <TableCell sx={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: '0.8rem', color: 'text.primary', fontWeight: 600 }}>{row.qty}</TableCell>
-                                      </TableRow>
-                                    ))}
+                                      { scenario: `SPY weak <$${spyWeak ?? '...'}`, spxl: `~$${spxlDown3 ?? '...'}`, action: 'BUY', actionColor: '#34C759', qty: '10', idx: 0 },
+                                      { scenario: `SPY flat $${spyWeak ?? '...'}-${spyStrong ?? '...'}`, spxl: spxl ? `~$${spxl.toFixed(0)}` : '...', action: 'WAIT AH', actionColor: '#FF9500', qty: '5', idx: 1 },
+                                      { scenario: `SPY strong >$${spyStrong ?? '...'}`, spxl: `~$${spxlUp3 ?? '...'}`, action: 'SKIP', actionColor: '#8E8E93', qty: '0', idx: 2 },
+                                      { scenario: `SPY shock <$${spy ? Math.round(spy * 0.96) : '...'}`, spxl: `~$${spxlDown8 ?? '...'}`, action: 'BUY AGGR', actionColor: '#FF3B30', qty: '15-20', idx: 3 },
+                                      { scenario: `SPY rally >$${spy ? Math.round(spy * 1.03) : '...'}`, spxl: `~$${spxlUp5 ?? '...'}`, action: 'SKIP', actionColor: '#8E8E93', qty: '0', idx: 4 },
+                                    ].map((row) => {
+                                      const isActive = row.idx === activeRow;
+                                      return (
+                                        <TableRow key={row.idx} sx={(t) => ({
+                                          '&:last-child td': { border: 0 },
+                                          ...(isActive ? {
+                                            background: t.palette.mode === 'dark' ? `${row.actionColor}12` : `${row.actionColor}08`,
+                                            '& td': { fontWeight: 700 },
+                                          } : {}),
+                                        })}>
+                                          <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                                            {isActive && <span style={{ marginRight: 6 }}>&#9654;</span>}
+                                            {row.scenario}
+                                          </TableCell>
+                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.primary', fontWeight: 600 }}>{row.spxl}</TableCell>
+                                          <TableCell>
+                                            <Chip label={row.action} size="small" sx={{
+                                              height: 22, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.03em',
+                                              backgroundColor: `${row.actionColor}18`, color: row.actionColor,
+                                              border: isActive ? `1px solid ${row.actionColor}` : 'none',
+                                            }} />
+                                          </TableCell>
+                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.primary', fontWeight: 600 }}>{row.qty}</TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                    {/* Sell trigger as last row */}
+                                    <TableRow sx={(t) => ({ background: t.palette.mode === 'dark' ? 'rgba(255,59,48,0.06)' : 'rgba(255,59,48,0.03)' })}>
+                                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>SPXL bounce +8-10%</TableCell>
+                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.primary', fontWeight: 600 }}>${spxlUp8 ?? '...'}-{spxlUp10 ?? '...'}</TableCell>
+                                      <TableCell>
+                                        <Chip label="TRIM" size="small" sx={{ height: 22, fontSize: '0.65rem', fontWeight: 800, backgroundColor: 'rgba(255,59,48,0.18)', color: '#FF3B30' }} />
+                                      </TableCell>
+                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.82rem', color: 'text.secondary' }}>Reduce</TableCell>
+                                    </TableRow>
                                   </TableBody>
                                 </Table>
                               </TableContainer>
                             </Box>
 
-                            {/* Sell Trigger — inline callout */}
-                            <Box sx={{
-                              p: 2, borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1.5,
-                              borderLeft: '3px solid #FF3B30',
-                              bgcolor: 'action.hover',
-                            }}>
-                              <TrendingDown sx={{ fontSize: 18, color: '#FF3B30', flexShrink: 0 }} />
-                              <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-                                <strong style={{ color: '#FF3B30' }}>SELL</strong> — SPXL bounces to{' '}
-                                <span style={{ fontFamily: '"SF Mono", "Fira Code", monospace', fontWeight: 700, color: '#FF3B30' }}>${spxlUp8 ?? '...'}-${spxlUp10 ?? '...'}</span>
-                                {' '}trim existing position, lock in swing gains
-                              </Typography>
+                            {/* Strategy Reference — collapsed section below */}
+                            <Box sx={{ mt: 1, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                              <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.disabled', mb: 1.5 }}>Strategy Reference</Typography>
+
+                              {/* Mode triggers — compact inline */}
+                              <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                                {[
+                                  { vix: '>20', mode: 'LPRS', color: '#FF3B30', active: vix && vix > 20 },
+                                  { vix: '15-20', mode: 'Gray Zone', color: '#FF9500', active: vix && vix >= 15 && vix <= 20 },
+                                  { vix: '<15', mode: 'CC Income', color: '#34C759', active: vix && vix < 15 },
+                                ].map((m, i) => (
+                                  <Chip key={i} label={`VIX ${m.vix} = ${m.mode}`} size="small" variant={m.active ? 'filled' : 'outlined'} sx={{
+                                    fontSize: '0.65rem', fontWeight: 600, height: 22,
+                                    ...(m.active ? { backgroundColor: `${m.color}20`, color: m.color, border: `1px solid ${m.color}` } : { opacity: 0.5, borderColor: 'divider', color: 'text.disabled' }),
+                                  }} />
+                                ))}
+                              </Box>
+
+                              {/* Rules — compact two-column */}
+                              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                                <Box>
+                                  <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#FF9500', mb: 0.75 }}>Core Rules</Typography>
+                                  {[
+                                    'Never sell SPXL to fund SPY repurchase shortfalls',
+                                    'Rebalance 80/20 only when SPY called away',
+                                    'Buy back positions before switching modes',
+                                    'Roll only for credit, never pay a debit',
+                                  ].map((rule, j) => (
+                                    <Typography key={j} sx={{ fontSize: '0.73rem', color: 'text.disabled', lineHeight: 1.5, pl: 1.25, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#FF9500' } }}>{rule}</Typography>
+                                  ))}
+                                </Box>
+                                <Box>
+                                  <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#34C759', mb: 0.75 }}>Rolling Rules</Typography>
+                                  {[
+                                    'Roll up $10, out 6mo, targeting 1% credit',
+                                    'SPXL 3x leverage covers roll costs structurally',
+                                  ].map((rule, j) => (
+                                    <Typography key={j} sx={{ fontSize: '0.73rem', color: 'text.disabled', lineHeight: 1.5, pl: 1.25, position: 'relative', '&::before': { content: '"\\2022"', position: 'absolute', left: 0, color: '#34C759' } }}>{rule}</Typography>
+                                  ))}
+                                </Box>
+                              </Box>
                             </Box>
                           </>
                         );
