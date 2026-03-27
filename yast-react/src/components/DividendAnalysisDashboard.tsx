@@ -4691,7 +4691,7 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                   animation: 'lprs-pulse 2s ease-in-out infinite',
                                   '@keyframes lprs-pulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.5 } },
                                 }} />
-                                <Typography sx={{ fontSize: '0.92rem', fontWeight: 700, color: 'text.primary', fontFamily: mono }}>
+                                <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.92rem' }, fontWeight: 700, color: 'text.primary', fontFamily: mono }}>
                                   {actionSummary}
                                 </Typography>
                               </Box>
@@ -4701,11 +4701,11 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                             <Box sx={{ mb: 3 }}>
                               <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.disabled', mb: 1 }}>SPXL Triggers</Typography>
                               <TableContainer sx={{ borderRadius: 1 }}>
-                                <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1.4, px: 2 } }}>
+                                <Table size="small" sx={{ '& .MuiTableCell-root': { py: { xs: 1, md: 1.4 }, px: { xs: 1, md: 2 } }, tableLayout: { xs: 'auto', md: 'auto' } }}>
                                   <TableHead>
                                     <TableRow>
                                       {['Scenario', 'SPXL', 'Action', 'Qty'].map(h => (
-                                        <TableCell key={h} sx={{ fontWeight: 600, color: 'text.disabled', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: 2, borderColor: 'divider' }}>{h}</TableCell>
+                                        <TableCell key={h} sx={{ fontWeight: 600, color: 'text.disabled', fontSize: { xs: '0.55rem', md: '0.6rem' }, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: 2, borderColor: 'divider', whiteSpace: 'nowrap' }}>{h}</TableCell>
                                       ))}
                                     </TableRow>
                                   </TableHead>
@@ -4728,19 +4728,19 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                             '&:hover': { background: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' },
                                           }),
                                         })}>
-                                          <TableCell sx={{ color: isActive ? 'text.primary' : 'text.primary', fontSize: '0.88rem', fontWeight: isActive ? 700 : 500 }}>
-                                            {isActive && <span style={{ marginRight: 6 }}>&#9654;</span>}
+                                          <TableCell sx={{ color: isActive ? 'text.primary' : 'text.primary', fontSize: { xs: '0.78rem', md: '0.88rem' }, fontWeight: isActive ? 700 : 500, whiteSpace: 'nowrap' }}>
+                                            {isActive && <span style={{ marginRight: 4 }}>&#9654;</span>}
                                             {row.scenario}
                                           </TableCell>
-                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.9rem', color: 'text.primary', fontWeight: 600 }}>{row.spxl}</TableCell>
+                                          <TableCell sx={{ fontFamily: mono, fontSize: { xs: '0.8rem', md: '0.9rem' }, color: 'text.primary', fontWeight: 600, whiteSpace: 'nowrap' }}>{row.spxl}</TableCell>
                                           <TableCell>
                                             <Chip label={row.action} size="small" sx={{
-                                              height: 24, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.03em',
+                                              height: { xs: 22, md: 24 }, fontSize: { xs: '0.6rem', md: '0.7rem' }, fontWeight: 800, letterSpacing: '0.03em',
                                               backgroundColor: `${row.actionColor}20`, color: row.actionColor,
                                               border: isActive ? `1.5px solid ${row.actionColor}` : 'none',
                                             }} />
                                           </TableCell>
-                                          <TableCell sx={{ fontFamily: mono, fontSize: '0.95rem', color: 'text.primary', fontWeight: 700 }}>{row.qty}</TableCell>
+                                          <TableCell sx={{ fontFamily: mono, fontSize: { xs: '0.82rem', md: '0.95rem' }, color: 'text.primary', fontWeight: 700 }}>{row.qty}</TableCell>
                                         </TableRow>
                                       );
                                     })}
@@ -4749,12 +4749,12 @@ Focus on actionable insights from the visual chart patterns and price action.`;
                                       background: t.palette.mode === 'dark' ? 'rgba(255,59,48,0.10)' : 'rgba(255,59,48,0.05)',
                                       borderLeft: '3px solid #FF3B30',
                                     })}>
-                                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.88rem' }}>SPXL bounce +8-10%</TableCell>
-                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.9rem', color: 'text.primary', fontWeight: 600 }}>${spxlUp8 ?? '...'}-{spxlUp10 ?? '...'}</TableCell>
+                                      <TableCell sx={{ color: 'text.secondary', fontSize: { xs: '0.78rem', md: '0.88rem' }, whiteSpace: 'nowrap' }}>SPXL +8-10%</TableCell>
+                                      <TableCell sx={{ fontFamily: mono, fontSize: { xs: '0.8rem', md: '0.9rem' }, color: 'text.primary', fontWeight: 600, whiteSpace: 'nowrap' }}>${spxlUp8 ?? '...'}-{spxlUp10 ?? '...'}</TableCell>
                                       <TableCell>
-                                        <Chip label="TRIM" size="small" sx={{ height: 24, fontSize: '0.7rem', fontWeight: 800, backgroundColor: 'rgba(255,59,48,0.22)', color: '#FF3B30', border: '1px solid rgba(255,59,48,0.4)' }} />
+                                        <Chip label="TRIM" size="small" sx={{ height: { xs: 22, md: 24 }, fontSize: { xs: '0.6rem', md: '0.7rem' }, fontWeight: 800, backgroundColor: 'rgba(255,59,48,0.22)', color: '#FF3B30', border: '1px solid rgba(255,59,48,0.4)' }} />
                                       </TableCell>
-                                      <TableCell sx={{ fontFamily: mono, fontSize: '0.95rem', color: '#FF3B30', fontWeight: 700 }}>Reduce</TableCell>
+                                      <TableCell sx={{ fontFamily: mono, fontSize: { xs: '0.82rem', md: '0.95rem' }, color: '#FF3B30', fontWeight: 700 }}>Reduce</TableCell>
                                     </TableRow>
                                   </TableBody>
                                 </Table>
