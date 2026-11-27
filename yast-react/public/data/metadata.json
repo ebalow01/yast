@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-11-26T15:56:42.268698",
-  "build_id": "8ecaa3e7",
+  "generated_at": "2026-11-27T15:43:24.126593",
+  "build_id": "5a773ae5",
   "version": "1.0.0",
   "status": "live",
-  "analysisDate": "November 26, 2026",
+  "analysisDate": "November 27, 2026",
   "startingCapital": 100000,
-  "totalTickers": 125,
+  "totalTickers": 124,
   "data_files": [
     "ticker_configs.json",
     "performance_data.json"
   ],
   "analysis_info": {
-    "total_tickers": 125,
+    "total_tickers": 124,
     "strategies_analyzed": [
       "Buy & Hold",
       "Dividend Capture",
